@@ -1,0 +1,2 @@
+-- Relic foundation uses deterministic test fixtures in supabase/fixtures.
+-- Production/local seed data is intentionally empty for now.

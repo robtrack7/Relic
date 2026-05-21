@@ -20,3 +20,18 @@ jobs:
 
       - name: Verify repository structure
         run: node scripts/verify-repo.mjs
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase
+        run: supabase start
+
+      - name: Run Supabase SQL tests
+        run: supabase test db
+
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop --no-backup

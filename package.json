@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "packageManager": "pnpm@10.11.0",
   "scripts": {
-    "verify": "node scripts/verify-repo.mjs"
+    "verify": "node scripts/verify-repo.mjs",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop --no-backup",
+    "test:supabase": "supabase test db"
   },
   "engines": {
     "node": ">=22.0.0"
