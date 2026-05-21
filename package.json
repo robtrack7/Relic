@@ -5,6 +5,10 @@
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "verify": "node scripts/verify-repo.mjs",
+    "dev:web": "pnpm --filter @relic/web dev",
+    "build:web": "pnpm --filter @relic/web build",
+    "lint:web": "pnpm --filter @relic/web lint",
+    "test:web": "pnpm --filter @relic/web test",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop --no-backup",
     "test:supabase": "supabase test db"

@@ -75,12 +75,15 @@ function walkFiles(root) {
 
   const files = [];
   const stack = [rootPath];
+  const ignoredDirectories = new Set(["node_modules", ".next", "coverage", "test-results", "playwright-report"]);
   while (stack.length > 0) {
     const current = stack.pop();
     for (const entry of readdirSync(current, { withFileTypes: true })) {
       const fullPath = join(current, entry.name);
       if (entry.isDirectory()) {
-        stack.push(fullPath);
+        if (!ignoredDirectories.has(entry.name)) {
+          stack.push(fullPath);
+        }
       } else if (entry.isFile()) {
         files.push(fullPath);
       }

@@ -18,8 +18,22 @@ jobs:
         with:
           node-version-file: .nvmrc
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Verify repository structure
-        run: node scripts/verify-repo.mjs
+        run: pnpm run verify
+
+      - name: Run web unit tests
+        run: pnpm run test:web
+
+      - name: Build web app
+        run: pnpm run build:web
 
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@v1
@@ -30,7 +44,7 @@ jobs:
         run: supabase start
 
       - name: Run Supabase SQL tests
-        run: supabase test db
+        run: pnpm run test:supabase
 
       - name: Stop Supabase
         if: always()

@@ -8,6 +8,9 @@ dist/
 build/
 coverage/
 out/
+test-results/
+playwright-report/
+*.tsbuildinfo
 
 # Expo / React Native
 .expo/
