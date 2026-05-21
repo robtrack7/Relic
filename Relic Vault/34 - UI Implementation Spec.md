@@ -1,0 +1,564 @@
+---
+status: active
+authority: secondary
+scope: mvp
+read_after:
+  - "[[00 - Start Here]]"
+depends_on:
+  - "[[00 - Start Here]]"
+supersedes: []
+last_audited: 2026-05-20
+source_file: "Sourced - Downloaded - 260518/relic-ui-implementation-spec-v0_2.md"
+---
+
+> [!info] How to use this spec
+> Owns: Route map, shells, components, build order, empty/loading/error states, and UI acceptance criteria.
+> Does not own: Historical rationale and superseded naming unless explicitly retained as an internal identifier.
+> Read next: [[00 - Start Here]]
+> Implementation-critical note: Treat this as coding input only after reading the authority order in [[00 - Start Here]].
+# Relic UI Implementation Spec v0.2
+
+*Created: May 18, 2026. Updated: May 18, 2026.*  
+*Purpose: give vibe-coding agents a buildable first-pass UI map without requiring them to re-read every product document.*
+
+## 0. Scope
+
+This spec translates the active Relic product, UX, schema, architecture, and design-system documents into a practical UI build plan.
+
+**Build against:**
+
+- `[[11 - Product Basepoint]]`
+- `[[12 - MVP PRD]]`
+- `[[14 - Design System Source]]`
+- `[[33 - First Run UX Flow]]`
+- `[[31 - Session Prep Flow]]`
+- `[[32 - Stage UX Flow]]`
+- `[[20 - Entity and Canon Schema]]`
+- `[[21 - Tech Architecture]]`
+- `[[23 - AI Task Registry]]`
+- `[[24 - Approval Queue]]`
+- `[[25 - Pricing and Rate Limits]]`
+
+**Implementation rule:** build the loop first: Create → Organize → Prep → Run → Review → Approve → Continue.
+
+**MVP surface rule:** Web owns the Sanctum. Mobile owns the Stage. Both remain functionally capable for the full loop where practical.
+
+---
+
+## Changelog
+
+**v0.2 (May 2026).** Document-control and naming refresh. Updates build-against references to the current versioned files and renames the new-saga continuation route parameter from `:workshopSessionId` to `:creationSessionId` so implementation naming no longer revives retired Saga Creation language. No UI scope expansion.
+
+
+## 1. Route map
+
+### 1.1 Web routes — Next.js App Router
+
+Use IDs in routes for MVP. Slugs may be added later for readability but must not be required for routing.
+
+| Route | Surface | Purpose | MVP |
+|---|---|---|---:|
+| `/` | Public | Landing or redirect to app | P0 minimal |
+| `/auth/sign-in` | Auth | Email/password sign in | P0 |
+| `/auth/sign-up` | Auth | Create GM account | P0 |
+| `/app` | Bootstrap | Load GM profile, Workspace, active World/Saga; redirect | P0 |
+| `/app/new-saga` | First-run / Create | New saga flow: World choice, GM profile, help level | P0 |
+| `/app/new-saga/:creationSessionId` | First-run / Create | Resume Build with AI / Bring your notes / scaffold review | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId` | Sanctum | Saga home, current prep card, Threads carry-forward | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/threads` | Sanctum | Thread list + read-only Thread Timeline | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/threads/:threadId` | Sanctum | Thread detail, objectives log, related entities, AI assists | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/entities` | Sanctum | Entity library, filters, search | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/entities/new` | Sanctum | Manual entity create / draft from prompt | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/entities/:entityType/:entityId` | Sanctum | Entity detail editor | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/sessions` | Sanctum | Session list and pipeline status | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/sessions/new` | Sanctum | Create session prep workspace | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/sessions/:sessionId/prep` | Sanctum | Session prep workspace | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/sessions/:sessionId/stage` | Stage web | Browser Stage fallback | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/sessions/:sessionId/review` | Sanctum | Transcript, summary, proposed updates | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/review` | Sanctum | Approval Queue | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/ask` | Sanctum | GM-invoked Saga-aware Ask surface | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/search` | Sanctum | Full search page, command-palette fallback | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/settings` | Sanctum | Saga settings: name, system, profile override, retention | P0 |
+| `/app/w/:workspaceId/world/:worldId/settings` | Sanctum | Lightweight World settings | P0 minimal |
+| `/app/w/:workspaceId/settings` | Sanctum | Workspace settings, usage, future billing placeholder | P0 minimal |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/export` | Sanctum | Markdown/JSON export request and downloads | P0 |
+
+**Do not build in MVP:** player wiki routes, public saga pages, per-player permissions, BYOK UI, local model UI, image generation UI, full timeline editor, graph editor, map editor, initiative/encounter tracker.
+
+### 1.2 Mobile routes — Expo Router
+
+Mobile starts at the Stage but must expose enough Sanctum-lite navigation to avoid dead ends.
+
+| Route | Surface | Purpose | MVP |
+|---|---|---|---:|
+| `/sign-in` | Auth | Email/password sign in | P0 |
+| `/sign-up` | Auth | GM account create | P0 |
+| `/bootstrap` | Bootstrap | Resolve Workspace/World/Saga/session state | P0 |
+| `/new-saga` | First-run mobile | Functional new saga form; web remains optimized | P0 |
+| `/sagas` | Switcher | World/Saga/session switcher | P0 |
+| `/stage` | Stage | Current ready/started/in-progress session | P0 |
+| `/stage/:sessionId` | Stage | Live session screen | P0 |
+| `/stage/:sessionId/search` | Stage | Search modal/screen | P0 |
+| `/stage/:sessionId/capture` | Stage sheet | Quick capture | P0 |
+| `/stage/:sessionId/stub` | Stage sheet | Quick NPC/place/thread stub | P0 |
+| `/stage/:sessionId/dice` | Stage sheet | Basic dice utility | P0 |
+| `/stage/:sessionId/end` | Stage modal | End Session confirm + undo | P0 |
+| `/sanctum` | Sanctum-lite | Saga home summary and next action | P0 |
+| `/sanctum/entities` | Sanctum-lite | Entity list/search | P0 light |
+| `/sanctum/entities/:entityType/:entityId` | Sanctum-lite | Read + light edit | P0 light |
+| `/sanctum/sessions/:sessionId/prep` | Sanctum-lite | Session packet read/edit enough to mark ready | P0 light |
+| `/sanctum/review` | Sanctum-lite | Functional Approval Queue minimum | P0 light |
+| `/settings` | Settings | Retention, usage readout, sign out | P0 minimal |
+
+---
+
+## 2. Layout shells
+
+### 2.1 Sanctum desktop shell
+
+**Use for:** saga home, Threads, Entities, Sessions, Review, Ask, Settings.
+
+- Parchment background.
+- Left navigation rail, 220–260px.
+- Top context bar: Workspace / World / Saga switcher, search/command entry, usage chip when near quota.
+- Main content column, max readable width 960–1120px unless list/detail layout requires more.
+- Optional right inspector for source/provenance, relationships, draft warnings, quota warnings.
+- Cream cards on Parchment. Amber marks consequential action. Sage marks confirmed/ready. Rust marks destructive/blocked.
+
+Default nav order: **Threads · Entities · Sessions · Review · Ask**. Settings sits low in the rail.
+
+### 2.2 Sanctum mobile shell
+
+**Use for:** mobile-light entity review, prep read/edit, approval minimum, settings.
+
+- Single column.
+- Top context switcher compressed into a sheet.
+- Bottom nav: Home, Search, Sessions, Review, Stage.
+- No persistent right rail; use bottom sheets for source/provenance and filters.
+- Large tap targets, minimum 44px.
+
+### 2.3 Stage mobile shell
+
+**Use for:** live play.
+
+- Ink background.
+- Cream text and cards.
+- Header: session title, state chip, recording/offline indicator.
+- Persistent search bar below header.
+- One vertical scroll: agenda → pinned cards → notes.
+- Sticky bottom action bar: Record · Mark Moment · Dice.
+- No decorative elements. No marketing copy. No proactive AI prompts.
+
+### 2.4 Stage web/tablet shell
+
+**Use for:** browser fallback and tablet use.
+
+- Same dark Stage visual language.
+- Main Stage column remains primary.
+- Optional right side panel for selected pinned entity.
+- Search can open as command palette on desktop; inline search remains visible.
+- Do not turn Stage web into Sanctum. Keep it glance-first.
+
+---
+
+## 3. Token mapping
+
+Map `[[14 - Design System Source]]` tokens into shared Tailwind/CSS variables.
+
+| Design token | CSS variable | Tailwind alias | Use |
+|---|---|---|---|
+| Ink | `--ink #1A1916` | `relic.ink` | text, dark Stage background |
+| Ink faint | `--ink-faint #2C2A25` | `relic.inkFaint` | Stage cards, dark panels |
+| Stone 900 | `--stone-900 #38342E` | `relic.stone900` | secondary dark text |
+| Stone 700 | `--stone-700 #6A6258` | `relic.stone700` | muted body text |
+| Stone 500 | `--stone-500 #9C9389` | `relic.stone500` | metadata, placeholders |
+| Stone 300 | `--stone-300 #C6BEB3` | `relic.stone300` | borders, dividers |
+| Stone 100 | `--stone-100 #E4DDD4` | `relic.stone100` | subtle surfaces |
+| Parchment | `--parchment #EFEBE4` | `relic.parchment` | Sanctum page background |
+| Cream | `--cream #F7F4EF` | `relic.cream` | cards, elevated surfaces |
+| White | `--white #FDFCFA` | `relic.white` | rare highlights only |
+| Amber | `--amber #B8702A` | `relic.amber` | primary action, canon consequence |
+| Amber light | `--amber-light #D4904C` | `relic.amberLight` | Stage active states |
+| Amber dim | `--amber-dim #EED9BF` | `relic.amberDim` | warning/loose-thread tint |
+| Rust | `--rust #8A3828` | `relic.rust` | destructive, recording, blocked |
+| Rust dim | `--rust-dim #F0D9D4` | `relic.rustDim` | destructive warning tint |
+| Sage | `--sage #496640` | `relic.sage` | success, approved, ready |
+| Sage dim | `--sage-dim #D2DBC9` | `relic.sageDim` | active-thread tint |
+
+**Fonts:**
+
+- Display: Cormorant Garamond. Use for entity names, saga titles, page heroes, literary excerpts.
+- UI: Instrument Sans. Use for all UI text, labels, body, inputs.
+- Mono: DM Mono. Use for metadata, timestamps, state chips, quota labels, source labels.
+
+**Radii and shadows:** keep tight. `radius-sm=2px`, `radius-md=4px`, `radius-lg=8px`. Avoid generic SaaS pill excess except for small state chips.
+
+---
+
+## 4. Shared component inventory
+
+### 4.1 Foundations
+
+- `AppShell`
+- `SanctumShell`
+- `StageShell`
+- `ContextSwitcher`
+- `CommandPalette`
+- `SearchInput`
+- `UsageChip`
+- `StateChip`
+- `SourceBadge`
+- `EntityTypeIcon`
+- `AutosaveIndicator`
+- `EmptyState`
+- `ErrorState`
+- `LoadingSkeleton`
+- `ConfirmDialog`
+- `BottomSheet`
+- `Toast`
+- `UndoBanner`
+
+### 4.2 Form primitives
+
+- `TextField`
+- `TextareaField`
+- `RichTextEditor`
+- `SelectField`
+- `RadioCardGroup`
+- `SegmentedControl`
+- `TagInput`
+- `RelationshipPicker`
+- `EntityPicker`
+- `FileDropzone`
+- `CharacterCountMeter`
+
+### 4.3 Canon and draft primitives
+
+- `CanonStateChip`
+- `DraftCard`
+- `DraftWarningList`
+- `ProvenancePanel`
+- `SourceExcerpt`
+- `CitationDriftIndicator`
+- `DiffViewer`
+- `ApprovalActionBar`
+- `RejectReasonPicker`
+- `CommitButton`
+
+### 4.4 Entity components
+
+- `EntityList`
+- `EntityListItem`
+- `EntityDetailHeader`
+- `EntityNarrativeEditor`
+- `GMNotesBlock`
+- `LoreNotesPanel`
+- `RelationshipList`
+- `MentionSuggestions`
+- `ArchivedBanner`
+- `StubBanner`
+- `FleshStubCTA`
+
+### 4.5 Thread components
+
+- `ThreadList`
+- `ThreadStateChip`
+- `ThreadCarryForwardCard`
+- `ThreadTimelineReadOnly`
+- `ThreadObjectiveLog`
+- `ThreadComplicationButton`
+
+### 4.6 Session prep components
+
+- `PrepWorkspace`
+- `PrepBriefingCard`
+- `AgendaEditor`
+- `SceneBeatAssistMenu`
+- `ActiveThreadsPanel`
+- `PinnedEntityPicker`
+- `SessionPacketPreview`
+- `ReadyForStageButton`
+- `StalePrepWarning`
+
+### 4.7 Stage components
+
+- `StageHeader`
+- `StageSearchBar`
+- `StageAgenda`
+- `PinnedList`
+- `StageCard`
+- `CharacterStageCard`
+- `PlaceStageCard`
+- `FactionStageCard`
+- `ArtifactStageCard`
+- `ThreadStageCard`
+- `QuickCaptureSheet`
+- `QuickStubSheet`
+- `RecordingControl`
+- `MarkMomentButton`
+- `DiceSheet`
+- `EndSessionConfirm`
+- `SessionEndSummaryCard`
+- `OfflineChip`
+
+---
+
+## 5. Page-by-page MVP build list
+
+### 5.1 Auth and bootstrap
+
+| Page | Build |
+|---|---|
+| Sign up / Sign in | Minimal email/password forms, error state, loading state. |
+| Bootstrap | Queries GM profile, Workspace, active World/Saga, active session. Redirects to New saga if none. |
+
+### 5.2 New saga / first-run
+
+| Page | Build |
+|---|---|
+| New saga form | Saga name, game system, World choice, GM profile card, help-level radio cards. |
+| Build with AI | Conversation surface, Draft it CTA, streaming state, retry, save/resume. |
+| Bring your notes | Paste field, `.txt/.md/.markdown` upload, 50,000-char cap, Draft from this CTA. |
+| Scaffold review | Section rail, draft cards, source rail, edit/regenerate/discard, Commit saga. |
+| Start blank | Immediate empty saga create and redirect to Sanctum home. |
+
+### 5.3 Sanctum home
+
+Build as the loop dashboard, not a generic project homepage.
+
+- Current Saga summary.
+- Next session / Plan Session 1 card.
+- Threads carry-forward card.
+- Recent entities.
+- Pending Review card.
+- Ask entry point.
+- Usage chip only when near quota or in settings.
+
+### 5.4 Threads
+
+- List states: Active, Loose, Dormant, Resolved.
+- Detail page with summary, objectives log, related entities, source references.
+- Read-only Thread Timeline derived from `threads.objectives_log`, sessions, and canon audit.
+- No writable timeline editor.
+
+### 5.5 Entities
+
+- Library with type filters, search, archived toggle.
+- Detail editor with autosave, source/provenance, relationships, mentions, notes.
+- New entity: manual blank plus `Draft from prompt`.
+- Stub flow: `Flesh this stub` invokes `propose_quick_stub_fleshing` and routes accepted changes through draft/update review.
+
+### 5.6 Sessions and prep
+
+- Session list with status chips: planned, ready, started, in_progress, ended_pending_undo, ended.
+- Prep workspace: objective, opening scene, scene notes, active threads, pinned entities, prep briefing, Ready for Stage.
+- Read-only lock when session is `in_progress` or `ended_pending_undo`.
+
+### 5.7 Stage
+
+- Current session screen.
+- Agenda, pinned cards, search, quick capture, quick stub, recording consent, chunked recording state, Mark Moment, dice, End Session, undo.
+- Offline cache state and pending sync state.
+
+### 5.8 Review and Approval Queue
+
+- Pipeline status page: transcript, summary, draft counts, failures.
+- Approval Queue grouped by entity.
+- Diff viewer, source panel, approve/edit/reject/merge/archive actions.
+- Commit selected. Avoid prominent Approve All.
+
+### 5.9 Ask
+
+- GM-invoked only.
+- Shows answer state: Canon / Draft / Raw / Transcript sources.
+- No answer may be presented as canon unless grounded in canon.
+- Empty state suggests example questions, not proactive prompts.
+
+### 5.10 Settings, usage, export
+
+- Saga settings: name, game system, audio/transcript retention, profile override.
+- Workspace settings: usage readout, upgrade placeholder, sign out.
+- Export: JSON and Markdown request, status, download link, 7-day expiry.
+
+---
+
+## 6. Empty, loading, and error states
+
+### 6.1 Empty states
+
+| Context | Copy direction | Primary action |
+|---|---|---|
+| No Saga | `Create your first saga.` | New saga |
+| Empty Saga | `Start with a character, place, or thread.` | New entity |
+| No Threads | `Threads track what is unresolved.` | New thread |
+| No Session | `Plan the next session from what matters now.` | New session |
+| No Review items | `No proposed changes waiting.` | Back to Sanctum |
+| Stage no ready session | `No session is ready for Stage.` | Open Sessions |
+| Search no result | `No match. Create a quick stub?` | Quick stub |
+
+### 6.2 Loading states
+
+Use skeletons for lists and cards. Use explicit progress states for model calls, transcription, upload, and export.
+
+Required async labels:
+
+- `Preparing draft...`
+- `Processing notes...`
+- `Transcribing audio...`
+- `Building review items...`
+- `Saving...`
+- `Saved · just now`
+- `Queued for sync`
+
+### 6.3 Error states
+
+Errors must tell the GM what happened and what is safe.
+
+| Error | Required action |
+|---|---|
+| AI call failed | Retry, edit prompt/input, continue manually. |
+| Quota reached | Explain human unit, show next reset or upgrade placeholder. |
+| Transcription failed | Retry upload/transcription, allow manual summary. |
+| Commit conflict | Show live version vs draft version, allow refresh or manual merge. |
+| Offline | Keep reading/capturing if cached; queue writes. |
+| RLS denial | Generic safe copy to user, full event to Sentry/PostHog. |
+
+---
+
+## 7. Form and autosave behavior
+
+- Default to autosave for entity, note, thread, and prep fields.
+- Debounce text autosave at 800ms after idle.
+- Save on blur immediately.
+- Show visible state: `Saving`, `Saved · just now`, `Saved · 2m ago`, `Offline · queued`.
+- Do not autosave destructive actions, commit actions, approve/reject actions, End Session, Start Session, or retention deletes.
+- Rich text editor saves structured content and plain-text search body.
+- Mention detection runs after save, not per keystroke.
+- Embeddings regenerate after substantive save, debounced server-side.
+
+---
+
+## 8. Approval diff components
+
+### 8.1 Required components
+
+- `ApprovalQueueShell`
+- `ApprovalGroupList`
+- `ApprovalItemCard`
+- `DiffViewer`
+- `InlineDraftEditor`
+- `SourceDock`
+- `TranscriptSourceExcerpt`
+- `CitationDriftIndicator`
+- `RejectReasonPicker`
+- `MergeTargetPicker`
+- `CommitSelectedBar`
+
+### 8.2 Diff rules
+
+- Create draft: show proposed card preview.
+- Update draft: show field-level before/after.
+- Archive request: show serious Rust state and confirmation.
+- Merge: identity decision first; resulting update returns as a separate review item.
+- Source dock remains visible on desktop. On mobile, source dock opens as a bottom sheet.
+
+---
+
+## 9. Session prep components
+
+Session prep is visually inside Sanctum, not a third top-level mode.
+
+**Accent density:** use Amber left rules and Sage thread chips to make prep feel active without changing the base surface.
+
+Required components:
+
+- `PrepBriefingCard`
+- `AgendaEditor`
+- `ObjectiveField`
+- `OpeningSceneField`
+- `SceneNotesField`
+- `ActiveThreadsPanel`
+- `PinnedEntityPicker`
+- `SceneBeatAssistMenu`
+- `NpcForSceneAssist`
+- `SessionPacketPreview`
+- `ReadyForStageButton`
+- `PrepLockedBanner`
+- `StalePrepWarning`
+
+---
+
+## 10. Stage card components
+
+### 10.1 Shared Stage card anatomy
+
+- Type label in DM Mono.
+- Name in Cormorant.
+- Summary in short Instrument Sans prose.
+- State chip: active, pinned, stub, archived reference, hidden if irrelevant.
+- Expanded body sections: What the GM needs now, relationships, last seen, notes.
+- Never display long editor chrome in Stage.
+
+### 10.2 Type-specific cards
+
+| Type | Required Stage content |
+|---|---|
+| Character | Name, summary, voice/wants if parsed, faction/location links, last session mention. |
+| Place | Name, summary, current scene notes, related characters/factions. |
+| Faction | Name, motive summary, allies/opponents, active threads. |
+| Artifact | Name, known properties, owner/location, GM notes if pinned. |
+| Thread | State, current objective, loose question, next pressure. |
+
+---
+
+## 11. Visualization boundaries
+
+| Visualization | MVP status | Build instruction |
+|---|---|---|
+| Thread Timeline | MVP, read-only | Build simple derived view from thread objectives/session/canon activity. No editing. |
+| Graph / Constellation | V1 | Do not build. Reserve data consistency through relationships/mentions only. |
+| Entity Neighborhood | V1 | Do not build. Entity detail may show a simple related list only. |
+| Thread Map | V1 | Do not build. Thread list and timeline cover MVP. |
+| Session Web | V1 | Do not build. Session detail may list related entities/drafts only. |
+| World History / Era Timeline | V1 | Do not build. MVP may create hidden/default Era and show no Era editor. |
+| Writable timeline editor | V1 | Explicitly excluded from MVP. |
+| Relationship graph editor | Excluded from MVP | Do not build. |
+
+---
+
+## 12. Coding order for vibe-coding agents
+
+1. **Design tokens and shells** — Tailwind/theme variables, typography, `SanctumShell`, `StageShell`.
+2. **Auth and bootstrap** — sign up, sign in, default Workspace, route guard.
+3. **New saga flow** — form, profile, World choice, help level, blank create.
+4. **Scaffold review** — Build with AI / Bring notes mocked or disabled until AI implementation-plan review, then wire to `scaffold_saga`.
+5. **Sanctum home** — Plan Session 1, Threads carry-forward, recent entities, pending Review.
+6. **Entity library/detail** — CRUD, autosave, state chips, source/provenance placeholders.
+7. **Threads** — list, detail, read-only timeline.
+8. **Session prep** — objective/opening/notes, pinned entities, Ready for Stage.
+9. **Stage mobile** — read cached packet, pinned cards, search, capture, dice.
+10. **Recording** — consent, local chunks, upload state, Mark Moment.
+11. **Post-session pipeline UI** — transcript/review status and failure states.
+12. **Approval Queue** — grouped review, diff, source dock, commit.
+13. **Usage and quota readouts** — chips, settings panel, quota errors.
+14. **Export** — JSON/Markdown request and download lifecycle.
+15. **Polish pass** — accessibility, responsive shells, empty/error/loading states, performance checks.
+
+---
+
+## 13. Acceptance criteria
+
+- A coding agent can identify every MVP route, shell, and major component without opening product strategy docs.
+- The first UI pass preserves Sanctum/Stage separation.
+- The design system tokens are mapped before custom styling begins.
+- First-run, prep, Stage, Review, and Approval can be built in sequence without inventing new UX concepts.
+- All AI surfaces are GM-invoked and visibly draft/proposal-oriented.
+- All MVP/V1 visualization boundaries are explicit.
+- Quota surfaces are present but do not require full Stripe billing.
+
+---
+
+*End of UI Implementation Spec v0.2.*
+
+
+

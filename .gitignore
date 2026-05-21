@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+dist/
+build/
+coverage/
+out/
+
+# Expo / React Native
+.expo/
+.expo-shared/
+web-build/
+
+# Supabase
+.branches/
+.temp/
+supabase/.temp/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.vs/
+Relic Vault/.obsidian/workspace.json
+
+# Codex local state
+.codex/

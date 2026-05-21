@@ -1,0 +1,41 @@
+name: Implementation Task
+description: Track a Codex-ready Relic implementation task.
+title: "[Implementation] "
+labels:
+  - implementation
+body:
+  - type: textarea
+    id: spec_sources
+    attributes:
+      label: Spec sources
+      description: List the active Relic Vault notes that own this work.
+      placeholder: "Relic Vault/00 - Start Here.md\nRelic Vault/41 - Foundation Implementation Plan.md"
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Describe exactly what should change.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance checks
+      description: List concrete checks or tests that prove this is complete.
+    validations:
+      required: true
+  - type: checkboxes
+    id: guardrails
+    attributes:
+      label: Guardrails
+      options:
+        - label: This preserves Workspace / World / Saga boundaries.
+          required: true
+        - label: This preserves supervised canon approval.
+          required: true
+        - label: This does not implement live AI task surfaces before AI runtime acceptance.
+          required: true
+        - label: This does not add V1-excluded MVP scope.
+          required: true

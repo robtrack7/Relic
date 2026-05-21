@@ -1,0 +1,87 @@
+---
+status: active
+authority: secondary
+scope: planning
+read_after:
+  - "[[40 - MVP Implementation Planning Sequence]]"
+depends_on:
+  - "[[14 - Design System Source]]"
+  - "[[30 - Sanctum UX Flow]]"
+  - "[[31 - Session Prep Flow]]"
+  - "[[32 - Stage UX Flow]]"
+  - "[[33 - First Run UX Flow]]"
+  - "[[34 - UI Implementation Spec]]"
+supersedes: []
+last_audited: 2026-05-20
+source_file: "Relic Vault/42 - UI Manual Flow Implementation Plan.md"
+---
+
+# UI Manual Flow Implementation Plan
+
+## Goal
+
+Build the MVP loop as a usable manual product before wiring AI calls: Create -> Organize -> Prep -> Run -> Review -> Approve -> Continue.
+
+## Build Against
+
+- [[14 - Design System Source]]
+- [[30 - Sanctum UX Flow]]
+- [[31 - Session Prep Flow]]
+- [[32 - Stage UX Flow]]
+- [[33 - First Run UX Flow]]
+- [[34 - UI Implementation Spec]]
+- [[24 - Approval Queue]]
+
+## Implementation Groups
+
+### 1. Design Tokens and Shells
+
+- Map design tokens into shared CSS/Tailwind variables.
+- Build `SanctumShell` for web-first Parchment/Cream UI.
+- Build `StageShell` for dark, glance-first mobile/tablet UI.
+- Implement Workspace/World/Saga context controls, search entry, usage chip placeholder, and state chips.
+
+### 2. Auth, Bootstrap, and Start Blank
+
+- Implement auth screens and route guard.
+- Implement bootstrap redirect rules from [[33 - First Run UX Flow]].
+- Implement New saga form with World choice, GM profile, help-level cards, and Start Blank create.
+- Keep Build with AI and Bring your notes visible only as mocked/disabled or review-gated states until [[43 - AI Runtime Implementation Plan]] is accepted.
+
+### 3. Sanctum Manual Loop
+
+- Build dashboard states: no sessions, planned/ready session, in-progress session, review-ready session, empty Saga.
+- Build entity library/detail CRUD with manual create, edit, archive, source/provenance placeholders, duplicate warnings, and state chips.
+- Build Threads list, Thread detail, resolution actions, objectives log, and read-only Thread Timeline.
+- Build notes and lore surfaces as sub-sections of Entities.
+
+### 4. Session Prep Without AI Wiring
+
+- Build session list, create planned session, full prep editor, inline dashboard prep, active threads, pinned entities, checklist, packet preview, and Ready for Stage.
+- Show prep briefing and AI assist areas as empty/mocked/disabled surfaces with manual alternatives until AI runtime is accepted.
+- Preserve autosave and quota/provider failure states without needing live AI calls.
+
+### 5. Stage Manual Loop
+
+- Build mobile Stage packet hydration, agenda, pinned cards, search UI, quick capture, quick stub, dice, consent, recording state UI, Mark Moment, End Session, and undo window.
+- Implement offline queue indicators and local-first Stage interactions according to [[32 - Stage UX Flow]].
+- Keep Stage AI dormant; Hybrid search is the only online retrieval affordance and must degrade clearly when offline.
+
+### 6. Review and Approval Shell
+
+- Build post-session status UI, transcript/review placeholders, and manual summary fallback.
+- Build Approval Queue grouped list, draft diff shell, source dock, rejection reasons, conflict panel, and quota/provider failure states.
+- The shell can be built before `synthesize_session`; it should accept seeded/manual draft fixtures for UI testing.
+
+## Required Tests
+
+- New GM can sign up, create default Workspace, create a World/Saga via Start Blank, and land on Sanctum.
+- GM can manually create/edit/archive entities and see audit/provenance placeholders.
+- GM can create a planned session, edit prep, mark Ready for Stage, and open Stage.
+- Stage can capture notes/stubs, roll dice, record consent state, and end a session without any AI call.
+- Approval Queue shell supports approve/edit/reject/merge/archive flows against fixture drafts.
+- AI-dependent buttons do not call live AI until AI runtime implementation is accepted.
+
+## Acceptance
+
+UI/manual planning is complete when the loop is usable without AI and all disabled/mocked AI surfaces have clear manual fallback states.

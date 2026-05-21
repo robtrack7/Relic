@@ -1,0 +1,12 @@
+{
+  "name": "relic",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "verify": "node scripts/verify-repo.mjs"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
