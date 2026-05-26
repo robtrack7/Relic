@@ -1,0 +1,277 @@
+/* ============================================================
+   Relic — Colors & Type
+   v0.3 — May 2026
+   ------------------------------------------------------------
+   Editorial, parchment-light, retro-modern. Two surfaces share
+   one language: The Sanctum (light, reflective) and The Stage
+   (dark, focused, table-ready).
+   ============================================================ */
+
+/* --- Brand fonts (local) ----------------------------------- */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('fonts/CormorantGaramond-VariableFont_wght.ttf') format('truetype-variations');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('fonts/CormorantGaramond-Italic-VariableFont_wght.ttf') format('truetype-variations');
+  font-weight: 300 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('fonts/InstrumentSans-VariableFont_wdth_wght.ttf') format('truetype-variations');
+  font-weight: 400 700;
+  font-stretch: 75% 100%;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  src: url('fonts/InstrumentSans-Italic-VariableFont_wdth_wght.ttf') format('truetype-variations');
+  font-weight: 400 700;
+  font-stretch: 75% 100%;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Mono';
+  src: url('fonts/DMMono-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Mono';
+  src: url('fonts/DMMono-LightItalic.ttf') format('truetype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Mono';
+  src: url('fonts/DMMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Mono';
+  src: url('fonts/DMMono-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Mono';
+  src: url('fonts/DMMono-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Mono';
+  src: url('fonts/DMMono-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  /* --- Ink / neutrals --------------------------------------- */
+  --ink:        #1A1916;
+  --ink-faint:  #2C2A25;
+  --stone-900:  #38342E;
+  --stone-700:  #6A6258;
+  --stone-500:  #9C9389;
+  --stone-300:  #C6BEB3;
+  --stone-100:  #E4DDD4;
+  --parchment:  #EFEBE4;
+  --cream:      #F7F4EF;
+  --white:      #FDFCFA;
+
+  /* --- Accents --------------------------------------------- */
+  --amber:        #B8702A;
+  --amber-light:  #D4904C;
+  --amber-dim:    #EED9BF;
+  --rust:         #8A3828;
+  --rust-dim:     #F0D9D4;
+  --verdigris:    #2F6B6E;
+  --verdigris-dim:#CCDDDC;
+
+  /* --- Faction / category accents (entity left rules) ------- */
+  --hue-npc:      var(--amber);
+  --hue-location: #6B8FA3;
+  --hue-quest:    var(--verdigris);
+  --hue-faction:  #7B5EA7;
+
+  /* --- Semantic ground / surfaces -------------------------- */
+  --fg-1:        var(--ink);         /* primary text */
+  --fg-2:        var(--stone-900);   /* body text */
+  --fg-3:        var(--stone-700);   /* secondary text */
+  --fg-4:        var(--stone-500);   /* tertiary / meta */
+  --fg-inverse:  var(--cream);       /* text on dark */
+  --bg-1:        var(--parchment);   /* page ground (Sanctum) */
+  --bg-2:        var(--cream);       /* card / panel */
+  --bg-3:        var(--stone-100);   /* nested / hover */
+  --bg-stage:    var(--ink);         /* The Stage */
+  --bg-stage-2:  rgba(255,255,255,0.04); /* Stage card */
+  --border-1:    var(--stone-300);
+  --border-2:    var(--stone-100);
+  --border-stage: rgba(255,255,255,0.08);
+
+  /* --- Thread state (v0.3) --------------------------------- */
+  --thread-active-bg:   var(--verdigris-dim);
+  --thread-active-fg:   var(--verdigris);
+  --thread-loose-bg:    var(--amber-dim);
+  --thread-loose-fg:    var(--amber);
+  --thread-dormant-bg:  var(--stone-100);
+  --thread-dormant-fg:  var(--stone-700);
+  --thread-resolved-bg: var(--stone-100);
+  --thread-resolved-fg: var(--stone-500);
+
+  /* --- Type families --------------------------------------- */
+  --font-display: 'Cormorant Garamond', 'Cormorant', Georgia, 'Times New Roman', serif;
+  --font-ui:      'Instrument Sans', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  --font-mono:    'DM Mono', 'IBM Plex Mono', 'Courier New', monospace;
+
+  /* --- Type scale (raw) ------------------------------------ */
+  --t-display-xl: 60px;
+  --t-display-lg: 40px;
+  --t-display-md: 28px;
+  --t-heading:    17px;
+  --t-body:       15px;
+  --t-small:      13px;
+  --t-label:      10px;
+  --t-mono-sm:    12px;
+
+  /* --- Spacing / radii / shadows --------------------------- */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+
+  --shadow-card:     0 1px 2px rgba(26,25,22,0.06), 0 3px 12px rgba(26,25,22,0.05);
+  --shadow-elevated: 0 2px 6px rgba(26,25,22,0.08), 0 8px 28px rgba(26,25,22,0.07);
+  --shadow-stage:    0 4px 24px rgba(0,0,0,0.35);
+
+  --duration-fast:  120ms;
+  --duration-base:  200ms;
+  --ease-out:       cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+/* ============================================================
+   Semantic typographic primitives
+   Use these classes (or copy the rules) rather than redefining.
+   ============================================================ */
+
+.t-display-xl {
+  font-family: var(--font-display);
+  font-size: var(--t-display-xl);
+  font-weight: 400;
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  color: var(--fg-1);
+}
+.t-display-lg {
+  font-family: var(--font-display);
+  font-size: var(--t-display-lg);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--fg-1);
+}
+.t-display-md {
+  font-family: var(--font-display);
+  font-size: var(--t-display-md);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.2;
+  color: var(--fg-3);
+}
+.t-heading {
+  font-family: var(--font-ui);
+  font-size: var(--t-heading);
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--fg-1);
+}
+.t-body {
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--fg-2);
+}
+.t-small {
+  font-family: var(--font-ui);
+  font-size: var(--t-small);
+  color: var(--fg-3);
+  line-height: 1.5;
+}
+.t-label {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-4);
+}
+.t-mono-sm {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono-sm);
+  color: var(--fg-3);
+  line-height: 1.6;
+}
+
+/* ============================================================
+   Element defaults — drop on a wrapper to inherit Relic
+   ============================================================ */
+
+.relic-root {
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  line-height: 1.5;
+  color: var(--fg-1);
+  background: var(--bg-1);
+  -webkit-font-smoothing: antialiased;
+}
+
+.relic-root h1 { font-family: var(--font-display); font-weight: 400; font-size: var(--t-display-xl); line-height: 1.0; letter-spacing: -0.02em; }
+.relic-root h2 { font-family: var(--font-display); font-weight: 400; font-size: var(--t-display-lg); line-height: 1.1; letter-spacing: -0.01em; }
+.relic-root h3 { font-family: var(--font-display); font-weight: 400; font-size: var(--t-display-md); line-height: 1.2; }
+.relic-root h4 { font-family: var(--font-ui); font-weight: 500; font-size: var(--t-heading); line-height: 1.35; letter-spacing: -0.01em; }
+.relic-root p  { font-family: var(--font-ui); font-size: var(--t-body); line-height: 1.65; color: var(--fg-2); }
+.relic-root small { font-size: var(--t-small); color: var(--fg-3); }
+.relic-root code, .relic-root kbd, .relic-root pre { font-family: var(--font-mono); font-size: var(--t-mono-sm); }
+
+/* ============================================================
+   Parchment paper texture (subtle film grain)
+   Apply via `.relic-grain` as a fixed overlay above content.
+   ============================================================ */
+
+.relic-grain::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+}

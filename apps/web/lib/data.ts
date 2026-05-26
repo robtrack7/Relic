@@ -1,9 +1,53 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { entityConfigs, tableForEntity } from "@/lib/entities";
+import { entityConfigs } from "@/lib/entities";
+import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
 import type { AppContext, EntitySummary, EntityType, IdParams, SearchResult } from "@/lib/types";
 
+type WorkspaceContext = { id: string; name: string; usage_limits?: Record<string, unknown> };
+type WorldContext = { id: string; name: string; summary?: string | null; default_game_system?: string | null };
+type SagaContext = {
+  id: string;
+  name: string;
+  premise?: string | null;
+  game_system?: string | null;
+  gm_profile_override?: Record<string, unknown> | null;
+  audio_retention?: string;
+  transcript_retention?: string;
+};
+type SessionRow = {
+  id: string;
+  name: string;
+  summary?: string | null;
+  status: string;
+  objective?: string | null;
+  opening_scene?: string | null;
+  scene_notes?: string | null;
+  prep_checklist?: Array<{ text: string; done?: boolean }>;
+  consent_state?: string;
+  started_at?: string | null;
+  ended_at?: string | null;
+  updated_at?: string;
+};
+type PinRow = { entity_type: EntityType; entity_id: string; order_index?: number };
+type ActiveThreadRow = { thread_id: string };
+type DraftRow = {
+  id: string;
+  entity_type: EntityType;
+  target_entity_id?: string | null;
+  state: string;
+  change_kind: string;
+  proposed_payload: Record<string, unknown>;
+  confidence_band?: string | null;
+  created_by?: string;
+  created_at?: string;
+  rejection_note?: string | null;
+};
+
 export async function requireUser() {
+  if (!hasSupabaseEnv()) {
+    redirect(supabaseConfigErrorPath());
+  }
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) {
@@ -24,24 +68,19 @@ export async function getBootstrapContext(): Promise<AppContext> {
 
 export async function requireSagaContext(params: IdParams) {
   const { supabase, user } = await requireUser();
-  const { data: workspace } = await supabase
-    .from("workspaces")
-    .select("id,name,usage_limits")
-    .eq("id", params.workspaceId)
-    .single();
-  const { data: world } = await supabase
-    .from("worlds")
-    .select("id,name,summary,default_game_system")
-    .eq("workspace_id", params.workspaceId)
-    .eq("id", params.worldId)
-    .single();
-  const { data: saga } = await supabase
-    .from("sagas")
-    .select("id,name,premise,game_system,gm_profile_override,audio_retention,transcript_retention")
-    .eq("workspace_id", params.workspaceId)
-    .eq("world_id", params.worldId)
-    .eq("id", params.sagaId)
-    .single();
+  const { data, error } = await supabase.rpc("get_saga_context", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const context = data as { workspace?: WorkspaceContext; world?: WorldContext; saga?: SagaContext } | null;
+  const workspace = context?.workspace;
+  const world = context?.world;
+  const saga = context?.saga;
 
   if (!workspace || !world || !saga) {
     notFound();
@@ -52,24 +91,13 @@ export async function requireSagaContext(params: IdParams) {
 
 export async function getEntityList(params: IdParams, type: EntityType, includeArchived = false) {
   const { supabase } = await requireSagaContext(params);
-  const table = tableForEntity(type);
-  const select = type === "note"
-    ? "id,workspace_id,world_id,saga_id,scope,title,body,canon_state,updated_at,note_type"
-    : "id,workspace_id,world_id,saga_id,scope,name,summary,narrative,gm_notes,canon_state,is_stub,status,updated_at";
-
-  let query = supabase
-    .from(table)
-    .select(select)
-    .eq("workspace_id", params.workspaceId)
-    .eq("world_id", params.worldId)
-    .or(`saga_id.eq.${params.sagaId},and(scope.eq.world,saga_id.is.null)`)
-    .order("updated_at", { ascending: false });
-
-  if (!includeArchived && type !== "session") {
-    query = query.neq("canon_state", "archived");
-  }
-
-  const { data, error } = await query;
+  const { data, error } = await supabase.rpc("list_entities", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    entity_type: type,
+    include_archived: includeArchived
+  });
   if (error) {
     throw new Error(error.message);
   }
@@ -95,17 +123,15 @@ export async function getRecentEntities(params: IdParams) {
 
 export async function getSessions(params: IdParams) {
   const { supabase } = await requireSagaContext(params);
-  const { data, error } = await supabase
-    .from("sessions")
-    .select("id,name,summary,status,objective,opening_scene,scene_notes,prep_checklist,consent_state,started_at,ended_at,updated_at")
-    .eq("workspace_id", params.workspaceId)
-    .eq("world_id", params.worldId)
-    .eq("saga_id", params.sagaId)
-    .order("created_at", { ascending: false });
+  const { data, error } = await supabase.rpc("get_sessions_for_saga", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId
+  });
   if (error) {
     throw new Error(error.message);
   }
-  return data ?? [];
+  return (data ?? []) as SessionRow[];
 }
 
 export async function getSession(params: IdParams, sessionId: string) {
@@ -130,17 +156,18 @@ export async function getPrepOptions(params: IdParams) {
 
 export async function getPinnedEntities(params: IdParams, sessionId: string) {
   const { supabase } = await requireSagaContext(params);
-  const { data, error } = await supabase
-    .from("session_pinned_entities")
-    .select("entity_type,entity_id,order_index")
-    .eq("session_id", sessionId)
-    .order("order_index");
+  const { data, error } = await supabase.rpc("get_session_pinned_entities", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId
+  });
   if (error) {
     throw new Error(error.message);
   }
   const all = await getPrepOptions(params);
   const entities = all.entities;
-  return (data ?? []).map((pin) => ({
+  return ((data ?? []) as PinRow[]).map((pin) => ({
     pin,
     entity: entities.find((entity) => entity.entityType === pin.entity_type && entity.id === pin.entity_id)
   })).filter((item) => item.entity);
@@ -148,30 +175,30 @@ export async function getPinnedEntities(params: IdParams, sessionId: string) {
 
 export async function getActiveThreads(params: IdParams, sessionId: string) {
   const { supabase } = await requireSagaContext(params);
-  const { data, error } = await supabase
-    .from("session_active_threads")
-    .select("thread_id")
-    .eq("session_id", sessionId);
+  const { data, error } = await supabase.rpc("get_session_active_threads", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId
+  });
   if (error) {
     throw new Error(error.message);
   }
   const threads = await getEntityList(params, "thread");
-  return (data ?? []).map((row) => threads.find((thread) => thread.id === row.thread_id)).filter(Boolean);
+  return ((data ?? []) as ActiveThreadRow[]).map((row) => threads.find((thread) => thread.id === row.thread_id)).filter(Boolean);
 }
 
 export async function getPendingDrafts(params: IdParams) {
   const { supabase } = await requireSagaContext(params);
-  const { data, error } = await supabase
-    .from("drafts")
-    .select("id,entity_type,target_entity_id,state,change_kind,proposed_payload,confidence_band,created_by,created_at,rejection_note")
-    .eq("workspace_id", params.workspaceId)
-    .eq("world_id", params.worldId)
-    .eq("saga_id", params.sagaId)
-    .order("created_at", { ascending: false });
+  const { data, error } = await supabase.rpc("get_pending_drafts", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId
+  });
   if (error) {
     throw new Error(error.message);
   }
-  return data ?? [];
+  return (data ?? []) as DraftRow[];
 }
 
 export async function searchForUi(params: IdParams, query: string, literalOnly = true): Promise<SearchResult[]> {

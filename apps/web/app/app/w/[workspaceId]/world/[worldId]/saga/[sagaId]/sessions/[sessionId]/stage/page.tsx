@@ -36,9 +36,11 @@ export default async function StagePage({ params, searchParams }: { params: Prom
             <button className="button" type="submit">{session.status === "ready" ? "Start Session" : "Go live"}</button>
           </form>
         </header>
-        <form className="stage-card field" action="">
-          <span>Search saga</span>
-          <input className="input" name="q" defaultValue={query.q ?? ""} placeholder="Literal quick match..." />
+        <form className="stage-card field stage-search" action="">
+          <label className="field">
+            <span>Search saga</span>
+            <input className="input" name="q" defaultValue={query.q ?? ""} placeholder="Literal quick match..." />
+          </label>
           {results.length ? <div>{results.map((result) => <p key={result.source_entity_id}>{result.snippet}</p>)}</div> : null}
         </form>
         <section className="stage-card">

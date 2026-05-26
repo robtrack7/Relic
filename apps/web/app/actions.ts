@@ -2,12 +2,23 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { editableEntityTypes, isEditableEntityType, normalizeScope, scopedPayload, tableForEntity } from "@/lib/entities";
+import { editableEntityTypes, isEditableEntityType, normalizeScope } from "@/lib/entities";
+import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
 import { sagaPath } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
-import type { EntityScope, IdParams } from "@/lib/types";
+import type { IdParams } from "@/lib/types";
+
+type RpcObject = {
+  id?: string;
+  workspace_id?: string;
+  world_id?: string;
+  saga_id?: string;
+};
 
 async function requireActionUser() {
+  if (!hasSupabaseEnv()) {
+    redirect(supabaseConfigErrorPath());
+  }
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) {
@@ -29,6 +40,9 @@ function paramsFromForm(formData: FormData): IdParams {
 }
 
 export async function signInAction(formData: FormData) {
+  if (!hasSupabaseEnv()) {
+    redirect(supabaseConfigErrorPath());
+  }
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({
     email: value(formData, "email"),
@@ -41,6 +55,9 @@ export async function signInAction(formData: FormData) {
 }
 
 export async function signUpAction(formData: FormData) {
+  if (!hasSupabaseEnv()) {
+    redirect(supabaseConfigErrorPath("/auth/sign-up"));
+  }
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
     email: value(formData, "email"),
@@ -53,13 +70,16 @@ export async function signUpAction(formData: FormData) {
 }
 
 export async function signOutAction() {
+  if (!hasSupabaseEnv()) {
+    redirect(supabaseConfigErrorPath());
+  }
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/auth/sign-in");
 }
 
 export async function createBlankSagaAction(formData: FormData) {
-  const { supabase, user } = await requireActionUser();
+  const { supabase } = await requireActionUser();
   const sagaName = value(formData, "sagaName");
   const gameSystem = value(formData, "gameSystem") || null;
   const experienceLevel = value(formData, "experienceLevel") || "returning";
@@ -70,85 +90,23 @@ export async function createBlankSagaAction(formData: FormData) {
     redirect("/app/new-saga?error=Saga%20name%20is%20required");
   }
 
-  const { data: workspaceId, error: workspaceError } = await supabase.rpc("ensure_default_workspace");
-  if (workspaceError || !workspaceId) {
-    throw new Error(workspaceError?.message ?? "Could not create Workspace.");
-  }
-
-  await supabase.from("gm_profiles").upsert({
-    user_id: user.id,
+  const { data, error } = await supabase.rpc("create_blank_saga", {
+    saga_name: sagaName,
+    game_system: gameSystem,
     experience_level: experienceLevel,
     improv_comfort: improvComfort,
     prep_style: prepStyle,
-    default_game_system: gameSystem
-  }, { onConflict: "user_id" });
+    world_choice: value(formData, "worldChoice"),
+    existing_world_id: value(formData, "existingWorldId") || null,
+    world_name: value(formData, "worldName") || null
+  });
 
-  const worldChoice = value(formData, "worldChoice");
-  let worldId = value(formData, "existingWorldId");
-
-  if (worldChoice !== "existing" || !worldId) {
-    const worldName = value(formData, "worldName") || `${sagaName} World`;
-    const { data: world, error } = await supabase
-      .from("worlds")
-      .insert({
-        workspace_id: workspaceId,
-        owner_gm_id: user.id,
-        name: worldName,
-        default_game_system: gameSystem
-      })
-      .select("id")
-      .single();
-    if (error || !world) {
-      throw new Error(error?.message ?? "Could not create World.");
-    }
-    worldId = world.id;
+  const result = data as RpcObject | null;
+  if (error || !result?.workspace_id || !result.world_id || !result.saga_id) {
+    throw new Error(error?.message ?? "Could not create Saga.");
   }
 
-  const { data: eraRows } = await supabase
-    .from("world_eras")
-    .select("id")
-    .eq("workspace_id", workspaceId)
-    .eq("world_id", worldId)
-    .order("sort_order")
-    .limit(1);
-
-  let eraId = eraRows?.[0]?.id ?? null;
-  if (!eraId) {
-    const { data: era, error } = await supabase
-      .from("world_eras")
-      .insert({
-        workspace_id: workspaceId,
-        world_id: worldId,
-        name: "Default Era",
-        summary: "Default timeframe for this world.",
-        sort_order: 0
-      })
-      .select("id")
-      .single();
-    if (error || !era) {
-      throw new Error(error?.message ?? "Could not create default timeframe.");
-    }
-    eraId = era.id;
-  }
-
-  const { data: saga, error: sagaError } = await supabase
-    .from("sagas")
-    .insert({
-      workspace_id: workspaceId,
-      world_id: worldId,
-      owner_gm_id: user.id,
-      name: sagaName,
-      game_system: gameSystem,
-      primary_era_id: eraId
-    })
-    .select("id")
-    .single();
-
-  if (sagaError || !saga) {
-    throw new Error(sagaError?.message ?? "Could not create Saga.");
-  }
-
-  redirect(sagaPath({ workspaceId, worldId, sagaId: saga.id }));
+  redirect(sagaPath({ workspaceId: result.workspace_id, worldId: result.world_id, sagaId: result.saga_id }));
 }
 
 export async function createEntityAction(formData: FormData) {
@@ -161,9 +119,6 @@ export async function createEntityAction(formData: FormData) {
 
   const scope = normalizeScope(formData.get("scope"));
   const base = {
-    workspace_id: params.workspaceId,
-    world_id: params.worldId,
-    ...scopedPayload(scope, params.sagaId),
     canon_state: "canon",
     created_by: "gm"
   };
@@ -172,13 +127,21 @@ export async function createEntityAction(formData: FormData) {
     ? { ...base, note_type: value(formData, "noteType") || "lore", title: value(formData, "name"), body: value(formData, "narrative") }
     : { ...base, name: value(formData, "name"), summary: value(formData, "summary"), narrative: value(formData, "narrative"), gm_notes: value(formData, "gmNotes") };
 
-  const { data, error } = await supabase.from(tableForEntity(type)).insert(payload as never).select("id").single();
-  if (error || !data) {
+  const { data, error } = await supabase.rpc("create_entity", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    entity_type: type,
+    entity_scope: scope,
+    payload
+  });
+  const result = data as RpcObject | null;
+  if (error || !result?.id) {
     throw new Error(error?.message ?? "Could not create entity.");
   }
 
   revalidatePath(sagaPath(params));
-  redirect(`${sagaPath(params)}/entities/${type}/${data.id}`);
+  redirect(`${sagaPath(params)}/entities/${type}/${result.id}`);
 }
 
 export async function updateEntityAction(formData: FormData) {
@@ -194,7 +157,14 @@ export async function updateEntityAction(formData: FormData) {
     ? { title: value(formData, "name"), body: value(formData, "narrative") }
     : { name: value(formData, "name"), summary: value(formData, "summary"), narrative: value(formData, "narrative"), gm_notes: value(formData, "gmNotes") };
 
-  const { error } = await supabase.from(tableForEntity(type)).update(payload as never).eq("id", id);
+  const { error } = await supabase.rpc("update_entity", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    entity_type: type,
+    entity_id: id,
+    payload
+  });
   if (error) {
     throw new Error(error.message);
   }
@@ -210,7 +180,13 @@ export async function archiveEntityAction(formData: FormData) {
   if (!isEditableEntityType(type)) {
     throw new Error("Unsupported entity type.");
   }
-  const { error } = await supabase.from(tableForEntity(type)).update({ canon_state: "archived", status: "archived" } as never).eq("id", id);
+  const { error } = await supabase.rpc("archive_entity", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    entity_type: type,
+    entity_id: id
+  });
   if (error) {
     throw new Error(error.message);
   }
@@ -222,10 +198,13 @@ export async function addThreadObjectiveAction(formData: FormData) {
   const params = paramsFromForm(formData);
   const threadId = value(formData, "threadId");
   const objective = value(formData, "objective");
-  const rawLog = value(formData, "objectivesLog");
-  const objectivesLog = rawLog ? JSON.parse(rawLog) as unknown[] : [];
-  objectivesLog.push({ text: objective, state: "open", created_at: new Date().toISOString() });
-  const { error } = await supabase.from("threads").update({ objectives_log: objectivesLog }).eq("id", threadId);
+  const { error } = await supabase.rpc("append_thread_objective", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    thread_id: threadId,
+    objective_text: objective
+  });
   if (error) {
     throw new Error(error.message);
   }
@@ -236,25 +215,20 @@ export async function createSessionAction(formData: FormData) {
   const { supabase } = await requireActionUser();
   const params = paramsFromForm(formData);
   const name = value(formData, "name") || "Next session";
-  const { data, error } = await supabase
-    .from("sessions")
-    .insert({
-      workspace_id: params.workspaceId,
-      world_id: params.worldId,
-      saga_id: params.sagaId,
-      scope: "saga",
-      name,
-      objective: value(formData, "objective"),
-      opening_scene: value(formData, "openingScene"),
-      scene_notes: value(formData, "sceneNotes"),
-      prep_checklist: []
-    })
-    .select("id")
-    .single();
-  if (error || !data) {
+  const { data, error } = await supabase.rpc("create_session", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_name: name,
+    objective: value(formData, "objective"),
+    opening_scene: value(formData, "openingScene"),
+    scene_notes: value(formData, "sceneNotes")
+  });
+  const result = data as RpcObject | null;
+  if (error || !result?.id) {
     throw new Error(error?.message ?? "Could not create session.");
   }
-  redirect(`${sagaPath(params)}/sessions/${data.id}/prep`);
+  redirect(`${sagaPath(params)}/sessions/${result.id}/prep`);
 }
 
 export async function updateSessionPrepAction(formData: FormData) {
@@ -267,36 +241,24 @@ export async function updateSessionPrepAction(formData: FormData) {
     .filter(Boolean)
     .map((text) => ({ text, done: false }));
 
-  const { error } = await supabase.from("sessions").update({
-    name: value(formData, "name"),
+  const pinned = formData.getAll("pinnedEntity").map(String);
+  const threads = formData.getAll("activeThread").map(String);
+
+  const { error } = await supabase.rpc("update_session_prep", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId,
+    session_name: value(formData, "name"),
     objective: value(formData, "objective"),
     opening_scene: value(formData, "openingScene"),
     scene_notes: value(formData, "sceneNotes"),
-    prep_checklist: checklist
-  }).eq("id", sessionId);
+    prep_checklist: checklist,
+    pinned_entities: pinned,
+    active_threads: threads
+  });
   if (error) {
     throw new Error(error.message);
-  }
-
-  await supabase.from("session_pinned_entities").delete().eq("session_id", sessionId);
-  const pinned = formData.getAll("pinnedEntity").map(String);
-  if (pinned.length) {
-    await supabase.from("session_pinned_entities").insert(pinned.map((item, index) => {
-      const [entityType, entityId] = item.split(":");
-      return { workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, session_id: sessionId, entity_type: entityType, entity_id: entityId, order_index: index };
-    }));
-  }
-
-  await supabase.from("session_active_threads").delete().eq("session_id", sessionId);
-  const threads = formData.getAll("activeThread").map(String);
-  if (threads.length) {
-    await supabase.from("session_active_threads").insert(threads.map((threadId) => ({
-      workspace_id: params.workspaceId,
-      world_id: params.worldId,
-      saga_id: params.sagaId,
-      session_id: sessionId,
-      thread_id: threadId
-    })));
   }
 
   revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/prep`);
@@ -306,7 +268,13 @@ export async function readyForStageAction(formData: FormData) {
   const { supabase } = await requireActionUser();
   const params = paramsFromForm(formData);
   const sessionId = value(formData, "sessionId");
-  const { error } = await supabase.from("sessions").update({ status: "ready" }).eq("id", sessionId);
+  const { error } = await supabase.rpc("set_session_status", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId,
+    status: "ready"
+  });
   if (error) {
     throw new Error(error.message);
   }
@@ -322,7 +290,13 @@ export async function setSessionStatusAction(formData: FormData) {
   if (!allowed.includes(status)) {
     throw new Error("Unsupported session status.");
   }
-  const { error } = await supabase.from("sessions").update({ status }).eq("id", sessionId);
+  const { error } = await supabase.rpc("set_session_status", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId,
+    status
+  });
   if (error) {
     throw new Error(error.message);
   }
@@ -336,16 +310,12 @@ export async function quickCaptureAction(formData: FormData) {
   if (!body) {
     return;
   }
-  const { error } = await supabase.from("notes").insert({
+  const { error } = await supabase.rpc("quick_capture", {
     workspace_id: params.workspaceId,
     world_id: params.worldId,
     saga_id: params.sagaId,
-    scope: "saga",
-    note_type: "quick_capture",
-    title: `Capture ${new Date().toLocaleTimeString()}`,
-    body,
-    canon_state: "canon",
-    created_by: "gm"
+    session_id: value(formData, "sessionId"),
+    body
   });
   if (error) {
     throw new Error(error.message);
@@ -361,18 +331,14 @@ export async function quickStubAction(formData: FormData) {
   if (!name || !["character", "place", "faction", "artifact", "thread"].includes(type)) {
     return;
   }
-  const scope: EntityScope = "saga";
-  const payload = {
+  const { error } = await supabase.rpc("quick_stub", {
     workspace_id: params.workspaceId,
     world_id: params.worldId,
-    ...scopedPayload(scope, params.sagaId),
-    name,
-    summary: value(formData, "summary"),
-    canon_state: "canon",
-    created_by: "gm",
-    is_stub: true
-  };
-  const { error } = await supabase.from(tableForEntity(type as (typeof editableEntityTypes)[number])).insert(payload as never);
+    saga_id: params.sagaId,
+    entity_type: type,
+    entity_name: name,
+    summary: value(formData, "summary")
+  });
   if (error) {
     throw new Error(error.message);
   }
@@ -383,12 +349,11 @@ export async function markMomentAction(formData: FormData) {
   const { supabase } = await requireActionUser();
   const params = paramsFromForm(formData);
   const sessionId = value(formData, "sessionId");
-  const { error } = await supabase.from("session_marked_moments").insert({
+  const { error } = await supabase.rpc("mark_moment", {
     workspace_id: params.workspaceId,
     world_id: params.worldId,
     saga_id: params.sagaId,
     session_id: sessionId,
-    occurred_at: new Date().toISOString(),
     label: value(formData, "label") || "Marked moment"
   });
   if (error) {
@@ -405,11 +370,14 @@ export async function updateDraftStateAction(formData: FormData) {
   if (!["approved", "rejected", "merged", "superseded"].includes(state)) {
     throw new Error("Unsupported draft state.");
   }
-  const { error } = await supabase.from("drafts").update({
+  const { error } = await supabase.rpc("update_draft_state", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    draft_id: draftId,
     state,
-    rejection_note: value(formData, "rejectionNote") || null,
-    resolved_at: new Date().toISOString()
-  }).eq("id", draftId);
+    rejection_note: value(formData, "rejectionNote") || null
+  });
   if (error) {
     throw new Error(error.message);
   }

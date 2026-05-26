@@ -66,3 +66,5 @@ All active source documents needed for the vault pass are present and linked.
 - [[04 - Final Contradiction Pass]]
 - [[05 - V1 Parking Lot]]
 - [[40 - MVP Implementation Planning Sequence]]
+- [[45 - Security Findings Register]]
+- [[50 - Session Log Index]]

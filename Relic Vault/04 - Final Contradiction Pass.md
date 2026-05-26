@@ -36,6 +36,13 @@ AI task surfaces still require implementation-plan review before coding, but the
 - Design examples changed from Campaign wording to Saga wording.
 - Stale footers updated for Schema, Tech Architecture, UI Implementation, Pricing, PRD, Sanctum, and Stage where found.
 
+## Current UI Planning Addendum
+
+- [[35 - Web Design Wireframe]] records the authenticated web-app design structure for the first design-system implementation pass.
+- The refined Claude design package is treated as visual vocabulary and asset source only; [[14 - Design System Source]] and active UX specs remain canonical.
+- The web shell resolves Search/Ask tension by keeping Ask in primary navigation while presenting Search as a command/search affordance and fallback route.
+- The first implementation pass is scoped to tokens, local fonts/assets, shared primitives, The Sanctum shell, and browser Stage fallback styling. It does not wire provider calls, autonomous AI behavior, live Stage captions, or deferred V1 surfaces.
+
 ## Consolidation And Cull Pass
 
 - [[10 - Project Overview for AI]], [[90 - Next Steps Before Coding]], [[91 - Continuity Architecture Report]], [[92 - Priority 3 Alignment Report]], and [[99 - Revisions Archive]] were replaced with archive stubs.

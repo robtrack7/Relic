@@ -8,7 +8,7 @@ type ShellProps = {
   workspace: { name: string };
   world: { name: string };
   saga: { name: string };
-  active?: "home" | "threads" | "entities" | "sessions" | "review" | "search" | "settings";
+  active?: "home" | "threads" | "entities" | "sessions" | "review" | "ask" | "search" | "settings";
   children: React.ReactNode;
 };
 
@@ -19,28 +19,43 @@ export function SanctumShell({ params, workspace, world, saga, active = "home", 
     ["entities", "Entities", `${root}/entities`],
     ["sessions", "Sessions", `${root}/sessions`],
     ["review", "Review", `${root}/review`],
-    ["search", "Search", `${root}/search`]
+    ["ask", "Ask", `${root}/ask`]
   ] as const;
 
   return (
     <div className="sanctum-shell">
       <aside className="sanctum-rail">
-        <Link className="brand" href={root}>Reli<span>c</span></Link>
+        <Link className="brand" href={root} aria-label="Relic">
+          <img className="brand-wordmark" src="/brand/wordmark.svg" alt="Relic" />
+        </Link>
         <div className="eyebrow">The Sanctum</div>
         <nav className="nav-list" aria-label="Sanctum">
           {nav.map(([key, label, href]) => (
-            <Link key={key} className={`nav-link ${active === key ? "active" : ""}`} href={href}>{label}</Link>
+            <Link
+              key={key}
+              className={`nav-link ${active === key ? "active" : ""} ${key === "ask" ? "is-gated" : ""}`}
+              href={href}
+              aria-disabled={key === "ask" ? true : undefined}
+            >
+              {label}
+            </Link>
           ))}
-          <span className="nav-link" aria-disabled="true">Ask · AI phase</span>
           <Link className={`nav-link ${active === "settings" ? "active" : ""}`} href={`${root}/settings`}>Settings</Link>
         </nav>
+        <Link className="command-entry" href={`${root}/search`}>
+          <span className="command-label">Command</span>
+          <span className="command-row">
+            <span className="command-title">Search saga canon</span>
+            <span className="command-kbd">Cmd K</span>
+          </span>
+        </Link>
         <div className="context-block">
           <span className="label">Workspace</span>
-          <strong>{workspace.name}</strong>
+          <strong className="context-value">{workspace.name}</strong>
           <span className="label">World</span>
-          <strong>{world.name}</strong>
+          <strong className="context-value">{world.name}</strong>
           <span className="label">Saga</span>
-          <strong>{saga.name}</strong>
+          <strong className="context-value">{saga.name}</strong>
         </div>
         <div className="context-block">
           <span className="chip amber">Usage ready</span>

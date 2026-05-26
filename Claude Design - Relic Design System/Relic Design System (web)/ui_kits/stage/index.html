@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relic · The Stage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stage.css">
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="StageShell.jsx"></script>
+<script type="text/babel" src="RosterRow.jsx"></script>
+<script type="text/babel" src="QuickLookup.jsx"></script>
+<script type="text/babel" src="Transcript.jsx"></script>
+<script type="text/babel" src="RulesPeek.jsx"></script>
+<script type="text/babel" src="ToneStrip.jsx"></script>
+
+<script type="text/babel">
+function App() {
+  const [pinned, setPinned] = React.useState(1);
+  const [tone, setTone] = React.useState("Hush");
+  const [recording, setRecording] = React.useState(true);
+  const [elapsed, setElapsed] = React.useState(1 * 3600 + 23 * 60 + 45);
+
+  React.useEffect(() => {
+    if (!recording) return;
+    const id = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => clearInterval(id);
+  }, [recording]);
+
+  const fmt = (sec) => {
+    const h = String(Math.floor(sec/3600)).padStart(2,"0");
+    const m = String(Math.floor((sec%3600)/60)).padStart(2,"0");
+    const s = String(sec%60).padStart(2,"0");
+    return h + ":" + m + ":" + s;
+  };
+
+  const subject = pinned ? getRoster(pinned) : null;
+
+  return (
+    <StageShell title="Session 14"
+                sub="The Thornwood Accord · In progress"
+                timer={fmt(elapsed)}
+                recording={recording}
+                onToggleRec={() => setRecording(r => !r)}>
+      <div data-screen-label="Stage / Roster">
+        <RosterRow pinnedId={pinned} onPin={setPinned} />
+      </div>
+      <ToneStrip active={tone} onPick={setTone} />
+      <QuickLookup />
+      <div className="main-cols">
+        <div data-screen-label="Stage / Transcript">
+          <Transcript recording={recording} />
+        </div>
+        <div data-screen-label="Stage / Peek">
+          <RulesPeek subject={subject} />
+        </div>
+      </div>
+    </StageShell>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

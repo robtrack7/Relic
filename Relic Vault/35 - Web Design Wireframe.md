@@ -1,0 +1,114 @@
+---
+status: active
+authority: secondary
+scope: mvp
+read_after:
+  - "[[00 - Start Here]]"
+  - "[[14 - Design System Source]]"
+  - "[[34 - UI Implementation Spec]]"
+depends_on:
+  - "[[00 - Start Here]]"
+  - "[[14 - Design System Source]]"
+  - "[[30 - Sanctum UX Flow]]"
+  - "[[31 - Session Prep Flow]]"
+  - "[[32 - Stage UX Flow]]"
+  - "[[33 - First Run UX Flow]]"
+  - "[[34 - UI Implementation Spec]]"
+supersedes: []
+last_audited: 2026-05-26
+source_file: "Relic Vault/35 - Web Design Wireframe.md"
+---
+
+# Web Design Wireframe
+
+This note translates the active Relic design system and UX specs into the first authenticated web-app wireframe pass. It is not a new product scope. Build against [[00 - Start Here]], [[14 - Design System Source]], and [[34 - UI Implementation Spec]] first; use this note to keep the visual structure consistent across the current web routes.
+
+## Design Authority
+
+`Relic Vault` remains canonical. The refined Claude design package is a production reference bundle for typography, local fonts, token values, wordmark, component grammar, and Sanctum/Stage mood. Its UI kit examples are visual vocabulary, not app code.
+
+Use:
+
+- Cormorant Garamond for Saga names, entity names, page display titles, and literary excerpts.
+- Instrument Sans for interface copy, body text, forms, and buttons.
+- DM Mono for labels, timestamps, status chips, source labels, and command hints.
+- Parchment page ground, Cream cards, Ink text and Stage background, Amber for canon/prep/consequential actions, Rust for destructive or blocked states, and Sage for approved, ready, active, or resolved progress states.
+- Tight radii: 2px chips, 4px controls, 8px cards and panels.
+- Quiet borders, warm shadows, and a subtle paper-grain overlay.
+
+Do not use glossy gradients, decorative illustrations, broad icon strips, emoji, autonomous AI prompts, real-time transcript/live-caption UI, graph/constellation surfaces, player surfaces, image generation, BYOK controls, or local-model controls.
+
+## App Shell
+
+The web app opens into The Sanctum. Use a left navigation rail with the Relic wordmark, surface label, primary navigation, active Workspace/World/Saga context, usage state, and sign-out control. Keep the rail parchment/cream, not a dark top header.
+
+Primary navigation order:
+
+1. Threads
+2. Entities
+3. Sessions
+4. Review
+5. Ask
+
+Search is not a primary nav item. It appears as a command/search affordance in the shell and may also retain a dedicated fallback route. Settings sits low in the rail.
+
+The main content area uses a constrained readable column by default, expanding only for list/detail and review layouts. Page heads use a mono eyebrow, Cormorant title, concise support copy, and restrained action buttons.
+
+## Screen Wireframes
+
+### New Saga
+
+Use a focused parchment page with one large Cream form panel. The form captures Saga name, game system, World choice, GM profile, and help level. Show Build with AI, Bring your notes, and Start blank as radio-card choices, but keep AI-assisted actions disabled or routed to manual fallback until runtime acceptance. Start blank is the active path in the current implementation.
+
+### Sanctum Home
+
+The home screen is state-aware. With no session, the primary card is Plan your first session. With a planned or ready session, the primary card becomes a prep-forward panel with Amber left rule, status chip, Open prep, and Open Stage when allowed. Review and recent canon appear nearby but do not compete with the next playable action.
+
+### Threads
+
+Threads are the continuity spine and should feel first-class. Use state chips for active, loose, dormant, and resolved groupings. The read-only Thread Timeline is a derived view; do not introduce a writable timeline editor. Detail views prioritize summary, objectives, related entities, source references, and disabled/manual-gated AI assists when runtime is not accepted.
+
+### Entities
+
+Entity cards use Cream surfaces with meaningful type left rules. Character, place, faction, artifact, thread, and note surfaces share the same card anatomy: mono type label, Cormorant name, short Instrument Sans summary, scope/canon chips, and subdued provenance hints. Detail pages keep the editor primary and source/provenance in a right inspector on desktop.
+
+### Sessions And Prep
+
+Sessions list rows show session number/name, status, objective/opening cue, and Open prep/Stage actions. Prep remains inside The Sanctum, with Amber density rather than a separate visual mode. The prep page should evolve toward session brief, agenda/scenes, context rail, packet preview, Ready for Stage, and disabled/manual-gated assist affordances.
+
+### Review
+
+Review uses grouped approval cards with source context, field-level diff language, and careful Rust/Amber/Sage state. Avoid prominent Approve All behavior. Review is about controlled canon change, not speed.
+
+### Ask
+
+Ask is present in the shell as an MVP surface, but the current implementation must not call providers or route to live task execution. Until runtime acceptance, render or document it as a disabled/manual-gated surface with copy that explains Ask will answer from current canon once runtime wiring is accepted.
+
+### Settings
+
+Settings stay lightweight: Saga, World/Workspace context, usage, retention/export placeholders, and sign out. Do not expose Era editor, full World dashboard, BYOK, local model, or billing implementation beyond planned usage readouts.
+
+### Browser Stage Fallback
+
+Stage is dark, glance-first, and separate from Sanctum chrome. The browser fallback uses Ink background, Cream text, translucent Stage cards, session title/status, persistent literal search, agenda, pinned cards, quick capture, quick stub, and a sticky action bar for Record state, Mark Moment, and End Session. Do not add live transcript captions, proactive AI, or decorative motion beyond a record-state indicator.
+
+## First Implementation Pass
+
+The first pass should install the visual foundation without broad route rewrites:
+
+- Copy local fonts and the wordmark into the web app public assets.
+- Map design tokens into `globals.css`.
+- Update shared primitives for buttons, cards, chips, fields, page heads, entity rows, command/search affordance, Sanctum shell, and Stage shell.
+- Update `SanctumShell` so Ask is primary nav and Search is a command affordance.
+- Restyle the browser Stage fallback using Stage tokens while preserving existing manual actions.
+
+Future passes can convert individual routes to richer page-specific components once the foundation is stable.
+
+## Acceptance
+
+- Authenticated web screens inherit the design system without adding provider calls or AI runtime behavior.
+- The Sanctum/Stage visual split is obvious.
+- Session prep reads as Sanctum work with Amber emphasis, not a third mode.
+- Search is available without replacing Ask in primary navigation.
+- Local fonts and wordmark load from web public assets.
+- Existing manual Create -> Organize -> Prep -> Run -> Review surfaces remain functional.

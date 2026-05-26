@@ -31,11 +31,14 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[32 - Stage UX Flow]] | Live-session Stage behavior | UX |
 | [[33 - First Run UX Flow]] | First-run, new saga, GM profile, Session 1 handoff | UX |
 | [[34 - UI Implementation Spec]] | Routes, shells, components, build order | UI implementation |
+| [[35 - Web Design Wireframe]] | Authenticated web app wireframe and first-pass design-system application | UI planning |
 | [[40 - MVP Implementation Planning Sequence]] | Codex implementation planning order and validation gates | Planning |
 | [[44 - Repo Bootstrap and GitHub Setup Plan]] | Repository structure, GitHub setup, and bootstrap guardrails before foundation work | Planning |
 | [[41 - Foundation Implementation Plan]] | Non-AI technical foundation planning | Planning |
 | [[42 - UI Manual Flow Implementation Plan]] | Manual loop UI planning before AI wiring | Planning |
 | [[43 - AI Runtime Implementation Plan]] | AI runtime planning after registry acceptance | Planning |
+| [[45 - Security Findings Register]] | Security findings, status, mitigation, and verification tracking | Security |
+| [[50 - Session Log Index]] | Session closeout trail and implementation continuity logs | Operations |
 
 ## Archive / Non-Coding Notes
 

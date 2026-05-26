@@ -5,7 +5,8 @@ export default async function NewSagaPage({ searchParams }: { searchParams: Prom
   const params = await searchParams;
   const { supabase } = await requireUser();
   await supabase.rpc("ensure_default_workspace");
-  const { data: worlds } = await supabase.from("worlds").select("id,name").order("updated_at", { ascending: false });
+  const { data } = await supabase.rpc("list_worlds_for_workspace");
+  const worlds = (data ?? []) as Array<{ id: string; name: string }>;
 
   return (
     <main className="auth-page">

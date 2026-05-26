@@ -1,0 +1,20 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]: Relic account
+      - heading "Sign in" [level=1] [ref=e5]
+      - paragraph [ref=e6]: Use email and password to enter The Sanctum. Supabase Auth owns the session.
+      - paragraph [ref=e7]: Supabase is not configured for this preview. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, then restart the web server.
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - generic [ref=e10]: Email
+          - textbox "Email" [ref=e11]
+        - generic [ref=e12]:
+          - generic [ref=e13]: Password
+          - textbox "Password" [ref=e14]
+        - button "Sign in" [ref=e15] [cursor=pointer]
+      - paragraph [ref=e16]:
+        - text: Need an account?
+        - link "Sign up" [ref=e17] [cursor=pointer]:
+          - /url: /auth/sign-up
+  - alert [ref=e18]

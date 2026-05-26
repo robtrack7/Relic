@@ -2,7 +2,7 @@ create extension if not exists pgtap with schema extensions;
 
 begin;
 
-select plan(25);
+select plan(32);
 
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, confirmation_token, email_change, email_change_token_new, recovery_token)
 values
@@ -60,9 +60,18 @@ values
   ('60000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'saga', 'character', '40000000-0000-0000-0000-000000000001', 'pending', 'update', '{"summary":"pending draft content"}'::jsonb)
 on conflict (id) do nothing;
 
+insert into public.sessions (id, workspace_id, world_id, saga_id, scope, name)
+values
+  ('70000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'saga', 'Security Test Session')
+on conflict (id) do nothing;
+
 insert into public.usage_monthly_rollups (workspace_id, period_start, period_end, ai_credits_used)
 values ('10000000-0000-0000-0000-000000000001', date_trunc('month', now())::date, (date_trunc('month', now()) + interval '1 month - 1 day')::date, 0)
 on conflict (workspace_id, period_start) do update set ai_credits_used = excluded.ai_credits_used;
+
+insert into public.usage_events (id, workspace_id, world_id, saga_id, actor_gm_id, event_kind, units, unit_type)
+values ('80000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'ai_call', 1, 'credit')
+on conflict (id) do nothing;
 
 select has_table('public', 'workspaces', 'workspaces table exists');
 select has_table('public', 'worlds', 'worlds table exists');
@@ -120,6 +129,45 @@ reset role;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', true);
+select set_config('request.jwt.claim.saga_id', '', true);
+
+select is(
+  (select count(*) from public.characters where saga_id = '30000000-0000-0000-0000-000000000001'),
+  0::bigint,
+  'direct table access to Saga-scoped rows fails closed without active Saga claim'
+);
+
+select throws_like(
+  $$ update public.workspaces
+     set usage_limits = '{"plan":"tampered","ai_credits_monthly":999999}'::jsonb
+     where id = '10000000-0000-0000-0000-000000000001' $$,
+  '%permission denied%',
+  'authenticated users cannot directly edit workspace usage limits'
+);
+
+select throws_like(
+  $$ update public.usage_events
+     set units = 999
+     where id = '80000000-0000-0000-0000-000000000001' $$,
+  '%permission denied%',
+  'authenticated users cannot directly update usage events'
+);
+
+select throws_like(
+  $$ delete from public.usage_events
+     where id = '80000000-0000-0000-0000-000000000001' $$,
+  '%permission denied%',
+  'authenticated users cannot directly delete usage events'
+);
+
+select throws_like(
+  $$ update public.drafts
+     set state = 'approved'
+     where id = '60000000-0000-0000-0000-000000000001' $$,
+  '%permission denied%',
+  'authenticated users cannot directly resolve drafts'
+);
+
 select set_config('request.jwt.claim.saga_id', '30000000-0000-0000-0000-000000000001', true);
 
 select is(
@@ -223,6 +271,37 @@ select is(
   )),
   true,
   'quota preflight never blocks manual editing'
+);
+
+select is(
+  public.update_draft_state(
+    '10000000-0000-0000-0000-000000000001',
+    '20000000-0000-0000-0000-000000000001',
+    '30000000-0000-0000-0000-000000000001',
+    '60000000-0000-0000-0000-000000000001',
+    'rejected',
+    'covered by security test'
+  ),
+  '60000000-0000-0000-0000-000000000001'::uuid,
+  'draft resolution works through the scoped RPC'
+);
+
+select throws_like(
+  $$ select public.update_session_prep(
+       '10000000-0000-0000-0000-000000000001',
+       '20000000-0000-0000-0000-000000000001',
+       '30000000-0000-0000-0000-000000000001',
+       '70000000-0000-0000-0000-000000000001',
+       'Security Test Session',
+       'Objective',
+       'Opening',
+       'Scene notes',
+       '[]'::jsonb,
+       '["character:40000000-0000-0000-0000-000000000003"]'::jsonb,
+       '[]'::jsonb
+     ) $$,
+  '%referenced entity is outside the row scope%',
+  'session prep RPC rejects sibling-Saga pinned entity IDs'
 );
 
 select is(
