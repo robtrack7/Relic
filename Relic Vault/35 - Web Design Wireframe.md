@@ -4,11 +4,11 @@ authority: secondary
 scope: mvp
 read_after:
   - "[[00 - Start Here]]"
-  - "[[14 - Design System Source]]"
+  - "[[13 - Design System]]"
   - "[[34 - UI Implementation Spec]]"
 depends_on:
   - "[[00 - Start Here]]"
-  - "[[14 - Design System Source]]"
+  - "[[13 - Design System]]"
   - "[[30 - Sanctum UX Flow]]"
   - "[[31 - Session Prep Flow]]"
   - "[[32 - Stage UX Flow]]"
@@ -21,7 +21,7 @@ source_file: "Relic Vault/35 - Web Design Wireframe.md"
 
 # Web Design Wireframe
 
-This note translates the active Relic design system and UX specs into the first authenticated web-app wireframe pass. It is not a new product scope. Build against [[00 - Start Here]], [[14 - Design System Source]], and [[34 - UI Implementation Spec]] first; use this note to keep the visual structure consistent across the current web routes.
+This note translates the active Relic design system and UX specs into the first authenticated web-app wireframe pass. It is not a new product scope. Build against [[00 - Start Here]], [[13 - Design System]], and [[34 - UI Implementation Spec]] first; use this note to keep the visual structure consistent across the current web routes.
 
 ## Design Authority
 
@@ -40,7 +40,7 @@ Do not use glossy gradients, decorative illustrations, broad icon strips, emoji,
 
 ## App Shell
 
-The web app opens into The Sanctum. Use a left navigation rail with the Relic wordmark, surface label, primary navigation, active Workspace/World/Saga context, usage state, and sign-out control. Keep the rail parchment/cream, not a dark top header.
+The web app opens into The Sanctum. The Sanctum should feel literary, modern, and relaxing. Use a left navigation rail with the Relic wordmark, surface label, primary navigation, active Workspace/World/Saga context, usage state, and sign-out control. Keep the rail parchment/cream, not a dark top header.
 
 Primary navigation order:
 
@@ -90,7 +90,7 @@ Settings stay lightweight: Saga, World/Workspace context, usage, retention/expor
 
 ### Browser Stage Fallback
 
-Stage is dark, glance-first, and separate from Sanctum chrome. The browser fallback uses Ink background, Cream text, translucent Stage cards, session title/status, persistent literal search, agenda, pinned cards, quick capture, quick stub, and a sticky action bar for Record state, Mark Moment, and End Session. Do not add live transcript captions, proactive AI, or decorative motion beyond a record-state indicator.
+Stage is clean, focused, dark, and separate from Sanctum chrome. The browser fallback uses Ink background, Cream text, translucent Stage cards, session title/status, persistent literal search, agenda, pinned cards, quick capture, quick stub, and a sticky action bar for Record state, Mark Moment, and End Session. Do not add live transcript captions, proactive AI, or decorative motion beyond a record-state indicator.
 
 ## First Implementation Pass
 
@@ -107,7 +107,7 @@ Future passes can convert individual routes to richer page-specific components o
 ## Acceptance
 
 - Authenticated web screens inherit the design system without adding provider calls or AI runtime behavior.
-- The Sanctum/Stage visual split is obvious.
+- The Sanctum/Stage split is obvious: Sanctum is the literary, modern, relaxing web app; Stage is the clean, focused mobile app with a browser fallback.
 - Session prep reads as Sanctum work with Amber emphasis, not a third mode.
 - Search is available without replacing Ask in primary navigation.
 - Local fonts and wordmark load from web public assets.

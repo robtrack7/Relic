@@ -20,7 +20,7 @@ source_file: "Sourced - Downloaded - 260518/relic-first-run-ux-flow-v0_2.md"
 
 **Status:** Active first-run UX specification  
 **Scope:** P0 MVP  
-**Source of truth inputs:** `[[11 - Product Basepoint]]`, `[[12 - MVP PRD]]`, `[[20 - Entity and Canon Schema]]`, `[[23 - AI Task Registry]]`, `[[31 - Session Prep Flow]]`, `[[32 - Stage UX Flow]]`, `[[34 - UI Implementation Spec]]`, `[[25 - Pricing and Rate Limits]]`, `[[14 - Design System Source]]`  
+**Source of truth inputs:** `[[11 - Product Basepoint]]`, `[[12 - MVP PRD]]`, `[[20 - Entity and Canon Schema]]`, `[[23 - AI Task Registry]]`, `[[31 - Session Prep Flow]]`, `[[32 - Stage UX Flow]]`, `[[34 - UI Implementation Spec]]`, `[[25 - Pricing and Rate Limits]]`, `[[13 - Design System]]`  
 **Purpose:** Specify the first 10 to 20 minutes from account creation to a ready first session without requiring implementation agents to invent onboarding, saga creation, profile capture, scaffold review, or recovery states.
 
 ---
@@ -655,6 +655,5 @@ Priority 4 is done when the following can be implemented without additional prod
 | World-canon promotion during first-run | V1 |
 | Player setup | Deferred beyond MVP |
 | Image generation | Excluded |
-
 
 

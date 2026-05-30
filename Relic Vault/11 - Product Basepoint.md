@@ -55,7 +55,7 @@ This document defines the locked direction for Relic. It guides product, UX, arc
 **Category:** AI-assisted saga creation and continuity workspace for tabletop Game Masters
 **MVP user:** Game Master only — players, publishing, and per-player permissions are deferred
 **Core loop:** Create → Organize → Prep → Run → Review → Approve → Continue
-**Primary modes:** The Sanctum (home base, worldbuilding, session prep embedded — web-optimized) and The Stage (live play — mobile-optimized). Both reachable cross-platform with different primary ergonomics.
+**Primary surfaces:** The Sanctum is the web app for home base, worldbuilding, embedded session prep, review, approval, and canon work. The Stage is the mobile app for live play. Browser Stage fallback and mobile Sanctum-lite are support paths, not equal primary surfaces.
 **Locked stack:** Expo + Next.js + Supabase + LiteLLM + Whisper + pgvector
 **Canon rule:** AI drafts. GM approves. Canon changes only by explicit GM action.
 **AI invocation rule:** AI is a button the GM can press, across creative and editorial domains. Many buttons exist. None push themselves.
@@ -113,13 +113,13 @@ Relic is organized around one recurring loop. Every product decision must make t
 
 **v3.4 change: session prep workspace is no longer a peer mode. It is a surface embedded within the Sanctum.**
 
-**The Sanctum** — the GM's home base. Editorial, warm, powerful, organized. Web/tablet-optimized; usable on mobile for lighter work. The Sanctum handles everything between sessions: Workspace/World/Saga switching, saga creation, dashboard, entity management, thread tracking, world-canon browsing, long-form notes, smart linking, import inbox, session prep (embedded), post-session review, approval queue, settings, export.
+**The Sanctum** — the GM's web home base. Literary, modern, relaxing, organized. The Sanctum handles everything between sessions: Workspace/World/Saga switching, saga creation, dashboard, entity management, thread tracking, world-canon browsing, long-form notes, smart linking, import inbox, session prep (embedded), post-session review, approval queue, settings, export.
 
 When the GM is prepping a session, the Sanctum's home surface *is* the session prep view — the briefing, agenda editor, thread carry-forward, and packet preview are all rendered inline within the Sanctum's parchment frame. The GM does not "switch to session prep workspace" — they open their session from the Sanctum home and the prep workspace opens within it.
 
-**The Stage** — table mode. Fast, quiet, dark, high-contrast, hard to break. Mobile/tablet-optimized; usable on web for laptop play. Handles: current session, agenda, pinned cards, search, quick capture, quick stubs, recording, Mark Moment, basic dice, end session.
+**The Stage** — the mobile live-session surface. Clean, focused, glanceable, hard to break. Handles: current session, agenda, pinned cards, search, quick capture, quick stubs, recording, Mark Moment, basic dice, end session. A browser Stage fallback can support the web-first build and laptop play, but the primary Stage product is mobile.
 
-**Mode rule:** The Sanctum builds, maintains, and preps the saga. The Stage supports live play. Both modes must be reachable on both platforms.
+**Surface rule:** The Sanctum builds, maintains, and preps the saga on web. The Stage supports live play on mobile. Support paths may keep the loop functional across platforms, but the product direction is web Sanctum first, mobile Stage after.
 
 **AI on The Stage:** unsolicited AI behavior is dormant. Search is the only GM-initiated AI affordance on Stage. During `in_progress` and `ended_pending_undo`, no background entity tagging, mention detection, summarization, prep nudges, or notification prompts run. Recording is captured and transcription is queued, but synthesis does not begin until End Session. V1 may add GM-initiated generators, but generated candidates remain non-canon until explicitly saved and approved.
 
@@ -314,8 +314,8 @@ Player wiki · player accounts · recap publishing · shareable saga pages · pe
 
 | Layer | Technology | Role |
 |---|---|---|
-| Mobile | Expo + React Native + TypeScript | Stage-optimized, full-loop capable |
-| Web | Next.js App Router + TypeScript | Sanctum-optimized, Stage-capable |
+| Web | Next.js App Router + TypeScript | Primary Sanctum app; web-first MVP build and browser Stage fallback |
+| Mobile | Expo + React Native + TypeScript | Primary Stage app after web Sanctum loop is stable |
 | Database | Supabase Postgres | Source of truth |
 | Auth | Supabase Auth | GM accounts |
 | Storage | Supabase Storage | Audio, imports, attachments |
@@ -342,9 +342,9 @@ For full backend contracts see Tech Architecture Spec v1.2.
 
 ## 14. Design Direction
 
-Design system file: `[[14 - Design System Source]]` — always reference before building UI.
+Design system file: `[[13 - Design System]]` — always reference before building UI. The HTML source remains available at [[14 - Design System Source.html]].
 
-**Language:** light editorial, retro-modern. A beautifully designed field journal rebuilt as a modern app.
+**Language:** literary, modern, relaxing. A beautifully designed field journal rebuilt as a contemporary web app.
 
 **Typefaces:** Cormorant Garamond (display) · Instrument Sans (UI) · DM Mono (mono).
 
@@ -354,9 +354,9 @@ Design system file: `[[14 - Design System Source]]` — always reference before 
 
 | Surface | Base | Distinguishing elements |
 |---|---|---|
-| **Sanctum** (default) | Parchment #EFEBE4 | Cream cards on Parchment background. Standard palette. |
+| **Sanctum** (default web app) | Parchment #EFEBE4 | Cream cards on Parchment background. Literary, modern, relaxing. |
 | **Session prep (within Sanctum)** | Parchment #EFEBE4 | Amber-forward accents: prep CTAs, Ready for Stage button, agenda fields use Amber left-rules. Sage used for thread-state indicators (active, loose, resolved). No separate Cream surface — prep is visually differentiated by Amber/Sage accent density, not a different background color. |
-| **Stage** | Ink #1A1916 | High-contrast Cream foreground. Amber for action state. Rust reserved for recording state. |
+| **Stage** (mobile app) | Ink #1A1916 | Clean, focused, high-contrast Cream foreground. Amber for action state. Rust reserved for recording state. |
 
 The Cream surface as a separate mode differentiator is retired. Cream remains available as a card surface within the Sanctum frame. The Stage dark treatment is unchanged.
 
@@ -366,7 +366,7 @@ The Cream surface as a separate mode differentiator is retired. Cream remains av
 3. Literary hierarchy — Cormorant carries names, Instrument carries UI, never compete.
 4. Amber marks action and consequence, not decoration.
 5. The GM is the author — UI language is deferential.
-6. The Stage strips back on every platform.
+6. The Stage is clean and focused for mobile live play.
 7. Drafts must look like drafts.
 8. State must be visible.
 
@@ -442,8 +442,8 @@ Resolved in v3.0–v3.3: see prior changelogs.
 
 **Still open:**
 
-- Specific Sanctum workflows that must be fully native in Expo vs. responsive web view.
-- App Store / TestFlight / Expo preview / web alpha sequencing.
+- Mobile Sanctum-lite scope after the web Sanctum loop is stable.
+- App Store / TestFlight / Expo preview sequencing after web alpha.
 - Paste-cap value beyond MVP (currently 50,000 chars at PRD level).
 
 ---
@@ -479,4 +479,3 @@ When making any product, UX, or architecture decision, optimize for the GM loop:
 > Create → Organize → Prep → Run → Review → Approve → Continue.
 
 If a feature does not make that loop faster, clearer, more trustworthy, or more delightful for the GM, it does not belong in the MVP. If a workflow is core to the loop, it must have a functional path on both web and mobile, even when one platform is clearly optimized for it.
-

@@ -24,7 +24,7 @@ source_file: "Sourced - Downloaded - 260518/relic-stage-ux-flow-v0_6.md"
 
 ## Document scope
 
-This document defines the user experience and interaction model for **The Stage**, Relic's live session surface. It is the source of truth for Stage behavior. Companion documents — `[[31 - Session Prep Flow]]`, `[[34 - UI Implementation Spec]]`, `[[12 - MVP PRD]]`, and `[[33 - First Run UX Flow]]` — define the surfaces this one references but does not specify.
+This document defines the user experience and interaction model for **The Stage**, Relic's mobile live-session surface. It is the source of truth for Stage behavior. Companion documents — `[[31 - Session Prep Flow]]`, `[[34 - UI Implementation Spec]]`, `[[12 - MVP PRD]]`, and `[[33 - First Run UX Flow]]` — define the surfaces this one references but does not specify.
 
 This document is optimized for downstream consumption by AI coding agents (vibe-coding tools, Claude Code). Each section is self-contained, references are explicit and versioned, and feature specs follow a consistent shape: **Purpose → Behavior → Schema/IDs → Edge cases → Out of scope.**
 
@@ -57,7 +57,7 @@ Material corrections:
 | Schema | v0.8 | §3 entities, §6 notes (`quick_capture`, `summary`), shared columns, session lifecycle, `session_marked_moments` |
 | Tech Arch | v1.2 | Offline sync, mobile architecture, Stage role, recording/upload/background jobs |
 | Registry | v1.0 | `search_for_ui`, `synthesize_session`, `compose_prep_briefing`, and stub-fleshing references. |
-| Design System | v0.3 | `[[14 - Design System Source]]` Stage dark pattern and Stage-specific tokens |
+| Design System | v0.3 | `[[13 - Design System]]` Stage mobile pattern and Stage-specific tokens |
 | Approval Queue | v0.5 | Summary note handling and downstream draft/canon processing |
 | Session Prep Flow | v0.2 | Ready-for-Stage packet, prep locking, fallback one-line summary handoff |
 
@@ -68,7 +68,7 @@ Relic has **two user-facing surfaces**:
 | Surface | Purpose | Platform primary |
 |---|---|---|
 | **Sanctum** | Workspace/World/Saga home, entity management, Threads, Review, Ask, and session prep workspace | Web |
-| **Stage** | Live session support: agenda, pinned cards, search, capture, record, dice, end session | Mobile/tablet |
+| **Stage** | Live session support: agenda, pinned cards, search, capture, record, dice, end session | Mobile |
 
 **Session prep** is a Sanctum workspace, not a top-level mode. The GM opens a session from Sanctum, edits the packet in the prep workspace, taps **Ready for Stage**, then opens Stage. Stage can preview a `ready` or `started` packet without locking prep. Prep locks only when the session reaches `in_progress`.
 
@@ -80,11 +80,11 @@ Relic has **two user-facing surfaces**:
 
 ## 1. Premise
 
-The Stage is the table-mode surface. It exists for one moment: a GM is mid-session, with players, recording running, and something needs to happen *now* — find an NPC, jot a thought, roll a die, mark a moment. Every interaction is a glance, not a workflow.
+The Stage is the mobile table surface. It exists for one moment: a GM is mid-session, with players, recording running, and something needs to happen *now* — find an NPC, jot a thought, roll a die, mark a moment. Every interaction is clean, focused, and glanceable, not a workflow.
 
 **Five rules:**
 
-1. **Single-screen on mobile.** Everything reachable without leaving the Stage.
+1. **Mobile-first surface.** Everything important is reachable without leaving the Stage.
 2. **AI is dormant by default.** Search is the only unsolicited AI affordance. GM-initiated generation (V1) is allowed inline as long as the GM invokes it. (PRD §3.1 + Basepoint §5.)
 3. **Airplane-mode complete.** Every Stage action works offline; reconnect flushes. (Tech Arch §15.)
 4. **Cold-load to interactive <2s** on modern phone with working network. (PRD STG acceptance.)
@@ -94,7 +94,7 @@ The Stage is the table-mode surface. It exists for one moment: a GM is mid-sessi
 
 ## 2. Theme & dark mode
 
-**Default:** Stage uses the dark high-contrast pattern from the design system (Ink #1A1916 surface, Cream foreground, Amber for action/state, Rust for record).
+**Default:** Stage uses a clean, focused, dark high-contrast pattern from the design system (Ink #1A1916 surface, Cream foreground, Amber for action/state, Rust for record).
 
 **Why dark is the default:** the Stage is a single-purpose surface for ~3-hour sessions in typically dim table conditions. Forcing a per-session light/dark choice is friction. Dark *is* the Stage.
 
@@ -153,7 +153,7 @@ The Stage operates against these `sessions.status` values:
 
 ## 5. Layout
 
-### 5.1 Mobile (primary surface)
+### 5.1 Mobile app (primary surface)
 
 One vertical scroll, no tabs. Sticky bottom action bar.
 
@@ -186,13 +186,13 @@ One vertical scroll, no tabs. Sticky bottom action bar.
 
 **Pinned cards on mobile:** **1 per row** for collapsed cards, full-width. (Revision from v0.1, which suggested 3 per row mirroring the design system sample. Table use needs larger tap targets and clearer reading.)
 
-### 5.2 Web / tablet (≥900px)
+### 5.2 Browser fallback / tablet (≥900px)
 
 Same primary column, plus an **optional right side panel** for the currently-expanded entity. Toggle with chevron; collapsed by default. The main column always shows agenda + pinned + notes.
 
 Search ⌘K opens modal. Persistent inline bar also visible. Tap result → opens in side panel (or full overlay on mobile).
 
-**Why a side panel, not a two-column dashboard:** the Stage is glance-first. A two-column layout encourages multi-focus, which is a Sanctum pattern. The side panel is opt-in for the GM with screen real estate who wants one entity persistent.
+**Why a side panel, not a two-column dashboard:** the Stage is clean and focused. A two-column layout encourages multi-focus, which is a Sanctum pattern. The side panel is opt-in for the GM with screen real estate who wants one entity persistent.
 
 ### 5.3 Density principles
 
@@ -895,7 +895,7 @@ Per Tech Arch §15.6, last-write-wins on reconnect. Conflicts surface in Sanctum
 
 ### 15.5 Web offline (Tech Arch §15.8)
 
-Web Stage uses React Query cache + Supabase real-time. Short-window offline works. Full network drop on web: recording keeps writing locally (MediaRecorder), entity cache is best-effort. Mobile is the resilience-first surface.
+Web Stage uses React Query cache + Supabase real-time. Short-window offline works. Full network drop on web: recording keeps writing locally (MediaRecorder), entity cache is best-effort. Mobile is the primary and resilience-first Stage surface.
 
 ---
 
@@ -973,7 +973,7 @@ These features are V1, but the V0 architecture must allow them to be added witho
 - System-aware Mechanical Strip rendering on Stage Card (deterministic; no per-render AI).
 - Continued dormancy for unsolicited AI.
 
-**Locked principle:** AI on Stage is always GM-invoked. Background AI is forbidden during `in_progress` and `ended_pending_undo` states.
+**Locked principle:** AI on Stage is always GM-invoked. Background AI is forbidden during `in_progress` and `ended_pending_undo` states. Keep the Stage clean and focused; do not turn it into a live assistant surface.
 
 **Note on v0.4 additions.** The Start Session confirmation modal (§11.7) and the optional one-line summary card (§14.5) are GM-facing prompts with zero AI calls. They are not violations of the AI dormancy principle. The Start Session modal's conditional warning is computed from a database query (not AI inference). The one-line summary card accepts only GM-typed text; no AI processing happens on it during the session window — Memory Spec §6.2 still applies (captures are BM25-only until post-session synthesis).
 
@@ -1096,7 +1096,7 @@ These are not blocking the Stage flow but require decisions in adjacent docs:
 
 ### 21.1 Alpha distribution
 
-Stage MVP is Expo-native and dogfooded through Expo preview/EAS internal builds. TestFlight and Android internal test follow once recording, upload, offline queue, and End Session are stable. Store release is not required for private alpha.
+Stage MVP is the mobile app and follows the web Sanctum build. It is dogfooded through Expo preview/EAS internal builds once the web loop and browser Stage fallback are stable. TestFlight and Android internal test follow once recording, upload, offline queue, and End Session are stable. Store release is not required for private alpha.
 
 ### 21.2 Notification tap behavior
 

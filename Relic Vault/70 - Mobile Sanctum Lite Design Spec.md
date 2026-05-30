@@ -9,6 +9,7 @@ depends_on:
   - "[[34 - UI Implementation Spec]]"
   - "[[31 - Session Prep Flow]]"
   - "[[24 - Approval Queue]]"
+  - "[[13 - Design System]]"
 supersedes: []
 last_audited: 2026-05-30
 source_file: "Relic Vault/70 - Mobile Sanctum Lite Design Spec.md"
@@ -21,7 +22,7 @@ source_file: "Relic Vault/70 - Mobile Sanctum Lite Design Spec.md"
 
 ## 1. Purpose
 
-Mobile Sanctum Lite gives the GM enough Sanctum capability on phone to continue the loop: view dashboard summary, search, browse/edit light entity details, prep enough to mark ready, review minimum Approval Queue items, and manage basic settings.
+Mobile Sanctum Lite gives the GM enough Sanctum capability on phone to continue the loop after the web app is stable: view dashboard summary, search, browse/edit light entity details, prep enough to mark ready, review minimum Approval Queue items, and manage basic settings.
 
 It does not replace web as the deep Sanctum workspace. Mobile's primary Relic surface remains The Stage.
 
@@ -55,7 +56,7 @@ Secondary actions include quick search, open context switcher sheet, filter list
 
 ## 7. Layout structure
 
-Use a single-column mobile Sanctum shell. Top area shows current Saga and a context switcher sheet trigger. Bottom nav can include Home, Search, Sessions, Review, Stage, with Stage visually available. Within Sanctum, use a horizontal top tab strip for Threads, Entities, Sessions, Review, Ask where needed.
+Use a single-column mobile Sanctum shell. Top area shows current Saga and a context switcher sheet trigger. The app-level bottom navigation should stay simple: Sanctum and Stage. Inside the Sanctum tab, use a horizontal top tab strip or compact section links for Home, Search, Threads, Entities, Sessions, Review, and Ask where needed.
 
 No persistent right rail. Use bottom sheets for filters, source/provenance, context switcher, AI results, and confirmation dialogs.
 
@@ -63,7 +64,7 @@ Prioritize the current loop over full information density. The home stack should
 
 ## 8. Key components
 
-- Navigation: `MobileSanctumShell`, `MobileContextSwitcherSheet`, `BottomNav`, `TopTabStrip`, `StageShortcut`.
+- Navigation: `MobileSanctumShell`, `MobileContextSwitcherSheet`, `MobileSurfaceTabBar`, `TopTabStrip`, `StageShortcut`.
 - Containment: `MobileDashboardSummary`, `MobileEntityList`, `MobileDetailView`, `MobilePrepStack`, `MobileApprovalCard`.
 - Inputs: `MobileSearch`, `SinglePaneEditor`, `SheetPicker`, `ChecklistEditor`.
 - Feedback: `MobileAutosaveIndicator`, `OfflineQueuedBanner`, `LoadingSkeleton`, `PermissionErrorState`.
@@ -103,10 +104,10 @@ Avoid desktop-density side rails, permanent chatbot columns, full two-pane Appro
 
 ## 15. Visual tone
 
-Compact Sanctum, not mini Stage. It stays parchment/cream, readable, and calm, with larger targets and clear bottom sheets. Stage remains the dark live surface.
+Compact Sanctum support, not mini Stage and not a replacement for the literary, modern, relaxing web app. It stays parchment/cream, readable, and calm, with larger targets and clear bottom sheets. Stage remains the clean, focused mobile live surface.
 
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's Mobile Sanctum Lite experience. It supports dashboard summary, search, Threads/Entities/Sessions/Review/Ask, light detail editing, prep enough to mark Ready for Stage, minimum approval review, settings, and quick Stage access. Use single-column parchment/cream layout, context switcher sheet, bottom nav with Stage, top tab strip, source bottom sheets, and large tap targets. Keep mobile functional but not as dense as web Sanctum. Exclude permanent chat, full desktop diff by default, transcript editing, graph/map editors, player controls, and proactive AI.
+Create Relic's Mobile Sanctum Lite support experience for after the web app is stable. It supports dashboard summary, search, Threads/Entities/Sessions/Review/Ask, light detail editing, prep enough to mark Ready for Stage, minimum approval review, settings, and quick Stage access. Use single-column parchment/cream layout, context switcher sheet, two-tab Sanctum/Stage bottom navigation, internal top tab strip, source bottom sheets, and large tap targets. Keep mobile functional but not as dense as the literary, modern, relaxing web Sanctum. Exclude permanent chat, full desktop diff by default, transcript editing, graph/map editors, player controls, and proactive AI.
 ```

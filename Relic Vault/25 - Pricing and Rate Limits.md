@@ -424,7 +424,7 @@ Recruit for:
 - New GMs who want structure.
 - Worldbuilder GMs with existing notes.
 - Improvisational GMs who need post-session capture.
-- At least 5 mobile-first/tablet-at-table GMs.
+- At least 5 GMs who use a mobile live-session surface at the table.
 
 ### 9.2 Alpha limits
 

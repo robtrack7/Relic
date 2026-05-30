@@ -5,7 +5,7 @@ scope: planning
 read_after:
   - "[[40 - MVP Implementation Planning Sequence]]"
 depends_on:
-  - "[[14 - Design System Source]]"
+  - "[[13 - Design System]]"
   - "[[30 - Sanctum UX Flow]]"
   - "[[31 - Session Prep Flow]]"
   - "[[32 - Stage UX Flow]]"
@@ -24,7 +24,7 @@ Build the MVP loop as a usable manual product before wiring AI calls: Create -> 
 
 ## Build Against
 
-- [[14 - Design System Source]]
+- [[13 - Design System]]
 - [[30 - Sanctum UX Flow]]
 - [[31 - Session Prep Flow]]
 - [[32 - Stage UX Flow]]
@@ -37,8 +37,8 @@ Build the MVP loop as a usable manual product before wiring AI calls: Create -> 
 ### 1. Design Tokens and Shells
 
 - Map design tokens into shared CSS/Tailwind variables.
-- Build `SanctumShell` for web-first Parchment/Cream UI.
-- Build `StageShell` for dark, glance-first mobile/tablet UI.
+- Build `SanctumShell` for the literary, modern, relaxing web-first Parchment/Cream UI.
+- Build the browser Stage fallback after the Sanctum web shell, then build `StageShell` for the clean, focused mobile app.
 - Implement Workspace/World/Saga context controls, search entry, usage chip placeholder, and state chips.
 
 ### 2. Auth, Bootstrap, and Start Blank
@@ -63,7 +63,7 @@ Build the MVP loop as a usable manual product before wiring AI calls: Create -> 
 
 ### 5. Stage Manual Loop
 
-- Build mobile Stage packet hydration, agenda, pinned cards, search UI, quick capture, quick stub, dice, consent, recording state UI, Mark Moment, End Session, and undo window.
+- Build browser Stage fallback first, then mobile Stage packet hydration, agenda, pinned cards, search UI, quick capture, quick stub, dice, consent, recording state UI, Mark Moment, End Session, and undo window.
 - Implement offline queue indicators and local-first Stage interactions according to [[32 - Stage UX Flow]].
 - Keep Stage AI dormant; Hybrid search is the only online retrieval affordance and must degrade clearly when offline.
 

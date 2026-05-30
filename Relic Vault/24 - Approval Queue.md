@@ -49,7 +49,7 @@ Desktop web uses a two-pane layout:
 2. Main: selected draft diff/editor.
 3. Optional right dock: sources, provenance, sibling drafts, conflicts.
 
-Mobile uses a single-column minimum review flow with source/provenance in a bottom sheet. Full review remains web-optimized.
+Mobile uses a single-column minimum review flow with source/provenance in a bottom sheet. Full review belongs to the web Sanctum.
 
 ## 3. Queue grouping
 

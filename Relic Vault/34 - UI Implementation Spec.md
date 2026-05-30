@@ -29,7 +29,7 @@ This spec translates the active Relic product, UX, schema, architecture, and des
 
 - `[[11 - Product Basepoint]]`
 - `[[12 - MVP PRD]]`
-- `[[14 - Design System Source]]`
+- `[[13 - Design System]]`
 - `[[33 - First Run UX Flow]]`
 - `[[31 - Session Prep Flow]]`
 - `[[32 - Stage UX Flow]]`
@@ -41,7 +41,7 @@ This spec translates the active Relic product, UX, schema, architecture, and des
 
 **Implementation rule:** build the loop first: Create → Organize → Prep → Run → Review → Approve → Continue.
 
-**MVP surface rule:** Web owns the Sanctum. Mobile owns the Stage. Both remain functionally capable for the full loop where practical.
+**MVP surface and build-order rule:** The Sanctum is the web app and is built first. It should feel literary, modern, and relaxing. The Stage is the mobile app and is built after the web loop is stable; it should feel clean and focused. Browser Stage fallback and mobile Sanctum-lite are support paths.
 
 ---
 
@@ -87,7 +87,7 @@ Use IDs in routes for MVP. Slugs may be added later for readability but must not
 
 ### 1.2 Mobile routes — Expo Router
 
-Mobile starts at the Stage but must expose enough Sanctum-lite navigation to avoid dead ends.
+Mobile is built after the web app and starts at the Stage, but must expose enough Sanctum-lite navigation to avoid dead ends.
 
 | Route | Surface | Purpose | MVP |
 |---|---|---|---:|
@@ -116,20 +116,20 @@ Mobile starts at the Stage but must expose enough Sanctum-lite navigation to avo
 
 ### 2.1 Sanctum desktop shell
 
-**Use for:** saga home, Threads, Entities, Sessions, Review, Ask, Settings.
+**Use for:** the primary web app: saga home, Threads, Entities, Sessions, Review, Ask, Settings.
 
 - Parchment background.
 - Left navigation rail, 220–260px.
 - Top context bar: Workspace / World / Saga switcher, search/command entry, usage chip when near quota.
 - Main content column, max readable width 960–1120px unless list/detail layout requires more.
 - Optional right inspector for source/provenance, relationships, draft warnings, quota warnings.
-- Cream cards on Parchment. Amber marks consequential action. Sage marks confirmed/ready. Rust marks destructive/blocked.
+- Cream cards on Parchment. Literary, modern, relaxing. Amber marks consequential action. Sage marks confirmed/ready. Rust marks destructive/blocked.
 
 Default nav order: **Threads · Entities · Sessions · Review · Ask**. Settings sits low in the rail.
 
 ### 2.2 Sanctum mobile shell
 
-**Use for:** mobile-light entity review, prep read/edit, approval minimum, settings.
+**Use for:** mobile-light support after web: entity review, prep read/edit, approval minimum, settings.
 
 - Single column.
 - Top context switcher compressed into a sheet.
@@ -139,7 +139,7 @@ Default nav order: **Threads · Entities · Sessions · Review · Ask**. Setting
 
 ### 2.3 Stage mobile shell
 
-**Use for:** live play.
+**Use for:** the primary mobile app for live play.
 
 - Ink background.
 - Cream text and cards.
@@ -147,23 +147,23 @@ Default nav order: **Threads · Entities · Sessions · Review · Ask**. Setting
 - Persistent search bar below header.
 - One vertical scroll: agenda → pinned cards → notes.
 - Sticky bottom action bar: Record · Mark Moment · Dice.
-- No decorative elements. No marketing copy. No proactive AI prompts.
+- Clean and focused. No decorative elements. No marketing copy. No proactive AI prompts.
 
-### 2.4 Stage web/tablet shell
+### 2.4 Stage browser fallback shell
 
-**Use for:** browser fallback and tablet use.
+**Use for:** web-first browser fallback and tablet use before the mobile app ships.
 
 - Same dark Stage visual language.
 - Main Stage column remains primary.
 - Optional right side panel for selected pinned entity.
 - Search can open as command palette on desktop; inline search remains visible.
-- Do not turn Stage web into Sanctum. Keep it glance-first.
+- Do not turn Stage web into Sanctum. Keep it clean, focused, and glance-ready.
 
 ---
 
 ## 3. Token mapping
 
-Map `[[14 - Design System Source]]` tokens into shared Tailwind/CSS variables.
+Map `[[13 - Design System]]` tokens into shared Tailwind/CSS variables.
 
 | Design token | CSS variable | Tailwind alias | Use |
 |---|---|---|---|
@@ -536,13 +536,14 @@ Required components:
 6. **Entity library/detail** — CRUD, autosave, state chips, source/provenance placeholders.
 7. **Threads** — list, detail, read-only timeline.
 8. **Session prep** — objective/opening/notes, pinned entities, Ready for Stage.
-9. **Stage mobile** — read cached packet, pinned cards, search, capture, dice.
-10. **Recording** — consent, local chunks, upload state, Mark Moment.
-11. **Post-session pipeline UI** — transcript/review status and failure states.
-12. **Approval Queue** — grouped review, diff, source dock, commit.
-13. **Usage and quota readouts** — chips, settings panel, quota errors.
-14. **Export** — JSON/Markdown request and download lifecycle.
-15. **Polish pass** — accessibility, responsive shells, empty/error/loading states, performance checks.
+9. **Stage browser fallback** — ready/in-progress packet, pinned cards, search, capture, dice, and End Session in web.
+10. **Mobile Stage app** — after web loop stability, read cached packet, pinned cards, search, capture, dice.
+11. **Recording** — consent, local chunks, upload state, Mark Moment.
+12. **Post-session pipeline UI** — transcript/review status and failure states.
+13. **Approval Queue** — grouped review, diff, source dock, commit.
+14. **Usage and quota readouts** — chips, settings panel, quota errors.
+15. **Export** — JSON/Markdown request and download lifecycle.
+16. **Polish pass** — accessibility, responsive shells, empty/error/loading states, performance checks.
 
 ---
 

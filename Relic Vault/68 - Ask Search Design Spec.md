@@ -9,6 +9,7 @@ depends_on:
   - "[[22 - Memory and Retrieval]]"
   - "[[23 - AI Task Registry]]"
   - "[[34 - UI Implementation Spec]]"
+  - "[[13 - Design System]]"
 supersedes: []
 last_audited: 2026-05-30
 source_file: "Relic Vault/68 - Ask Search Design Spec.md"
@@ -21,7 +22,7 @@ source_file: "Relic Vault/68 - Ask Search Design Spec.md"
 
 ## 1. Purpose
 
-Search and Ask help the GM find or query current Saga canon plus relevant World canon. Search is a persistent top-context affordance. Ask Relic is a page, sidecar, or contextual action, not a permanent chatbot column.
+Search and Ask help the GM find or query current Saga canon plus relevant World canon. Search is a persistent top-context affordance. Ask Relic is a page, collapsible sidecar, or contextual action, not a permanent chatbot column.
 
 Search supports fast lookup. Ask supports cited, canon-grounded answers.
 
@@ -58,7 +59,7 @@ Secondary actions include filter by entity type/scope/state, switch search mode,
 
 Top context bar includes a global search input/command entry beside Workspace/World/Saga context. Search modal or page shows grouped results: Threads first when relevant, then entities, sessions, notes, and review/source hits.
 
-Ask page or sidecar uses a single-column question/answer layout with source citations inline and source panel/sheet. It must not become a persistent right chat column on every screen. Contextual Ask can open as a drawer from detail pages and prep, but it closes back to the originating page.
+Ask page or sidecar uses a single-column question/answer layout with source citations inline and source panel/sheet. From the dashboard or detail pages, Ask may dock as a temporary right utility sidecar. It must not become a persistent right chat column on every screen. Contextual Ask can open as a drawer from detail pages and prep, but it closes back to the originating page.
 
 Mobile uses search as a full-screen modal and Ask as a page/sheet.
 
@@ -104,10 +105,10 @@ Avoid permanent chatbot columns, proactive prompts, uncited answers, cross-Saga 
 
 ## 15. Visual tone
 
-Fast, precise, and quiet. Search should feel like a command palette inside an editorial workspace. Ask should feel like a cited reference answer, not a personality-driven chatbot.
+Fast, precise, quiet, and compatible with the literary, modern, relaxing web Sanctum. Search should feel like a command palette inside an editorial workspace. Ask should feel like a cited reference answer, not a personality-driven chatbot.
 
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's Search and Ask surfaces. Search lives in the top context bar and opens a command palette/full search page with scope/type filters and grouped results. Ask Relic is a page, sidecar, or contextual action, not a permanent chatbot column. Ask answers are canon-only, GM-invoked, and require citations; include no-answer, quota, retry, and source preview states. Default retrieval is current Saga plus relevant World canon. Use Relic editorial styling and exclude proactive chat, model settings, BYOK, cross-Saga default search, and answer-to-canon actions.
+Create Relic's Search and Ask surfaces for the literary, modern, relaxing web Sanctum. Search lives in the top context bar and opens a command palette/full search page with scope/type filters and grouped results. Ask Relic is a page, collapsible sidecar, or contextual action, not a permanent chatbot column. Ask answers are canon-only, GM-invoked, and require citations; include no-answer, quota, retry, and source preview states. Default retrieval is current Saga plus relevant World canon. Use Relic editorial styling and exclude proactive chat, model settings, BYOK, cross-Saga default search, and answer-to-canon actions.
 ```

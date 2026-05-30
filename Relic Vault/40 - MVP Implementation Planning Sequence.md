@@ -44,7 +44,7 @@ After the repository bootstrap in [[44 - Repo Bootstrap and GitHub Setup Plan]],
 
 ### 2. UI and Manual Flow
 
-Plan the playable loop without live AI wiring: design tokens, shells, Start Blank, manual entity CRUD, Threads, read-only Thread Timeline, manual session prep, Ready for Stage, Stage packet, capture/stubs/dice, and Approval Queue shell.
+Plan the playable loop without live AI wiring: design tokens, the literary/modern/relaxing Sanctum web app, Start Blank, manual entity CRUD, Threads, read-only Thread Timeline, manual session prep, Ready for Stage, clean/focused browser Stage fallback, capture/stubs/dice, and Approval Queue shell. Mobile Stage follows after the web loop is stable.
 
 AI-dependent surfaces should be mocked, disabled, or implemented as manual fallbacks until [[43 - AI Runtime Implementation Plan]] is accepted.
 

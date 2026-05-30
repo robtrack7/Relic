@@ -8,7 +8,7 @@ depends_on:
   - "[[33 - First Run UX Flow]]"
   - "[[12 - MVP PRD]]"
   - "[[11 - Product Basepoint]]"
-  - "[[14 - Design System Source]]"
+  - "[[13 - Design System]]"
 supersedes: []
 last_audited: 2026-05-30
 source_file: "Relic Vault/62 - New Saga Design Spec.md"
@@ -59,11 +59,11 @@ The selected help-level card should determine CTA copy and destination.
 
 Secondary actions include resume previous draft, edit World name, use existing World, save and leave, sign out if first-run auth needs escape, and discard an abandoned draft with confirmation.
 
-Unsupported import options, such as PDF or docx, can be mentioned only as disabled/help copy where upstream specs allow. Do not make them active MVP routes here.
+Bring your notes should only expose MVP-supported note intake. Do not show disabled PDF/RAG, docx, Obsidian, Notion, World Anvil, Kanka, or advanced import controls as if they are near-term routes.
 
 ## 7. Layout structure
 
-Use a focused Sanctum creation layout, not the full dashboard. Parchment background, centered form width, Cream groups, Cormorant title `New saga`, and a simple progress/context label.
+Use a focused web Sanctum creation layout, not the full dashboard. Parchment background, centered form width, Cream groups, Cormorant title `New saga`, and a simple progress/context label.
 
 Desktop layout: left column for core fields and profile, right column for help-level cards and a short "What happens next" summary. Mobile stacks: title, resume card if present, Saga name, World choice, profile card, help-level cards, CTA.
 
@@ -87,7 +87,7 @@ The quota-blocked state should keep Start blank available and preserve typed inp
 
 ## 10. AI behavior
 
-No AI generation happens on the initial New saga form. AI begins only after the GM chooses Build with AI or Bring your notes and triggers the primary CTA. Start blank creates an empty Saga without invoking AI.
+No AI generation happens on the initial New saga form. AI begins only after the GM chooses Build with AI or Bring your notes and triggers the primary CTA. Start blank creates an empty Saga without invoking AI, while leaving AI available later as an invoked tool.
 
 Profile copy can explain that selections shape future suggestions. Do not present model controls, provider choices, BYOK, local model settings, or image options.
 
@@ -109,10 +109,10 @@ Avoid marketing hero pages, tutorial Saga setup, player setup, co-GM invitations
 
 ## 15. Visual tone
 
-Calm and ceremonial, but short. It should feel like opening a new field journal: tactile, focused, and ready for creation. Amber should mark the next step. Rust appears only for discard or blocked states.
+Literary, modern, relaxing, and ceremonial, but short. It should feel like opening a new field journal inside the web Sanctum: tactile, focused, and ready for creation. Amber should mark the next step. Rust appears only for discard or blocked states.
 
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's New saga screen. It is a focused creation form inside The Sanctum, not a marketing onboarding page. Include Saga name, optional game system, compact World choice, GM profile card, and three help-level radio cards: Build with AI, Bring your notes, Start blank. The selected card changes the primary CTA. Show resume-draft and duplicate-name states. AI does not run on this page; it starts only after the GM invokes an AI-assisted path. Use Relic parchment/cream editorial styling and exclude player setup, full World admin, Era editor, model settings, and image generation.
+Create Relic's New saga screen. It is a focused creation form inside the web Sanctum, not a marketing onboarding page. Make it literary, modern, and relaxing. Include Saga name, optional game system, compact World choice, GM profile card, and three help-level radio cards: Build with AI, Bring your notes, Start blank. The selected card changes the primary CTA. Show resume-draft and duplicate-name states. AI does not run on this page; it starts only after the GM invokes an AI-assisted path. Use Relic parchment/cream editorial styling and exclude player setup, full World admin, Era editor, model settings, and image generation.
 ```

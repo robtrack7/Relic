@@ -9,7 +9,7 @@ depends_on:
   - "[[30 - Sanctum UX Flow]]"
   - "[[32 - Stage UX Flow]]"
   - "[[23 - AI Task Registry]]"
-  - "[[14 - Design System Source]]"
+  - "[[13 - Design System]]"
 supersedes: []
 last_audited: 2026-05-30
 source_file: "Relic Vault/65 - Session Prep Design Spec.md"
@@ -24,7 +24,7 @@ source_file: "Relic Vault/65 - Session Prep Design Spec.md"
 
 Session prep turns current Saga canon, active Threads, loose consequences, pinned entities, and GM notes into a runnable Session Packet for The Stage.
 
-Prep is a workflow inside The Sanctum. It is not a separate top-level mode.
+Prep is a workflow inside the web Sanctum. It is not a separate top-level mode.
 
 ## 2. Page synthesis
 
@@ -61,7 +61,7 @@ Destructive or broad actions belong in an actions menu.
 
 ## 7. Layout structure
 
-Inside Sanctum shell, use Parchment base with Amber-forward prep accents. Desktop full editor can use a main agenda column plus context rail. The rail contains briefing, active/loose Threads, pinned entities, recent canon changes, packet preview, and readiness.
+Inside the web Sanctum shell, use Parchment base with Amber-forward prep accents. Desktop full editor can use a main agenda column plus context rail. The rail contains briefing, active/loose Threads, pinned entities, recent canon changes, packet preview, and readiness.
 
 Inline dashboard version is more compact: briefing, Thread carry-forward, agenda preview, pinned entities, checklist, Ready for Stage. Full editor expands each section and shows richer suggestion history.
 
@@ -114,10 +114,10 @@ Avoid treating prep as a third top-level mode, tactical scene maps, initiative t
 
 ## 15. Visual tone
 
-Prepared, practical, and active. Same Sanctum warmth, but denser Amber structure and Sage Thread state. The page should feel like a tabletop prep packet being assembled, not a task-management board.
+Prepared, practical, and active within the literary, modern, relaxing web Sanctum. Use denser Amber structure and Sage Thread state without losing the calm desk-like tone. The page should feel like a tabletop prep packet being assembled, not a task-management board.
 
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's Session Prep workspace inside The Sanctum. Show both an inline dashboard version and fuller editor logic through the same design language. Include canon-only prep briefing with source stamp, Thread carry-forward, agenda fields, pinned entities, checklist, packet preview, AI-invoked Draft this session, Brainstorm beats, Draft an NPC, and Ready for Stage. Use Parchment base with Amber prep accents and Sage thread chips. Make clear that prep is not a third mode and that AI suggestions do not write canon directly. Exclude initiative, encounter, tactical map, VTT, live transcription, player, and custom calendar features.
+Create Relic's Session Prep workspace inside the web Sanctum. Show both an inline dashboard version and fuller editor logic through the same literary, modern, relaxing design language. Include canon-only prep briefing with source stamp, Thread carry-forward, agenda fields, pinned entities, checklist, packet preview, AI-invoked Draft this session, Brainstorm beats, Draft an NPC, and Ready for Stage. Use Parchment base with Amber prep accents and Sage thread chips. Make clear that prep is not a third mode and that AI suggestions do not write canon directly. Exclude initiative, encounter, tactical map, VTT, live transcription, player, and custom calendar features.
 ```

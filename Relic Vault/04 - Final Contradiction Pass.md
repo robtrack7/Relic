@@ -39,7 +39,7 @@ AI task surfaces still require implementation-plan review before coding, but the
 ## Current UI Planning Addendum
 
 - [[35 - Web Design Wireframe]] records the authenticated web-app design structure for the first design-system implementation pass.
-- The refined Claude design package is treated as visual vocabulary and asset source only; [[14 - Design System Source]] and active UX specs remain canonical.
+- The refined Claude design package is treated as visual vocabulary and asset source only; [[13 - Design System]] and active UX specs remain canonical.
 - The web shell resolves Search/Ask tension by keeping Ask in primary navigation while presenting Search as a command/search affordance and fallback route.
 - The first implementation pass is scoped to tokens, local fonts/assets, shared primitives, The Sanctum shell, and browser Stage fallback styling. It does not wire provider calls, autonomous AI behavior, live Stage captions, or deferred V1 surfaces.
 

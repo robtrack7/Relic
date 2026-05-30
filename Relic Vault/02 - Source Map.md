@@ -19,7 +19,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 |---|---|---|
 | [[11 - Product Basepoint]] | Product north star, scope, naming, exclusions | Primary |
 | [[12 - MVP PRD]] | P0 requirements and acceptance framing | Primary |
-| [[14 - Design System Source]] | UI tokens, typography, palette, component feel | Primary design |
+| [[13 - Design System]] | UI tokens, typography, palette, component feel; wrapper for [[14 - Design System Source.html]] | Primary design |
 | [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch | Implementation |
 | [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, deployment, monitoring | Implementation |
 | [[22 - Memory and Retrieval]] | Embeddings, retrieval, task profiles, context assembly | Implementation |
@@ -42,7 +42,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 
 ## Design Specification Sources
 
-These notes translate the active product, UX, and UI sources into compact screen-level design briefs. They are secondary to the owning source specs above and should be used with [[14 - Design System Source]] and [[34 - UI Implementation Spec]].
+These notes translate the active product, UX, and UI sources into compact screen-level design briefs. They are secondary to the owning source specs above and should be used with [[13 - Design System]] and [[34 - UI Implementation Spec]].
 
 | Note | Use for | Authority |
 |---|---|---|
@@ -52,7 +52,7 @@ These notes translate the active product, UX, and UI sources into compact screen
 | [[63 - Saga Scaffold Review Design Spec]] | Creation-time AI draft review, source inspection, commit-to-canon moment | Secondary design |
 | [[64 - Unified Library Detail Design Spec]] | Entity, Thread, Session, note library/detail patterns | Secondary design |
 | [[65 - Session Prep Design Spec]] | Prep workspace inside The Sanctum and Ready for Stage handoff | Secondary design |
-| [[66 - Mobile Stage Design Spec]] | Dark mobile-first live session Stage | Secondary design |
+| [[66 - Mobile Stage Design Spec]] | Clean, focused mobile live-session Stage | Secondary design |
 | [[67 - Approval Queue Design Spec]] | Draft review, diff, source/provenance, canon approval | Secondary design |
 | [[68 - Ask Search Design Spec]] | Top-context search, command palette, Ask Relic Q&A | Secondary design |
 | [[69 - Settings Usage Design Spec]] | Saga/World/Workspace settings, usage, retention, export | Secondary design |

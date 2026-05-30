@@ -5,7 +5,7 @@ scope: mvp-design
 read_after:
   - "[[60 - Design Spec Overview]]"
 depends_on:
-  - "[[14 - Design System Source]]"
+  - "[[13 - Design System]]"
   - "[[34 - UI Implementation Spec]]"
   - "[[30 - Sanctum UX Flow]]"
   - "[[32 - Stage UX Flow]]"
@@ -16,7 +16,7 @@ source_file: "Relic Vault/71 - Component Inventory Design Spec.md"
 ---
 
 > [!info] How to use this spec
-> Use this as the reusable component checklist for the design specs in [[60 - Design Spec Overview]]. It references Material 3 and Checklist Design only for coverage completeness; Relic's design system in [[14 - Design System Source]] remains visually authoritative.
+> Use this as the reusable component checklist for the design specs in [[60 - Design Spec Overview]]. It references Material 3 and Checklist Design only for coverage completeness; Relic's design system in [[13 - Design System]] remains visually authoritative.
 
 # Component Inventory Design Spec
 
@@ -26,16 +26,16 @@ This inventory names the reusable Relic components that should appear across the
 
 All components should preserve Relic's surface model:
 
-- The Sanctum: Parchment base, Cream cards, editorial density, Amber for consequential action, Sage for ready/confirmed/thread-active state, Rust for destructive/blocked/recording.
-- The Stage: Ink base, Cream foreground, high contrast, minimal decoration, large tap targets, offline resilience.
+- The Sanctum web app: Parchment base, Cream cards, literary/modern/relaxing tone, Amber for consequential action, Sage for ready/confirmed/thread-active state, Rust for destructive/blocked/recording.
+- The Stage mobile app: Ink base, Cream foreground, clean/focused tone, high contrast, minimal decoration, large tap targets, offline resilience.
 
 Material 3 and Checklist Design can be used to check component coverage: nav, inputs, dialogs, sheets, feedback, loading, empty, offline, error, and destructive confirmation. Do not copy their visual styling.
 
 ## Navigation
 
-`SanctumShell` wraps authenticated web Sanctum routes. It includes nav order Threads, Entities, Sessions, Review, Ask; secondary Settings; top context bar; and main content slot.
+`SanctumShell` wraps authenticated web Sanctum routes. It includes Home, Threads, Entities, Sessions, Review, Ask; lower-priority Export and Settings; top context bar; main content slot; and optional right utility sidecar.
 
-`StageShell` wraps Stage routes. It includes Stage header, search, primary scroll area, sticky action bar, and optional tablet/web side panel.
+`StageShell` wraps the mobile Stage routes. It includes Stage header, search, primary scroll area, sticky action bar, and optional browser fallback side panel.
 
 `MobileSanctumShell` is the phone-friendly Sanctum shell with context sheet, bottom nav, and single-column content.
 
@@ -47,9 +47,13 @@ Material 3 and Checklist Design can be used to check component coverage: nav, in
 
 `SanctumNav` displays Threads, Entities, Sessions, Review, Ask. Review supports pending count.
 
-`BottomNav` on mobile keeps Home/Search/Sessions/Review/Stage or equivalent accessible.
+`MobileSurfaceTabBar` on mobile keeps the two primary surfaces accessible: Sanctum and Stage. Inside Sanctum, use a top tab strip, section links, or command/search entry for Home, Search, Threads, Entities, Sessions, Review, and Ask.
 
 `BreadcrumbBack` is used in detail and focused creation flows where shell nav alone is insufficient.
+
+`RightUtilitySidecar` is the optional desktop dock for Ask Relic, source/provenance, relationship context, draft warnings, or active inspector content. It is not permanent by default and should close without changing page context.
+
+`AskRelicSidecar` is a specific right utility sidecar for cited, GM-invoked answers. It should feel like a sourced reference tool, not a general-purpose chatbot rail.
 
 `SettingsSubnav` groups Saga, World, Workspace usage, Retention, Notifications, Export, Account.
 
@@ -82,6 +86,10 @@ Action hierarchy should be strict. A screen may have many available actions, but
 ## Containment
 
 `SagaStatusPanel` shows current Saga loop state without becoming a Workspace analytics card.
+
+`NextActionCard` is the dashboard hero pattern. It changes by loop state: Plan Session 1, Continue prep, Open Stage, Resume Stage, Open Review, or Plan next session.
+
+`CurrentSessionPill` is a top-bar route into prep, Stage, or Review depending on session status.
 
 `PrepWorkspace` contains the prep editor or inline prep summary.
 
@@ -319,6 +327,18 @@ Conflicts appear where approval, autosave, offline sync, or draft expected versi
 - disabled unsafe action
 
 Never silently overwrite canon from an AI draft.
+
+## Components to use sparingly or avoid
+
+`Carousel` should not carry core canon, Threads, Review, Session Prep, or navigation. It may be used only for low-risk inspiration, examples, or compact recent-work browsing where all items remain accessible elsewhere.
+
+`PermanentAIChatColumn` is not a Relic component. Ask Relic may appear as a page, collapsible sidecar, command/contextual action, or sheet, but the dashboard and detail pages should not become chatbot-first interfaces.
+
+`HeavyDataTable` should be limited to usage/export/admin-like settings or developer-facing diagnostics. Entity, Thread, prep, and review work should use lists, cards, detail panels, and diffs.
+
+`FABMenu` should be mobile-only and reserved for a small set of closely related creation actions. Desktop Sanctum should prefer explicit buttons, quick-create cards, and command/search.
+
+`GenericMaterialStyling` should never override Relic's visual system. Material 3 is a coverage reference for behavior, accessibility, and interaction states, not the visual source of truth.
 
 ## Components explicitly excluded from MVP
 

@@ -19,7 +19,7 @@ source_file: "Sourced - Downloaded - 260518/relic-mvp-prd-v0_10.md"
 # Relic MVP — Product Requirements Document
 
 **Version:** v0.10
-**Source of truth:** `[[11 - Product Basepoint]]` · `[[14 - Design System Source]]` · `[[22 - Memory and Retrieval]]` · `[[20 - Entity and Canon Schema]]` · `[[23 - AI Task Registry]]` · `[[24 - Approval Queue]]` · `[[21 - Tech Architecture]]` · `[[30 - Sanctum UX Flow]]` · `[[31 - Session Prep Flow]]` · `[[32 - Stage UX Flow]]` · `[[33 - First Run UX Flow]]` · `[[34 - UI Implementation Spec]]` · `[[25 - Pricing and Rate Limits]]`
+**Source of truth:** `[[11 - Product Basepoint]]` · `[[13 - Design System]]` · `[[22 - Memory and Retrieval]]` · `[[20 - Entity and Canon Schema]]` · `[[23 - AI Task Registry]]` · `[[24 - Approval Queue]]` · `[[21 - Tech Architecture]]` · `[[30 - Sanctum UX Flow]]` · `[[31 - Session Prep Flow]]` · `[[32 - Stage UX Flow]]` · `[[33 - First Run UX Flow]]` · `[[34 - UI Implementation Spec]]` · `[[25 - Pricing and Rate Limits]]`
 **Scope:** P0 only (Basepoint §12)
 **Organized by:** GM loop — Create → Organize → Prep → Run → Review → Approve → Continue
 
@@ -116,6 +116,7 @@ Requirement ID migration table:
 | 34 | **Content scope is explicit.** World-scoped canon uses `scope='world'` and `saga_id=null`; Saga-scoped canon uses `scope='saga'` and a required `saga_id`. |
 | 35 | **Post-session canon defaults to Saga scope.** World-canon promotion, era-specific canon versions, cross-Saga conflict resolution, and temporal contradiction detection are V1. |
 | 36 | **Timeline is derived.** MVP timeline views are read-only projections from Sessions, Threads, and approved canon activity. Writable timeline editor and cross-Saga/world history views are V1. |
+| 37 | **Build and surface sequencing.** The Sanctum is the web app: literary, modern, relaxing, and built first. The Stage is the mobile app: clean, focused, and built after the web loop is stable. Browser Stage and mobile Sanctum-lite are support paths. |
 
 ---
 
@@ -473,7 +474,7 @@ Stub creation surfaces:
 **User story.**
 > *"Players are at the table, recorder running, someone just asked who Seraphine is. I need her open in three seconds."*
 
-**Design.** Dark, fast, high-contrast. The Stage consumes the packet prepared in the session prep workspace. Unsolicited AI stays dormant.
+**Design.** Clean, focused, dark, and high-contrast for mobile live play. The Stage consumes the packet prepared in the session prep workspace. Unsolicited AI stays dormant.
 
 **Session state machine.**
 
@@ -586,7 +587,5 @@ The loop closes.
 ---
 
 *End of PRD v0.10. Aligned with Basepoint v3.5, Memory & Retrieval Spec v0.9, Entity & Canon Schema v0.8, AI Task Registry v1.0, Approval Queue Spec v0.5, Tech Architecture Spec v1.2, Sanctum UX Flow v0.2, Session Prep Flow v0.2, Stage UX Flow v0.6, First-Run UX Flow v0.2, UI Implementation Spec v0.2, and Pricing & Rate Limits Spec v0.2.*
-
-
 
 

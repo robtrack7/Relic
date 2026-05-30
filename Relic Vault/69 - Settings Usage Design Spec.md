@@ -9,6 +9,7 @@ depends_on:
   - "[[30 - Sanctum UX Flow]]"
   - "[[21 - Tech Architecture]]"
   - "[[34 - UI Implementation Spec]]"
+  - "[[13 - Design System]]"
 supersedes: []
 last_audited: 2026-05-30
 source_file: "Relic Vault/69 - Settings Usage Design Spec.md"
@@ -59,7 +60,7 @@ Secondary actions include reset Saga profile override, retry failed export, down
 
 ## 7. Layout structure
 
-Use Sanctum shell. Desktop settings can use a left settings subnav with panels: Saga, World, Workspace usage, Retention, Notifications, Export, Account. Keep World settings lightweight and avoid a full World dashboard.
+Use the web Sanctum shell. Desktop settings can use a left settings subnav with panels: Saga, World, Workspace usage, Retention, Notifications, Export, Account. Keep World settings lightweight and avoid a full World dashboard.
 
 Main panels should be framed with Cream cards on Parchment. Put dangerous actions low on the page in Rust-bordered containment. Mobile uses stacked sections with accordions or simple route tabs.
 
@@ -107,10 +108,10 @@ Avoid full Stripe billing setup, BYOK UI, local model settings, player permissio
 
 ## 15. Visual tone
 
-Restrained, clear, and administrative without feeling corporate. Use simple labels, explicit consequences, and low visual drama except for destructive actions and quota blocks.
+Restrained, clear, literary, modern, and relaxing without feeling corporate. Use simple labels, explicit consequences, and low visual drama except for destructive actions and quota blocks.
 
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's Settings and Usage screens inside The Sanctum. Include Saga settings, lightweight World settings, Workspace usage, retention, notifications, export, and account/sign out. Show quota meters, reset dates, export lifecycle states, autosave, and destructive confirmations. Keep Workspace/World/Saga hierarchy clear. Use Relic parchment/cream editorial styling. Do not include BYOK, local model settings, full billing setup, player permissions, co-GM collaboration, custom calendars, Era editor, full World dashboard, plugin marketplace, or image generation.
+Create Relic's Settings and Usage screens inside the web Sanctum. Make them restrained, literary, modern, and relaxing. Include Saga settings, lightweight World settings, Workspace usage, retention, notifications, export, and account/sign out. Show quota meters, reset dates, export lifecycle states, autosave, and destructive confirmations. Keep Workspace/World/Saga hierarchy clear. Use Relic parchment/cream editorial styling. Do not include BYOK, local model settings, full billing setup, player permissions, co-GM collaboration, custom calendars, Era editor, full World dashboard, plugin marketplace, or image generation.
 ```

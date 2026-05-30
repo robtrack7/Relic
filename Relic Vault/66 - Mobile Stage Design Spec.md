@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[32 - Stage UX Flow]]"
   - "[[31 - Session Prep Flow]]"
-  - "[[14 - Design System Source]]"
+  - "[[13 - Design System]]"
   - "[[34 - UI Implementation Spec]]"
 supersedes: []
 last_audited: 2026-05-30
@@ -15,7 +15,7 @@ source_file: "Relic Vault/66 - Mobile Stage Design Spec.md"
 ---
 
 > [!info] How to use this spec
-> Use this for the primary mobile/tablet Stage experience and browser fallback. Read with [[60 - Design Spec Overview]] and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[32 - Stage UX Flow]], [[31 - Session Prep Flow]], and [[34 - UI Implementation Spec]].
+> Use this for the primary mobile Stage experience and browser fallback. Read with [[60 - Design Spec Overview]] and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[32 - Stage UX Flow]], [[31 - Session Prep Flow]], and [[34 - UI Implementation Spec]].
 
 # Mobile Stage Design Spec
 
@@ -23,13 +23,13 @@ source_file: "Relic Vault/66 - Mobile Stage Design Spec.md"
 
 The Stage supports live play. It gives the GM immediate access to the current session packet, pinned cards, search, quick capture, quick stubs, recording, Mark Moment, dice, and End Session.
 
-It is dark, mobile-first, and live-session-focused.
+It is the mobile app surface: clean, focused, and live-session-ready.
 
 ## 2. Page synthesis
 
-This spec condenses [[32 - Stage UX Flow]] into a design prompt for the mobile-first Stage. It must preserve the packet relationship with [[31 - Session Prep Flow]]: Stage renders prepared content; it does not re-synthesize, rewrite, or manage prep.
+This spec condenses [[32 - Stage UX Flow]] into a design prompt for the mobile Stage. It must preserve the packet relationship with [[31 - Session Prep Flow]]: Stage renders prepared content; it does not re-synthesize, rewrite, or manage prep.
 
-Stage is not a Sanctum dashboard in dark mode. It is a quiet table surface.
+Stage is not a Sanctum dashboard in dark mode. It is a clean, focused table surface.
 
 ## 3. User mental model
 
@@ -113,10 +113,10 @@ Avoid initiative trackers, encounter HUDs, tactical maps, live transcript panels
 
 ## 15. Visual tone
 
-Dark, quiet, fast. Every element should justify its presence at a live table. Use high contrast, large tap targets, minimal ornament, and strong state clarity. Amber marks action/currentness; Rust marks recording, danger, or destructive confirmation.
+Clean, focused, dark, and fast. Every element should justify its presence at a live table. Use high contrast, large tap targets, minimal ornament, and strong state clarity. Amber marks action/currentness; Rust marks recording, danger, or destructive confirmation.
 
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's mobile-first Stage screen for live tabletop play. Use Ink dark background, Cream text, Amber action/current state, Rust recording/destructive state. Layout: header with session state, persistent search, agenda, pinned cards one per row, session notes, sticky bottom bar with Record, Mark Moment, Dice. Include Quick Capture, Quick Stub, offline queue chip, consent gate, End Session two-step confirm, 60-second undo, and optional one-line summary after end. AI is dormant except GM-initiated Hybrid search. Exclude initiative, encounter, tactical map, VTT, live transcription, player controls, proactive AI, and deep review features.
+Create Relic's mobile Stage screen for live tabletop play. It should feel clean and focused. Use Ink dark background, Cream text, Amber action/current state, Rust recording/destructive state. Layout: header with session state, persistent search, agenda, pinned cards one per row, session notes, sticky bottom bar with Record, Mark Moment, Dice. Include Quick Capture, Quick Stub, offline queue chip, consent gate, End Session two-step confirm, 60-second undo, and optional one-line summary after end. AI is dormant except GM-initiated Hybrid search. Exclude initiative, encounter, tactical map, VTT, live transcription, player controls, proactive AI, and deep review features.
 ```

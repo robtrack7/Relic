@@ -9,6 +9,7 @@ depends_on:
   - "[[20 - Entity and Canon Schema]]"
   - "[[23 - AI Task Registry]]"
   - "[[34 - UI Implementation Spec]]"
+  - "[[13 - Design System]]"
 supersedes: []
 last_audited: 2026-05-30
 source_file: "Relic Vault/67 - Approval Queue Design Spec.md"
@@ -64,7 +65,7 @@ Desktop uses a two- or three-pane layout:
 - Main: selected draft diff/editor and action bar.
 - Right dock: source/provenance, transcript excerpt, citation drift, sibling drafts, conflict detail.
 
-Mobile uses one draft at a time. Queue list, diff, and source bottom sheet should be reachable but not cramped. Full review remains web-optimized, but mobile must allow functional approve/reject/edit.
+Mobile uses one draft at a time. Queue list, diff, and source bottom sheet should be reachable but not cramped. Full review belongs to the web Sanctum, but mobile must allow functional approve/reject/edit.
 
 The selected draft should always have a clear review frame: target entity, change kind, current state, proposed state, confidence/source quality, and the action consequence. The GM should never need to infer whether an action commits immediately, creates a follow-up draft, or only marks a proposal rejected. Keep action buttons close to the diff, while filters and queue navigation stay visually separate.
 
@@ -112,10 +113,10 @@ Avoid prominent Approve All, automatic canon commit, hidden source panels, chatb
 
 ## 15. Visual tone
 
-Trustworthy editorial desk. It should feel deliberate and evidence-backed. Use Cream review surfaces, clear before/after diff styling, Amber for action, Sage for approved/safe state, Rust for destructive/archive/broken-source warnings.
+Trustworthy editorial desk inside the literary, modern, relaxing web Sanctum. It should feel deliberate and evidence-backed. Use Cream review surfaces, clear before/after diff styling, Amber for action, Sage for approved/safe state, Rust for destructive/archive/broken-source warnings.
 
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's Approval Queue trust surface. Desktop layout: grouped draft list, selected diff/editor, source/provenance dock. Mobile: one draft at a time with source bottom sheet. Include approve, edit-and-approve, reject, merge, archive confirmation, filters, confidence chips, source badges, citation drift, broken source warnings, conflict panel, and stale queue banner. Make clear that AI drafts are not canon until explicit GM action. Do not include a prominent Approve All or proactive AI chat. Exclude player publishing, graph merge visuals, and any automatic canon write.
+Create Relic's Approval Queue trust surface inside the web Sanctum. Make it literary, modern, relaxing, deliberate, and evidence-backed. Desktop layout: grouped draft list, selected diff/editor, source/provenance dock. Mobile: one draft at a time with source bottom sheet. Include approve, edit-and-approve, reject, merge, archive confirmation, filters, confidence chips, source badges, citation drift, broken source warnings, conflict panel, and stale queue banner. Make clear that AI drafts are not canon until explicit GM action. Do not include a prominent Approve All or proactive AI chat. Exclude player publishing, graph merge visuals, and any automatic canon write.
 ```

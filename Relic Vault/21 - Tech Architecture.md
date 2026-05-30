@@ -18,7 +18,7 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 > Implementation-critical note: Treat this as coding input only after reading the authority order in [[00 - Start Here]].
 # Relic — Tech Architecture Spec v1.2
 
-**Source of truth:** `[[11 - Product Basepoint]]` §13 · `[[12 - MVP PRD]]` §0.4, §7 · `[[20 - Entity and Canon Schema]]` · `[[22 - Memory and Retrieval]]` · `[[23 - AI Task Registry]]` · `[[24 - Approval Queue]]` · `[[31 - Session Prep Flow]]` · `[[25 - Pricing and Rate Limits]]` · Design System (`[[14 - Design System Source]]`)
+**Source of truth:** `[[11 - Product Basepoint]]` §13 · `[[12 - MVP PRD]]` §0.4, §7 · `[[20 - Entity and Canon Schema]]` · `[[22 - Memory and Retrieval]]` · `[[23 - AI Task Registry]]` · `[[24 - Approval Queue]]` · `[[31 - Session Prep Flow]]` · `[[25 - Pricing and Rate Limits]]` · Design System (`[[13 - Design System]]`)
 **Status:** Locked spec. Engineering and Claude Code may build against this document. Closes carry-forward items 3–11, 17–20.
 **Scope:** Contracts and mechanisms for engineering. Not runbooks. CI/CD, log retention, and on-call rotation are out of scope unless they shape what gets built.
 
@@ -1381,7 +1381,7 @@ Audio is a special case — chunks are immutable, append-only. The upload queue 
 
 The web Stage uses the same Stage UI but does **not** maintain a SQLite cache — it relies on React Query's cache plus Supabase's real-time subscriptions. Web offline is short-window only (the IndexedDB cache lasts a session). For laptop play in a basement with patchy wifi: works, but doesn't survive a full network drop the way mobile does.
 
-This is an intentional asymmetry. The Stage is mobile-first per Basepoint; web Stage is a courtesy.
+This is an intentional asymmetry. The Stage is the clean, focused mobile app per Basepoint; web Stage is a browser fallback for the web-first build and laptop play.
 
 ---
 

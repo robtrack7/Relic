@@ -27,7 +27,7 @@ This plan runs before [[41 - Foundation Implementation Plan]]. It does not repla
 
 - Repository shape: pnpm monorepo.
 - Runtime baseline: Node 22 LTS.
-- App folders: `apps/web` for the Sanctum web app and browser Stage fallback, `apps/mobile` for Expo mobile with Stage-first routing.
+- App folders: `apps/web` for the literary, modern, relaxing Sanctum web app and browser Stage fallback; `apps/mobile` for the clean, focused Stage mobile app after the web loop is stable.
 - Shared code folders: `packages/core` for Relic domain constants/types and `packages/config` for shared tooling config.
 - Supabase folders: `supabase/migrations`, `supabase/functions`, `supabase/tests`, and `supabase/fixtures`.
 - AI proxy config folder: `services/litellm`.

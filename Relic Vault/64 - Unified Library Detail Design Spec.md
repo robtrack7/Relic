@@ -9,6 +9,7 @@ depends_on:
   - "[[20 - Entity and Canon Schema]]"
   - "[[23 - AI Task Registry]]"
   - "[[34 - UI Implementation Spec]]"
+  - "[[13 - Design System]]"
 supersedes: []
 last_audited: 2026-05-30
 source_file: "Relic Vault/64 - Unified Library Detail Design Spec.md"
@@ -21,7 +22,7 @@ source_file: "Relic Vault/64 - Unified Library Detail Design Spec.md"
 
 ## 1. Purpose
 
-The unified library/detail surface lets the GM browse, filter, search, edit, link, archive, and inspect canon or draft-adjacent records inside The Sanctum. It covers entity library patterns and the detail editor family.
+The unified library/detail surface lets the GM browse, filter, search, edit, link, archive, and inspect canon or draft-adjacent records inside the web Sanctum. It covers entity library patterns and the detail editor family.
 
 Threads deserve special weight inside this pattern because they are the continuity spine.
 
@@ -59,7 +60,7 @@ Avoid a Save button for ordinary edits. Autosave state must be visible.
 
 ## 6. Secondary actions
 
-Secondary actions include filter, sort, archived toggle, source panel, relationship picker, mention acceptance, AI Expand/Tighten/Reorganize, Draft from prompt, archive, restore, hard-delete only where upstream allows, copy link, open in Stage if pinned/active, and jump to related Session or Thread.
+Secondary actions include filter, sort, archived toggle, source panel, relationship picker, mention acceptance, Draft from prompt, Propose thread complication, Flesh stub from evidence, archive, restore, hard-delete only where upstream allows, copy link, open in Stage if pinned/active, and jump to related Session or Thread.
 
 ## 7. Layout structure
 
@@ -87,7 +88,7 @@ Archived records must be recoverable and visually subdued. Hard-delete requires 
 
 ## 10. AI behavior
 
-AI is invoked by the GM through explicit buttons. Entity assists can draft from prompt or transform rough notes. Thread complication generates ephemeral cards that the GM may copy into narrative. Stub fleshing creates an update draft routed through the approval write path.
+AI is invoked by the GM through explicit buttons. Entity assists can draft from prompt where the owning task exists. Thread complication generates ephemeral cards that the GM may copy into narrative. Stub fleshing creates an update draft routed through the approval write path.
 
 AI must not auto-link mentions or auto-create relationships. Mention suggestions are accepted or dismissed by the GM.
 
@@ -111,10 +112,10 @@ Avoid relationship graph visualization, writable timeline editor, map editor, pl
 
 ## 15. Visual tone
 
-Calm reference library with editorial detail. Names and lore should feel authored, but controls should stay practical. Threads use stronger continuity state language with Sage/Amber/Stone chips.
+Literary, modern, relaxing reference library with editorial detail. Names and lore should feel authored, but controls should stay practical. Threads use stronger continuity state language with Sage/Amber/Stone chips.
 
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's unified Sanctum library and detail pattern. Include type/filter rail, current Saga plus World canon scope filters, search, entity list, and detail editor with autosave. Detail header shows type, canon state, scope, stub/archive state, and source access. Include Thread-specific objectives and read-only timeline entry, plus GM-invoked AI buttons for draft from prompt, propose thread complication, and flesh stub from evidence. Use Relic editorial parchment styling. Exclude relationship graphs, writable timeline editors, map editors, player controls, initiative/encounter widgets, and permanent chat columns.
+Create Relic's unified web Sanctum library and detail pattern. Make it literary, modern, and relaxing. Include type/filter rail, current Saga plus World canon scope filters, search, entity list, and detail editor with autosave. Detail header shows type, canon state, scope, stub/archive state, and source access. Include Thread-specific objectives and read-only timeline entry, plus GM-invoked AI buttons for draft from prompt, propose thread complication, and flesh stub from evidence. Use Relic editorial parchment styling. Exclude relationship graphs, writable timeline editors, map editors, player controls, initiative/encounter widgets, and permanent chat columns.
 ```

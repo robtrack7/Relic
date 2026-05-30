@@ -25,7 +25,7 @@ All active source documents needed for the vault pass are present and linked.
 1. [[00 - Start Here]]
 2. [[11 - Product Basepoint]]
 3. [[12 - MVP PRD]]
-4. [[14 - Design System Source]]
+4. [[13 - Design System]]
 5. Implementation contracts: [[20 - Entity and Canon Schema]], [[21 - Tech Architecture]], [[22 - Memory and Retrieval]], [[23 - AI Task Registry]], [[24 - Approval Queue]], [[25 - Pricing and Rate Limits]]
 6. UX and UI specs: [[30 - Sanctum UX Flow]], [[31 - Session Prep Flow]], [[32 - Stage UX Flow]], [[33 - First Run UX Flow]], [[34 - UI Implementation Spec]]
 7. Reference and audit notes: [[90 - Next Steps Before Coding]], [[91 - Continuity Architecture Report]], [[92 - Priority 3 Alignment Report]], [[99 - Revisions Archive]]
@@ -35,7 +35,7 @@ All active source documents needed for the vault pass are present and linked.
 - Product/scope work: read [[11 - Product Basepoint]], [[12 - MVP PRD]], then [[03 - Glossary]].
 - Backend/schema work: read [[20 - Entity and Canon Schema]], [[21 - Tech Architecture]], [[25 - Pricing and Rate Limits]], then the relevant UX note.
 - AI/retrieval work: read [[22 - Memory and Retrieval]], [[23 - AI Task Registry]], [[24 - Approval Queue]], and [[25 - Pricing and Rate Limits]] before planning task routing or AI surfaces.
-- UX/UI work: read [[14 - Design System Source]], [[30 - Sanctum UX Flow]], [[31 - Session Prep Flow]], [[32 - Stage UX Flow]], [[33 - First Run UX Flow]], and [[34 - UI Implementation Spec]].
+- UX/UI work: read [[13 - Design System]], [[30 - Sanctum UX Flow]], [[31 - Session Prep Flow]], [[32 - Stage UX Flow]], [[33 - First Run UX Flow]], and [[34 - UI Implementation Spec]].
 - Screen-level design work: read [[60 - Design Spec Overview]], then the relevant screen spec and [[71 - Component Inventory Design Spec]] after the owning UX/UI sources.
 - Historical/context work: use archive stubs only to locate original imported files; do not build from archived notes.
 
@@ -43,6 +43,9 @@ All active source documents needed for the vault pass are present and linked.
 
 - Relic is Game Master software in MVP status usings Create -> Organize -> Prep -> Run -> Review -> Approve -> Continue workflow
 - User-facing surfaces are The Sanctum and The Stage.
+- The Sanctum is the web app: literary, modern, relaxing, and optimized for between-session creation, prep, review, and canon work.
+- The Stage is the mobile app: clean, focused, and optimized for live-session use.
+- Build order is web app first, then mobile app after the Sanctum loop and browser Stage fallback are stable.
 - Session prep is a workflow inside The Sanctum, not a third top-level mode.
 - Saga creation replaces old user-facing creation-mode wording. Internal names like `workshop_sessions`, `workshop_input`, `workshop_path`, and `workshop_state` remain valid schema identifiers.
 - Workspace owns billing, usage, and future collaboration. World owns shared setting canon. Saga owns active play and session data.

@@ -20,7 +20,7 @@ source_file: "Sourced - Downloaded - 260518/relic-session-prep-flow-v0_2.md"
 
 *Priority 7 technical closeout revision. Last updated May 2026.*
 
-**Source of truth inputs:** `[[11 - Product Basepoint]]`, `[[12 - MVP PRD]]`, `[[20 - Entity and Canon Schema]]`, `[[23 - AI Task Registry]]`, `[[22 - Memory and Retrieval]]`, `[[21 - Tech Architecture]]`, `[[32 - Stage UX Flow]]`, `[[34 - UI Implementation Spec]]`, `[[25 - Pricing and Rate Limits]]`, `[[14 - Design System Source]]`.
+**Source of truth inputs:** `[[11 - Product Basepoint]]`, `[[12 - MVP PRD]]`, `[[20 - Entity and Canon Schema]]`, `[[23 - AI Task Registry]]`, `[[22 - Memory and Retrieval]]`, `[[21 - Tech Architecture]]`, `[[32 - Stage UX Flow]]`, `[[34 - UI Implementation Spec]]`, `[[25 - Pricing and Rate Limits]]`, `[[13 - Design System]]`.
 
 ---
 
@@ -105,7 +105,7 @@ Prep may reference World-canon records, but session writes remain Saga-scoped.
 
 Use the Sanctum shell from `[[34 - UI Implementation Spec]]`.
 
-### Desktop web
+### Web Sanctum
 
 Primary panels:
 
@@ -115,11 +115,11 @@ Primary panels:
 4. **AI assist drawer** — GM-invoked only, quota-gated.
 5. **Ready for Stage panel** — packet preview, missing items, send/open in Stage.
 
-### Mobile web / narrow Sanctum
+### Mobile Sanctum-lite / narrow support path
 
 - Single-column stacked cards.
-- Editing remains possible but deep prep is web-optimized.
-- Stage-native live use remains in `[[32 - Stage UX Flow]]`.
+- Editing remains possible, but deep prep belongs to the web Sanctum.
+- Mobile Sanctum-lite follows after the web app; Stage-native live use remains in `[[32 - Stage UX Flow]]`.
 
 ---
 
@@ -210,5 +210,3 @@ On Ready for Stage:
 ---
 
 *End Session Prep Flow v0.2. Active MVP implementation source.*
-
-
