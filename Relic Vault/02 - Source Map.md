@@ -40,6 +40,25 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[45 - Security Findings Register]] | Security findings, status, mitigation, and verification tracking | Security |
 | [[50 - Session Log Index]] | Session closeout trail and implementation continuity logs | Operations |
 
+## Design Specification Sources
+
+These notes translate the active product, UX, and UI sources into compact screen-level design briefs. They are secondary to the owning source specs above and should be used with [[14 - Design System Source]] and [[34 - UI Implementation Spec]].
+
+| Note | Use for | Authority |
+|---|---|---|
+| [[60 - Design Spec Overview]] | Entry point, design-spec map, preserved product decisions, review checklist | Secondary design |
+| [[61 - Sanctum Dashboard Design Spec]] | Active Saga cockpit, dashboard states, quick create, recent canon, prep/review entry | Secondary design |
+| [[62 - New Saga Design Spec]] | New saga entry, World/Saga choice, GM profile, help-level cards | Secondary design |
+| [[63 - Saga Scaffold Review Design Spec]] | Creation-time AI draft review, source inspection, commit-to-canon moment | Secondary design |
+| [[64 - Unified Library Detail Design Spec]] | Entity, Thread, Session, note library/detail patterns | Secondary design |
+| [[65 - Session Prep Design Spec]] | Prep workspace inside The Sanctum and Ready for Stage handoff | Secondary design |
+| [[66 - Mobile Stage Design Spec]] | Dark mobile-first live session Stage | Secondary design |
+| [[67 - Approval Queue Design Spec]] | Draft review, diff, source/provenance, canon approval | Secondary design |
+| [[68 - Ask Search Design Spec]] | Top-context search, command palette, Ask Relic Q&A | Secondary design |
+| [[69 - Settings Usage Design Spec]] | Saga/World/Workspace settings, usage, retention, export | Secondary design |
+| [[70 - Mobile Sanctum Lite Design Spec]] | Mobile-light Sanctum routes and reductions | Secondary design |
+| [[71 - Component Inventory Design Spec]] | Shared component vocabulary and state coverage | Secondary design |
+
 ## Archive / Non-Coding Notes
 
 These notes are retained as stubs or historical references. They are not active coding sources.
