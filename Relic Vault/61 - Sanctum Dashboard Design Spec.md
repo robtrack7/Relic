@@ -27,7 +27,7 @@ This is not a generic Workspace overview or analytics page. Workspace and World 
 
 ## 2. Page synthesis
 
-The page combines state-aware home behavior from [[30 - Sanctum UX Flow]], prep entry from [[31 - Session Prep Flow]], shell rules from [[34 - UI Implementation Spec]], and visual tone from [[13 - Design System]]. It is the web app's literary, modern, relaxing Saga cockpit and should show one dominant next step, not a grid of equal modules.
+The page combines state-aware home behavior from [[30 - Sanctum UX Flow]], prep entry from [[31 - Session Prep Flow]], shell rules from [[34 - UI Implementation Spec]], and visual tone from [[13 - Design System]]. It is The Sanctum's literary, modern, relaxing Saga cockpit and should show one dominant next step, not a grid of equal modules.
 
 When a session is planned or ready, the dashboard's primary content becomes an inline prep surface. When a session is in progress, it becomes a Resume Stage surface. When review is pending, it foregrounds the Approval Queue without hiding Plan Next Session. When no session exists, it points to Plan Session 1 or New session.
 
@@ -118,10 +118,10 @@ Avoid generic metrics dashboards, full Workspace admin cards, permanent chatbot 
 
 ## 15. Visual tone
 
-Literary, modern, relaxing, and decisive. The web dashboard should feel like a prepared desk for the active Saga: parchment frame, cream cards, restrained Amber action, Sage thread signals, Cormorant for Saga/session names, DM Mono for state and provenance.
+Literary, modern, relaxing, and decisive. The dashboard should feel like a prepared desk for the active Saga on any platform: parchment frame, cream cards, restrained Amber action, Sage thread signals, Cormorant for Saga/session names, DM Mono for state and provenance.
 
 ## 16. Claude Design prompt
 
 ```text
-Create the Relic Sanctum dashboard as an active Saga cockpit for the web app, not a Workspace overview. Make it literary, modern, and relaxing using the Sanctum parchment design system. Include shell context for Workspace/World/Saga, top-bar search, nav order Threads, Entities, Sessions, Review, Ask. The main card must adapt to Saga/session state and show the next loop action. Include Thread carry-forward, pending review, recently edited canon, and quick create. Session prep lives inline when a session is planned or ready. Ask Relic is a page/contextual action, not a permanent chat column. Exclude initiative, encounter, map, player, graph, and live transcription features.
+Create the Relic Sanctum dashboard as an active Saga cockpit, not a Workspace overview. Make it literary, modern, and relaxing using the Sanctum parchment design system. Include shell context for Workspace/World/Saga, top-bar search, nav order Threads, Entities, Sessions, Review, Ask. The main card must adapt to Saga/session state and show the next loop action. Include Thread carry-forward, pending review, recently edited canon, and quick create. Session prep lives inline when a session is planned or ready. Ask Relic is a page/contextual action, not a permanent chat column. Design desktop and mobile layouts as equivalent product capability, with mobile using stacked sections and sheets. Exclude initiative, encounter, map, player, graph, and live transcription features.
 ```

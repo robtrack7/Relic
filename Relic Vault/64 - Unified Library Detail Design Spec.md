@@ -22,7 +22,7 @@ source_file: "Relic Vault/64 - Unified Library Detail Design Spec.md"
 
 ## 1. Purpose
 
-The unified library/detail surface lets the GM browse, filter, search, edit, link, archive, and inspect canon or draft-adjacent records inside the web Sanctum. It covers entity library patterns and the detail editor family.
+The unified library/detail surface lets the GM browse, filter, search, edit, link, archive, and inspect canon or draft-adjacent records inside The Sanctum. It covers entity library patterns and the detail editor family.
 
 Threads deserve special weight inside this pattern because they are the continuity spine.
 
@@ -117,5 +117,5 @@ Literary, modern, relaxing reference library with editorial detail. Names and lo
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's unified web Sanctum library and detail pattern. Make it literary, modern, and relaxing. Include type/filter rail, current Saga plus World canon scope filters, search, entity list, and detail editor with autosave. Detail header shows type, canon state, scope, stub/archive state, and source access. Include Thread-specific objectives and read-only timeline entry, plus GM-invoked AI buttons for draft from prompt, propose thread complication, and flesh stub from evidence. Use Relic editorial parchment styling. Exclude relationship graphs, writable timeline editors, map editors, player controls, initiative/encounter widgets, and permanent chat columns.
+Create Relic's unified Sanctum library and detail pattern for web and mobile. Make it literary, modern, and relaxing. Include type/filter rail or sheet, current Saga plus World canon scope filters, search, entity list, and detail editor with autosave. Detail header shows type, canon state, scope, stub/archive state, and source access. Include Thread-specific objectives and read-only timeline entry, plus GM-invoked AI buttons for draft from prompt, propose thread complication, and flesh stub from evidence. Use Relic editorial parchment styling. Exclude relationship graphs, writable timeline editors, map editors, player controls, initiative/encounter widgets, and permanent chat columns.
 ```

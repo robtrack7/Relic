@@ -63,7 +63,7 @@ Bring your notes should only expose MVP-supported note intake. Do not show disab
 
 ## 7. Layout structure
 
-Use a focused web Sanctum creation layout, not the full dashboard. Parchment background, centered form width, Cream groups, Cormorant title `New saga`, and a simple progress/context label.
+Use a focused Sanctum creation layout, not the full dashboard. Parchment background, centered form width, Cream groups, Cormorant title `New saga`, and a simple progress/context label.
 
 Desktop layout: left column for core fields and profile, right column for help-level cards and a short "What happens next" summary. Mobile stacks: title, resume card if present, Saga name, World choice, profile card, help-level cards, CTA.
 
@@ -109,10 +109,10 @@ Avoid marketing hero pages, tutorial Saga setup, player setup, co-GM invitations
 
 ## 15. Visual tone
 
-Literary, modern, relaxing, and ceremonial, but short. It should feel like opening a new field journal inside the web Sanctum: tactile, focused, and ready for creation. Amber should mark the next step. Rust appears only for discard or blocked states.
+Literary, modern, relaxing, and ceremonial, but short. It should feel like opening a new field journal inside The Sanctum: tactile, focused, and ready for creation. Amber should mark the next step. Rust appears only for discard or blocked states.
 
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's New saga screen. It is a focused creation form inside the web Sanctum, not a marketing onboarding page. Make it literary, modern, and relaxing. Include Saga name, optional game system, compact World choice, GM profile card, and three help-level radio cards: Build with AI, Bring your notes, Start blank. The selected card changes the primary CTA. Show resume-draft and duplicate-name states. AI does not run on this page; it starts only after the GM invokes an AI-assisted path. Use Relic parchment/cream editorial styling and exclude player setup, full World admin, Era editor, model settings, and image generation.
+Create Relic's New saga screen. It is a focused creation form inside The Sanctum, not a marketing onboarding page. Make it literary, modern, and relaxing. Include Saga name, optional game system, compact World choice, GM profile card, and three help-level radio cards: Build with AI, Bring your notes, Start blank. The selected card changes the primary CTA. Show resume-draft and duplicate-name states. AI does not run on this page; it starts only after the GM invokes an AI-assisted path. Use Relic parchment/cream editorial styling and include both desktop and mobile layouts with equivalent functionality. Exclude player setup, full World admin, Era editor, model settings, and image generation.
 ```

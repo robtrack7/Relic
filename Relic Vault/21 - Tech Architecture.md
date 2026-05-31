@@ -1310,7 +1310,7 @@ Per Basepoint §13 and PRD v0.10: current session packet, pinned entities, sessi
 
 ### 15.2 expo-sqlite + Drizzle on mobile
 
-The mobile app embeds a SQLite database accessed via Drizzle ORM. Schema is a **subset** of the Supabase schema — only tables the Stage needs:
+The mobile app embeds a SQLite database accessed via Drizzle ORM. Schema is a **subset** of the Supabase schema focused on offline-critical mobile workflows, starting with the Stage packet and the Sanctum records needed around prep, review, search, and context:
 
 - `sessions` (active session plus any `status='ready'` row cached when the GM enters session prep workspace for that session)
 - `characters`, `places`, `factions`, `artifacts`, `threads` (only pinned + recently-searched)
@@ -1381,7 +1381,7 @@ Audio is a special case — chunks are immutable, append-only. The upload queue 
 
 The web Stage uses the same Stage UI but does **not** maintain a SQLite cache — it relies on React Query's cache plus Supabase's real-time subscriptions. Web offline is short-window only (the IndexedDB cache lasts a session). For laptop play in a basement with patchy wifi: works, but doesn't survive a full network drop the way mobile does.
 
-This is an intentional asymmetry. The Stage is the clean, focused mobile app per Basepoint; web Stage is a browser fallback for the web-first build and laptop play.
+This is an intentional platform asymmetry, not a product-surface split. The Stage is clean and focused on both web and mobile; mobile gets deeper offline resilience because table use benefits from it. Web Stage remains first-class for the web-first build and laptop play.
 
 ---
 
@@ -1389,7 +1389,7 @@ This is an intentional asymmetry. The Stage is the clean, focused mobile app per
 
 ### 16.1 Mobile: EAS
 
-Expo Application Services builds and submits the mobile app. Expo owns Stage as the primary surface and includes mobile-functional session prep workspace screens for packet review, agenda edits, and Ready for Stage handoff.
+Expo Application Services builds and submits the mobile app. Expo owns the mobile implementation of both Sanctum and Stage, including session prep, packet review, agenda edits, Ready for Stage handoff, and the live Stage surface.
 
 - **Channels.** `development` (local dev), `preview` (TestFlight/internal Android), `production` (App Store).
 - **OTA updates.** EAS Update for JS-only changes (bug fixes, copy tweaks). Native binary updates ship through stores.
@@ -1650,7 +1650,7 @@ Push token registration:
 3. Upload to `push_devices` (RLS scopes to user).
 4. On uninstall / permission revoke, mark the device stale (cleanup cron sweeps weekly).
 
-Web push is not in MVP — the web Stage is a courtesy, not a primary surface, and Web Push setup is meaningfully more work than mobile.
+Web push is not in MVP — email plus mobile push are the MVP notification channels, and Web Push setup is meaningfully more work for less immediate value.
 
 ### 18.7 Preferences UI
 

@@ -52,11 +52,11 @@ These notes translate the active product, UX, and UI sources into compact screen
 | [[63 - Saga Scaffold Review Design Spec]] | Creation-time AI draft review, source inspection, commit-to-canon moment | Secondary design |
 | [[64 - Unified Library Detail Design Spec]] | Entity, Thread, Session, note library/detail patterns | Secondary design |
 | [[65 - Session Prep Design Spec]] | Prep workspace inside The Sanctum and Ready for Stage handoff | Secondary design |
-| [[66 - Mobile Stage Design Spec]] | Clean, focused mobile live-session Stage | Secondary design |
+| [[66 - Stage Design Spec]] | Clean, focused live-session Stage across web and mobile | Secondary design |
 | [[67 - Approval Queue Design Spec]] | Draft review, diff, source/provenance, canon approval | Secondary design |
 | [[68 - Ask Search Design Spec]] | Top-context search, command palette, Ask Relic Q&A | Secondary design |
 | [[69 - Settings Usage Design Spec]] | Saga/World/Workspace settings, usage, retention, export | Secondary design |
-| [[70 - Mobile Sanctum Lite Design Spec]] | Mobile-light Sanctum routes and reductions | Secondary design |
+| [[70 - Mobile App Design Spec]] | Mobile adaptation of both Sanctum and Stage | Secondary design |
 | [[71 - Component Inventory Design Spec]] | Shared component vocabulary and state coverage | Secondary design |
 
 ## Archive / Non-Coding Notes

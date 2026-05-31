@@ -113,10 +113,10 @@ Avoid general Approval Queue layouts with unrelated post-session drafts, promine
 
 ## 15. Visual tone
 
-Literary, modern, relaxing editorial review table inside the web Sanctum creation flow. The page should feel careful but not bureaucratic: draft cards on Cream, Amber for commit/readiness, Rust for blocking validation, Sage for resolved readiness. Cormorant carries names; DM Mono carries `DRAFT`, source, and warning labels.
+Literary, modern, relaxing editorial review table inside the Sanctum creation flow. The page should feel careful but not bureaucratic: draft cards on Cream, Amber for commit/readiness, Rust for blocking validation, Sage for resolved readiness. Cormorant carries names; DM Mono carries `DRAFT`, source, and warning labels.
 
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's Saga scaffold review screen after AI-assisted New saga. It is the GM approval moment before canon write inside the literary, modern, relaxing web Sanctum creation flow. Use a desktop layout with section rail, editable draft-card main pane, and source/warnings rail; include a mobile stacked variant with source bottom sheet. Show draft chips, source badges, duplicate warnings, edit/regenerate/discard actions, first-session packet preview, and a disabled/enabled Commit saga bar. AI can only regenerate targeted items. Nothing is canon until the GM commits. Exclude general queue bulk approval, player publishing, graph/timeline editors, image generation, and model settings.
+Create Relic's Saga scaffold review screen after AI-assisted New saga. It is the GM approval moment before canon write inside the literary, modern, relaxing Sanctum creation flow. Use a desktop layout with section rail, editable draft-card main pane, and source/warnings rail; include a mobile stacked variant with source bottom sheet and equivalent commit/edit/regenerate capability. Show draft chips, source badges, duplicate warnings, edit/regenerate/discard actions, first-session packet preview, and a disabled/enabled Commit saga bar. AI can only regenerate targeted items. Nothing is canon until the GM commits. Exclude general queue bulk approval, player publishing, graph/timeline editors, image generation, and model settings.
 ```

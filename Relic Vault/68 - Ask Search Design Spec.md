@@ -105,10 +105,10 @@ Avoid permanent chatbot columns, proactive prompts, uncited answers, cross-Saga 
 
 ## 15. Visual tone
 
-Fast, precise, quiet, and compatible with the literary, modern, relaxing web Sanctum. Search should feel like a command palette inside an editorial workspace. Ask should feel like a cited reference answer, not a personality-driven chatbot.
+Fast, precise, quiet, and compatible with the literary, modern, relaxing Sanctum. Search should feel like a command palette inside an editorial workspace. Ask should feel like a cited reference answer, not a personality-driven chatbot.
 
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's Search and Ask surfaces for the literary, modern, relaxing web Sanctum. Search lives in the top context bar and opens a command palette/full search page with scope/type filters and grouped results. Ask Relic is a page, collapsible sidecar, or contextual action, not a permanent chatbot column. Ask answers are canon-only, GM-invoked, and require citations; include no-answer, quota, retry, and source preview states. Default retrieval is current Saga plus relevant World canon. Use Relic editorial styling and exclude proactive chat, model settings, BYOK, cross-Saga default search, and answer-to-canon actions.
+Create Relic's Search and Ask surfaces for the literary, modern, relaxing Sanctum on web and mobile. Search lives in the top context bar and opens a command palette/full search page with scope/type filters and grouped results. Ask Relic is a page, collapsible sidecar, or contextual action, not a permanent chatbot column. Ask answers are canon-only, GM-invoked, and require citations; include no-answer, quota, retry, and source preview states. Default retrieval is current Saga plus relevant World canon. Use Relic editorial styling and exclude proactive chat, model settings, BYOK, cross-Saga default search, and answer-to-canon actions.
 ```

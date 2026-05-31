@@ -40,7 +40,7 @@ Do not use glossy gradients, decorative illustrations, broad icon strips, emoji,
 
 ## App Shell
 
-The web app opens into The Sanctum. The Sanctum should feel literary, modern, and relaxing. Use a left navigation rail with the Relic wordmark, surface label, primary navigation, active Workspace/World/Saga context, usage state, and sign-out control. Keep the rail parchment/cream, not a dark top header.
+The web app opens into The Sanctum by default, but it includes both Sanctum and Stage surfaces. The Sanctum should feel literary, modern, and relaxing. Use a left navigation rail with the Relic wordmark, surface label, primary navigation, active Workspace/World/Saga context, usage state, and sign-out control. Keep the rail parchment/cream, not a dark top header.
 
 Primary navigation order:
 
@@ -90,7 +90,7 @@ Settings stay lightweight: Saga, World/Workspace context, usage, retention/expor
 
 ### Browser Stage Fallback
 
-Stage is clean, focused, dark, and separate from Sanctum chrome. The browser fallback uses Ink background, Cream text, translucent Stage cards, session title/status, persistent literal search, agenda, pinned cards, quick capture, quick stub, and a sticky action bar for Record state, Mark Moment, and End Session. Do not add live transcript captions, proactive AI, or decorative motion beyond a record-state indicator.
+Stage is clean, focused, dark, and separate from Sanctum chrome. The web Stage surface uses Ink background, Cream text, translucent Stage cards, session title/status, persistent literal search, agenda, pinned cards, quick capture, quick stub, and a sticky action bar for Record state, Mark Moment, and End Session. Do not add live transcript captions, proactive AI, or decorative motion beyond a record-state indicator.
 
 ## First Implementation Pass
 
@@ -100,14 +100,14 @@ The first pass should install the visual foundation without broad route rewrites
 - Map design tokens into `globals.css`.
 - Update shared primitives for buttons, cards, chips, fields, page heads, entity rows, command/search affordance, Sanctum shell, and Stage shell.
 - Update `SanctumShell` so Ask is primary nav and Search is a command affordance.
-- Restyle the browser Stage fallback using Stage tokens while preserving existing manual actions.
+- Build the web Stage surface using Stage tokens while preserving existing manual actions.
 
 Future passes can convert individual routes to richer page-specific components once the foundation is stable.
 
 ## Acceptance
 
 - Authenticated web screens inherit the design system without adding provider calls or AI runtime behavior.
-- The Sanctum/Stage split is obvious: Sanctum is the literary, modern, relaxing web app; Stage is the clean, focused mobile app with a browser fallback.
+- The Sanctum/Stage split is obvious as a mode split, not a platform split: Sanctum is literary, modern, relaxing; Stage is clean and focused; both exist on web and mobile.
 - Session prep reads as Sanctum work with Amber emphasis, not a third mode.
 - Search is available without replacing Ask in primary navigation.
 - Local fonts and wordmark load from web public assets.

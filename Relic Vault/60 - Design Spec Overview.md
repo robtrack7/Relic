@@ -41,13 +41,13 @@ Reusable component guidance lives in [[71 - Component Inventory Design Spec]]. E
 | [[61 - Sanctum Dashboard Design Spec]] | State-aware Saga cockpit, current prep, recent canon, quick create, pending review, and continuity restart. |
 | [[62 - New Saga Design Spec]] | Entry flow for Build with AI, Bring your notes, and Start blank. |
 | [[63 - Saga Scaffold Review Design Spec]] | Review and commit of AI-assisted starting material before canon write. |
-| [[64 - Unified Library Detail Design Spec]] | Entity, Thread, Session, and note browsing/detail patterns inside the web Sanctum. |
-| [[65 - Session Prep Design Spec]] | Prep workspace inside the web Sanctum and Ready for Stage handoff. |
-| [[66 - Mobile Stage Design Spec]] | Clean, focused mobile live-session surface. |
+| [[64 - Unified Library Detail Design Spec]] | Entity, Thread, Session, and note browsing/detail patterns inside The Sanctum. |
+| [[65 - Session Prep Design Spec]] | Prep workspace inside The Sanctum and Ready for Stage handoff. |
+| [[66 - Stage Design Spec]] | Clean, focused live-session surface across web and mobile. |
 | [[67 - Approval Queue Design Spec]] | Trust surface for draft review, source inspection, and canon commit. |
 | [[68 - Ask Search Design Spec]] | Top context search, Ask Relic page/sidecar, and cited answers. |
 | [[69 - Settings Usage Design Spec]] | Saga, World, Workspace, retention, usage, quota, and export controls. |
-| [[70 - Mobile Sanctum Lite Design Spec]] | Mobile-light Sanctum workflows that support the loop without becoming the main deep-work surface. |
+| [[70 - Mobile App Design Spec]] | Mobile adaptation of both Sanctum and Stage without reducing product scope. |
 | [[71 - Component Inventory Design Spec]] | Shared component vocabulary, states, and constraints. |
 
 The requested `50` numbering could not be used because [[50 - Session Log Index]] already exists and is the canonical operations index. This layer uses `60` through `71` to preserve existing backlinks.
@@ -58,7 +58,7 @@ The Sanctum dashboard is a clean contemporary/literary active Saga landing page 
 
 Session prep lives inside Sanctum. It can open as a fuller editor route, but it is not a third top-level surface and does not get its own navigation mode. Prep uses The Sanctum's parchment base with Amber-forward action accents and Sage thread-state signals.
 
-The Stage is the clean, focused mobile live-session surface. It is optimized for glance reading, quick capture, search, pinned cards, recording, Mark Moment, dice, and End Session. It must not become a tactical board, encounter manager, live transcript viewer, or proactive AI cockpit.
+The Stage is the clean, focused live-session surface on web and mobile. It is optimized for glance reading, quick capture, search, pinned cards, recording, Mark Moment, dice, and End Session. It must not become a tactical board, encounter manager, live transcript viewer, or proactive AI cockpit.
 
 Threads are the continuity spine. They appear before generic entity browsing in the Sanctum navigation, drive dashboard carry-forward, frame prep, and give the GM a compact way to understand what still matters.
 
@@ -78,8 +78,8 @@ Relic has two product surfaces:
 
 | Surface | Primary role | Design stance |
 |---|---|---|
-| The Sanctum | Create, organize, prep, review, approve, continue. | Web app: literary, modern, relaxing. |
-| The Stage | Run live sessions. | Mobile app: clean, focused, high-contrast, resilient offline. |
+| The Sanctum | Create, organize, prep, review, approve, continue. | Literary, modern, relaxing on web and mobile. |
+| The Stage | Run live sessions. | Clean, focused, high-contrast, resilient offline where the platform supports it. |
 
 The Sanctum uses Parchment as the frame and Cream as card/elevated surface. It should feel literary, modern, and relaxing while still structured enough for serious continuity work. The Stage uses Ink as the base, Cream foreground, Amber for current action/state, Rust for recording or blocked/destructive states, and should remain clean and focused.
 
@@ -145,7 +145,7 @@ Stage navigation should be minimal. A GM mid-session should see session title, s
 Use this checklist when reviewing any mockup, Claude Design output, or UI implementation:
 
 - Does it preserve the Sanctum/Stage split?
-- Does session prep appear inside the web Sanctum rather than as a third top-level mode?
+- Does session prep appear inside The Sanctum rather than as a third top-level mode?
 - Does the dashboard read as an active Saga cockpit?
 - Are Threads visibly treated as continuity spine?
 - Is AI invoked by the GM, except the visible canon-only prep briefing?
@@ -163,7 +163,7 @@ Use this checklist when reviewing any mockup, Claude Design output, or UI implem
 When using these specs with Claude Design, start with this shared context:
 
 ```text
-Design Relic, an AI-assisted Saga creation and continuity workspace for tabletop Game Masters. Use the active Relic design system: Parchment #EFEBE4, Cream #F7F4EF, Ink #1A1916, Amber #B8702A, Rust #8A3828, Sage #496640; Cormorant Garamond for names/titles, Instrument Sans for UI, DM Mono for metadata. Preserve two surfaces: The Sanctum is the web app and should feel literary, modern, and relaxing for create/organize/prep/review/approve/continue; The Stage is the mobile app and should feel clean, focused, and live-session-ready. Build the web app first, then mobile after. AI is GM-invoked, never proactive, and never writes canon without explicit GM approval or a documented inline review path. Search lives in the top context bar. Ask Relic is a page/sidecar/contextual action, not a permanent chatbot column. Do not include MVP-excluded features.
+Design Relic, an AI-assisted Saga creation and continuity workspace for tabletop Game Masters. Use the active Relic design system: Parchment #EFEBE4, Cream #F7F4EF, Ink #1A1916, Amber #B8702A, Rust #8A3828, Sage #496640; Cormorant Garamond for names/titles, Instrument Sans for UI, DM Mono for metadata. Preserve two surfaces on both web and mobile: The Sanctum should feel literary, modern, and relaxing for create/organize/prep/review/approve/continue; The Stage should feel clean, focused, and live-session-ready. Build the web app first with the full Sanctum/Stage loop, then adapt the full product to mobile. AI is GM-invoked, never proactive, and never writes canon without explicit GM approval or a documented inline review path. Search lives in the top context bar. Ask Relic is a page/sidecar/contextual action, not a permanent chatbot column. Do not include MVP-excluded features.
 ```
 
 Then append the relevant screen's `Claude Design prompt` section.

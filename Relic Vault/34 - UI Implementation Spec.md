@@ -41,7 +41,7 @@ This spec translates the active Relic product, UX, schema, architecture, and des
 
 **Implementation rule:** build the loop first: Create → Organize → Prep → Run → Review → Approve → Continue.
 
-**MVP surface and build-order rule:** The Sanctum is the web app and is built first. It should feel literary, modern, and relaxing. The Stage is the mobile app and is built after the web loop is stable; it should feel clean and focused. Browser Stage fallback and mobile Sanctum-lite are support paths.
+**MVP surface and build-order rule:** The Sanctum and The Stage are both product surfaces on web and mobile. Sanctum should feel literary, modern, and relaxing. Stage should feel clean and focused. Build the web app first with both surfaces and the full loop, then build the mobile app with platform-appropriate layouts and offline behavior.
 
 ---
 
@@ -87,7 +87,7 @@ Use IDs in routes for MVP. Slugs may be added later for readability but must not
 
 ### 1.2 Mobile routes — Expo Router
 
-Mobile is built after the web app and starts at the Stage, but must expose enough Sanctum-lite navigation to avoid dead ends.
+Mobile is built after the web app and preserves both Sanctum and Stage. It may open to Stage when a session is live, but it must expose complete mobile-appropriate Sanctum routes as part of the same product model.
 
 | Route | Surface | Purpose | MVP |
 |---|---|---|---:|
@@ -103,11 +103,11 @@ Mobile is built after the web app and starts at the Stage, but must expose enoug
 | `/stage/:sessionId/stub` | Stage sheet | Quick NPC/place/thread stub | P0 |
 | `/stage/:sessionId/dice` | Stage sheet | Basic dice utility | P0 |
 | `/stage/:sessionId/end` | Stage modal | End Session confirm + undo | P0 |
-| `/sanctum` | Sanctum-lite | Saga home summary and next action | P0 |
-| `/sanctum/entities` | Sanctum-lite | Entity list/search | P0 light |
-| `/sanctum/entities/:entityType/:entityId` | Sanctum-lite | Read + light edit | P0 light |
-| `/sanctum/sessions/:sessionId/prep` | Sanctum-lite | Session packet read/edit enough to mark ready | P0 light |
-| `/sanctum/review` | Sanctum-lite | Functional Approval Queue minimum | P0 light |
+| `/sanctum` | Sanctum | Saga home summary and next action | P0 |
+| `/sanctum/entities` | Sanctum | Entity list/search | P0 |
+| `/sanctum/entities/:entityType/:entityId` | Sanctum | Read/edit detail | P0 |
+| `/sanctum/sessions/:sessionId/prep` | Sanctum | Session packet read/edit and Ready for Stage | P0 |
+| `/sanctum/review` | Sanctum | Approval Queue review with mobile source sheets | P0 |
 | `/settings` | Settings | Retention, usage readout, sign out | P0 minimal |
 
 ---
@@ -116,7 +116,7 @@ Mobile is built after the web app and starts at the Stage, but must expose enoug
 
 ### 2.1 Sanctum desktop shell
 
-**Use for:** the primary web app: saga home, Threads, Entities, Sessions, Review, Ask, Settings.
+**Use for:** the web implementation of the Sanctum: saga home, Threads, Entities, Sessions, Review, Ask, Settings.
 
 - Parchment background.
 - Left navigation rail, 220–260px.
@@ -139,7 +139,7 @@ Default nav order: **Threads · Entities · Sessions · Review · Ask**. Setting
 
 ### 2.3 Stage mobile shell
 
-**Use for:** the primary mobile app for live play.
+**Use for:** the mobile implementation of Stage for live play.
 
 - Ink background.
 - Cream text and cards.
@@ -149,9 +149,9 @@ Default nav order: **Threads · Entities · Sessions · Review · Ask**. Setting
 - Sticky bottom action bar: Record · Mark Moment · Dice.
 - Clean and focused. No decorative elements. No marketing copy. No proactive AI prompts.
 
-### 2.4 Stage browser fallback shell
+### 2.4 Stage web shell
 
-**Use for:** web-first browser fallback and tablet use before the mobile app ships.
+**Use for:** web implementation of Stage and tablet/laptop live play before the mobile app ships.
 
 - Same dark Stage visual language.
 - Main Stage column remains primary.

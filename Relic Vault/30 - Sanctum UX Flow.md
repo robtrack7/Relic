@@ -20,7 +20,7 @@ source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 
 **Source of truth:** [[11 - Product Basepoint]] · [[12 - MVP PRD]] · [[20 - Entity and Canon Schema]] · [[24 - Approval Queue]] · [[22 - Memory and Retrieval]] · [[23 - AI Task Registry]] · [[21 - Tech Architecture]] · [[31 - Session Prep Flow]] · [[13 - Design System]]
 **Status:** Active Sanctum UX specification. Replaces v0.1. Sister doc to Stage UX Flow v0.6.
-**Scope:** MVP (P0). The Sanctum is the GM's web app — literary, modern, relaxing, and focused on worldbuilding, session prep, review, approval, settings, and canon management.
+**Scope:** MVP (P0). The Sanctum is the GM's home-base surface on web and mobile — literary, modern, relaxing, and focused on worldbuilding, session prep, review, approval, settings, and canon management.
 
 ---
 
@@ -48,7 +48,7 @@ No changes to Approval Queue surface (§8), Search (§9), Imports (§10), Sessio
 
 ## 0. How to read this
 
-The Sanctum is the GM's web home base. When there is no live session — which is most of the time — the GM is here. It handles: saga creation, the dashboard, entity management, thread tracking, session prep, post-session review, approval queue, settings, and export. The web app is built first; mobile Sanctum-lite follows later as a support path.
+The Sanctum is the GM's home base. When there is no live session — which is most of the time — the GM is here. It handles: saga creation, the dashboard, entity management, thread tracking, session prep, post-session review, approval queue, settings, and export. The web app is built first, then the mobile app adapts the same Sanctum capabilities to smaller screens.
 
 The section order:
 
@@ -76,7 +76,7 @@ Requirement IDs from PRD are referenced inline. Requirements introduced in v0.1 
 
 ## 1. Premise
 
-The Sanctum is the web home base for the active World and Saga. Session prep lives here. Entity management lives here. The approval queue lives here. Its tone is literary, modern, and relaxing. The Stage is the mobile live-session surface. Everything between sessions is here.
+The Sanctum is the home base for the active World and Saga. Session prep lives here. Entity management lives here. The approval queue lives here. Its tone is literary, modern, and relaxing. The Stage is the clean, focused live-session surface. Both surfaces exist on web and mobile.
 
 **Four rules (unchanged from v0.1):**
 
@@ -97,9 +97,9 @@ The Sanctum is the web home base for the active World and Saga. Session prep liv
 
 | Surface | Background | Accents |
 |---|---|---|
-| **Sanctum default web app** | Parchment `#EFEBE4` with noise overlay | Literary, modern, relaxing. Cream `#F7F4EF` for card surfaces. |
+| **Sanctum** | Parchment `#EFEBE4` with noise overlay | Literary, modern, relaxing. Cream `#F7F4EF` for card surfaces. |
 | **Session prep area (inline within Sanctum)** | Parchment `#EFEBE4` — same as default | **Amber-forward:** prep action CTAs, agenda field left-rules, Ready for Stage button all use Amber `#B8702A`. Thread-state chips use Sage `#496640` (active), Amber (loose), Stone (dormant), Stone muted (resolved). |
-| **Stage mobile app** | Ink `#1A1916` | Clean and focused. Cream foreground, Amber action state, Rust recording state. |
+| **Stage** | Ink `#1A1916` | Clean and focused. Cream foreground, Amber action state, Rust recording state. |
 
 **Why:** session prep workspace as a mode (with its own Cream surface) implied a mode-switch the GM had to consciously make. Session prep is not a separate mode — it is what the GM does *within* the Sanctum when a session is upcoming. Amber density does the work of visual differentiation without requiring a separate palette. The GM does not have to "go to session prep workspace"; they are already home.
 
@@ -680,7 +680,7 @@ All tasks except `compose_prep_briefing` (auto-running reading aid) are GM-invok
 
 Loading states, offline behavior, empty saga, mobile reduction, reasoning — unchanged from v0.1 §16.3–16.7.
 
-**Mobile reduction update (§16.6):** The web Sanctum is the primary build target. Mobile Sanctum-lite is a later support path; Thread timeline view is web-preferred and may remain read-only/horizontal-scroll on mobile. All essential thread list operations remain mobile-functional when Sanctum-lite ships.
+**Mobile adaptation update (§16.6):** The web app is the first build target, but mobile Sanctum is not a lesser product surface. Mobile may use stacked layouts, sheets, and horizontal-scroll timeline treatment, while preserving complete core loop functionality.
 
 ---
 
@@ -732,5 +732,4 @@ The prior downstream-doc revision table is closed by the vault pass. Current act
 ---
 
 *End Sanctum UX Flow v0.2 vault copy. Aligned for MVP coding with Basepoint v3.5, PRD v0.10, Schema v0.8, Approval Queue v0.5, Memory v0.9, AI Registry v1.0, Tech Architecture v1.2, Stage UX v0.6, Session Prep v0.2, and Design System.*
-
 

@@ -26,16 +26,16 @@ This inventory names the reusable Relic components that should appear across the
 
 All components should preserve Relic's surface model:
 
-- The Sanctum web app: Parchment base, Cream cards, literary/modern/relaxing tone, Amber for consequential action, Sage for ready/confirmed/thread-active state, Rust for destructive/blocked/recording.
-- The Stage mobile app: Ink base, Cream foreground, clean/focused tone, high contrast, minimal decoration, large tap targets, offline resilience.
+- The Sanctum: Parchment base, Cream cards, literary/modern/relaxing tone, Amber for consequential action, Sage for ready/confirmed/thread-active state, Rust for destructive/blocked/recording.
+- The Stage: Ink base, Cream foreground, clean/focused tone, high contrast, minimal decoration, large tap targets, offline resilience where the platform supports it.
 
 Material 3 and Checklist Design can be used to check component coverage: nav, inputs, dialogs, sheets, feedback, loading, empty, offline, error, and destructive confirmation. Do not copy their visual styling.
 
 ## Navigation
 
-`SanctumShell` wraps authenticated web Sanctum routes. It includes Home, Threads, Entities, Sessions, Review, Ask; lower-priority Export and Settings; top context bar; main content slot; and optional right utility sidecar.
+`SanctumShell` wraps authenticated Sanctum routes on web and mobile. It includes Home, Threads, Entities, Sessions, Review, Ask; lower-priority Export and Settings; context bar or context sheet; main content slot; and optional right utility sidecar on wide screens.
 
-`StageShell` wraps the mobile Stage routes. It includes Stage header, search, primary scroll area, sticky action bar, and optional browser fallback side panel.
+`StageShell` wraps Stage routes on web and mobile. It includes Stage header, search, primary scroll area, sticky action bar, and optional wide-screen side panel.
 
 `MobileSanctumShell` is the phone-friendly Sanctum shell with context sheet, bottom nav, and single-column content.
 

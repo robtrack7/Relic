@@ -27,7 +27,7 @@ This plan runs before [[41 - Foundation Implementation Plan]]. It does not repla
 
 - Repository shape: pnpm monorepo.
 - Runtime baseline: Node 22 LTS.
-- App folders: `apps/web` for the literary, modern, relaxing Sanctum web app and browser Stage fallback; `apps/mobile` for the clean, focused Stage mobile app after the web loop is stable.
+- App folders: `apps/web` for the first full Sanctum/Stage implementation; `apps/mobile` for the later mobile implementation of both surfaces after the web loop is stable.
 - Shared code folders: `packages/core` for Relic domain constants/types and `packages/config` for shared tooling config.
 - Supabase folders: `supabase/migrations`, `supabase/functions`, `supabase/tests`, and `supabase/fixtures`.
 - AI proxy config folder: `services/litellm`.
@@ -38,8 +38,8 @@ This plan runs before [[41 - Foundation Implementation Plan]]. It does not repla
 
 | Path | Responsibility |
 |---|---|
-| `apps/web` | Future Next.js App Router implementation for Sanctum, auth, Approval Queue, web Stage fallback, settings, and export surfaces. |
-| `apps/mobile` | Future Expo Router implementation for Stage-first mobile, Sanctum-lite, notifications, and offline packet behavior. |
+| `apps/web` | Future Next.js App Router implementation for Sanctum, Stage, auth, Approval Queue, settings, and export surfaces. |
+| `apps/mobile` | Future Expo Router implementation for mobile Relic: Sanctum, Stage, notifications, and offline packet behavior. |
 | `packages/core` | Shared MVP-safe domain names, route constants, hierarchy types, AI task identifiers, and scope guards. No provider SDK calls. |
 | `packages/config` | Shared TypeScript, lint, formatting, and test configuration once dependencies are installed. |
 | `supabase/migrations` | Ordered SQL migrations for schema, RLS, storage policies, indexes, functions, and seed-safe enum creation. |

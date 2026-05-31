@@ -75,7 +75,7 @@ Suggested route names are implementation guidance, not locked product copy.
 | Scaffold review | `/sanctum/new-saga/:workshop_session_id/review` | AI Draft payload | Inline edit, regenerate, discard, commit. |
 | Sanctum home | `/sanctum/:saga_id` | Canon entities after commit, or empty Saga | Shows Plan your first session card. |
 | Session 1 prep | `/sanctum/:saga_id/sessions/:session_id/prep` | `sessions.status='planned'` | Inline prep workspace, full route available. |
-| Stage ready | mobile Stage route | `sessions.status='ready'` | Ready for Stage transition complete. |
+| Stage ready | Stage route | `sessions.status='ready'` | Ready for Stage transition complete. |
 
 ### Bootstrap rule
 
@@ -655,5 +655,4 @@ Priority 4 is done when the following can be implemented without additional prod
 | World-canon promotion during first-run | V1 |
 | Player setup | Deferred beyond MVP |
 | Image generation | Excluded |
-
 

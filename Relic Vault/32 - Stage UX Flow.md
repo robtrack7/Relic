@@ -24,7 +24,7 @@ source_file: "Sourced - Downloaded - 260518/relic-stage-ux-flow-v0_6.md"
 
 ## Document scope
 
-This document defines the user experience and interaction model for **The Stage**, Relic's mobile live-session surface. It is the source of truth for Stage behavior. Companion documents — `[[31 - Session Prep Flow]]`, `[[34 - UI Implementation Spec]]`, `[[12 - MVP PRD]]`, and `[[33 - First Run UX Flow]]` — define the surfaces this one references but does not specify.
+This document defines the user experience and interaction model for **The Stage**, Relic's live-session surface on web and mobile. It is the source of truth for Stage behavior. Companion documents — `[[31 - Session Prep Flow]]`, `[[34 - UI Implementation Spec]]`, `[[12 - MVP PRD]]`, and `[[33 - First Run UX Flow]]` — define the surfaces this one references but does not specify.
 
 This document is optimized for downstream consumption by AI coding agents (vibe-coding tools, Claude Code). Each section is self-contained, references are explicit and versioned, and feature specs follow a consistent shape: **Purpose → Behavior → Schema/IDs → Edge cases → Out of scope.**
 
@@ -80,7 +80,7 @@ Relic has **two user-facing surfaces**:
 
 ## 1. Premise
 
-The Stage is the mobile table surface. It exists for one moment: a GM is mid-session, with players, recording running, and something needs to happen *now* — find an NPC, jot a thought, roll a die, mark a moment. Every interaction is clean, focused, and glanceable, not a workflow.
+The Stage is the table surface. It exists for one moment: a GM is mid-session, with players, recording running, and something needs to happen *now* — find an NPC, jot a thought, roll a die, mark a moment. Every interaction is clean, focused, and glanceable, not a workflow.
 
 **Five rules:**
 
@@ -1096,14 +1096,14 @@ These are not blocking the Stage flow but require decisions in adjacent docs:
 
 ### 21.1 Alpha distribution
 
-Stage MVP is the mobile app and follows the web Sanctum build. It is dogfooded through Expo preview/EAS internal builds once the web loop and browser Stage fallback are stable. TestFlight and Android internal test follow once recording, upload, offline queue, and End Session are stable. Store release is not required for private alpha.
+Stage ships first inside the web app as part of the full web Sanctum/Stage loop. The mobile implementation follows through Expo preview/EAS internal builds once the web loop is stable. TestFlight and Android internal test follow once recording, upload, offline queue, and End Session are stable. Store release is not required for private alpha.
 
 ### 21.2 Notification tap behavior
 
 | Notification | Tap target |
 |---|---|
 | `session_ready_for_stage` | `/stage/:sessionId` if the packet is cached or fetchable. |
-| `pipeline_ready` | Sanctum review route; on mobile, open Sanctum-lite Review with “open web for full review” CTA when needed. |
+| `pipeline_ready` | Sanctum review route; on mobile, open the mobile Review layout with source sheets and conflict-safe actions. |
 | `pipeline_failed` | Failed pipeline card with retry/manual-summary fallback. |
 | `quota_blocked` | Settings → Usage. |
 

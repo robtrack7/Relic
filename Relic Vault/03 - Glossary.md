@@ -16,8 +16,8 @@ source_file: "Relic Vault/03 - Glossary.md"
 
 ## Product Surfaces
 
-- **The Sanctum**: web app home base for worldbuilding, session prep, review, approval, settings, and export. Its tone is literary, modern, and relaxing. See [[30 - Sanctum UX Flow]].
-- **The Stage**: mobile live-session surface for agenda, pinned cards, search, capture, recording, dice, and End Session. Its tone is clean and focused. See [[32 - Stage UX Flow]].
+- **The Sanctum**: Relic's home-base surface for worldbuilding, session prep, review, approval, settings, and export. It is available on web and mobile. Its tone is literary, modern, and relaxing. See [[30 - Sanctum UX Flow]].
+- **The Stage**: Relic's live-session surface for agenda, pinned cards, search, capture, recording, dice, and End Session. It is available on web and mobile. Its tone is clean and focused. See [[32 - Stage UX Flow]].
 - **Session prep workspace**: the prep workflow inside The Sanctum. Not a top-level product mode. See [[31 - Session Prep Flow]].
 - **New saga / Saga creation**: first-run and later saga creation flow. Replaces retired user-facing creation-mode wording. See [[33 - First Run UX Flow]].
 

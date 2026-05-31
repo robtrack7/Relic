@@ -115,11 +115,11 @@ Primary panels:
 4. **AI assist drawer** — GM-invoked only, quota-gated.
 5. **Ready for Stage panel** — packet preview, missing items, send/open in Stage.
 
-### Mobile Sanctum-lite / narrow support path
+### Mobile Sanctum / narrow layout
 
 - Single-column stacked cards.
-- Editing remains possible, but deep prep belongs to the web Sanctum.
-- Mobile Sanctum-lite follows after the web app; Stage-native live use remains in `[[32 - Stage UX Flow]]`.
+- Editing remains possible through a mobile-appropriate layout with sheets and stacked sections.
+- Mobile follows after the web app, but it carries the same Sanctum/Stage product model rather than a reduced support-only mode.
 
 ---
 

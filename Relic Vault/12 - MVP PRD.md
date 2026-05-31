@@ -116,7 +116,7 @@ Requirement ID migration table:
 | 34 | **Content scope is explicit.** World-scoped canon uses `scope='world'` and `saga_id=null`; Saga-scoped canon uses `scope='saga'` and a required `saga_id`. |
 | 35 | **Post-session canon defaults to Saga scope.** World-canon promotion, era-specific canon versions, cross-Saga conflict resolution, and temporal contradiction detection are V1. |
 | 36 | **Timeline is derived.** MVP timeline views are read-only projections from Sessions, Threads, and approved canon activity. Writable timeline editor and cross-Saga/world history views are V1. |
-| 37 | **Build and surface sequencing.** The Sanctum is the web app: literary, modern, relaxing, and built first. The Stage is the mobile app: clean, focused, and built after the web loop is stable. Browser Stage and mobile Sanctum-lite are support paths. |
+| 37 | **Build and surface sequencing.** The Sanctum and The Stage are both available on web and mobile. Sanctum is literary, modern, and relaxing; Stage is clean and focused. Web is built first with the full Sanctum/Stage loop, then mobile follows with platform-appropriate layouts and offline behavior. |
 
 ---
 
@@ -587,5 +587,4 @@ The loop closes.
 ---
 
 *End of PRD v0.10. Aligned with Basepoint v3.5, Memory & Retrieval Spec v0.9, Entity & Canon Schema v0.8, AI Task Registry v1.0, Approval Queue Spec v0.5, Tech Architecture Spec v1.2, Sanctum UX Flow v0.2, Session Prep Flow v0.2, Stage UX Flow v0.6, First-Run UX Flow v0.2, UI Implementation Spec v0.2, and Pricing & Rate Limits Spec v0.2.*
-
 

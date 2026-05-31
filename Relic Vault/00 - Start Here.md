@@ -43,9 +43,10 @@ All active source documents needed for the vault pass are present and linked.
 
 - Relic is Game Master software in MVP status usings Create -> Organize -> Prep -> Run -> Review -> Approve -> Continue workflow
 - User-facing surfaces are The Sanctum and The Stage.
-- The Sanctum is the web app: literary, modern, relaxing, and optimized for between-session creation, prep, review, and canon work.
-- The Stage is the mobile app: clean, focused, and optimized for live-session use.
-- Build order is web app first, then mobile app after the Sanctum loop and browser Stage fallback are stable.
+- The Sanctum is the literary, modern, relaxing side of Relic for between-session creation, prep, review, and canon work.
+- The Stage is the clean, focused side of Relic for live-session use.
+- Sanctum and Stage are both available on web and mobile; they are two sides of the same product, not a platform split.
+- Build order is web app first, then mobile app after the web implementation proves the full loop.
 - Session prep is a workflow inside The Sanctum, not a third top-level mode.
 - Saga creation replaces old user-facing creation-mode wording. Internal names like `workshop_sessions`, `workshop_input`, `workshop_path`, and `workshop_state` remain valid schema identifiers.
 - Workspace owns billing, usage, and future collaboration. World owns shared setting canon. Saga owns active play and session data.

@@ -20,8 +20,8 @@ This wrapper exists so Obsidian links and backlinks resolve cleanly while preser
 ## Use For
 
 - Typography, color, spacing, cards, badges, shell feel, and Stage/Sanctum component tone.
-- Sanctum tone: literary, modern, relaxing; this is the primary web app.
-- Stage tone: clean and focused; this is the primary mobile app.
+- Sanctum tone: literary, modern, relaxing; this surface exists on web and mobile.
+- Stage tone: clean and focused; this surface exists on web and mobile.
 - Design examples updated in the vault to use Saga wording instead of Campaign wording.
 
 ## Read With

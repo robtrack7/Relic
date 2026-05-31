@@ -60,7 +60,7 @@ Secondary actions include reset Saga profile override, retry failed export, down
 
 ## 7. Layout structure
 
-Use the web Sanctum shell. Desktop settings can use a left settings subnav with panels: Saga, World, Workspace usage, Retention, Notifications, Export, Account. Keep World settings lightweight and avoid a full World dashboard.
+Use the Sanctum shell. Desktop settings can use a left settings subnav with panels: Saga, World, Workspace usage, Retention, Notifications, Export, Account. Mobile uses stacked sections or tabs with the same settings capability. Keep World settings lightweight and avoid a full World dashboard.
 
 Main panels should be framed with Cream cards on Parchment. Put dangerous actions low on the page in Rust-bordered containment. Mobile uses stacked sections with accordions or simple route tabs.
 
@@ -113,5 +113,5 @@ Restrained, clear, literary, modern, and relaxing without feeling corporate. Use
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's Settings and Usage screens inside the web Sanctum. Make them restrained, literary, modern, and relaxing. Include Saga settings, lightweight World settings, Workspace usage, retention, notifications, export, and account/sign out. Show quota meters, reset dates, export lifecycle states, autosave, and destructive confirmations. Keep Workspace/World/Saga hierarchy clear. Use Relic parchment/cream editorial styling. Do not include BYOK, local model settings, full billing setup, player permissions, co-GM collaboration, custom calendars, Era editor, full World dashboard, plugin marketplace, or image generation.
+Create Relic's Settings and Usage screens inside The Sanctum. Make them restrained, literary, modern, and relaxing. Include Saga settings, lightweight World settings, Workspace usage, retention, notifications, export, and account/sign out across desktop and mobile layouts. Show quota meters, reset dates, export lifecycle states, autosave, and destructive confirmations. Keep Workspace/World/Saga hierarchy clear. Use Relic parchment/cream editorial styling. Do not include BYOK, local model settings, full billing setup, player permissions, co-GM collaboration, custom calendars, Era editor, full World dashboard, plugin marketplace, or image generation.
 ```
