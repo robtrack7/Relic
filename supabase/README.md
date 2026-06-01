@@ -37,7 +37,7 @@ To prove migrations replay cleanly from the current migration set, run:
 npm run backend:baseline:reset
 ```
 
-The reset command applies local migrations, runs seed data, then runs the pgTAP harnesses in `supabase/tests/access_control.sql`, `supabase/tests/canon_write_path.sql`, and `supabase/tests/foundation.sql`.
+The reset command applies local migrations, runs seed data, then runs the pgTAP harnesses in `supabase/tests/access_control.sql`, `supabase/tests/approval_queue.sql`, `supabase/tests/canon_write_path.sql`, and `supabase/tests/foundation.sql`.
 
 Do not paste local Supabase keys, JWT secrets, storage keys, or generated service credentials into notes, logs, commits, or screenshots.
 

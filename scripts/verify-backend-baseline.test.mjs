@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { getSpawnPlan, redactOutput } from "./verify-backend-baseline.mjs";
+import { getSpawnPlan, isSupabaseResetRestartFailure, redactOutput } from "./verify-backend-baseline.mjs";
 
 test("redacts local Supabase secrets from CLI output", () => {
   const output = [
@@ -41,4 +41,20 @@ test("uses cmd.exe for Windows npm and npx commands", () => {
     command: "npm",
     args: ["run", "verify"]
   });
+});
+
+test("detects Supabase reset restart 502 after migration replay", () => {
+  assert.equal(isSupabaseResetRestartFailure({
+    code: 1,
+    stdout: "Applying migration 20260601174516_approval_queue_commit.sql\nSeeding data from supabase/seed.sql\nRestarting containers...",
+    stderr: "Error status 502: An invalid response was received from the upstream server",
+    label: "supabase db reset --local --yes"
+  }), true);
+
+  assert.equal(isSupabaseResetRestartFailure({
+    code: 1,
+    stdout: "Applying migration 001_extensions_enums.sql",
+    stderr: "ERROR: syntax error",
+    label: "supabase db reset --local --yes"
+  }), false);
 });

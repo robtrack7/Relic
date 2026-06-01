@@ -121,6 +121,10 @@ Detailed execution plan: [[49 - Backend Module 2 Canon Write Path Plan]].
 
 **Goal:** Turn the Review shell into the MVP trust gate.
 
+Detailed execution plan: [[51 - Backend Module 3 Approval Queue Plan]].
+
+**Implementation status:** Complete for rough-UI approval, rejection, merge identity, generated merge update draft, and archive-request commit behavior. Verified on 2026-06-01 with `npm run backend:baseline:reset`: passed.
+
 **Owns:**
 
 - Approve.

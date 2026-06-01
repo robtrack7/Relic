@@ -77,5 +77,6 @@ All active source documents needed for the vault pass are present and linked.
 - [[48 - Backend Module 1 Access Control Plan]]
 - [[49 - Backend Module 2 Canon Write Path Plan]]
 - [[50 - Session Log Index]]
+- [[51 - Backend Module 3 Approval Queue Plan]]
 - [[60 - Design Spec Overview]]
 - [[72 - Navigation Design Spec]]

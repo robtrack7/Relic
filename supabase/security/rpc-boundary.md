@@ -37,7 +37,7 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `quick_capture(...)` | Add a Stage quick-capture note. |
 | `quick_stub(...)` | Add a Stage quick-stub entity. |
 | `mark_moment(...)` | Add a Stage marked moment. |
-| `update_draft_state(...)` | Resolve draft state without direct table updates. |
+| `update_draft_state(...)` | Resolve drafts and commit approved create/update/archive-request drafts to canon. |
 | `list_entities(...)` | Read scoped entity lists. |
 | `get_sessions_for_saga(...)` | Read scoped Session lists. |
 | `get_session_pinned_entities(...)` | Read scoped pinned entities. |
@@ -73,6 +73,8 @@ These public-schema helpers are `security definer` because they are called by sc
 - validation trigger helpers for session pins, active threads, notes, relationships, mentions, sources, and draft sources
 
 Manual canon writes must create a synthetic `gm_instruction` source and a `canon_audit` row in the same transaction as the row mutation. Update and archive calls must include the live `expected_version` value from the loaded row.
+
+Approval Queue commits must apply create/update/archive-request drafts and write `canon_audit` rows with `actor_kind='gm_via_ai_approval'`, `draft_id`, and cited `draft_sources`. Rejections and merge identity decisions must not mutate canon directly.
 
 ## Verification
 

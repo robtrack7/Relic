@@ -80,6 +80,29 @@ async function runRequired(command, commandArgs, options = {}) {
   return result;
 }
 
+export function isSupabaseResetRestartFailure(result) {
+  const output = `${result.stdout}\n${result.stderr}`;
+  return result.code !== 0
+    && output.includes("Restarting containers")
+    && output.includes("Error status 502");
+}
+
+async function runSupabaseReset() {
+  const result = await run("supabase", ["db", "reset", "--local", "--yes"]);
+  if (result.code === 0) {
+    return result;
+  }
+
+  if (isSupabaseResetRestartFailure(result)) {
+    console.error("\nSupabase reset replayed migrations but failed during container restart with 502; restarting stack before SQL tests.");
+    await runRequired("supabase", ["start"]);
+    return result;
+  }
+
+  console.error(`\nBASELINE_FAILED: ${result.label}`);
+  process.exit(result.code ?? 1);
+}
+
 async function ensureSupabaseStarted({ skipStart }) {
   if (skipStart) {
     console.log("\nSkipping Supabase start because --skip-start was provided.");
@@ -108,7 +131,7 @@ export async function main(argv = process.argv.slice(2)) {
   await ensureSupabaseStarted({ skipStart });
 
   if (shouldReset) {
-    await runRequired("supabase", ["db", "reset", "--local", "--yes"]);
+    await runSupabaseReset();
   }
 
   await runRequired("npm", ["run", "test:supabase"]);
