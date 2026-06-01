@@ -41,3 +41,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-06-01 - Backend Module 0 Baseline]]
 - [[Session Logs/2026-06-01 - Backend Modules 1-3]]
 - [[Session Logs/2026-06-01 - Backend Modules 4-5]]
+- [[Session Logs/2026-06-01 - Backend Modules 6-7 and Module 8 Plan]]

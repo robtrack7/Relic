@@ -47,6 +47,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[53 - Backend Module 5 Session Prep and Stage Data Plan]] | Detailed implementation plan for Session Prep, Stage lifecycle, quick captures, consent, dice, and packet read models | Planning |
 | [[54 - Backend Module 6 Usage Quota and Metering Plan]] | Detailed implementation plan for quota preflight, usage event charging, monthly rollups, overrides, and usage summaries | Planning |
 | [[55 - Backend Module 7 Storage Audio Transcription Cleanup Plan]] | Detailed implementation plan for Storage RLS, audio chunks, transcription jobs, transcript edits, retention, and cleanup jobs | Planning |
+| [[56 - Backend Module 8 Background Job and Edge Runtime Plan]] | Detailed implementation plan for async job claiming, retries, dead letters, scoped JWTs, and Edge Function runtime scaffolding | Planning |
 | [[50 - Session Log Index]] | Session closeout trail and implementation continuity logs | Operations |
 
 ## Design Specification Sources

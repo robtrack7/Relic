@@ -247,6 +247,8 @@ Detailed plan: [[55 - Backend Module 7 Storage Audio Transcription Cleanup Plan]
 
 ### Module 8 - Background Job and Edge Function Runtime
 
+Detailed plan: [[56 - Backend Module 8 Background Job and Edge Runtime Plan]].
+
 **Goal:** Build the async backbone shared by AI, embeddings, storage, and notifications.
 
 **Owns:**

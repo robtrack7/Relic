@@ -82,5 +82,6 @@ All active source documents needed for the vault pass are present and linked.
 - [[53 - Backend Module 5 Session Prep and Stage Data Plan]]
 - [[54 - Backend Module 6 Usage Quota and Metering Plan]]
 - [[55 - Backend Module 7 Storage Audio Transcription Cleanup Plan]]
+- [[56 - Backend Module 8 Background Job and Edge Runtime Plan]]
 - [[60 - Design Spec Overview]]
 - [[72 - Navigation Design Spec]]
