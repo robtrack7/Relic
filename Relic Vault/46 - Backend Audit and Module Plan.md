@@ -56,6 +56,8 @@ The backend is not yet wired end-to-end for the MVP trust loop:
 
 **Goal:** Establish the current backend baseline before changing behavior.
 
+Detailed execution plan: [[47 - Backend Module 0 Baseline Plan]].
+
 **Owns:**
 
 - Local Supabase reset/test procedure.

@@ -73,6 +73,7 @@ All active source documents needed for the vault pass are present and linked.
 - [[40 - MVP Implementation Planning Sequence]]
 - [[45 - Security Findings Register]]
 - [[46 - Backend Audit and Module Plan]]
+- [[47 - Backend Module 0 Baseline Plan]]
 - [[50 - Session Log Index]]
 - [[60 - Design Spec Overview]]
 - [[72 - Navigation Design Spec]]
