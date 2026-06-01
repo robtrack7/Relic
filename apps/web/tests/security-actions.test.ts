@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { addThreadObjectiveAction, createEntityAction } from "@/app/actions";
+import { addThreadObjectiveAction, archiveEntityAction, createEntityAction, updateEntityAction } from "@/app/actions";
 import { createClient } from "@/lib/supabase/server";
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -100,6 +100,64 @@ describe("security-hardened server actions", () => {
       saga_id: "saga-a",
       thread_id: "thread-a",
       objective_text: "Find the reliquary"
+    });
+  });
+
+  it("forwards expected versions for manual entity updates", async () => {
+    const supabase = authenticatedSupabase();
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    await updateEntityAction(form({
+      workspaceId: "workspace-a",
+      worldId: "world-a",
+      sagaId: "saga-a",
+      entityType: "character",
+      entityId: "entity-a",
+      expectedVersion: "2026-06-01T17:00:00.000Z",
+      name: "Mara",
+      summary: "Scout updated",
+      narrative: "Knows the old roads.",
+      gmNotes: "voice: direct"
+    }));
+
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith("update_entity", {
+      workspace_id: "workspace-a",
+      world_id: "world-a",
+      saga_id: "saga-a",
+      entity_type: "character",
+      entity_id: "entity-a",
+      payload: {
+        name: "Mara",
+        summary: "Scout updated",
+        narrative: "Knows the old roads.",
+        gm_notes: "voice: direct",
+        expected_version: "2026-06-01T17:00:00.000Z"
+      }
+    });
+  });
+
+  it("forwards expected versions for manual archive requests", async () => {
+    const supabase = authenticatedSupabase();
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    await expect(archiveEntityAction(form({
+      workspaceId: "workspace-a",
+      worldId: "world-a",
+      sagaId: "saga-a",
+      entityType: "character",
+      entityId: "entity-a",
+      expectedVersion: "2026-06-01T17:00:00.000Z"
+    }))).rejects.toThrow("NEXT_REDIRECT:/app/w/workspace-a/world/world-a/saga/saga-a/entities");
+
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith("archive_entity", {
+      workspace_id: "workspace-a",
+      world_id: "world-a",
+      saga_id: "saga-a",
+      entity_type: "character",
+      entity_id: "entity-a",
+      expected_version: "2026-06-01T17:00:00.000Z"
     });
   });
 });

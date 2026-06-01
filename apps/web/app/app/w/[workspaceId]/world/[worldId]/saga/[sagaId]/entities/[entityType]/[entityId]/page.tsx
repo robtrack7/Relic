@@ -32,6 +32,7 @@ export default async function EntityDetailPage({ params }: { params: Promise<Pag
           <HiddenContextFields params={ids} />
           <input type="hidden" name="entityType" value={all.entityType} />
           <input type="hidden" name="entityId" value={all.entityId} />
+          <input type="hidden" name="expectedVersion" value={entity.updated_at ?? ""} />
           <label className="field"><span>Name / title</span><input className="input" name="name" defaultValue={entity.name} required /></label>
           <label className="field"><span>Summary</span><input className="input" name="summary" defaultValue={entity.summary ?? ""} /></label>
           <label className="field"><span>Narrative / body</span><textarea className="textarea" name="narrative" defaultValue={entity.narrative ?? entity.summary ?? ""} /></label>
@@ -47,6 +48,7 @@ export default async function EntityDetailPage({ params }: { params: Promise<Pag
             <HiddenContextFields params={ids} />
             <input type="hidden" name="entityType" value={all.entityType} />
             <input type="hidden" name="entityId" value={all.entityId} />
+            <input type="hidden" name="expectedVersion" value={entity.updated_at ?? ""} />
             <button className="button-rust" type="submit">Archive</button>
           </form>
         </aside>

@@ -41,6 +41,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[46 - Backend Audit and Module Plan]] | Current backend readiness audit and backend module work order | Planning |
 | [[47 - Backend Module 0 Baseline Plan]] | Detailed implementation plan for repeatable backend baseline verification | Planning |
 | [[48 - Backend Module 1 Access Control Plan]] | Detailed implementation plan for backend access control, RLS, grants, and RPC boundary hardening | Planning |
+| [[49 - Backend Module 2 Canon Write Path Plan]] | Detailed implementation plan for manual canon write provenance, source rows, audit rows, and conflict checks | Planning |
 | [[50 - Session Log Index]] | Session closeout trail and implementation continuity logs | Operations |
 
 ## Design Specification Sources

@@ -29,7 +29,7 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `list_worlds_for_workspace()` | List Worlds available to the authenticated Workspace owner. |
 | `create_entity(...)` | Create manual canon rows through a scoped path. |
 | `update_entity(...)` | Update manual canon rows through a scoped path. |
-| `archive_entity(...)` | Archive canon rows through a scoped path. |
+| `archive_entity(..., expected_version)` | Archive canon rows through a scoped conflict-checked path. |
 | `append_thread_objective(...)` | Update a Thread objective through a scoped path. |
 | `create_session(...)` | Create a Session through a scoped path. |
 | `update_session_prep(...)` | Update prep fields, pins, and active threads through scoped validation. |
@@ -61,6 +61,18 @@ These helpers are callable by `authenticated` because RLS policies or storage po
 - `saga_row_allowed(uuid, uuid, uuid)`
 - `storage_path_allowed(text)`
 - `storage_path_segment(text, integer)`
+
+## Internal Definer Helpers
+
+These public-schema helpers are `security definer` because they are called by scoped RPCs or triggers, but they are not directly executable by browser roles:
+
+- `assert_saga_access(...)`
+- `scoped_entity_exists(...)`
+- `write_manual_canon_source(...)`
+- `write_manual_canon_audit(...)`
+- validation trigger helpers for session pins, active threads, notes, relationships, mentions, sources, and draft sources
+
+Manual canon writes must create a synthetic `gm_instruction` source and a `canon_audit` row in the same transaction as the row mutation. Update and archive calls must include the live `expected_version` value from the loaded row.
 
 ## Verification
 

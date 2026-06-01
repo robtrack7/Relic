@@ -154,8 +154,12 @@ export async function updateEntityAction(formData: FormData) {
   }
 
   const payload = type === "note"
-    ? { title: value(formData, "name"), body: value(formData, "narrative") }
-    : { name: value(formData, "name"), summary: value(formData, "summary"), narrative: value(formData, "narrative"), gm_notes: value(formData, "gmNotes") };
+    ? { title: value(formData, "name"), body: value(formData, "narrative"), expected_version: value(formData, "expectedVersion") }
+    : { name: value(formData, "name"), summary: value(formData, "summary"), narrative: value(formData, "narrative"), gm_notes: value(formData, "gmNotes"), expected_version: value(formData, "expectedVersion") };
+
+  if (!payload.expected_version) {
+    throw new Error("Missing expected version for this manual edit.");
+  }
 
   const { error } = await supabase.rpc("update_entity", {
     workspace_id: params.workspaceId,
@@ -177,15 +181,20 @@ export async function archiveEntityAction(formData: FormData) {
   const params = paramsFromForm(formData);
   const type = value(formData, "entityType");
   const id = value(formData, "entityId");
+  const expectedVersion = value(formData, "expectedVersion");
   if (!isEditableEntityType(type)) {
     throw new Error("Unsupported entity type.");
+  }
+  if (!expectedVersion) {
+    throw new Error("Missing expected version for this archive request.");
   }
   const { error } = await supabase.rpc("archive_entity", {
     workspace_id: params.workspaceId,
     world_id: params.worldId,
     saga_id: params.sagaId,
     entity_type: type,
-    entity_id: id
+    entity_id: id,
+    expected_version: expectedVersion
   });
   if (error) {
     throw new Error(error.message);

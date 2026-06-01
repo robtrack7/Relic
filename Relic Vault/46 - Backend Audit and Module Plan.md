@@ -98,6 +98,10 @@ Detailed execution plan: [[48 - Backend Module 1 Access Control Plan]].
 
 **Goal:** Make every canon mutation provenance-safe.
 
+Detailed execution plan: [[49 - Backend Module 2 Canon Write Path Plan]].
+
+**Implementation status:** Complete for direct GM manual canon writes. Verified on 2026-06-01 with `npm run backend:baseline:reset`: passed. Approval Queue draft commit behavior remains Module 3.
+
 **Owns:**
 
 - Direct GM create/update/archive write path.
