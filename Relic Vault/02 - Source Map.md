@@ -38,6 +38,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[42 - UI Manual Flow Implementation Plan]] | Manual loop UI planning before AI wiring | Planning |
 | [[43 - AI Runtime Implementation Plan]] | AI runtime planning after registry acceptance | Planning |
 | [[45 - Security Findings Register]] | Security findings, status, mitigation, and verification tracking | Security |
+| [[46 - Backend Audit and Module Plan]] | Current backend readiness audit and backend module work order | Planning |
 | [[50 - Session Log Index]] | Session closeout trail and implementation continuity logs | Operations |
 
 ## Design Specification Sources

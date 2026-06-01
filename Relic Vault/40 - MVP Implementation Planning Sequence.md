@@ -26,6 +26,8 @@ Relic is conditionally ready for implementation planning. The next plans must be
 3. [[42 - UI Manual Flow Implementation Plan]]
 4. [[43 - AI Runtime Implementation Plan]]
 
+Before additional UI expansion, use [[46 - Backend Audit and Module Plan]] to confirm which backend modules are complete enough for UI testing.
+
 Do not code directly from this router. Use it to select the correct detailed plan and then read the owning active specs.
 
 ## Phase 1 Complete

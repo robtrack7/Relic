@@ -36,3 +36,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-05-30 - Unified Surface Correction]]
 - [[Session Logs/2026-05-31 - Navigation Spec Propagation]]
 - [[Session Logs/2026-06-01 - Stage Access and Relic Guide Alignment]]
+- [[Session Logs/2026-06-01 - Backend Audit and Module Plan]]

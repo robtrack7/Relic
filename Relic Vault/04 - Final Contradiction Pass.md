@@ -43,6 +43,12 @@ AI task surfaces still require implementation-plan review before coding, but the
 - The web shell resolves Search/Relic Guide tension by keeping Search in the top context bar and Relic Guide as an always-available sidecar/sheet, not a primary rail item.
 - The first implementation pass is scoped to tokens, local fonts/assets, shared primitives, The Sanctum shell, Prepare workflow, and the web Stage surface. It does not wire provider calls, autonomous AI behavior, live Stage captions, or deferred V1 surfaces.
 
+## Current Backend Planning Addendum
+
+- [[46 - Backend Audit and Module Plan]] records the 2026-06-01 backend readiness audit and the module work order before additional UI expansion.
+- The current backend has foundation schema/RLS/RPC scaffolding, but Approval Queue commit behavior, audit/provenance writes, real vector retrieval, workers, AI runtime, storage processing, quota charging, and notifications remain backend-gated.
+- The existing web app may be used as a thin smoke-test harness, but fuller UI work should wait until backend Modules 1-5 in [[46 - Backend Audit and Module Plan]] pass.
+
 ## Consolidation And Cull Pass
 
 - [[10 - Project Overview for AI]], [[90 - Next Steps Before Coding]], [[91 - Continuity Architecture Report]], [[92 - Priority 3 Alignment Report]], and [[99 - Revisions Archive]] were replaced with archive stubs.
