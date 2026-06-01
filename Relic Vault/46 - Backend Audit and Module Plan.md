@@ -170,6 +170,10 @@ Detailed plan: [[52 - Backend Module 4 Retrieval and Embeddings Plan]].
 
 ### Module 5 - Session Prep and Stage Data Backend
 
+Detailed plan: [[53 - Backend Module 5 Session Prep and Stage Data Plan]].
+
+**Status:** Implemented on 2026-06-01 in `supabase/migrations/20260601222000_session_stage_backend.sql`; `npm run backend:baseline:reset` passed with `RELIC_BACKEND_BASELINE_OK`.
+
 **Goal:** Make manual session prep and live-session data reliable before UI polish.
 
 **Owns:**

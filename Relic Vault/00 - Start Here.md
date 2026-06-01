@@ -79,5 +79,6 @@ All active source documents needed for the vault pass are present and linked.
 - [[50 - Session Log Index]]
 - [[51 - Backend Module 3 Approval Queue Plan]]
 - [[52 - Backend Module 4 Retrieval and Embeddings Plan]]
+- [[53 - Backend Module 5 Session Prep and Stage Data Plan]]
 - [[60 - Design Spec Overview]]
 - [[72 - Navigation Design Spec]]
