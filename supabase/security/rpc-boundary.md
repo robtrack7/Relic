@@ -48,6 +48,7 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `get_pending_drafts(...)` | Read scoped pending drafts. |
 | `get_workspace_usage_summary(...)` | Read scoped usage summary. |
 | `check_quota_preflight(...)` | Check quota before metered work. |
+| `record_usage_event(...)` | Record an idempotent usage event and update monthly rollups. |
 | `search_for_ui(...)` | Run scoped lexical UI search. |
 | `retrieve_for_task(...)` | Run scoped retrieval for AI/task contexts. |
 

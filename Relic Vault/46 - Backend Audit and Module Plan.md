@@ -197,6 +197,10 @@ Detailed plan: [[53 - Backend Module 5 Session Prep and Stage Data Plan]].
 
 ### Module 6 - Usage, Quota, and Metering
 
+Detailed plan: [[54 - Backend Module 6 Usage Quota and Metering Plan]].
+
+**Status:** Implemented on 2026-06-01 in `supabase/migrations/20260601231000_usage_metering.sql`; `npm run backend:baseline:reset` passed with `RELIC_BACKEND_BASELINE_OK`.
+
 **Goal:** Make every cost-driving action enforceable and accountable.
 
 **Owns:**
@@ -301,22 +305,21 @@ Detailed plan: [[53 - Backend Module 5 Session Prep and Stage Data Plan]].
 
 ## Recommended UI Timing
 
-Use the current web app now as a thin smoke-test harness for auth, bootstrap, manual entity CRUD, session prep, and Stage capture flows. Do not invest heavily in new UI polish until Modules 1-3 are complete, because canon writes and Approval Queue behavior are still the backend trust core.
+Use the current web app now as a thin smoke-test harness for auth, bootstrap, manual entity CRUD, session prep, Stage capture flows, and usage summary reads. Do not invest heavily in UI polish until the remaining backend runtime modules are complete.
 
-Start building the fuller UI in earnest after Modules 1-5 pass. At that point, the manual MVP loop can be tested through the UI without live AI:
+Start building the fuller rough UI in earnest after Module 7 passes. At that point, the manual MVP loop plus storage/audio substrate can be tested through the UI without live AI:
 
 Create -> Organize -> Prep -> Run -> Review -> Approve -> Continue.
 
-AI-facing UI should wait until Modules 4, 6, 8, and 9 pass. Those modules provide retrieval, quota charging, async execution, source validation, and draft creation.
+AI-facing UI should wait until Modules 8 and 9 pass. Modules 4 and 6 now provide retrieval and quota charging; Modules 8 and 9 still need async execution, source validation, provider routing, and draft creation.
 
 ## Immediate Work Order
 
-1. Complete Module 0 and get a repeatable verification baseline.
-2. Complete Module 1 security/RPC review and close any security-definer deviations.
-3. Complete Module 2 canon provenance for manual writes.
-4. Complete Module 3 Approval Queue commit behavior.
-5. Use the existing web UI for an end-to-end manual smoke test.
-6. Complete Modules 4-9 before enabling AI UI.
+1. Keep Modules 0-6 green under `npm run backend:baseline:reset`.
+2. Complete Module 7 storage, audio, transcription, and cleanup.
+3. Use the existing web UI for an end-to-end manual smoke test once Module 7 passes.
+4. Complete Module 8 background job and Edge Function runtime.
+5. Complete Module 9 AI task router/runtime before enabling AI UI.
 
 ## Open Follow-Ups
 
