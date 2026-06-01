@@ -61,6 +61,7 @@ values
   ('scoped_entity_exists', 'Scope validator for entity references.'),
   ('write_manual_canon_source', 'Internal helper that creates synthetic GM instruction sources.'),
   ('write_manual_canon_audit', 'Internal helper that appends canon audit rows for manual GM writes.'),
+  ('materialize_embedding_job_for_test', 'Internal test/worker-contract helper that materializes safe embedding chunks without provider vectors.'),
   ('validate_session_pinned_entity_scope', 'Trigger guard for session pinned entities.'),
   ('validate_session_active_thread_scope', 'Trigger guard for active thread references.'),
   ('source_belongs_to_scope', 'Scope helper for source validation.'),

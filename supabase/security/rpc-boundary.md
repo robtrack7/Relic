@@ -70,11 +70,14 @@ These public-schema helpers are `security definer` because they are called by sc
 - `scoped_entity_exists(...)`
 - `write_manual_canon_source(...)`
 - `write_manual_canon_audit(...)`
+- `materialize_embedding_job_for_test(...)`
 - validation trigger helpers for session pins, active threads, notes, relationships, mentions, sources, and draft sources
 
 Manual canon writes must create a synthetic `gm_instruction` source and a `canon_audit` row in the same transaction as the row mutation. Update and archive calls must include the live `expected_version` value from the loaded row.
 
 Approval Queue commits must apply create/update/archive-request drafts and write `canon_audit` rows with `actor_kind='gm_via_ai_approval'`, `draft_id`, and cited `draft_sources`. Rejections and merge identity decisions must not mutate canon directly.
+
+Embedding helpers must only enqueue or materialize chunk text from embeddable fields. `gm_notes` columns and `note_type='gm_note'` notes are excluded from embedding chunks. Provider workers may fill `embeddings.embedding`, but retrieval must continue to function lexically without provider keys.
 
 ## Verification
 

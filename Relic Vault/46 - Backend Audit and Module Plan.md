@@ -145,6 +145,10 @@ Detailed execution plan: [[51 - Backend Module 3 Approval Queue Plan]].
 
 ### Module 4 - Search, Retrieval, Embeddings, and Evaluation
 
+Detailed plan: [[52 - Backend Module 4 Retrieval and Embeddings Plan]].
+
+**Status:** Implemented on 2026-06-01 in `supabase/migrations/20260601210000_retrieval_embedding_contract.sql`; `npm run backend:baseline:reset` passed with `RELIC_BACKEND_BASELINE_OK`.
+
 **Goal:** Make retrieval match the Memory spec before AI depends on it.
 
 **Owns:**
