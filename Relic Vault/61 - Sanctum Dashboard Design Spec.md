@@ -11,7 +11,7 @@ depends_on:
   - "[[13 - Design System]]"
   - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-31
+last_audited: 2026-06-01
 source_file: "Relic Vault/61 - Sanctum Dashboard Design Spec.md"
 ---
 
@@ -62,26 +62,26 @@ Only one action should receive the strongest Amber treatment.
 
 ## 6. Secondary actions
 
-Secondary actions include quick create, Open Threads, Open Library, Open Sessions, Search or Ask, View recent canon, and Open Approval Queue. These should be visible but quieter than the primary loop action.
+Secondary actions include quick create, Open Threads, Open Library, Open Prepare, Open Sessions, Search, open Relic Guide, View recent canon, and Open Approval Queue. These should be visible but quieter than the primary loop action.
 
 Quick create belongs on the dashboard because it lets the GM capture momentum without navigating away. It should use type-specific choices rather than a generic "add item" button.
 
 ## 7. Layout structure
 
-Use the Sanctum shell: a persistent left rail, a top context bar, central dashboard content, and an optional right utility sidecar. The rail should read as places to go: Home, Threads, Library, Sessions, Stage, Review, with Export and Settings lower in the rail. Search and Ask do not belong in the rail; they belong in the top context bar as a scoped `Search or ask...` omnibox with Workspace/World/Saga scope.
+Use the Sanctum shell: a persistent left rail, a top context bar, central dashboard content, and a collapsible right Relic Guide sidecar. The rail should read as places to go: Home, Threads, Library, Prepare, Sessions, Review, with Export and Settings lower in the rail. Stage does not belong in the default rail; it is opened from Prepare, session state, dashboard next-action cards, notifications/deep links, app resume, or a live-session return affordance.
 
-The top context bar should show active Workspace/World/Saga, the combined Search or Ask omnibox, `+ Create`, current session pill, Review badge, usage chip when relevant, and account menu. The current session pill is one of the primary routes into prep, Stage, or Review.
+The top context bar should show active Workspace/World/Saga, Search, Relic Guide toggle, `+ Create`, current session pill, Review badge, usage chip when relevant, and account menu. The current session pill is one of the primary routes into Prepare, Stage, or Review. While a session is live and the GM is in Sanctum, place a bright `Return to Stage` affordance near the top-right controls.
 
-The default desktop dashboard uses two content columns. The main column holds the primary loop card, current session/prep/review state, and Thread carry-forward. The secondary column holds recently edited canon, quick create, small usage/status summaries, and a compact Search or Ask entry. On wide screens, a right sidecar may open for Ask Relic, source/provenance, or contextual inspection, but it should be closed by default and should not become a permanent chat column.
+The default desktop dashboard uses two content columns plus a collapsible Relic Guide sidecar. The main column holds the primary loop card, current session/prep/review state, and Thread carry-forward. The secondary column holds recently edited canon, quick create, and small usage/status summaries. Relic Guide can be minimized to a narrow handle and expanded for sourced answers, prep help, and GM-reviewed create/edit actions.
 
 If a session is planned or ready, inline prep can occupy the main column with briefing, agenda preview, thread carry-forward, pinned entities, and Ready for Stage CTA. Use `Open full editor` as a secondary link. On mobile, collapse into a single column ordered by next action, session state, pending review, Threads, recent canon, and quick create.
 
 ## 8. Key components
 
-- Navigation: `SanctumShell`, `SanctumHomeLink`, `ContextSwitcher`, `SearchOrAskOmnibox`, `GlobalCreateMenu`, `CurrentSessionPill`, `SanctumNav`, `ReviewBadge`.
-- Actions: `PrimaryLoopCTA`, `QuickCreateMenu`, `ReadyForStageButton`, `OpenReviewButton`, `OpenStageButton`, `AskRelicAction`.
+- Navigation: `SanctumShell`, `SanctumHomeLink`, `ContextSwitcher`, `SearchInput`, `RelicGuideToggle`, `GlobalCreateMenu`, `CurrentSessionPill`, `ReturnToStageButton`, `SanctumNav`, `ReviewBadge`.
+- Actions: `PrimaryLoopCTA`, `QuickCreateMenu`, `ReadyForStageButton`, `OpenReviewButton`, `OpenStageButton`, `RelicGuideAction`.
 - Containment: `SagaStatusPanel`, `NextActionCard`, `PrepSummaryPanel`, `ThreadCarryForwardCard`, `RecentCanonList`, `PendingReviewCard`, `QuickCreateCard`.
-- Sidecar/inspection: `AskRelicSidecar`, `SourceProvenanceSidecar`, `ContextInspector`.
+- Sidecar/inspection: `RelicGuideSidecar`, `SourceProvenanceSidecar`, `ContextInspector`.
 - Feedback: `AutosaveIndicator`, `PipelineStatusBanner`, `QuotaWarningChip`, `OfflineQueuedChip`.
 - AI and trust: `PrepBriefingCard`, `SourceCountBadge`, `AskRelicAction`, `DraftFromPromptAction`.
 
@@ -91,13 +91,13 @@ See [[71 - Component Inventory Design Spec]] for shared definitions.
 
 Required dashboard states: no Saga resolved, empty Saga, no sessions, Session 1 prompt, planned session, ready session, in-progress session, ended pending pipeline, review ready, no review items, quota warning, offline/cached, loading shell, loading dashboard, RLS/permission error, and stale pending review.
 
-The empty Saga state should offer `Plan your first session`, `Create character`, `Create place`, `Create thread`, and a clearly invoked `Draft from prompt` or `Ask Relic a question` action from the omnibox or contextual card. AI must not auto-run.
+The empty Saga state should offer `Plan your first session`, `Create character`, `Create place`, `Create thread`, and clearly invoked Relic Guide draft/question actions. AI must not auto-run.
 
 ## 10. AI behavior
 
-AI appears as invoked actions, a collapsible sidecar/page, and one visible reading aid. The prep briefing may compose when a prep surface loads, but it must be visibly stamped as canon-only and source-backed. Dashboard AI actions can link to Ask Relic, Draft this session, Brainstorm beats, or Draft an NPC only when the relevant prep context exists.
+AI appears as Relic Guide, invoked actions, and one visible reading aid. The prep briefing may compose when a prep surface loads, but it must be visibly stamped as canon-only and source-backed. Dashboard AI actions can link to Relic Guide, Draft this session, Brainstorm beats, or Draft an NPC only when the relevant prep context exists. Relic Guide can prepare real changes, but canon mutation requires inline GM-reviewed commit or Approval Queue.
 
-No proactive suggestions, surprise cards, persistent chatbot rail, or "Relic noticed..." nudges. AI never writes canon from the dashboard without the GM entering a review or explicit inline approval path.
+No proactive surprise cards, autonomous changes, or "Relic noticed..." nudges. Relic Guide is always available and collapsible, but it should behave as a sourced action sidecar, not an unsolicited chatbot.
 
 ## 11. Source/provenance behavior
 
@@ -111,7 +111,7 @@ Users arrive from auth/bootstrap, New saga commit, Start blank, Stage end, notif
 
 ## 13. Navigation out
 
-Users can go to Threads, Library, Sessions, session prep editor, Stage, Approval Queue, Search or Ask, Export, Settings, or specific recent canon detail pages. If the session is in progress, Saga switching should be blocked until End Session.
+Users can go to Threads, Library, Prepare, Sessions, Stage through session context, Approval Queue, Search, Relic Guide, Export, Settings, or specific recent canon detail pages. If the session is in progress, Saga switching should be blocked until End Session.
 
 ## 14. Components to avoid
 
@@ -124,5 +124,5 @@ Literary, modern, relaxing, and decisive. The dashboard should feel like a prepa
 ## 16. Claude Design prompt
 
 ```text
-Create the Relic Sanctum dashboard as an active Saga cockpit, not a Workspace overview. Make it literary, modern, and relaxing using the Sanctum parchment design system. Include shell context for Workspace/World/Saga, a top-bar `Search or ask...` omnibox, `+ Create`, current session pill, Review badge, and left-rail order Home, Threads, Library, Sessions, Stage, Review, Export, Settings. The main card must adapt to Saga/session state and show the next loop action. Include Thread carry-forward, pending review, recently edited canon, and quick create. Session prep lives inline when a session is planned or ready. Ask Relic is invoked from the omnibox/page/contextual action, not a permanent chat column or primary rail item. Design desktop and mobile layouts as equivalent product capability, with mobile using stacked sections and sheets. Exclude initiative, encounter, map, player, graph, and live transcription features.
+Create the Relic Sanctum dashboard as an active Saga cockpit, not a Workspace overview. Make it literary, modern, and relaxing using the Sanctum parchment design system. Include shell context for Workspace/World/Saga, Search, Relic Guide toggle, `+ Create`, current session pill, Review badge, and left-rail order Home, Threads, Library, Prepare, Sessions, Review, Export, Settings. The main card must adapt to Saga/session state and show the next loop action. Include Thread carry-forward, pending review, recently edited canon, and quick create. Session prep lives inline when a session is planned or ready and is reached through Prepare. Stage opens from Ready/Open Stage actions, live session state, notifications/deep links, or a bright top-right Return to Stage button while live, not from the default rail. Relic Guide is an always-available collapsible sidecar that can answer, draft, create, and edit through GM-reviewed actions. Design desktop and mobile layouts as equivalent product capability, with mobile using stacked sections and sheets. Exclude initiative, encounter, map, player, graph, and live transcription features.
 ```

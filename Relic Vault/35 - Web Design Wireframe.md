@@ -17,7 +17,7 @@ depends_on:
   - "[[34 - UI Implementation Spec]]"
   - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-31
+last_audited: 2026-06-01
 source_file: "Relic Vault/35 - Web Design Wireframe.md"
 ---
 
@@ -42,19 +42,19 @@ Do not use glossy gradients, decorative illustrations, broad icon strips, emoji,
 
 ## App Shell
 
-The web app opens into The Sanctum by default, but it includes both Sanctum and Stage surfaces. The Sanctum should feel literary, modern, and relaxing. Use a top context bar for active Workspace/World/Saga, `Search or ask...`, `+ Create`, current session, Review, usage state, and account controls. Use a left navigation rail with the Relic wordmark and primary work surfaces. Keep the rail parchment/cream, not a dark top header.
+The web app opens into The Sanctum by default, but it includes both Sanctum and Stage surfaces. The Sanctum should feel literary, modern, and relaxing. Use a top context bar for active Workspace/World/Saga, Search, Relic Guide, `+ Create`, current session, Review, usage state, and account controls. Use a left navigation rail with the Relic wordmark and primary work surfaces. Keep the rail parchment/cream, not a dark top header.
 
 Primary navigation order:
 
 1. Threads
 2. Library
-3. Sessions
-4. Stage
+3. Prepare
+4. Sessions
 5. Review
 6. Export
 7. Settings
 
-Home is represented by the Relic mark or first rail item depending on density. Search and Ask are not primary nav items. They share the top-context omnibox and may also retain dedicated fallback routes, sidecars, or contextual entry points.
+Home is represented by the Relic mark or first rail item depending on density. Stage is not a primary rail item; it is reached from Prepare, session state, Home cards, notifications/deep links, app resume, and a bright Return to Stage affordance while live. Search and Relic Guide are not rail items. Search lives in the top bar, and Relic Guide is always available as a collapsible sidecar/sheet plus fallback route.
 
 The main content area uses a constrained readable column by default, expanding only for list/detail and review layouts. Page heads use a mono eyebrow, Cormorant title, concise support copy, and restrained action buttons.
 
@@ -66,7 +66,7 @@ Use a focused parchment page with one large Cream form panel. The form captures 
 
 ### Sanctum Home
 
-The home screen is state-aware. With no session, the primary card is Plan your first session. With a planned or ready session, the primary card becomes a prep-forward panel with Amber left rule, status chip, Open prep, and Open Stage when allowed. Review and recent canon appear nearby but do not compete with the next playable action.
+The home screen is state-aware. With no session, the primary card is Plan your first session. With a planned or ready session, the primary card becomes a prep-forward panel with Amber left rule, status chip, Open Prepare, and Open Stage when allowed. With a live session, show Return to Stage as the brightest top-right action and a matching primary card. Review and recent canon appear nearby but do not compete with the next playable action.
 
 ### Threads
 
@@ -76,17 +76,17 @@ Threads are the continuity spine and should feel first-class. Use state chips fo
 
 Entity cards use Cream surfaces with meaningful type left rules. Character, place, faction, artifact, thread, and note surfaces share the same card anatomy: mono type label, Cormorant name, short Instrument Sans summary, scope/canon chips, and subdued provenance hints. Detail pages keep the editor primary and source/provenance in a right inspector on desktop.
 
-### Sessions And Prep
+### Prepare And Sessions
 
-Sessions list rows show session number/name, status, objective/opening cue, and Open prep/Stage actions. Prep remains inside The Sanctum, with Amber density rather than a separate visual mode. The prep page should evolve toward session brief, agenda/scenes, context rail, packet preview, Ready for Stage, and disabled/manual-gated assist affordances.
+Prepare is the rail destination for the active or next planned session. It remains inside The Sanctum, with Amber density rather than a separate visual mode. The Prepare page should evolve toward session brief, agenda/scenes, context rail, Relic Guide sidecar, packet preview, Ready for Stage, and disabled/manual-gated assist affordances. Sessions list rows show session number/name, status, objective/opening cue, and Open Prepare/Stage actions.
 
 ### Review
 
 Review uses grouped approval cards with source context, field-level diff language, and careful Rust/Amber/Sage state. Avoid prominent Approve All behavior. Review is about controlled canon change, not speed.
 
-### Ask
+### Relic Guide
 
-Ask is invoked from the top `Search or ask...` omnibox, contextual actions, or fallback page; it is not a primary left-rail item or permanent chat column. The current implementation must not call providers or route to live task execution until runtime acceptance. Until then, render or document it as a disabled/manual-gated surface with copy that explains Ask will answer from current canon once runtime wiring is accepted.
+Relic Guide is always available as a collapsible right sidecar on desktop and sheet/drawer on mobile; it is not a primary left-rail item or autonomous chat column. It can answer with citations and prepare create/edit actions. The current implementation must not call providers or route to live task execution until runtime acceptance. Until then, render or document it as a disabled/manual-gated surface with copy that explains Guide will answer from current canon and prepare reviewed actions once runtime wiring is accepted.
 
 ### Settings
 
@@ -94,7 +94,7 @@ Settings stay lightweight: Saga, World/Workspace context, usage, retention/expor
 
 ### Browser Stage Fallback
 
-Stage is clean, focused, dark, and separate from Sanctum chrome. The web Stage surface uses Ink background, Cream text, translucent Stage cards, session title/status, persistent literal search, agenda, pinned cards, quick capture, quick stub, and a sticky action bar for Record state, Mark Moment, and End Session. Do not add live transcript captions, proactive AI, or decorative motion beyond a record-state indicator.
+Stage is clean, focused, dark, and separate from Sanctum chrome. The web Stage surface uses Ink background, Cream text, translucent Stage cards, session title/status, persistent literal search, agenda, pinned cards, Relic Guide sidecar, quick capture, quick stub, and a sticky action bar for Record state, Mark Moment, and End Session. Stage opens from Prepare/session context rather than default rail navigation. Do not add live transcript captions, autonomous AI, or decorative motion beyond a record-state indicator.
 
 ## First Implementation Pass
 
@@ -103,7 +103,7 @@ The first pass should install the visual foundation without broad route rewrites
 - Copy local fonts and the wordmark into the web app public assets.
 - Map design tokens into `globals.css`.
 - Update shared primitives for buttons, cards, chips, fields, page heads, entity rows, command/search affordance, Sanctum shell, and Stage shell.
-- Update `SanctumShell` so the left rail follows [[72 - Navigation Design Spec]] and the top context bar carries `Search or ask...`, `+ Create`, current session, Review, Usage, and Account affordances.
+- Update `SanctumShell` so the left rail follows [[72 - Navigation Design Spec]] and the top context bar carries Search, Relic Guide, `+ Create`, current session, Review, Usage, Account, and Return to Stage affordances.
 - Build the web Stage surface using Stage tokens while preserving existing manual actions.
 
 Future passes can convert individual routes to richer page-specific components once the foundation is stable.
@@ -113,6 +113,6 @@ Future passes can convert individual routes to richer page-specific components o
 - Authenticated web screens inherit the design system without adding provider calls or AI runtime behavior.
 - The Sanctum/Stage split is obvious as a mode split, not a platform split: Sanctum is literary, modern, relaxing; Stage is clean and focused; both exist on web and mobile.
 - Session prep reads as Sanctum work with Amber emphasis, not a third mode.
-- Search/Ask is available through the top context omnibox, and Ask is not treated as a permanent rail item or chat column.
+- Search is available through the top context bar, and Relic Guide is always available as a collapsible sidecar/sheet without becoming a rail item or autonomous chat column.
 - Local fonts and wordmark load from web public assets.
 - Existing manual Create -> Organize -> Prep -> Run -> Review surfaces remain functional.

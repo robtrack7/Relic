@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-25
+last_audited: 2026-06-01
 source_file: "Relic Vault/50 - Session Log Index.md"
 ---
 
@@ -35,3 +35,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-05-30 - Surface Language Alignment]]
 - [[Session Logs/2026-05-30 - Unified Surface Correction]]
 - [[Session Logs/2026-05-31 - Navigation Spec Propagation]]
+- [[Session Logs/2026-06-01 - Stage Access and Relic Guide Alignment]]

@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-06-01
 source_file: "Sourced - Downloaded - 260518/relic-stage-ux-flow-v0_6.md"
 ---
 
@@ -65,16 +65,18 @@ Material corrections:
 
 Relic has **two user-facing surfaces**:
 
-| Surface | Purpose | Platform primary |
+| Surface | Purpose | Build order |
 |---|---|---|
-| **Sanctum** | Workspace/World/Saga home, entity management, Threads, Review, Ask, and session prep workspace | Web |
-| **Stage** | Live session support: agenda, pinned cards, search, capture, record, dice, end session | Mobile |
+| **Sanctum** | Workspace/World/Saga home, entity management, Threads, Review, Relic Guide, and Prepare workspace | Web first, mobile follows |
+| **Stage** | Live session support: agenda, pinned cards, search, Relic Guide, capture, record, dice, end session | Web first, mobile follows |
 
-**Session prep** is a Sanctum workspace, not a top-level mode. The GM opens a session from Sanctum, edits the packet in the prep workspace, taps **Ready for Stage**, then opens Stage. Stage can preview a `ready` or `started` packet without locking prep. Prep locks only when the session reaches `in_progress`.
+**Prepare** is a Sanctum workspace, not a separate product surface. The GM opens a session from Sanctum, edits the packet in Prepare, taps **Ready for Stage**, then opens Stage. Stage can preview a `ready` or `started` packet without locking prep. Prep locks only when the session reaches `in_progress`.
+
+**Stage access** is contextual. Stage is not a default left-rail destination; it opens from Prepare, current session pill, Home next-action cards, notification/deep link, app/crash resume, or the bright `Return to Stage` affordance shown in Sanctum while a session is live.
 
 **Saga creation** replaces retired user-facing creation-mode language. Internal names such as `workshop_sessions`, `workshop_input`, or `scaffold_saga` may remain in engineering/schema contexts, but Stage copy must never tell the GM to open Saga Creation.
 
-**Session prep workspace** is the active user-facing wording. Use **session prep workspace**, **prep editor**, or **prep briefing** in MVP copy.
+**Prepare workspace** is the active user-facing wording for the rail destination. Use **Prepare**, **prep editor**, or **prep briefing** in MVP copy depending on context.
 
 ---
 
@@ -84,8 +86,8 @@ The Stage is the table surface. It exists for one moment: a GM is mid-session, w
 
 **Five rules:**
 
-1. **Mobile-first surface.** Everything important is reachable without leaving the Stage.
-2. **AI is dormant by default.** Search is the only unsolicited AI affordance. GM-initiated generation (V1) is allowed inline as long as the GM invokes it. (PRD §3.1 + Basepoint §5.)
+1. **Mobile-ready surface.** Everything important is reachable without leaving the Stage; web ships first, then mobile follows with stronger offline ergonomics.
+2. **Relic Guide is GM-controlled.** Guide is available for live support and can prepare actions, but it never mutates canon autonomously.
 3. **Airplane-mode complete.** Every Stage action works offline; reconnect flushes. (Tech Arch §15.)
 4. **Cold-load to interactive <2s** on modern phone with working network. (PRD STG acceptance.)
 5. **Decoration costs milliseconds. None are paid.** (Design System principle 06.)
@@ -120,7 +122,8 @@ Stage entry points:
 |---|---|---|
 | `RESUME` | Sanctum home status card | Stage with active `in_progress` session |
 | `OPEN` | App icon (mobile) | Stage if active session exists, else prompt |
-| `START` | Session prep workspace `Open in Stage` CTA | Stage with `ready` packet; session remains editable until Start Session confirmation |
+| `START` | Prepare `Open in Stage` CTA | Stage with `ready` packet; session remains editable until Start Session confirmation |
+| `RETURN` | Sanctum top-right `Return to Stage` affordance | Stage with current `started`, `in_progress`, or `ended_pending_undo` session |
 
 **Frame budget (mobile, <2s total):**
 
@@ -128,7 +131,7 @@ Stage entry points:
 - **200–600ms:** Packet hydrates from local SQLite (Tech Arch §15.2). Agenda + pinned cards populate.
 - **<2s:** Network reconciliation in background. Updates flow in without re-rendering shell.
 
-**Empty state:** No active or ready session → single CTA: `Plan a session` / `Open session prep`, or `Resume Session N — The Title` if a `ready`, `started`, or `in_progress` packet exists.
+**Empty state:** No active or ready session → single CTA: `Open Prepare` / `Plan a session`, or `Resume Session N — The Title` if a `ready`, `started`, or `in_progress` packet exists.
 
 ---
 
@@ -138,7 +141,7 @@ The Stage operates against these `sessions.status` values:
 
 | State | Set when | Prep editable? | Stage behavior |
 |---|---|---:|---|
-| `planned` | Session created in the session prep workspace | Yes | Not openable from Stage. |
+| `planned` | Session created in Prepare | Yes | Not openable from Stage. |
 | `ready` | GM taps `Ready for Stage` in prep | Yes | Openable. Stage previews agenda + pinned cards. No recording. |
 | `started` | GM confirms `Start Session` in Stage | Yes | Active shell; consent gate available. GM may still return to prep. |
 | `in_progress` | First recording starts, or GM explicitly starts without recording | No | Live session state. Prep workspace read-only. |
@@ -147,7 +150,7 @@ The Stage operates against these `sessions.status` values:
 
 **Schema contract:** Schema v0.8 tracks `started_at`, `went_live_at`, `ended_pending_undo_at`, `ended_at`, `sessions.status`, and computed prep-lock state for status in {`in_progress`, `ended_pending_undo`}.
 
-**Key design point:** the prep → Stage transition is **not** lockingly one-way. The GM can open Stage for preview, return to prep, edit, and re-open Stage. The lock fires on `in_progress` only.
+**Key design point:** the Prepare → Stage transition is **not** lockingly one-way. The GM can open Stage for preview, return to prep, edit, and re-open Stage. The lock fires on `in_progress` only. When the GM leaves Stage during `started`, `in_progress`, or `ended_pending_undo`, Sanctum shows a bright `Return to Stage` affordance near the top-right controls.
 
 ---
 
@@ -204,7 +207,7 @@ Search ⌘K opens modal. Persistent inline bar also visible. Tap result → open
 
 ## 6. Agenda
 
-The Agenda renders the session packet authored in the session prep workspace.
+The Agenda renders the session packet authored in Prepare.
 
 **Source of truth:** `sessions` row + linked active threads + pinned entities. Read by the Stage on session open.
 
@@ -218,7 +221,7 @@ The Agenda renders the session packet authored in the session prep workspace.
 
 All three default to expanded on session open. Collapse state persists per session per device.
 
-**Prep relationship:** the Agenda is the GM's prep, which is the output of AI synthesis plus GM editing in the session prep workspace. The Stage does not re-synthesize, summarize, or modify the agenda. If the GM wants changes, they return to the prep workspace while the session is still editable (`ready` or `started`).
+**Prep relationship:** the Agenda is the GM's prep, which is the output of AI synthesis plus GM editing in Prepare. The Stage does not re-synthesize, summarize, or modify the agenda unless the GM invokes Relic Guide and reviews an action. If the GM wants direct prep changes, they return to Prepare while the session is still editable (`ready` or `started`).
 
 **Why no AI summarization on Stage:** the agenda is the GM's authored prep. Compressing it is disrespectful and adds latency. The prep workspace is where AI helps shape this content. The Stage just renders it.
 
@@ -779,7 +782,7 @@ Session 14 ended. Pipeline starts in 0:57.   [ Undo ]
 ### 14.2 Prep workspace relationship during End Session
 
 - While `ended_pending_undo`: the prep workspace remains read-only for this session (it could return to `in_progress`).
-- On `ended`: the session record becomes available for retrospective notes only. Prep for the next session happens in a new session prep workspace.
+- On `ended`: the session record becomes available for retrospective notes only. Prep for the next session happens in a new Prepare workspace.
 
 **v0.4 addition.** On the `ended` transition, the optional one-line summary card (§14.5) appears before Stage returns to dashboard. If the GM saves, the next-session prep briefing (Session Prep Flow §6.3) incorporates the new GM-authored canon summary on next generation. If the GM skips, Session Prep Flow §6.5 fallback CTA offers a second chance.
 
@@ -960,20 +963,21 @@ These features are V1, but the V0 architecture must allow them to be added witho
 
 ---
 
-## 18. AI behavior summary on Stage
+## 18. Relic Guide and AI behavior summary on Stage
 
 **V0:**
-- AI is dormant by default.
-- The only AI-touching surface is Hybrid search (`search_for_ui`), GM-initiated, no follow-on suggestions.
+- Relic Guide is available as a collapsible live sidecar/sheet.
+- Guide can answer live questions with citations, suggest prompts, draft quick captures/stubs, and prepare edits.
+- Hybrid search (`search_for_ui`) remains GM-initiated.
 - All capture/stub/recording content stored verbatim. No mid-session AI processing.
 - Post-session pipeline begins only on `ended` state (after 60s undo).
 
 **V1 (planned additions):**
 - GM-initiated random generators (one tap → one candidate → save or dismiss).
 - System-aware Mechanical Strip rendering on Stage Card (deterministic; no per-render AI).
-- Continued dormancy for unsolicited AI.
+- Continued ban on unsolicited/autonomous AI.
 
-**Locked principle:** AI on Stage is always GM-invoked. Background AI is forbidden during `in_progress` and `ended_pending_undo` states. Keep the Stage clean and focused; do not turn it into a live assistant surface.
+**Locked principle:** AI on Stage is always GM-invoked. Relic Guide can affect the project only through GM-reviewed actions. Low-risk session working-state changes can use inline preview/apply. Canon-impacting changes require inline GM-reviewed commit or Approval Queue draft with provenance. Background AI is forbidden during `in_progress` and `ended_pending_undo` states. Keep the Stage clean and focused; do not turn Guide into autonomous narration.
 
 **Note on v0.4 additions.** The Start Session confirmation modal (§11.7) and the optional one-line summary card (§14.5) are GM-facing prompts with zero AI calls. They are not violations of the AI dormancy principle. The Start Session modal's conditional warning is computed from a database query (not AI inference). The one-line summary card accepts only GM-typed text; no AI processing happens on it during the session window — Memory Spec §6.2 still applies (captures are BM25-only until post-session synthesis).
 

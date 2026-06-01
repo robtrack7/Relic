@@ -14,12 +14,12 @@ depends_on:
   - "[[61 - Sanctum Dashboard Design Spec]]"
   - "[[71 - Component Inventory Design Spec]]"
 supersedes: []
-last_audited: 2026-05-31
+last_audited: 2026-06-01
 source_file: "Relic Vault/72 - Navigation Design Spec.md"
 ---
 
 > [!info] How to use this spec
-> Use this as the navigation contract for Relic's web app shell and major product surfaces. It defines what belongs in the top context bar, left navigation rail, global create menu, World/Saga switcher, and future-reserved navigation areas. Read with [[60 - Design Spec Overview]], [[61 - Sanctum Dashboard Design Spec]], [[70 - Mobile App Design Spec]], and [[71 - Component Inventory Design Spec]].
+> Use this as the navigation contract for Relic's web app shell and major product surfaces. It defines what belongs in the top context bar, left navigation rail, global create menu, World/Saga switcher, Relic Guide sidecar, and future-reserved navigation areas. Read with [[60 - Design Spec Overview]], [[61 - Sanctum Dashboard Design Spec]], [[70 - Mobile App Design Spec]], and [[71 - Component Inventory Design Spec]].
 
 # Navigation Design Spec
 
@@ -27,7 +27,7 @@ source_file: "Relic Vault/72 - Navigation Design Spec.md"
 
 This spec defines Relic's primary navigation model for the web app and the canonical navigation vocabulary for downstream screen specs. It translates the product hierarchy, the Sanctum/Stage surface model, and the core GM loop into a clear navigation system. Mobile adapts this model through [[70 - Mobile App Design Spec]] without changing the product IA.
 
-The desktop left rail described here is a web-shell pattern, not a platform split. Mobile keeps the same product hierarchy and complete Sanctum/Stage capability, but presents it through a Sanctum/Stage bottom bar, compact section navigation, omnibox entry, and sheets per [[70 - Mobile App Design Spec]].
+The desktop left rail described here is a web-shell pattern, not a platform split. Mobile keeps the same product hierarchy and complete Sanctum/Stage capability, but presents it through a Sanctum/Stage bottom bar, compact section navigation, Search entry, Relic Guide sheet, and task sheets per [[70 - Mobile App Design Spec]].
 
 Relic navigation must help the GM answer five questions quickly:
 
@@ -39,7 +39,7 @@ Relic navigation must help the GM answer five questions quickly:
 
 The guiding rule:
 
-> The left rail is for places the GM works. The top bar is for context, search, creation, and urgent state.
+> The left rail is for places the GM works. The top bar is for context, search, creation, urgent state, and Guide visibility.
 
 ---
 
@@ -62,15 +62,15 @@ Account
 | Account | Authenticated user identity. | Account menu only. |
 | Workspace | Ownership, usage, future billing/collaboration boundary. | Top context switcher and Settings. |
 | World | Shared setting and World canon container. | Top context switcher, lightweight World settings, future World overview. |
-| Saga | Playable storyline inside a World. | Primary active context for the dashboard, shell, search, prep, Stage, Review, and Library. |
-| Session | Prep/run/review unit inside a Saga. | Current session pill, Sessions, Prep, Stage, Review. |
+| Saga | Playable storyline inside a World. | Primary active context for the dashboard, shell, search, Prepare, Stage, Review, and Library. |
+| Session | Prep/run/review unit inside a Saga. | Current session pill, Prepare, Sessions, Stage, Review. |
 
 ### 1.2 Scope rule
 
 The active Workspace / World / Saga is not decorative metadata. It controls:
 
 - search scope
-- Ask Relic scope
+- Relic Guide scope
 - AI retrieval scope
 - Library filters
 - Stage packet loading
@@ -87,21 +87,21 @@ The shell must always make current scope visible.
 
 Relic uses two persistent navigation zones:
 
-1. **Top context bar** — global scope, search, create, session state, review state, usage, account.
+1. **Top context bar** — global scope, search, Guide toggle, create, session state, review state, usage, account.
 2. **Left navigation rail** — primary work surfaces.
 
 Recommended web shell:
 
 ```text
-[Relic]  Workspace / World / Saga ▾     [Search or ask…]     [+ Create]     [Session pill]     [Review badge]     [Usage]     [Account]
+[Relic]  Workspace / World / Saga ▾     [Search…]     [Guide]     [+ Create]     [Session pill]     [Review badge]     [Usage]     [Account]
 ```
 
 ```text
 Home
 Threads
 Library
+Prepare
 Sessions
-Stage
 Review
 
 Export
@@ -117,7 +117,7 @@ Settings
 The top context bar answers:
 
 - What Workspace / World / Saga am I in?
-- How do I find or ask about anything?
+- How do I find anything or open Relic Guide?
 - How do I create something quickly?
 - What is the current session state?
 - What needs review?
@@ -181,17 +181,13 @@ Saga
 | Session in progress | Block switching and route user to End Session or Resume Stage. |
 | Unsaved local edits | Warn before switching if changes are not yet safely queued/saved. |
 
-### Zone 3: Search or Ask
+### Zone 3: Search
 
-Use a combined omnibox:
+Use a global search entry:
 
 ```text
-Search or ask…
+Search…
 ```
-
-This removes redundancy between top search and a separate Ask nav item.
-
-#### Search mode
 
 Search answers:
 
@@ -214,11 +210,15 @@ Examples:
 - `Session 12`
 - `loose ledger`
 
-#### Ask mode
+Search belongs in the top context bar and should be globally available across Sanctum. Stage has its own local search treatment inside the Stage shell.
 
-Ask answers:
+### Zone 4: Relic Guide
 
-> What does the canon say?
+Relic Guide is the always-available AI sidecar. It is visible as a collapsible/minimizable control in the shell and can be expanded into a right sidecar on desktop or a sheet/drawer on mobile.
+
+Relic Guide can answer:
+
+> What does the canon say, and what can I do next?
 
 Outputs:
 
@@ -227,6 +227,8 @@ Outputs:
 - source drawer
 - linked records
 - no-answer state when insufficient canon exists
+- suggested prompts based on the current surface
+- draft text, prep changes, quick stubs, Library proposals, or reviewable edits
 
 Examples:
 
@@ -234,17 +236,17 @@ Examples:
 - `Which threads are still loose from last session?`
 - `What should I remember before prepping Session 15?`
 
-#### Omnibox behavior
+#### Guide behavior
 
-- Entity-like input should prioritize Find results.
-- Question-like input should allow Ask results.
-- User can toggle `Find` / `Ask`.
-- Ask answers require citations.
-- Ask must not create or alter canon.
+- Guide answers require citations when they make factual claims about canon.
+- Guide can create or edit proposals and can apply low-risk working-state changes after GM review.
+- Guide must not autonomously mutate canon.
+- Canon changes require either explicit inline GM-reviewed commit or Approval Queue draft, depending on risk and provenance.
 - Default scope is current Saga plus relevant World canon.
 - Sibling Sagas are excluded unless a future explicit cross-Saga tool is added.
+- Guide can be minimized without losing its current thread or draft state.
 
-### Zone 4: Global Create
+### Zone 5: Global Create
 
 A scoped creation menu:
 
@@ -279,7 +281,7 @@ New World / Saga
 - Unsupported imports must be disabled or absent.
 - AI must not auto-run from the create menu unless the GM explicitly selects an AI-assisted path.
 
-### Zone 5: Current session pill
+### Zone 6: Current session pill
 
 The current session pill is the fastest route into prep, Stage, or Review.
 
@@ -298,7 +300,7 @@ Session 12 · Review ready
 | Pill state | Route |
 |---|---|
 | No session planned | Sessions or New Session. |
-| Planned / Prepping | Session Prep. |
+| Planned / Prepping | Prepare. |
 | Ready | Stage preview, with option to return to Prep. |
 | Started | Stage. |
 | In progress | Stage. |
@@ -306,7 +308,9 @@ Session 12 · Review ready
 | Review ready | Review / Approval Queue. |
 | Pipeline pending | Session pipeline status. |
 
-### Zone 6: Review badge
+When a session is `started`, `in_progress`, or `ended_pending_undo` and the GM is viewing Sanctum, the current session pill expands or pairs with a high-visibility `Return to Stage` affordance near the top-right controls. Use Amber/Amber-light for return-to-live guidance and reserve Rust for recording, blocked, or destructive states.
+
+### Zone 7: Review badge
 
 Displays pending review count:
 
@@ -320,7 +324,7 @@ Behavior:
 - Badge can show low-confidence or conflict warning states.
 - Should remain visible when review is pending.
 
-### Zone 7: Usage / quota chip
+### Zone 8: Usage / quota chip
 
 Only visible when relevant.
 
@@ -339,7 +343,7 @@ Behavior:
 - Explains what is blocked.
 - Manual workflows remain available where allowed.
 
-### Zone 8: Account menu
+### Zone 9: Account menu
 
 Contains:
 
@@ -368,8 +372,8 @@ Recommended rail:
 Home
 Threads
 Library
+Prepare
 Sessions
-Stage
 Review
 
 Export
@@ -518,7 +522,7 @@ Owns:
 - ready sessions
 - active/in-progress status
 - ended sessions
-- Session Prep entry
+- Prepare entry
 - transcript / pipeline state
 - session review entry
 - manual summary fallback
@@ -534,9 +538,11 @@ Ended
 Pipeline
 ```
 
-### Session Prep routing
+### Prepare routing
 
-Session Prep is reached from:
+Prepare is the primary left-rail route for the active or next planned session's prep workspace.
+
+Prepare is also reached from:
 
 - Home primary CTA
 - current session pill
@@ -545,11 +551,11 @@ Session Prep is reached from:
 - Approval Queue completion
 - Stage return before session is in progress
 
-Session Prep is not its own top-level left rail item.
+Prepare is not a third product surface; it is a Sanctum workflow and uses the Sanctum shell, palette, and source/provenance rules.
 
 ## 5.5 Stage
 
-Stage is the live-session surface.
+Stage is the live-session surface. It is not a default left-rail destination.
 
 Owns:
 
@@ -580,7 +586,9 @@ Ended pending undo → Undo surface
 Ended → Pipeline queued / return to Review
 ```
 
-AI is dormant on Stage except GM-initiated search. Do not include proactive suggestions, live transcript panel, encounter tracker, VTT, tactical map, or player controls.
+AI is dormant on Stage unless the GM explicitly invokes Search or Relic Guide. Do not include proactive suggestions, live transcript panel, encounter tracker, VTT, tactical map, or player controls.
+
+Stage access is contextual. It opens from Prepare after `Ready for Stage`, from the current session pill when a session is ready or live, from Home next-action cards, from notifications/deep links, from app/crash resume, or from the top-right `Return to Stage` affordance during a live session.
 
 ## 5.6 Review
 
@@ -692,7 +700,7 @@ Each section has local create actions:
 | Threads | New Thread |
 | Library | New Character / Place / Faction / Artifact / Lore Note |
 | Sessions | New Session |
-| Session Prep | Add pinned entity / Create quick stub |
+| Prepare | Add pinned entity / Create quick stub |
 | Stage | Quick Capture / Quick Stub |
 | Review | No create-first behavior; review actions dominate. |
 
@@ -760,7 +768,7 @@ The active Saga dashboard remains Home. Saga settings should not replace Home.
 
 ## 8. Search and Ask navigation
 
-Search and Ask are related but distinct.
+Search and Relic Guide are related but distinct.
 
 ## 8.1 Search
 
@@ -778,9 +786,9 @@ Outputs:
 
 Search belongs in the top context bar and should be globally available.
 
-## 8.2 Ask
+## 8.2 Relic Guide
 
-Ask is for answering.
+Relic Guide is for answering and acting with GM control.
 
 Outputs:
 
@@ -789,28 +797,33 @@ Outputs:
 - source drawer
 - linked records
 - no-answer state
+- proposed edits
+- prep insertions
+- quick stubs
+- reviewable canon drafts
 
-Ask is:
+Relic Guide is:
 
-- top-bar omnibox mode
-- optional sidecar
-- optional full page if needed
-- contextual action from detail/prep surfaces
+- an always-available collapsible sidecar/sheet
+- a surface-aware action assistant
+- a cited answer surface
+- a draft/proposal generator
+- a GM-reviewed editing aid
 
-Ask is not:
+Relic Guide is not:
 
 - a permanent chatbot column
 - a left rail destination by default
-- a canon-writing surface
-- an answer-to-canon tool
+- an autonomous canon-writing surface
+- an answer-to-canon tool without GM review
 
 ---
 
 ## 9. Stage navigation
 
-Stage appears in the left rail because it is an equal-weight product surface in the web app.
+Stage does not appear in the default left rail. The rail exposes `Prepare`; Stage opens from the prep/live-session workflow.
 
-Stage is also reachable from:
+Stage is reachable from:
 
 - current session pill
 - Ready for Stage panel
@@ -818,13 +831,15 @@ Stage is also reachable from:
 - Home next action
 - direct Stage route
 - notification/deep link
+- app/crash resume
+- top-right `Return to Stage` affordance while a session is live
 
 Stage should preserve session context and avoid deep branching.
 
 Stage routes/states:
 
 ```text
-Stage / no ready session
+Stage / no ready session → open Prepare
 Stage / ready preview
 Stage / started
 Stage / in progress
@@ -919,11 +934,15 @@ App
 │  │  ├─ Resume saga creation
 │  │  ├─ New Saga in this World
 │  │  └─ Saga settings
-│  ├─ Search or ask
+│  ├─ Search
 │  │  ├─ Find results
-│  │  ├─ Ask answer
-│  │  ├─ Citations
 │  │  └─ Create stub from no result
+│  ├─ Relic Guide
+│  │  ├─ Cited answer
+│  │  ├─ Suggested prompts
+│  │  ├─ Draft proposal
+│  │  ├─ Inline reviewed edit
+│  │  └─ Approval Queue draft
 │  ├─ + Create
 │  │  ├─ Thread
 │  │  ├─ Character
@@ -949,8 +968,8 @@ App
 │  ├─ Home
 │  ├─ Threads
 │  ├─ Library
+│  ├─ Prepare
 │  ├─ Sessions
-│  ├─ Stage
 │  ├─ Review
 │  ├─ Export
 │  └─ Settings
@@ -958,7 +977,7 @@ App
 ├─ Home
 │  ├─ Next action
 │  ├─ Current session state
-│  ├─ Inline prep when planned/ready
+│  ├─ Inline prep summary when planned/ready
 │  ├─ Threads carry-forward
 │  ├─ Pending Review
 │  ├─ Recent canon
@@ -994,7 +1013,7 @@ App
 │  ├─ Ready
 │  ├─ Ended
 │  ├─ Pipeline
-│  ├─ Session Prep
+│  ├─ Prepare
 │  ├─ Session Review
 │  └─ Transcript / summary
 │
@@ -1076,11 +1095,13 @@ Use this checklist when reviewing wireframes or implementation:
 - Is the dashboard focused on the active Saga rather than Workspace analytics?
 - Are Threads top-level and visually treated as the continuity spine?
 - Does Library contain entity types, notes, sources, and future relationship/timeline reserves?
-- Is Session Prep reachable but not a top-level nav item?
-- Is Stage visible as an equal-weight surface?
+- Is Prepare in the left rail and visibly a Sanctum workflow?
+- Is Stage absent from the default left rail and reachable from prep/live-session context?
+- Does a live session show a high-visibility `Return to Stage` affordance in Sanctum?
 - Is Review clearly available when drafts are pending?
-- Is Search or Ask in the top bar?
-- Is Ask absent from the primary left rail unless it becomes a full workspace later?
+- Is Search in the top bar?
+- Is Relic Guide always available, collapsible, and absent from the primary left rail?
+- Do Relic Guide create/edit actions require inline GM review or Approval Queue before canon mutation?
 - Is global create scoped and type-specific?
 - Are World and Saga management handled through the switcher and Settings?
 - Are timeline and relationships reserved without becoming MVP primary nav?
@@ -1093,5 +1114,5 @@ Use this checklist when reviewing wireframes or implementation:
 ## 14. Claude Design prompt
 
 ```text
-Design Relic's web app navigation system. Use a top context bar for Relic/Home, Workspace/World/Saga switcher, Search or Ask omnibox, + Create, current session pill, Review badge, Usage chip, and Account menu. Use a left rail for primary work surfaces: Home, Threads, Library, Sessions, Stage, Review, Export, Settings. Home is the active Saga cockpit, not a Workspace overview. Threads are the continuity spine. Library contains Characters, Places, Factions, Artifacts, Lore, Notes, Sources, Archived, and future reserves for Relationships/Timeline/Maps. Session Prep lives inside Sanctum and is reached from Home, Sessions, and the session pill. Stage is an equal-weight live-session surface. Review is the trust surface where drafts become canon by explicit GM action. Ask is handled through the top omnibox, sidecar, or contextual action, not a permanent chatbot column. Preserve MVP exclusions and do not add initiative, encounters, VTT, player wiki, full graph, writable timeline, maps, BYOK, local models, image generation, custom calendars, or co-GM features.
+Design Relic's web app navigation system. Use a top context bar for Relic/Home, Workspace/World/Saga switcher, Search, Relic Guide toggle, + Create, current session pill, Review badge, Usage chip, and Account menu. Use a left rail for primary work surfaces: Home, Threads, Library, Prepare, Sessions, Review, Export, Settings. Home is the active Saga cockpit, not a Workspace overview. Threads are the continuity spine. Library contains Characters, Places, Factions, Artifacts, Lore, Notes, Sources, Archived, and future reserves for Relationships/Timeline/Maps. Prepare is the Sanctum workflow for the active or next planned session and is the bridge to Stage. Stage is a contextual live-session surface reached from Prepare, current session pill, Home next-action cards, notifications/deep links, app resume, and a bright Return to Stage affordance while live. Review is the trust surface where drafts become canon by explicit GM action. Relic Guide is always available as a collapsible sidecar/sheet, can answer with citations and prepare create/edit actions, and cannot mutate canon without inline GM review or Approval Queue. Preserve MVP exclusions and do not add initiative, encounters, VTT, player wiki, full graph, writable timeline, maps, BYOK, local models, image generation, custom calendars, or co-GM features.
 ```

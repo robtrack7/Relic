@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-06-01
 source_file: "Sourced - Downloaded - 260518/relic-first-run-ux-flow-v0_2.md"
 ---
 
@@ -413,7 +413,7 @@ On `Create blank saga`:
 Title: `Your saga is ready.`  
 Body: `Start with a character, place, faction, thread, or plan your first session.`  
 Primary CTA: `Plan your first session`  
-Secondary CTAs: `Create character`, `Create place`, `Create thread`, `Ask Relic to draft something`
+Secondary CTAs: `Create character`, `Create place`, `Create thread`, `Open Relic Guide`
 
 AI must be available on-demand, but no AI generation fires automatically.
 
@@ -655,4 +655,3 @@ Priority 4 is done when the following can be implemented without additional prod
 | World-canon promotion during first-run | V1 |
 | Player setup | Deferred beyond MVP |
 | Image generation | Excluded |
-

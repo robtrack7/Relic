@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-31
+last_audited: 2026-06-01
 source_file: "Sourced - Downloaded - 260518/relic-mvp-prd-v0_10.md"
 ---
 
@@ -110,7 +110,7 @@ Requirement ID migration table:
 | 28 | ~~First-time GMs pass through session prep workspace for Session 1 via a tooltip tour.~~ **Revised v0.9.** Post-creation, the Sanctum home shows a "Plan your first session" card with a `+ Plan Session 1` CTA. No separate tooltip tour surface. Dismissal stored on `gm_profiles.session_prep_intro_dismissed_at` (field retained). |
 | 29 | **Thread Timeline is MVP.** Read-only, derived from `threads.objectives_log` + `canon_audit`. No new schema. Writable timeline editor remains V1. |
 | 30 | **AI creative tasks are GM-invoked, produce ephemeral output, never auto-run.** `propose_scene_beats`, `propose_thread_complication`, `propose_npc_for_scene`, `answer_saga_question` are all light-quota, balanced-model tasks (Registry v1.0 §§7-10). `propose_quick_stub_fleshing` (Registry v1.0 §11) is the one exception: it produces an update draft that routes through the standard approval write path. |
-| 31 | **Sanctum web navigation follows [[72 - Navigation Design Spec]].** Top context bar owns Workspace/World/Saga, `Search or ask...`, `+ Create`, current session, Review, Usage, and Account. Left rail order is Home · Threads · Library · Sessions · Stage · Review, with Export and Settings lower. Notes is a sub-section of Library. Ask is invoked from the omnibox, page, sidecar, or contextual action, not the default left rail. Maps is absent (V1 reserve). |
+| 31 | **Sanctum web navigation follows [[72 - Navigation Design Spec]].** Top context bar owns Workspace/World/Saga, Search, Relic Guide, `+ Create`, current session, Review, Usage, Account, and `Return to Stage` while live. Left rail order is Home · Threads · Library · Prepare · Sessions · Review, with Export and Settings lower. Notes is a sub-section of Library. Stage is reached from Prepare, session state, Home next-action cards, notifications/deep links, app resume, and the live-session return affordance; it is not a default rail item. Maps is absent (V1 reserve). |
 | 32 | **Workspace / World / Saga hierarchy.** Workspace owns billing, usage, and future collaboration; World owns shared setting and World canon; Saga is the playable campaign/storyline inside a World. No separate Campaign layer. |
 | 33 | **Era/Timeframe is V1-ready.** MVP may create a default hidden Era and reserve Saga time-index fields; no Era editor UI ships in MVP. |
 | 34 | **Content scope is explicit.** World-scoped canon uses `scope='world'` and `saga_id=null`; Saga-scoped canon uses `scope='saga'` and a required `saga_id`. |
@@ -443,7 +443,7 @@ Stub creation surfaces:
 - `AIC-FR-1` **Scene beats.** Prep workspace agenda editor exposes a "Brainstorm beats" button. Invokes `propose_scene_beats` (Registry v1.0 §7). Returns exactly 3 beat sketches. Each beat shows summary, narrative, entities involved, thread implication, sources. No auto-commit; GM copies text into scene notes if desired.
 - `AIC-FR-2` **Thread complication.** Thread detail page exposes a "Propose a complication" button. Invokes `propose_thread_complication` (Registry v1.0 §8). Returns 1–3 complication cards. GM copies text into thread narrative if desired. No auto-commit.
 - `AIC-FR-3` **NPC for scene.** Prep workspace and entity creation expose a "Draft an NPC for this scene" button. GM describes the role. Invokes `propose_npc_for_scene` (Registry v1.0 §9) to return 1–3 candidates. On candidate selection, candidate is passed to `draft_entity_from_prompt` (Registry v1.0 §3) for full entity creation with standard inline review. No direct canon write from this task.
-- `AIC-FR-4` **Saga question.** GM invokes Ask from the top `Search or ask...` omnibox, a contextual action, sidecar, or fallback page. Invokes `answer_saga_question` (Registry v1.0 §10). Answer renders with mandatory inline citations. If retrieval is insufficient, renders "I don't have enough information about that." No answer without citations.
+- `AIC-FR-4` **Saga question.** GM invokes Relic Guide from the top context bar, a contextual action, sidecar/sheet, or fallback page. Invokes `answer_saga_question` (Registry v1.0 §10). Answer renders with mandatory inline citations. If retrieval is insufficient, renders "I don't have enough information about that." No answer without citations. Relic Guide may prepare GM-reviewed create/edit actions, but canon-impacting changes require inline GM review or the Approval Queue.
 - `AIC-FR-5` **Stub fleshing.** Stub entity detail page (where `is_stub=true` AND transcript evidence exists) exposes "Flesh out from session evidence." Invokes `propose_quick_stub_fleshing` (Registry v1.0 §11). **Unlike other creative tasks, this produces an AI Draft update** that routes through the standard approval write path (Schema §10.1). Approval clears `is_stub=false`.
 
 **Universal rules for all `AIC-FR-*` tasks.**
@@ -532,7 +532,7 @@ The loop closes.
 14. Navigate to The Pale Broker thread. Tap "Propose a complication." 2 complication cards appear. Copy one into the thread narrative.
 15. Need an informant for the dockside scene. Tap "Draft an NPC for this scene." Describe "a dock worker who owes Seraphine." 2 candidate cards appear. Pick one → inline review pane opens → accept → entity written to canon as stub, pinned to session.
 16. Open The Pale Broker entity — it's a stub. Transcript evidence found in 2 sessions. Tap "Flesh out from session evidence." Proposal renders with 3 paragraphs and 2 suggested relationships. Accept → update draft in Approval Queue.
-17. Open Ask. Type "What's the current state of the Thornwood Accord?" → sourced answer in 8s. Tap a citation → transcript segment opens.
+17. Open Relic Guide. Type "What's the current state of the Thornwood Accord?" → sourced answer in 8s. Tap a citation → transcript segment opens.
 
 ---
 
@@ -556,7 +556,7 @@ The loop closes.
 | Session prep → Scene beats | `propose_scene_beats` → ephemeral cards in prep workspace |
 | Thread detail → Complications | `propose_thread_complication` → ephemeral cards |
 | Prep workspace → NPC creation | `propose_npc_for_scene` → `draft_entity_from_prompt` → inline review |
-| Sanctum Ask → Answer | `answer_saga_question` → sourced answer |
+| Relic Guide → Answer/action | `answer_saga_question` → sourced answer; GM-reviewed action cards for create/edit where supported |
 | Every stage → AI Layer | Retrieval scoped via RLS + Workspace/World/Saga IDs; current Saga + relevant World canon by default |
 | Every stage → Audit Log | State transitions logged |
 

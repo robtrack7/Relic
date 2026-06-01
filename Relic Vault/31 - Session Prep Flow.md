@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-06-01
 source_file: "Sourced - Downloaded - 260518/relic-session-prep-flow-v0_2.md"
 ---
 
@@ -26,9 +26,9 @@ source_file: "Sourced - Downloaded - 260518/relic-session-prep-flow-v0_2.md"
 
 ## 0. Purpose
 
-This document defines the MVP session-prep workspace inside **The Sanctum**.
+This document defines the MVP Prepare workspace inside **The Sanctum**.
 
-Session prep is not a third top-level product mode. It is the Sanctum workflow that turns current Saga state into a practical **Session Packet** for The Stage.
+Session prep is not a third product surface. It is the Sanctum workflow, reached through the `Prepare` rail item and session context, that turns current Saga state into a practical **Session Packet** for The Stage.
 
 **Core promise:**
 
@@ -45,7 +45,7 @@ Session prep is not a third top-level product mode. It is the Sanctum workflow t
 - Generate conservative prep suggestions from approved canon and selected raw/session material.
 - Review AI suggestions inline before saving them.
 - Mark the session **Ready for Stage**.
-- Open the resulting packet in The Stage.
+- Open the resulting packet in The Stage from Prepare or live-session context.
 
 ### P1
 
@@ -69,6 +69,7 @@ Session prep is not a third top-level product mode. It is the Sanctum workflow t
 | Entry | Behavior |
 |---|---|
 | Sanctum home → Prep next session | Opens next planned session or creates one. |
+| Left rail → Prepare | Opens the active, ready, or next planned session prep workspace; if none exists, prompts New session. |
 | First-run commit → Plan Session 1 | Creates Session 1 with scaffolded context. |
 | Session list → New session | Creates blank planned session. |
 | Approval Queue completion → Prep from consequences | Opens next session with newly approved changes available as context. |
@@ -112,7 +113,7 @@ Primary panels:
 1. **Session brief** — title, date, objective, opening scene.
 2. **Agenda / scenes** — editable notes, beats, reminders.
 3. **Context rail** — active threads, pinned entities, recent canon changes, loose threads.
-4. **AI assist drawer** — GM-invoked only, quota-gated.
+4. **Relic Guide sidecar/sheet** — GM-invoked, quota-gated, cited prep help and reviewed actions.
 5. **Ready for Stage panel** — packet preview, missing items, send/open in Stage.
 
 ### Mobile Sanctum / narrow layout
@@ -191,7 +192,9 @@ On Ready for Stage:
 1. Save all session fields.
 2. Set `packet_locked_at = now()`.
 3. Confirm Stage packet preview.
-4. Route to mobile deep link if available, or show “Open this session in Stage.”
+4. Show `Open this session in Stage`; route to mobile deep link if available.
+
+Stage is not a default navigation rail destination. It is opened from this Ready/Open Stage handoff, the current session pill, Home next-action cards, notification/deep link, app/crash resume, or `Return to Stage` while live.
 
 `packet_locked_at` is informational. GMs may still edit after locking.
 

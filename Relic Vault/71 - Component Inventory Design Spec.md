@@ -12,12 +12,12 @@ depends_on:
   - "[[24 - Approval Queue]]"
   - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-31
+last_audited: 2026-06-01
 source_file: "Relic Vault/71 - Component Inventory Design Spec.md"
 ---
 
 > [!info] How to use this spec
-> Use this as the reusable component checklist for the design specs in [[60 - Design Spec Overview]]. Read with [[72 - Navigation Design Spec]] for shell, rail, omnibox, and global create behavior. It references Material 3 and Checklist Design only for coverage completeness; Relic's design system in [[13 - Design System]] remains visually authoritative.
+> Use this as the reusable component checklist for the design specs in [[60 - Design Spec Overview]]. Read with [[72 - Navigation Design Spec]] for shell, rail, Search, Relic Guide, and global create behavior. It references Material 3 and Checklist Design only for coverage completeness; Relic's design system in [[13 - Design System]] remains visually authoritative.
 
 # Component Inventory Design Spec
 
@@ -34,29 +34,33 @@ Material 3 and Checklist Design can be used to check component coverage: nav, in
 
 ## Navigation
 
-`SanctumShell` wraps authenticated Sanctum routes on web and mobile. On web it includes top context bar, left rail, main content slot, and optional right utility sidecar on wide screens. The left rail destinations are Home, Threads, Library, Sessions, Stage, Review, Export, and Settings.
+`SanctumShell` wraps authenticated Sanctum routes on web and mobile. On web it includes top context bar, left rail, main content slot, and collapsible Relic Guide sidecar on wide screens. The left rail destinations are Home, Threads, Library, Prepare, Sessions, Review, Export, and Settings.
 
 `StageShell` wraps Stage routes on web and mobile. It includes Stage header, search, primary scroll area, sticky action bar, and optional wide-screen side panel.
 
-`MobileSanctumShell` is the phone-friendly Sanctum shell with context sheet, Sanctum/Stage app-level bottom navigation, and single-column content. Inside Sanctum, use compact section navigation for Home, Search/Ask, Threads, Library, Sessions, and Review.
+`MobileSanctumShell` is the phone-friendly Sanctum shell with context sheet, contextual Stage bottom navigation, and single-column content. Inside Sanctum, use compact section navigation for Home, Search, Guide, Threads, Library, Prepare, Sessions, and Review.
 
 `ContextSwitcher` shows active Workspace, World, and Saga. It supports switching, resumable new-Saga drafts, `+ New saga`, and blocked switching during live sessions.
 
-`SearchOrAskOmnibox` is the persistent top-context search and Ask entry. It opens Find results, Ask answer mode, command palette/full search, and keeps scope clear.
+`SearchInput` is the persistent top-context search entry. It opens Find results, command palette/full search, and keeps scope clear.
+
+`RelicGuideToggle` opens, focuses, minimizes, or restores Relic Guide without changing page context.
 
 `GlobalCreateMenu` is the top-bar `+ Create` menu. It uses type-specific labels such as New Thread, New Character, New Place, New Faction, New Artifact, New Lore Note, New Session, Import notes, New Saga, and New World / Saga.
 
 `CommandPalette` handles keyboard and modal search on desktop.
 
-`SanctumNav` displays Home, Threads, Library, Sessions, Stage, Review, Export, and Settings. Review supports pending count. Ask is not displayed as a primary rail item by default.
+`SanctumNav` displays Home, Threads, Library, Prepare, Sessions, Review, Export, and Settings. Review supports pending count. Stage and Relic Guide are not displayed as primary rail items by default.
 
-`MobileSurfaceTabBar` on mobile keeps the two primary surfaces accessible: Sanctum and Stage. Inside Sanctum, use a top tab strip, section links, or command/search entry for Home, Search/Ask, Threads, Library, Sessions, and Review.
+`MobileSurfaceTabBar` on mobile keeps Sanctum accessible by default and shows Stage only while a session is ready, started, in_progress, or ended_pending_undo. Inside Sanctum, use a top tab strip, section links, or command/search entry for Home, Search, Guide, Threads, Library, Prepare, Sessions, and Review.
 
 `BreadcrumbBack` is used in detail and focused creation flows where shell nav alone is insufficient.
 
-`RightUtilitySidecar` is the optional desktop dock for Ask Relic, source/provenance, relationship context, draft warnings, or active inspector content. It is not permanent by default and should close without changing page context.
+`RightUtilitySidecar` is the optional desktop dock for source/provenance, relationship context, draft warnings, or active inspector content. It should close without changing page context.
 
-`AskRelicSidecar` is a specific right utility sidecar for cited, GM-invoked answers. It should feel like a sourced reference tool, not a general-purpose chatbot rail, and it should close without changing page context.
+`RelicGuideSidecar` is the always-available collapsible AI sidecar for cited answers and GM-reviewed actions. It should feel like a sourced project assistant, not a general-purpose chatbot rail, and it should minimize without losing prompt/action state.
+
+`ReturnToStageButton` is a high-visibility Amber/Amber-light affordance near top-right shell controls while a session is started, in progress, or ended pending undo and the GM is outside Stage.
 
 `SettingsSubnav` groups Saga, World, Workspace usage, Retention, Notifications, Export, Account.
 
@@ -64,7 +68,7 @@ Navigation components must always communicate scope. The active Workspace/World/
 
 ## Actions
 
-`PrimaryLoopCTA` is the dashboard's state-aware action: Plan Session 1, Continue prep, Ready/Open Stage, Resume Stage, Open Review, or Plan next session.
+`PrimaryLoopCTA` is the dashboard's state-aware action: Plan Session 1, Continue prep, Ready/Open Stage, Return to Stage, Open Review, or Plan next session.
 
 `QuickCreateMenu` offers type-specific creation: Character, Place, Faction, Artifact, Thread, Session, note. It should not be a vague plus menu without labels.
 
@@ -72,9 +76,9 @@ Navigation components must always communicate scope. The active Workspace/World/
 
 `ReadyForStageButton` marks a session ready. It validates packet completeness and never starts recording.
 
-`OpenStageButton` opens a ready/started/in-progress session in Stage.
+`OpenStageButton` opens a ready/started/in-progress session in Stage from Prepare, Home, current session pill, notification/deep link, or app resume.
 
-`DraftThisSessionButton`, `BrainstormBeatsButton`, `DraftNpcButton`, `ThreadComplicationButton`, and `FleshStubCTA` are GM-invoked AI actions. They must show quota/loading/failure states and never imply direct canon writes.
+`RelicGuideAction`, `DraftThisSessionButton`, `BrainstormBeatsButton`, `DraftNpcButton`, `ThreadComplicationButton`, and `FleshStubCTA` are GM-invoked AI actions. They must show quota/loading/failure states and never imply autonomous canon writes.
 
 `ApproveButton`, `EditApproveButton`, `RejectButton`, `MergeButton`, `ArchiveConfirmButton`, and `CommitSelectedBar` belong to review flows. Bulk approval should not be visually prominent.
 
@@ -92,9 +96,9 @@ Action hierarchy should be strict. A screen may have many available actions, but
 
 `SagaStatusPanel` shows current Saga loop state without becoming a Workspace analytics card.
 
-`NextActionCard` is the dashboard hero pattern. It changes by loop state: Plan Session 1, Continue prep, Open Stage, Resume Stage, Open Review, or Plan next session.
+`NextActionCard` is the dashboard hero pattern. It changes by loop state: Plan Session 1, Continue prep, Open Stage, Return to Stage, Open Review, or Plan next session.
 
-`CurrentSessionPill` is a top-bar route into prep, Stage, or Review depending on session status.
+`CurrentSessionPill` is a top-bar route into Prepare, Stage, or Review depending on session status.
 
 `PrepWorkspace` contains the prep editor or inline prep summary.
 
@@ -164,9 +168,9 @@ Feedback components should separate status from instruction. A chip can say `Off
 
 `SearchInput` appears in command palette, Library filters, and Stage. Search state must show scope.
 
-`SearchOrAskInput` appears in the top context omnibox and mobile Search/Ask entry. It preserves the user's query while switching between Find and Ask behavior.
+`GuidePromptInput` appears in Relic Guide. It preserves the user's prompt on failure and supports answer, draft, create, and edit intents.
 
-`QuestionInput` is for Ask Relic and must preserve the question on failure.
+`QuestionInput` is retained as an internal primitive for Guide Q&A and must preserve the question on failure.
 
 `ChecklistEditor` supports prep checklist and Thread objectives where applicable.
 
@@ -190,9 +194,9 @@ Input components should preserve GM authorship. AI insertions should enter edita
 
 `ConfidenceBandChip` communicates source-quality proxy bands in Review. It should not imply model certainty.
 
-`SourceBadge` is the compact citation/provenance entry on draft cards, Ask answers, queue items, and prep suggestions.
+`SourceBadge` is the compact citation/provenance entry on draft cards, Relic Guide answers, queue items, and prep suggestions.
 
-`CitationBadge` indexes Ask citations and opens source preview.
+`CitationBadge` indexes Relic Guide citations and opens source preview.
 
 `CitationDriftIndicator` appears when a transcript source's current segment differs from the frozen excerpt used by a draft.
 
@@ -204,7 +208,9 @@ Status chips must be visually small but semantically precise. Draft, Canon, Arch
 
 ## AI and trust
 
-`AskAnswerCard` renders the answer, citations, and no-answer state. It must not present uncited factual claims.
+`GuideAnswerCard` renders the answer, citations, and no-answer state. It must not present uncited factual claims.
+
+`GuideActionCard` renders proposed creates/edits with target, source/provenance, risk, and the next safe action: apply to working state, review inline, or send to Approval Queue.
 
 `PrepSuggestionCards`, `SceneBeatCards`, `NpcCandidateCards`, and `ThreadComplicationCards` are ephemeral suggestion containers. They offer Insert/Copy/Use/Discard as appropriate, not direct canon commit.
 
@@ -214,7 +220,7 @@ Status chips must be visually small but semantically precise. Draft, Canon, Arch
 
 `NoCanonUntilCommitNotice` appears in creation-time review.
 
-`NoAnswerState` appears when Ask lacks sufficient canon grounding.
+`NoAnswerState` appears when Relic Guide lacks sufficient canon grounding.
 
 `BrokenSourceWarning` disables unsafe approval paths and explains alternatives.
 
@@ -222,7 +228,7 @@ Status chips must be visually small but semantically precise. Draft, Canon, Arch
 
 `ProvenancePanel`, `SourceDock`, and `SourceBottomSheet` are required in any flow where trust depends on evidence.
 
-AI components should always answer three questions: who invoked this, what state is the output in, and what happens if the GM accepts it? Ephemeral suggestions can be discarded without audit. Draft-backed changes require review. GM-direct synthetic approval paths need visible inline review. Canon-only answers and briefings need citations or source stamps and no write affordance.
+AI components should always answer three questions: who invoked this, what state is the output in, and what happens if the GM accepts it? Ephemeral suggestions can be discarded without audit. Draft-backed changes require review. GM-direct synthetic approval paths need visible inline review. Canon-only answers and briefings need citations or source stamps. Relic Guide may prepare real changes, but canon mutation requires inline GM review or Approval Queue.
 
 ## Mobile sheets and modals
 
@@ -255,9 +261,9 @@ Empty states should be concrete and action-oriented:
 - No Threads: explain Threads as unresolved continuity and offer New thread.
 - No Session: plan the next session.
 - No Review items: no proposed changes waiting.
-- Stage no ready session: open Sessions or prep.
+- Stage no ready session: open Prepare or plan a session.
 - Search no results: adjust search or create quick stub where appropriate.
-- Ask no answer: not enough current canon, try search or browse library.
+- Relic Guide no answer: not enough current canon, try search or browse Library.
 
 Do not use empty states to promote MVP-excluded features.
 
@@ -339,7 +345,7 @@ Never silently overwrite canon from an AI draft.
 
 `Carousel` should not carry core canon, Threads, Review, Session Prep, or navigation. It may be used only for low-risk inspiration, examples, or compact recent-work browsing where all items remain accessible elsewhere.
 
-`PermanentAIChatColumn` is not a Relic component. Ask Relic may appear as a page, collapsible sidecar, command/contextual action, or sheet, but the dashboard and detail pages should not become chatbot-first interfaces.
+`PermanentAIChatColumn` is not a Relic component. Relic Guide is an always-available collapsible sidecar/sheet, but the dashboard and detail pages should not become chatbot-first interfaces and Guide must not act autonomously.
 
 `HeavyDataTable` should be limited to usage/export/admin-like settings or developer-facing diagnostics. Entity, Thread, prep, and review work should use lists, cards, detail panels, and diffs.
 

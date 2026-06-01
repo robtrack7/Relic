@@ -8,7 +8,7 @@ depends_on:
   - "[[02 - Source Map]]"
 supersedes:
   - "[[90 - Next Steps Before Coding]]"
-last_audited: 2026-05-20
+last_audited: 2026-06-01
 source_file: "Relic Vault/04 - Final Contradiction Pass.md"
 ---
 
@@ -40,8 +40,8 @@ AI task surfaces still require implementation-plan review before coding, but the
 
 - [[35 - Web Design Wireframe]] records the authenticated web-app design structure for the first design-system implementation pass.
 - The refined Claude design package is treated as visual vocabulary and asset source only; [[13 - Design System]] and active UX specs remain canonical.
-- The web shell resolves Search/Ask tension by keeping Ask in primary navigation while presenting Search as a command/search affordance and fallback route.
-- The first implementation pass is scoped to tokens, local fonts/assets, shared primitives, The Sanctum shell, and the web Stage surface. It does not wire provider calls, autonomous AI behavior, live Stage captions, or deferred V1 surfaces.
+- The web shell resolves Search/Relic Guide tension by keeping Search in the top context bar and Relic Guide as an always-available sidecar/sheet, not a primary rail item.
+- The first implementation pass is scoped to tokens, local fonts/assets, shared primitives, The Sanctum shell, Prepare workflow, and the web Stage surface. It does not wire provider calls, autonomous AI behavior, live Stage captions, or deferred V1 surfaces.
 
 ## Consolidation And Cull Pass
 

@@ -12,7 +12,7 @@ depends_on:
   - "[[13 - Design System]]"
   - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-31
+last_audited: 2026-06-01
 source_file: "Relic Vault/64 - Unified Library Detail Design Spec.md"
 ---
 
@@ -73,7 +73,7 @@ Mobile uses a single-pane list and detail route. Filters and provenance open as 
 
 ## 8. Key components
 
-- Navigation: `TypeFilterRail`, `LibrarySearchBar`, `ScopeFilter`, `BreadcrumbBack`, `SearchOrAskOmnibox`.
+- Navigation: `TypeFilterRail`, `LibrarySearchBar`, `ScopeFilter`, `BreadcrumbBack`, `SearchInput`, `RelicGuideToggle`.
 - Containment: `EntityList`, `EntityListItem`, `EntityDetailHeader`, `NarrativeEditorPanel`, `ThreadObjectiveLog`, `ThreadTimelineReadOnly`.
 - Inputs: `InlineTitleField`, `RichTextEditor`, `TagInput`, `RelationshipPicker`, `EntityPicker`, `MentionSuggestionChip`.
 - Trust/status: `CanonStateChip`, `ScopeChip`, `StubBanner`, `ArchivedBanner`, `SourceBadge`, `ProvenancePanel`.
@@ -101,7 +101,7 @@ For stubs, show why the stub exists and what evidence allows fleshing. For Threa
 
 ## 12. Navigation in
 
-Users arrive from the Library rail item, dashboard recent canon, search result, Ask citation, Approval Queue target, prep pinned entity picker, Stage read-only open, or notification/deep link.
+Users arrive from the Library rail item, dashboard recent canon, search result, Relic Guide citation, Approval Queue target, prep pinned entity picker, Stage read-only open, or notification/deep link.
 
 ## 13. Navigation out
 

@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-06-01
 source_file: "Relic Vault/02 - Source Map.md"
 ---
 
@@ -26,7 +26,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[23 - AI Task Registry]] | Standalone MVP AI task contracts, task routing, prompt versions, validation, and draft/canon behavior | Implementation |
 | [[24 - Approval Queue]] | Approval UX, diff, source citation, canon commit behavior | Implementation |
 | [[25 - Pricing and Rate Limits]] | Caps, metering, quota preflight, hard stops | Implementation |
-| [[30 - Sanctum UX Flow]] | Sanctum IA, dashboard, Threads, Ask, Review, settings | UX |
+| [[30 - Sanctum UX Flow]] | Sanctum IA, dashboard, Threads, Relic Guide, Review, settings | UX |
 | [[31 - Session Prep Flow]] | Session prep workspace and Ready for Stage handoff | UX |
 | [[32 - Stage UX Flow]] | Live-session Stage behavior | UX |
 | [[33 - First Run UX Flow]] | First-run, new saga, GM profile, Session 1 handoff | UX |
@@ -54,7 +54,7 @@ These notes translate the active product, UX, and UI sources into compact screen
 | [[65 - Session Prep Design Spec]] | Prep workspace inside The Sanctum and Ready for Stage handoff | Secondary design |
 | [[66 - Stage Design Spec]] | Clean, focused live-session Stage across web and mobile | Secondary design |
 | [[67 - Approval Queue Design Spec]] | Draft review, diff, source/provenance, canon approval | Secondary design |
-| [[68 - Ask Search Design Spec]] | Top-context search, command palette, Ask Relic Q&A | Secondary design |
+| [[68 - Ask Search Design Spec]] | Top-context search, command palette, Relic Guide Q&A/actions | Secondary design |
 | [[69 - Settings Usage Design Spec]] | Saga/World/Workspace settings, usage, retention, export | Secondary design |
 | [[70 - Mobile App Design Spec]] | Mobile adaptation of both Sanctum and Stage | Secondary design |
 | [[71 - Component Inventory Design Spec]] | Shared component vocabulary and state coverage | Secondary design |

@@ -7,12 +7,12 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-31
+last_audited: 2026-06-01
 source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 ---
 
 > [!info] How to use this spec
-> Owns: Sanctum IA, dashboard, embedded session prep, Threads, Ask, Review, and settings UX.
+> Owns: Sanctum IA, dashboard, embedded session prep, Threads, Relic Guide, Review, and settings UX.
 > Does not own: Historical rationale and superseded naming unless explicitly retained as an internal identifier.
 > Read next: [[00 - Start Here]]
 > Implementation-critical note: Treat this as coding input only after reading the authority order in [[00 - Start Here]].
@@ -32,13 +32,13 @@ source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 
 1. **§2.1 Theme revised.** Cream surface retired as a mode differentiator. Session-prep areas within the Sanctum use Amber-forward accents and Sage thread-state signals to visually distinguish prep context within the Parchment frame. Stage dark treatment is unchanged. Specific token changes called out in §2.1.
 
-2. **§2.2 Navigation revised.** The web shell follows [[72 - Navigation Design Spec]]: the left rail uses `Home`, `Threads`, `Library`, `Sessions`, `Stage`, `Review`, with `Export` and `Settings` lower in the rail. `Notes` moves to a sub-section of `Library`. `Sessions` remains but routes to the sessions index, not session prep workspace. The session pill routes to session prep inline, Stage, or Review depending on state. Mobile bottom tab bar remains Sanctum · Stage.
+2. **§2.2 Navigation revised.** The web shell follows [[72 - Navigation Design Spec]]: the left rail uses `Home`, `Threads`, `Library`, `Prepare`, `Sessions`, `Review`, with `Export` and `Settings` lower in the rail. `Notes` moves to a sub-section of `Library`. `Prepare` routes to the active or next planned session prep workspace. `Sessions` remains the index/lifecycle manager. Stage is reached from Prepare, session state, Home cards, notifications/deep links, app resume, and a bright Return to Stage affordance while live. Mobile shows Stage in bottom navigation only when a session is ready/live.
 
 3. **§3 Dashboard revised.** The Sanctum home page is session-state-aware. When a session is `planned` or `ready`, the home page renders an inline session-prep workspace (briefing, agenda preview, thread carry-forward, Ready for Stage CTA) as the primary content area, not just a CTA pointing elsewhere. The continuity card pattern is retained for states where no active session exists.
 
 4. **§4 Threads surface added (new).** Thread library with list view (by resolution state) and Timeline view (read-only, derived from `objectives_log` + `canon_audit`). Thread detail page gains `Propose a complication` AI button (Registry v1.0 §8). Both views ship in MVP.
 
-5. **§6.3 Creative AI tasks added.** Session prep editor adds `Brainstorm scene beats` button (Registry v1.0 §7) and `Draft an NPC for this scene` button (Registry v1.0 §9). Entity creation adds `propose_npc_for_scene` as an entry point. Ask surface has a full task contract (Registry v1.0 §10). Stub entity detail page gains `Flesh out from session evidence` button (Registry v1.0 §11).
+5. **§6.3 Creative AI tasks added.** Session prep editor adds `Brainstorm scene beats` button (Registry v1.0 §7) and `Draft an NPC for this scene` button (Registry v1.0 §9). Entity creation adds `propose_npc_for_scene` as an entry point. Relic Guide uses the `answer_saga_question` contract for cited answers and can prepare GM-reviewed create/edit actions. Stub entity detail page gains `Flesh out from session evidence` button (Registry v1.0 §11).
 
 6. **§2.4 Saga creation flow updated.** Saga Creation references updated to "New saga" flow with help-level choice. No-AI path removed. Resumable saga-creation session wording updated.
 
@@ -61,7 +61,7 @@ The section order:
 7. Entity creation (manual, AI-drafted, creative)
 8. Notes (lore, gm_note, summary)
 9. Approval Queue surface
-10. Search & Ask
+10. Search & Relic Guide
 11. Imports
 12. Sessions index & post-session review entry
 13. Saga settings
@@ -85,7 +85,7 @@ The Sanctum is the home base for the active World and Saga. Session prep lives h
 3. **Reach in two clicks.** Global search from any screen. Every active-Saga entity reachable in ≤2 clicks from the dashboard; relevant World canon is one filter away.
 4. **Autosave with visible state.** No Save button. The GM types, the database settles.
 
-**v0.2 addition — AI invocation rule:** AI is a button. Many buttons exist. None push themselves. This applies equally to scene beat brainstorming, NPC drafting, and session summarization. The domain does not determine AI presence; invocation does.
+**v0.2 addition — AI invocation rule:** AI is GM-controlled. Relic Guide is always available as a collapsible sidecar/sheet, and many explicit AI buttons exist. None push themselves or mutate canon autonomously. This applies equally to scene beat brainstorming, NPC drafting, session summarization, Guide answers, and Guide create/edit actions.
 
 ---
 
@@ -115,16 +115,16 @@ The Sanctum is the home base for the active World and Saga. Session prep lives h
 
 ### 2.2 Top-level navigation (web)
 
-**Navigation patch: align with [[72 - Navigation Design Spec]]. Threads remain first-class, Notes are absorbed into Library, Search/Ask belongs in the top bar, and Stage is a primary work surface in the left rail.**
+**Navigation patch: align with [[72 - Navigation Design Spec]]. Threads remain first-class, Notes are absorbed into Library, Search belongs in the top bar, Relic Guide is always available as a collapsible sidecar/sheet, Prepare replaces Stage in the left rail, and Stage is entered only from prep/live-session context.**
 
 ```
-Relic   [Workspace / World / Saga ▾]   [Search or ask...]   [+ Create]   [Session 15]   [Review 8]   [Usage]   [GM]
+Relic   [Workspace / World / Saga ▾]   [Search]   [Guide]   [+ Create]   [Session 15]   [Review 8]   [Usage]   [GM]
 
 Home
 Threads
 Library
+Prepare
 Sessions
-Stage
 Review
 
 Export
@@ -136,19 +136,22 @@ Settings
 | **Home** | Active Saga dashboard (§3) | Active Saga cockpit. |
 | **Threads** | Thread library (§4) | **New position — first in nav.** Threads are the continuity spine. |
 | **Library** | Library (§5) | Replaces user-facing `Entities` rail label. Notes, sources, and entity types live here. |
-| **Sessions** | Sessions index (§12) | Unchanged. |
-| **Stage** | Stage surface in [[32 - Stage UX Flow]] | Equal-weight live-session work surface. |
+| **Prepare** | Active/next session prep workspace (§3.2 and [[31 - Session Prep Flow]]) | Primary prep bridge to Stage. |
+| **Sessions** | Sessions index (§12) | Lifecycle list and historical sessions. |
 | **Review** | Approval Queue (§9) | Badge with pending count. Unchanged. |
 | **Export** | Export lifecycle | Low-rail utility. |
 | **Settings** | Saga/World/Workspace settings | Low-rail utility. |
 
-**Ask/Search:** Ask is not a default left-rail item. It is reached through the top `Search or ask...` omnibox, a temporary sidecar/page, or contextual actions from dashboard, detail, Thread, and prep surfaces.
+**Search/Guide:** Search is a top-bar affordance. Relic Guide is always available as a collapsible sidecar/sheet and can answer with citations, draft, create, and edit through GM-reviewed actions. It is not a left-rail item.
+
+**Stage access:** Stage is not a default rail item. It is reached through Prepare after `Ready for Stage`, current session pill, Home next-action cards, notifications/deep links, app/crash resume, and the top-right `Return to Stage` affordance while a session is live.
 
 **Notes:** no longer a separate nav link. Lore notes, GM notes, summaries, and sources are accessible from within the Library (`Library → Notes` sub-section). Notes usage is contextual — GMs access a lore note by navigating to the Library record or surface it is attached to, not from a top-level Notes inbox.
 
 **The session pill** (top-right) shows the active or most-recent-prepped session and routes:
-- `in_progress` → Stage.
-- `ready` or `planned` (with prep started) → the inline session prep workspace (§3.2).
+- `in_progress` → Stage, with `Return to Stage` visible throughout Sanctum.
+- `ready` → Stage preview or Prepare, depending on the last context.
+- `planned` (with prep started) → Prepare (§3.2).
 - No active session → Sessions index, pre-filtered to Planned + Ready.
 
 Copy adapts: `Session 15 · Prepping` (planned/started), `Session 15 · Ready` (ready), `Session 14 · Active` (in_progress).
@@ -159,11 +162,11 @@ Copy adapts: `Session 15 · Prepping` (planned/started), `Session 15 · Ready` (
 
 **v0.2 change: Bottom tab bar simplified to two tabs.**
 
-- **Bottom tab bar: Sanctum · Stage** (two tabs, not three).
-- Inside Sanctum on mobile: a scrollable top tab strip or section links: `Home · Search/Ask · Threads · Library · Sessions · Review`.
+- **Bottom tab bar:** Sanctum by default; Stage appears only while a session is `ready`, `started`, `in_progress`, or `ended_pending_undo`.
+- Inside Sanctum on mobile: a scrollable top tab strip or section links: `Home · Search · Guide · Threads · Library · Prepare · Sessions · Review`.
 - Session prep is reached from the Sanctum home (the inline prep workspace) or from `Sessions` → tap session row → Open prep.
 
-`SNC-FR-1` (updated) — Mobile Sanctum supports: state-aware dashboard (including inline session prep workspace), thread library (list view), thread detail, Library browse/filter/search, Library detail edit (single-pane), note view/edit, approval queue review (one-pane per AQ-FR-13), Search/Ask surface, session index, World/Saga switcher. Mobile defers: thread timeline view (web-preferred, accessible but not optimized), two-pane diff, saga export, transcript segment editor, advanced import workflows.
+`SNC-FR-1` (updated) — Mobile Sanctum supports: state-aware dashboard (including inline session prep workspace), thread library (list view), thread detail, Library browse/filter/search, Library detail edit (single-pane), note view/edit, approval queue review (one-pane per AQ-FR-13), Search, Relic Guide sheet, session index, World/Saga switcher. Mobile defers: thread timeline view (web-preferred, accessible but not optimized), two-pane diff, saga export, transcript segment editor, advanced import workflows.
 
 ### 2.4 World/Saga switcher
 
@@ -193,8 +196,8 @@ The Sanctum URL `/workspace/<workspace_id>/world/<world_id>/saga/<saga_id>` rend
 | Active Saga state | Home area renders |
 |---|---|
 | **No sessions yet** (just created) | Welcome card: "Plan your first session" + `+ New session` CTA. Saga stats below. |
-| **Session `planned` or `ready`** | **Inline session prep workspace** — the briefing, agenda preview, thread carry-forward, and Ready for Stage CTA (§3.2). This is the primary content. Saga stats are accessible by scrolling. |
-| **Session `in_progress`** | "Session in progress" status card with session title + duration + `Resume Stage` as the prominent CTA. |
+| **Session `planned` or `ready`** | **Inline Prepare workspace** — the briefing, agenda preview, thread carry-forward, and Ready for Stage/Open Stage CTA (§3.2). This is the primary content. Saga stats are accessible by scrolling. |
+| **Session `in_progress`** | "Session in progress" status card with session title + duration + `Return to Stage` as the prominent top-right and card CTA. |
 | **Session `ended`, pipeline pending** | Review card: "Session N ended — review ready · X items" with `Open Review` CTA. Below it: `+ New session` secondary CTA. |
 | **Session `ended`, pipeline complete, no new session** | "Last session reviewed" summary card + `+ Plan next session` CTA. |
 | **No sessions at all, blank saga** | Empty state with `+ New session` and `Import notes` CTAs. Continuity nudges surface once the GM has ≥1 entity. |
@@ -232,7 +235,7 @@ This is the "session prep workspace" work — surfaced directly on the Sanctum h
 │ │ [AI: Draft this session]  [Brainstorm beats]  [Draft an NPC]     │  │
 │ └──────────────────────────────────────────────────────────────────┘  │
 │                                                                       │
-│ ┌── Pinned entities (4) ──────────────────── [ + Add · Ask AI ]    ┐  │
+│ ┌── Pinned entities (4) ───────────────── [ + Add · Relic Guide ]  ┐  │
 │ │ ▣ Seraphine Valdrus  ▣ The Pale Broker  ▣ Bren Holst (stub)      │  │
 │ │ ▣ The Iron Deed                                                  │  │
 │ └──────────────────────────────────────────────────────────────────┘  │
@@ -248,7 +251,7 @@ This is the "session prep workspace" work — surfaced directly on the Sanctum h
 
 **Notes:**
 - `Open full editor` navigates to `/saga/<id>/sessions/<id>/prep` — the full-page session editor with more room. For quick edits, the home workspace is sufficient. For detailed prep, the full editor is one click.
-- `Ready for Stage` (amber, Basepoint §5) transitions `planned` → `ready`. The prep workspace updates its header chip to `◇ ready` and the CTA becomes `Open in Stage →`.
+- `Ready for Stage` (amber, Basepoint §5) transitions `planned` → `ready`. The Prepare workspace updates its header chip to `◇ ready` and the CTA becomes `Open in Stage →`.
 - `AI: Draft this session` is `generate_session_prep` (GM-invoked, Registry v1.0 §4).
 - `Brainstorm beats` is `propose_scene_beats` (Registry v1.0 §7).
 - `Draft an NPC` is `propose_npc_for_scene` (Registry v1.0 §9).
@@ -267,7 +270,7 @@ On first dashboard load after saga creation (any help-level path), an Amber-bord
 ┌─ Your saga is ready ──────────────────────────────────┐
 │ Plan your first session to get to the table.           │
 │                                                        │
-│ [ + Plan Session 1 → ]       [ Skip to Stage ]         │
+│ [ + Plan Session 1 → ]       [ Open Prepare ]          │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -560,18 +563,18 @@ Unchanged from v0.1 §8. No changes to queue IA, item anatomy, per-group commit,
 
 ---
 
-## 10. Search & Ask
+## 10. Search & Relic Guide
 
 ### 10.1 – 10.3 Search
 
 Unchanged from v0.1 §9.1–9.3. Search bar persistent, Literal default, Hybrid opt-in, <500ms p50.
 
-### 10.4 Ask — RAG-backed Q&A
+### 10.4 Relic Guide — RAG-backed Q&A and actions
 
-Ask uses the same Workspace/World/Saga retrieval boundary as Memory Spec v0.9: current Saga canon first, relevant World/Era canon second, no sibling Sagas by default.
+Relic Guide uses the same Workspace/World/Saga retrieval boundary as Memory Spec v0.9: current Saga canon first, relevant World/Era canon second, no sibling Sagas by default.
 
 
-**v0.2 update: `answer_saga_question` task is registered (Registry v1.0 §10).** The surface design from v0.1 §9.4 is carried forward unchanged. The v0.1 note about the missing task ("This spec assumes one will be added in a Registry revision") is resolved by the registry task contract.
+**v0.2 update: `answer_saga_question` task is registered (Registry v1.0 §10).** Relic Guide uses this task for cited answers and can prepare GM-reviewed actions that either apply inline to working state or route to Approval Queue for canon-impacting changes. The v0.1 note about the missing task ("This spec assumes one will be added in a Registry revision") is resolved by the registry task contract.
 
 Updated internal references:
 
@@ -673,7 +676,7 @@ The v0.1 §15.2 Thread Timeline is **no longer a V1 placeholder** — it has bee
 | Prep briefing | `compose_prep_briefing` | Auto-runs on prep workspace load (streaming) | light |
 | Mention chip on save | mention detection | Async post-save, debounced 5s | infrastructure |
 | Search bar (Hybrid) | `search_for_ui` | On query, hybrid mode | infrastructure |
-| Ask | `answer_saga_question` | GM submits question | light |
+| Relic Guide answer | `answer_saga_question` | GM submits question | light |
 | Approval Queue | None — review only | — | — |
 
 All tasks except `compose_prep_briefing` (auto-running reading aid) are GM-invoked. No task fires unsolicited during or outside prep.
