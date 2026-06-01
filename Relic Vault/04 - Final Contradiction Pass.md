@@ -52,7 +52,8 @@ AI task surfaces still require implementation-plan review before coding, but the
 - [[52 - Backend Module 4 Retrieval and Embeddings Plan]] records the retrieval, embedding queue, worker contract, and RRF implementation plan that must pass before AI runtime depends on memory.
 - [[53 - Backend Module 5 Session Prep and Stage Data Plan]] records the Session Prep and Stage data implementation plan that must pass before rough UI flow testing.
 - [[54 - Backend Module 6 Usage Quota and Metering Plan]] records the usage, quota, rollup, and metering implementation plan that must pass before paid/provider-backed actions are wired.
-- The current backend has foundation schema/RLS/RPC scaffolding plus completed backend modules for access boundaries, canon provenance, Approval Queue commits, retrieval/embedding contracts, manual Session Prep/Stage data, and usage/quota metering. External provider workers, AI runtime, storage processing, provider-charge integration, and notifications remain backend-gated.
+- [[55 - Backend Module 7 Storage Audio Transcription Cleanup Plan]] records the completed Storage, audio chunk, transcription, transcript-edit, retention, and cleanup database contracts needed for rough UI recording/upload testing.
+- The current backend has foundation schema/RLS/RPC scaffolding plus completed backend modules for access boundaries, canon provenance, Approval Queue commits, retrieval/embedding contracts, manual Session Prep/Stage data, usage/quota metering, and Storage/audio/transcript database contracts. Edge Function dispatchers, actual Storage object deletion, provider workers, AI runtime, provider-charge integration, and notifications remain backend-gated.
 - The existing web app may be used as a thin smoke-test harness, but fuller UI work should wait until backend Modules 1-5 in [[46 - Backend Audit and Module Plan]] pass.
 
 ## Consolidation And Cull Pass

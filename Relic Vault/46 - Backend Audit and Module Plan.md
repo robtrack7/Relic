@@ -222,6 +222,10 @@ Detailed plan: [[54 - Backend Module 6 Usage Quota and Metering Plan]].
 
 ### Module 7 - Storage, Audio, Transcription, and Cleanup
 
+Detailed plan: [[55 - Backend Module 7 Storage Audio Transcription Cleanup Plan]].
+
+**Status:** Implemented on 2026-06-01 in `supabase/migrations/20260601234500_storage_audio_transcription.sql`; `npm run backend:baseline:reset` passed with `RELIC_BACKEND_BASELINE_OK`.
+
 **Goal:** Wire the file and audio substrate behind Stage and exports.
 
 **Owns:**
@@ -307,7 +311,7 @@ Detailed plan: [[54 - Backend Module 6 Usage Quota and Metering Plan]].
 
 Use the current web app now as a thin smoke-test harness for auth, bootstrap, manual entity CRUD, session prep, Stage capture flows, and usage summary reads. Do not invest heavily in UI polish until the remaining backend runtime modules are complete.
 
-Start building the fuller rough UI in earnest after Module 7 passes. At that point, the manual MVP loop plus storage/audio substrate can be tested through the UI without live AI:
+The fuller rough UI can start now that Module 7 has passed. The manual MVP loop plus storage/audio substrate can be tested through the UI without live AI:
 
 Create -> Organize -> Prep -> Run -> Review -> Approve -> Continue.
 
@@ -315,11 +319,10 @@ AI-facing UI should wait until Modules 8 and 9 pass. Modules 4 and 6 now provide
 
 ## Immediate Work Order
 
-1. Keep Modules 0-6 green under `npm run backend:baseline:reset`.
-2. Complete Module 7 storage, audio, transcription, and cleanup.
-3. Use the existing web UI for an end-to-end manual smoke test once Module 7 passes.
-4. Complete Module 8 background job and Edge Function runtime.
-5. Complete Module 9 AI task router/runtime before enabling AI UI.
+1. Keep Modules 0-7 green under `npm run backend:baseline:reset`.
+2. Use the existing web UI for an end-to-end manual smoke test of auth, canon CRUD, session prep, Stage capture, usage summary, audio upload metadata, and transcript-edit surfaces.
+3. Complete Module 8 background job and Edge Function runtime.
+4. Complete Module 9 AI task router/runtime before enabling AI UI.
 
 ## Open Follow-Ups
 

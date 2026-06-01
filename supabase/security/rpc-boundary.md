@@ -40,6 +40,11 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `record_session_consent(...)` | Record per-session Stage recording consent. |
 | `record_dice_roll(...)` | Record per-session Stage dice history. |
 | `get_stage_packet(...)` | Read a scoped Stage packet for rough UI smoke testing. |
+| `get_audio_upload_target(...)` | Build a scoped deterministic audio Storage upload target. |
+| `register_audio_chunk(...)` | Register uploaded audio chunk metadata and meter storage once. |
+| `enqueue_transcription_job(...)` | Queue scoped transcription work for a Session. |
+| `update_transcript_segments(...)` | Edit transcript segment text/deleted flags while preserving timestamp boundaries. |
+| `get_transcript_source_context(...)` | Read frozen citation text beside current transcript text for drift display. |
 | `update_draft_state(...)` | Resolve drafts and commit approved create/update/archive-request drafts to canon. |
 | `list_entities(...)` | Read scoped entity lists. |
 | `get_sessions_for_saga(...)` | Read scoped Session lists. |

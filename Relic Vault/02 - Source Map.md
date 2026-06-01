@@ -46,6 +46,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[52 - Backend Module 4 Retrieval and Embeddings Plan]] | Detailed implementation plan for search, retrieval, embedding jobs, chunking, RRF, and retrieval eval fixtures | Planning |
 | [[53 - Backend Module 5 Session Prep and Stage Data Plan]] | Detailed implementation plan for Session Prep, Stage lifecycle, quick captures, consent, dice, and packet read models | Planning |
 | [[54 - Backend Module 6 Usage Quota and Metering Plan]] | Detailed implementation plan for quota preflight, usage event charging, monthly rollups, overrides, and usage summaries | Planning |
+| [[55 - Backend Module 7 Storage Audio Transcription Cleanup Plan]] | Detailed implementation plan for Storage RLS, audio chunks, transcription jobs, transcript edits, retention, and cleanup jobs | Planning |
 | [[50 - Session Log Index]] | Session closeout trail and implementation continuity logs | Operations |
 
 ## Design Specification Sources
