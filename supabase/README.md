@@ -4,8 +4,9 @@ Supabase implementation folder for Relic MVP.
 
 - `migrations` - ordered SQL migrations for schema, RLS, policies, functions, indexes, and storage policies.
 - `functions` - Edge Functions for scoped backend actions, async jobs, retrieval, notifications, exports, and later AI runtime work.
-- `tests` - RLS, migration, retrieval, quota, storage, and job tests.
+- `tests` - RLS, access-control, migration, retrieval, quota, storage, and job tests.
 - `fixtures` - test fixture data.
+- `security/rpc-boundary.md` - browser-callable RPC boundary and accepted short-term definer-function constraints.
 
 Guardrails:
 
@@ -36,11 +37,13 @@ To prove migrations replay cleanly from the current migration set, run:
 npm run backend:baseline:reset
 ```
 
-The reset command applies local migrations, runs seed data, then runs the pgTAP harness in `supabase/tests/foundation.sql`.
+The reset command applies local migrations, runs seed data, then runs the pgTAP harnesses in `supabase/tests/access_control.sql` and `supabase/tests/foundation.sql`.
 
 Do not paste local Supabase keys, JWT secrets, storage keys, or generated service credentials into notes, logs, commits, or screenshots.
 
 ## Public RPCs Added By Foundation
+
+The current callable boundary is documented in `supabase/security/rpc-boundary.md` and enforced by `supabase/tests/access_control.sql`.
 
 - `ensure_default_workspace()`
 - `get_bootstrap_context()`

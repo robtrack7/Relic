@@ -40,6 +40,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[45 - Security Findings Register]] | Security findings, status, mitigation, and verification tracking | Security |
 | [[46 - Backend Audit and Module Plan]] | Current backend readiness audit and backend module work order | Planning |
 | [[47 - Backend Module 0 Baseline Plan]] | Detailed implementation plan for repeatable backend baseline verification | Planning |
+| [[48 - Backend Module 1 Access Control Plan]] | Detailed implementation plan for backend access control, RLS, grants, and RPC boundary hardening | Planning |
 | [[50 - Session Log Index]] | Session closeout trail and implementation continuity logs | Operations |
 
 ## Design Specification Sources

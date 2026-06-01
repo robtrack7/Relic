@@ -76,6 +76,10 @@ Detailed execution plan: [[47 - Backend Module 0 Baseline Plan]].
 
 **Goal:** Lock the browser/backend boundary before product behavior grows.
 
+Detailed execution plan: [[48 - Backend Module 1 Access Control Plan]].
+
+**Implementation status:** Complete for the rough-UI backend milestone. Verified on 2026-06-01 with `npm run backend:baseline:reset`: passed.
+
 **Owns:**
 
 - Public table grants.

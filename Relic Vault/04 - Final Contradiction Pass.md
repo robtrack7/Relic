@@ -46,6 +46,7 @@ AI task surfaces still require implementation-plan review before coding, but the
 ## Current Backend Planning Addendum
 
 - [[46 - Backend Audit and Module Plan]] records the 2026-06-01 backend readiness audit and the module work order before additional UI expansion.
+- [[48 - Backend Module 1 Access Control Plan]] records the access-control/RLS/RPC boundary implementation plan that must pass before product backend behavior expands.
 - The current backend has foundation schema/RLS/RPC scaffolding, but Approval Queue commit behavior, audit/provenance writes, real vector retrieval, workers, AI runtime, storage processing, quota charging, and notifications remain backend-gated.
 - The existing web app may be used as a thin smoke-test harness, but fuller UI work should wait until backend Modules 1-5 in [[46 - Backend Audit and Module Plan]] pass.
 

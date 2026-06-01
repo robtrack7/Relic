@@ -9,7 +9,7 @@ depends_on:
   - "[[21 - Tech Architecture]]"
   - "[[41 - Foundation Implementation Plan]]"
 supersedes: []
-last_audited: 2026-05-26
+last_audited: 2026-06-01
 source_file: "Relic Vault/45 - Security Findings Register.md"
 ---
 
@@ -31,9 +31,9 @@ Status values: `live`, `fixed`, `deferred`, `accepted-risk`.
 | SEC-FOUNDATION-008 | medium | deferred | retrieval | Retrieval still uses lexical/trigram behavior until embedding workers populate real vectors. | Keep current retrieval as MVP-safe fallback; require embedding-worker verification before claiming vector retrieval complete. | Future AI/runtime or embedding-worker phase. |
 | SEC-FOUNDATION-009 | medium | deferred | jobs | Background job worker/service-role execution model is schema-only. | Keep jobs inert until worker code defines scoped execution, service-role use, retry, and audit behavior. | Future job-worker implementation plan. |
 | SEC-FOUNDATION-010 | medium | deferred | storage | Upload UI is not active, so signed upload and storage RLS UX are not fully exercised. | Keep private buckets and path RLS; require signed upload/RLS verification before enabling uploads. | Future upload-flow implementation. |
+| SEC-FOUNDATION-011 | medium | accepted-risk | RPC boundary | Browser-callable RPCs currently live in `public` and use `security definer` for scoped operations. | Accepted for the rough-UI backend milestone only. Direct table writes are revoked, anonymous function execution is denied, authenticated execution is allowlisted, every public `security definer` function requires fixed `search_path`, and the boundary is documented in `supabase/security/rpc-boundary.md`. | `supabase/tests/access_control.sql` plus `npm run backend:baseline:reset`. |
 
 ## Open Follow-Ups
 
 - Add targeted pgtap fixtures for each relationship/source trigger, beyond the current session-pinned sibling-Saga regression.
-- Run Supabase SQL tests against a local database after Docker/Supabase is available.
-- Revisit security-definer RPC placement if the project moves to a dedicated exposed API schema.
+- Revisit the accepted public-schema `security definer` RPC placement before production hardening or multi-tenant collaboration work.
