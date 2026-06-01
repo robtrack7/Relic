@@ -16,15 +16,29 @@ Guardrails:
 
 ## Local Foundation Checks
 
-Install the Supabase CLI, then run:
+Install Docker Desktop and the Supabase CLI, then run the backend baseline:
 
 ```bash
-supabase start
-npm run test:supabase
-supabase stop --no-backup
+npm run backend:baseline
 ```
 
-The test harness uses `supabase/tests/foundation.sql` and deterministic fixture rows from `supabase/fixtures/foundation.sql`.
+This command runs:
+
+- `npm run test:scripts`
+- `npm run verify`
+- `npx pnpm@10.11.0 --filter @relic/web test`
+- `supabase start` when the local stack is not already running
+- `npm run test:supabase`
+
+To prove migrations replay cleanly from the current migration set, run:
+
+```bash
+npm run backend:baseline:reset
+```
+
+The reset command applies local migrations, runs seed data, then runs the pgTAP harness in `supabase/tests/foundation.sql`.
+
+Do not paste local Supabase keys, JWT secrets, storage keys, or generated service credentials into notes, logs, commits, or screenshots.
 
 ## Public RPCs Added By Foundation
 

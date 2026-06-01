@@ -5,6 +5,9 @@
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "verify": "node scripts/verify-repo.mjs",
+    "test:scripts": "node --test scripts/*.test.mjs",
+    "backend:baseline": "node scripts/verify-backend-baseline.mjs",
+    "backend:baseline:reset": "node scripts/verify-backend-baseline.mjs --reset",
     "dev:web": "pnpm --filter @relic/web dev",
     "build:web": "pnpm --filter @relic/web build",
     "lint:web": "pnpm --filter @relic/web lint",

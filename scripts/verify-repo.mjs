@@ -26,6 +26,8 @@ const requiredPaths = [
   "supabase/seed.sql",
   "supabase/tests/foundation.sql",
   "supabase/fixtures/foundation.sql",
+  "scripts/verify-backend-baseline.mjs",
+  "scripts/verify-backend-baseline.test.mjs",
   "services/litellm/README.md",
   ".github/workflows/ci.yml",
   ".github/pull_request_template.md"

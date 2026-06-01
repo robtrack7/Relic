@@ -37,6 +37,8 @@ Verified on 2026-06-01:
 
 Do not record local API keys, JWT secrets, storage keys, or other local Supabase secrets in notes, logs, commits, or test snapshots.
 
+- Module 0 implementation verified on 2026-06-01 with `npm run backend:baseline:reset`: passed.
+
 ## File Structure
 
 - Create `scripts/verify-backend-baseline.mjs`: orchestrates backend baseline verification and optional local database reset.
