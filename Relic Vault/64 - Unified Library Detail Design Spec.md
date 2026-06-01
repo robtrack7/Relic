@@ -10,25 +10,26 @@ depends_on:
   - "[[23 - AI Task Registry]]"
   - "[[34 - UI Implementation Spec]]"
   - "[[13 - Design System]]"
+  - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-30
+last_audited: 2026-05-31
 source_file: "Relic Vault/64 - Unified Library Detail Design Spec.md"
 ---
 
 > [!info] How to use this spec
-> Use this for Sanctum library and detail patterns across Characters, Places, Factions, Artifacts, Threads, Sessions, and notes. Read with [[60 - Design Spec Overview]] and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[30 - Sanctum UX Flow]], [[20 - Entity and Canon Schema]], and [[34 - UI Implementation Spec]].
+> Use this for Sanctum Library and detail patterns across Characters, Places, Factions, Artifacts, Threads, Sessions, sources, and notes. Read with [[60 - Design Spec Overview]], [[72 - Navigation Design Spec]], and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[30 - Sanctum UX Flow]], [[20 - Entity and Canon Schema]], and [[34 - UI Implementation Spec]].
 
 # Unified Library Detail Design Spec
 
 ## 1. Purpose
 
-The unified library/detail surface lets the GM browse, filter, search, edit, link, archive, and inspect canon or draft-adjacent records inside The Sanctum. It covers entity library patterns and the detail editor family.
+The unified Library/detail surface lets the GM browse, filter, search, edit, link, archive, and inspect canon or draft-adjacent records inside The Sanctum. It covers entity, note, source, Thread, and detail editor patterns under the left-rail Library destination.
 
 Threads deserve special weight inside this pattern because they are the continuity spine.
 
 ## 2. Page synthesis
 
-This spec translates [[30 - Sanctum UX Flow]] entity, Thread, notes, and detail behavior into a shared screen pattern. It uses [[20 - Entity and Canon Schema]] canon states and source model, [[23 - AI Task Registry]] for invoked entity/stub assists, and [[34 - UI Implementation Spec]] for component naming.
+This spec translates [[30 - Sanctum UX Flow]] entity, Thread, notes, and detail behavior into a shared screen pattern. It uses [[20 - Entity and Canon Schema]] canon states and source model, [[23 - AI Task Registry]] for invoked entity/stub assists, [[34 - UI Implementation Spec]] for component naming, and [[72 - Navigation Design Spec]] for the Library label and shell placement.
 
 The goal is one coherent detail experience, not separate design languages per entity type.
 
@@ -52,7 +53,7 @@ For Threads, the GM thinks: "This is what is unresolved or evolving." For notes,
 
 Primary action depends on context:
 
-- Library: `New entity` or type-specific create.
+- Library: `New character`, `New place`, `New faction`, `New artifact`, `New lore note`, or another type-specific create.
 - Thread list: `New thread`.
 - Detail: edit/autosave is primary background behavior; explicit primary action may be `Flesh out from session evidence` for eligible stubs or `Propose a complication` for Threads.
 
@@ -72,7 +73,7 @@ Mobile uses a single-pane list and detail route. Filters and provenance open as 
 
 ## 8. Key components
 
-- Navigation: `TypeFilterRail`, `LibrarySearchBar`, `ScopeFilter`, `BreadcrumbBack`.
+- Navigation: `TypeFilterRail`, `LibrarySearchBar`, `ScopeFilter`, `BreadcrumbBack`, `SearchOrAskOmnibox`.
 - Containment: `EntityList`, `EntityListItem`, `EntityDetailHeader`, `NarrativeEditorPanel`, `ThreadObjectiveLog`, `ThreadTimelineReadOnly`.
 - Inputs: `InlineTitleField`, `RichTextEditor`, `TagInput`, `RelationshipPicker`, `EntityPicker`, `MentionSuggestionChip`.
 - Trust/status: `CanonStateChip`, `ScopeChip`, `StubBanner`, `ArchivedBanner`, `SourceBadge`, `ProvenancePanel`.
@@ -100,11 +101,11 @@ For stubs, show why the stub exists and what evidence allows fleshing. For Threa
 
 ## 12. Navigation in
 
-Users arrive from Sanctum nav, dashboard recent canon, search result, Ask citation, Approval Queue target, prep pinned entity picker, Stage read-only open, or notification/deep link.
+Users arrive from the Library rail item, dashboard recent canon, search result, Ask citation, Approval Queue target, prep pinned entity picker, Stage read-only open, or notification/deep link.
 
 ## 13. Navigation out
 
-Users can navigate to related entities, related Threads, Sessions, Approval Queue drafts, source transcript segments, prep editor, Stage preview, or back to library filters.
+Users can navigate to related Library records, related Threads, Sessions, Approval Queue drafts, source transcript segments, prep editor, Stage preview, or back to Library filters.
 
 ## 14. Components to avoid
 
@@ -117,5 +118,5 @@ Literary, modern, relaxing reference library with editorial detail. Names and lo
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's unified Sanctum library and detail pattern for web and mobile. Make it literary, modern, and relaxing. Include type/filter rail or sheet, current Saga plus World canon scope filters, search, entity list, and detail editor with autosave. Detail header shows type, canon state, scope, stub/archive state, and source access. Include Thread-specific objectives and read-only timeline entry, plus GM-invoked AI buttons for draft from prompt, propose thread complication, and flesh stub from evidence. Use Relic editorial parchment styling. Exclude relationship graphs, writable timeline editors, map editors, player controls, initiative/encounter widgets, and permanent chat columns.
+Create Relic's unified Sanctum Library and detail pattern for web and mobile. Make it literary, modern, and relaxing. Include type/filter rail or sheet, current Saga plus World canon scope filters, search, Library record list, and detail editor with autosave. Detail header shows type, canon state, scope, stub/archive state, and source access. Include Thread-specific objectives and read-only timeline entry, plus GM-invoked AI buttons for draft from prompt, propose thread complication, and flesh stub from evidence. Use Relic editorial parchment styling. Exclude relationship graphs, writable timeline editors, map editors, player controls, initiative/encounter widgets, and permanent chat columns.
 ```

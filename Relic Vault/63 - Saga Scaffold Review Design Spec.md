@@ -9,13 +9,14 @@ depends_on:
   - "[[23 - AI Task Registry]]"
   - "[[20 - Entity and Canon Schema]]"
   - "[[13 - Design System]]"
+  - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-30
+last_audited: 2026-05-31
 source_file: "Relic Vault/63 - Saga Scaffold Review Design Spec.md"
 ---
 
 > [!info] How to use this spec
-> Use this for the shared review screen after Build with AI or Bring your notes. Read with [[60 - Design Spec Overview]] and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[33 - First Run UX Flow]], [[23 - AI Task Registry]], and [[20 - Entity and Canon Schema]].
+> Use this for the shared review screen after Build with AI or Bring your notes. Read with [[60 - Design Spec Overview]], [[72 - Navigation Design Spec]], and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[33 - First Run UX Flow]], [[23 - AI Task Registry]], and [[20 - Entity and Canon Schema]].
 
 # Saga Scaffold Review Design Spec
 

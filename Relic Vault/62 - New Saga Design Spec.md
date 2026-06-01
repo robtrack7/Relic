@@ -9,13 +9,14 @@ depends_on:
   - "[[12 - MVP PRD]]"
   - "[[11 - Product Basepoint]]"
   - "[[13 - Design System]]"
+  - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-30
+last_audited: 2026-05-31
 source_file: "Relic Vault/62 - New Saga Design Spec.md"
 ---
 
 > [!info] How to use this spec
-> Use this for the New saga entry screen and help-level choice. Read with [[60 - Design Spec Overview]] and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[33 - First Run UX Flow]], [[12 - MVP PRD]], and [[11 - Product Basepoint]].
+> Use this for the New saga entry screen and help-level choice. Read with [[60 - Design Spec Overview]], [[72 - Navigation Design Spec]], and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[33 - First Run UX Flow]], [[12 - MVP PRD]], and [[11 - Product Basepoint]].
 
 # New Saga Design Spec
 

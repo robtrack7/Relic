@@ -9,13 +9,14 @@ depends_on:
   - "[[31 - Session Prep Flow]]"
   - "[[13 - Design System]]"
   - "[[34 - UI Implementation Spec]]"
+  - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-30
+last_audited: 2026-05-31
 source_file: "Relic Vault/66 - Stage Design Spec.md"
 ---
 
 > [!info] How to use this spec
-> Use this for The Stage across web and mobile. Read with [[60 - Design Spec Overview]] and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[32 - Stage UX Flow]], [[31 - Session Prep Flow]], and [[34 - UI Implementation Spec]].
+> Use this for The Stage across web and mobile. Read with [[60 - Design Spec Overview]], [[72 - Navigation Design Spec]], and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[32 - Stage UX Flow]], [[31 - Session Prep Flow]], and [[34 - UI Implementation Spec]].
 
 # Stage Design Spec
 
@@ -101,7 +102,7 @@ Quick captures and marked moments become sources later. They should show timesta
 
 ## 12. Navigation in
 
-Users arrive from Sanctum Ready for Stage, app launch with active session, notification/deep link, or resume after crash. A planned session is not openable as live Stage until marked ready.
+Users arrive from the Stage rail item, current session pill, Sanctum Ready for Stage, app launch with active session, notification/deep link, or resume after crash. A planned session is not openable as live Stage until marked ready.
 
 ## 13. Navigation out
 

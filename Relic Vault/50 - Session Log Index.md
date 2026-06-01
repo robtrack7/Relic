@@ -34,3 +34,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-05-30 - Design Spec Layer]]
 - [[Session Logs/2026-05-30 - Surface Language Alignment]]
 - [[Session Logs/2026-05-30 - Unified Surface Correction]]
+- [[Session Logs/2026-05-31 - Navigation Spec Propagation]]

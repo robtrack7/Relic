@@ -10,13 +10,14 @@ depends_on:
   - "[[31 - Session Prep Flow]]"
   - "[[24 - Approval Queue]]"
   - "[[13 - Design System]]"
+  - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-30
+last_audited: 2026-05-31
 source_file: "Relic Vault/70 - Mobile App Design Spec.md"
 ---
 
 > [!info] How to use this spec
-> Use this for adapting Relic's full Sanctum and Stage product model to mobile after the web app proves the loop. Read with [[60 - Design Spec Overview]] and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[30 - Sanctum UX Flow]], [[32 - Stage UX Flow]], [[34 - UI Implementation Spec]], [[31 - Session Prep Flow]], and [[24 - Approval Queue]].
+> Use this for adapting Relic's full Sanctum and Stage product model to mobile after the web app proves the loop. Read with [[60 - Design Spec Overview]], [[72 - Navigation Design Spec]], and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[30 - Sanctum UX Flow]], [[32 - Stage UX Flow]], [[34 - UI Implementation Spec]], [[31 - Session Prep Flow]], and [[24 - Approval Queue]].
 
 # Mobile App Design Spec
 
@@ -40,7 +41,7 @@ They expect simple stacks, sheets, large tap targets, reliable offline behavior 
 
 - See active Saga home summary and next action.
 - Search and open canon quickly.
-- Browse Threads, entities, Sessions, Review, and Ask through a compact Sanctum shell.
+- Browse Threads, Library, Sessions, Review, and Search/Ask through a compact Sanctum shell.
 - Make edits with autosave.
 - Prep or adjust a session and mark Ready for Stage.
 - Complete Approval Queue actions with mobile source/provenance sheets.
@@ -52,11 +53,11 @@ The primary mobile action is context-dependent: `Continue prep`, `Open Stage`, `
 
 ## 6. Secondary actions
 
-Secondary actions include quick search, open context switcher sheet, filter lists, open source/provenance sheet, quick create, edit entity, approve/reject/merge/archive drafts, open Ask, and open Settings/Usage.
+Secondary actions include quick Search/Ask, open context switcher sheet, filter lists, open source/provenance sheet, quick create, edit Library record, approve/reject/merge/archive drafts, and open Settings/Usage.
 
 ## 7. Layout structure
 
-Use a two-surface mobile shell. The app-level bottom navigation should stay simple: Sanctum and Stage. Top area shows current Saga and a context switcher sheet trigger. Inside the Sanctum tab, use a horizontal top tab strip or compact section links for Home, Search, Threads, Entities, Sessions, Review, and Ask where needed. Inside Stage, keep the live-session stack and sticky action bar.
+Use a two-surface mobile shell. The app-level bottom navigation should stay simple: Sanctum and Stage. Top area shows current Saga and a context switcher sheet trigger. Inside the Sanctum tab, use a horizontal top tab strip or compact section links for Home, Search/Ask, Threads, Library, Sessions, and Review where needed. Inside Stage, keep the live-session stack and sticky action bar.
 
 No persistent right rail. Use bottom sheets for filters, source/provenance, context switcher, AI results, and confirmation dialogs.
 
@@ -96,7 +97,7 @@ Users arrive from mobile app bootstrap, Stage exit, notification tap, bottom nav
 
 ## 13. Navigation out
 
-Users go to Stage, dashboard, detail pages, prep, Review, Ask, Settings, or source/provenance sheets. Context switcher changes active Saga only when no live session blocks it.
+Users go to Stage, dashboard, detail pages, prep, Review, Search/Ask, Settings, or source/provenance sheets. Context switcher changes active Saga only when no live session blocks it.
 
 ## 14. Components to avoid
 
@@ -109,5 +110,5 @@ Full Relic adapted to mobile. Sanctum stays literary, modern, relaxing, parchmen
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's mobile app experience for after the web app is stable. It includes both surfaces: Sanctum for dashboard, search, Threads/Entities/Sessions/Review/Ask, editing, prep, approval, settings, and usage; Stage for live session agenda, pinned cards, capture, recording, Mark Moment, dice, and End Session. Use two-tab Sanctum/Stage bottom navigation, parchment/cream Sanctum layouts, dark clean/focused Stage layouts, context switcher sheets, source bottom sheets, and large tap targets. Keep mobile functionally equivalent while using mobile-native stacks and sheets. Exclude permanent chat, cramped desktop diff by default, graph/map editors, player controls, and proactive AI.
+Create Relic's mobile app experience for after the web app is stable. It includes both surfaces: Sanctum for dashboard, Search/Ask, Threads/Library/Sessions/Review, editing, prep, approval, settings, and usage; Stage for live session agenda, pinned cards, capture, recording, Mark Moment, dice, and End Session. Use two-tab Sanctum/Stage bottom navigation, parchment/cream Sanctum layouts, dark clean/focused Stage layouts, context switcher sheets, source bottom sheets, and large tap targets. Keep mobile functionally equivalent while using mobile-native stacks and sheets. Exclude permanent chat, cramped desktop diff by default, graph/map editors, player controls, and proactive AI.
 ```

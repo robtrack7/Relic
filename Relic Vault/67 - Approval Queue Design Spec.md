@@ -10,13 +10,14 @@ depends_on:
   - "[[23 - AI Task Registry]]"
   - "[[34 - UI Implementation Spec]]"
   - "[[13 - Design System]]"
+  - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-30
+last_audited: 2026-05-31
 source_file: "Relic Vault/67 - Approval Queue Design Spec.md"
 ---
 
 > [!info] How to use this spec
-> Use this for Review and Approval Queue screens where drafts become canon. Read with [[60 - Design Spec Overview]] and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[24 - Approval Queue]], [[20 - Entity and Canon Schema]], and [[23 - AI Task Registry]].
+> Use this for Review and Approval Queue screens where drafts become canon. Read with [[60 - Design Spec Overview]], [[72 - Navigation Design Spec]], and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[24 - Approval Queue]], [[20 - Entity and Canon Schema]], and [[23 - AI Task Registry]].
 
 # Approval Queue Design Spec
 
@@ -55,7 +56,7 @@ Do not make bulk approval visually dominant. Stale bulk archive is a cleanup act
 
 ## 6. Secondary actions
 
-Secondary actions include Reject, Merge, Archive request confirmation, View source, Open target entity, Filter, Search draft text/source, Refresh conflict, Copy into manual edit, Retry pipeline artifact if allowed, and Open session review.
+Secondary actions include Reject, Merge, Archive request confirmation, View source, Open target Library record, Filter, Search draft text/source, Refresh conflict, Copy into manual edit, Retry pipeline artifact if allowed, and Open session review.
 
 ## 7. Layout structure
 
@@ -67,7 +68,7 @@ Desktop uses a two- or three-pane layout:
 
 Mobile uses one draft at a time. Queue list, diff, and source bottom sheet should be reachable but not cramped. The mobile layout must remain functionally equivalent: approve, edit-and-approve, reject, merge, archive, and source review are all available.
 
-The selected draft should always have a clear review frame: target entity, change kind, current state, proposed state, confidence/source quality, and the action consequence. The GM should never need to infer whether an action commits immediately, creates a follow-up draft, or only marks a proposal rejected. Keep action buttons close to the diff, while filters and queue navigation stay visually separate.
+The selected draft should always have a clear review frame: target Library record, change kind, current state, proposed state, confidence/source quality, and the action consequence. The GM should never need to infer whether an action commits immediately, creates a follow-up draft, or only marks a proposal rejected. Keep action buttons close to the diff, while filters and queue navigation stay visually separate.
 
 ## 8. Key components
 
@@ -101,11 +102,11 @@ Source detail should be readable before action. On desktop, the source dock can 
 
 ## 12. Navigation in
 
-Users arrive from dashboard pending review card, Review nav, post-session notification, pipeline status page, entity detail draft badge, stale queue notification, or prep pending-warning link.
+Users arrive from dashboard pending review card, Review rail item, post-session notification, pipeline status page, Library detail draft badge, stale queue notification, or prep pending-warning link.
 
 ## 13. Navigation out
 
-Users go to target entity detail, source transcript segment, session review page, dashboard, session prep, or Settings usage if quota affects rerun options.
+Users go to target Library detail, source transcript segment, session review page, dashboard, session prep, or Settings usage if quota affects rerun options.
 
 ## 14. Components to avoid
 

@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-05-31
 source_file: "Sourced - Downloaded - 260518/relic-mvp-prd-v0_10.md"
 ---
 
@@ -110,7 +110,7 @@ Requirement ID migration table:
 | 28 | ~~First-time GMs pass through session prep workspace for Session 1 via a tooltip tour.~~ **Revised v0.9.** Post-creation, the Sanctum home shows a "Plan your first session" card with a `+ Plan Session 1` CTA. No separate tooltip tour surface. Dismissal stored on `gm_profiles.session_prep_intro_dismissed_at` (field retained). |
 | 29 | **Thread Timeline is MVP.** Read-only, derived from `threads.objectives_log` + `canon_audit`. No new schema. Writable timeline editor remains V1. |
 | 30 | **AI creative tasks are GM-invoked, produce ephemeral output, never auto-run.** `propose_scene_beats`, `propose_thread_complication`, `propose_npc_for_scene`, `answer_saga_question` are all light-quota, balanced-model tasks (Registry v1.0 §§7-10). `propose_quick_stub_fleshing` (Registry v1.0 §11) is the one exception: it produces an update draft that routes through the standard approval write path. |
-| 31 | **Sanctum nav order: Threads · Entities · Sessions · Review · Ask.** Notes is a sub-section of Entities. Maps is absent (V1 reserve). |
+| 31 | **Sanctum web navigation follows [[72 - Navigation Design Spec]].** Top context bar owns Workspace/World/Saga, `Search or ask...`, `+ Create`, current session, Review, Usage, and Account. Left rail order is Home · Threads · Library · Sessions · Stage · Review, with Export and Settings lower. Notes is a sub-section of Library. Ask is invoked from the omnibox, page, sidecar, or contextual action, not the default left rail. Maps is absent (V1 reserve). |
 | 32 | **Workspace / World / Saga hierarchy.** Workspace owns billing, usage, and future collaboration; World owns shared setting and World canon; Saga is the playable campaign/storyline inside a World. No separate Campaign layer. |
 | 33 | **Era/Timeframe is V1-ready.** MVP may create a default hidden Era and reserve Saga time-index fields; no Era editor UI ships in MVP. |
 | 34 | **Content scope is explicit.** World-scoped canon uses `scope='world'` and `saga_id=null`; Saga-scoped canon uses `scope='saga'` and a required `saga_id`. |
@@ -443,7 +443,7 @@ Stub creation surfaces:
 - `AIC-FR-1` **Scene beats.** Prep workspace agenda editor exposes a "Brainstorm beats" button. Invokes `propose_scene_beats` (Registry v1.0 §7). Returns exactly 3 beat sketches. Each beat shows summary, narrative, entities involved, thread implication, sources. No auto-commit; GM copies text into scene notes if desired.
 - `AIC-FR-2` **Thread complication.** Thread detail page exposes a "Propose a complication" button. Invokes `propose_thread_complication` (Registry v1.0 §8). Returns 1–3 complication cards. GM copies text into thread narrative if desired. No auto-commit.
 - `AIC-FR-3` **NPC for scene.** Prep workspace and entity creation expose a "Draft an NPC for this scene" button. GM describes the role. Invokes `propose_npc_for_scene` (Registry v1.0 §9) to return 1–3 candidates. On candidate selection, candidate is passed to `draft_entity_from_prompt` (Registry v1.0 §3) for full entity creation with standard inline review. No direct canon write from this task.
-- `AIC-FR-4` **Saga question.** Sanctum Ask surface (nav link). GM types a question. Invokes `answer_saga_question` (Registry v1.0 §10). Answer renders with mandatory inline citations. If retrieval is insufficient, renders "I don't have enough information about that." No answer without citations.
+- `AIC-FR-4` **Saga question.** GM invokes Ask from the top `Search or ask...` omnibox, a contextual action, sidecar, or fallback page. Invokes `answer_saga_question` (Registry v1.0 §10). Answer renders with mandatory inline citations. If retrieval is insufficient, renders "I don't have enough information about that." No answer without citations.
 - `AIC-FR-5` **Stub fleshing.** Stub entity detail page (where `is_stub=true` AND transcript evidence exists) exposes "Flesh out from session evidence." Invokes `propose_quick_stub_fleshing` (Registry v1.0 §11). **Unlike other creative tasks, this produces an AI Draft update** that routes through the standard approval write path (Schema §10.1). Approval clears `is_stub=false`.
 
 **Universal rules for all `AIC-FR-*` tasks.**
@@ -547,11 +547,11 @@ The loop closes.
 | Stage → Sanctum (post-End) | One-line summary card writes GM-authored canon summary |
 | Stage → Post-Session Pipeline | Submits audio + notes + captures |
 | Pipeline → Approval Queue | Produces proposed updates + new entities |
-| Approval Queue → Sanctum entities | Approved drafts become canon |
+| Approval Queue → Library | Approved drafts become canon |
 | Approval Queue → Prep workspace (next session) | Loose threads + carry-forward |
 | Sanctum canon → Prep briefing | `compose_prep_briefing` auto-generates on prep workspace load |
 | Prep workspace → Stage | Next session packet |
-| Prep AI Quick Stub → Sanctum entities | Direct canon stub via synthetic resolved draft |
+| Prep AI Quick Stub → Library | Direct canon stub via synthetic resolved draft |
 | Thread detail → Approval Queue | `propose_quick_stub_fleshing` produces update draft (via Queue) |
 | Session prep → Scene beats | `propose_scene_beats` → ephemeral cards in prep workspace |
 | Thread detail → Complications | `propose_thread_complication` → ephemeral cards |
@@ -587,4 +587,3 @@ The loop closes.
 ---
 
 *End of PRD v0.10. Aligned with Basepoint v3.5, Memory & Retrieval Spec v0.9, Entity & Canon Schema v0.8, AI Task Registry v1.0, Approval Queue Spec v0.5, Tech Architecture Spec v1.2, Sanctum UX Flow v0.2, Session Prep Flow v0.2, Stage UX Flow v0.6, First-Run UX Flow v0.2, UI Implementation Spec v0.2, and Pricing & Rate Limits Spec v0.2.*
-

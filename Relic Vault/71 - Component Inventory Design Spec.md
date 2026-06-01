@@ -10,13 +10,14 @@ depends_on:
   - "[[30 - Sanctum UX Flow]]"
   - "[[32 - Stage UX Flow]]"
   - "[[24 - Approval Queue]]"
+  - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-30
+last_audited: 2026-05-31
 source_file: "Relic Vault/71 - Component Inventory Design Spec.md"
 ---
 
 > [!info] How to use this spec
-> Use this as the reusable component checklist for the design specs in [[60 - Design Spec Overview]]. It references Material 3 and Checklist Design only for coverage completeness; Relic's design system in [[13 - Design System]] remains visually authoritative.
+> Use this as the reusable component checklist for the design specs in [[60 - Design Spec Overview]]. Read with [[72 - Navigation Design Spec]] for shell, rail, omnibox, and global create behavior. It references Material 3 and Checklist Design only for coverage completeness; Relic's design system in [[13 - Design System]] remains visually authoritative.
 
 # Component Inventory Design Spec
 
@@ -33,27 +34,29 @@ Material 3 and Checklist Design can be used to check component coverage: nav, in
 
 ## Navigation
 
-`SanctumShell` wraps authenticated Sanctum routes on web and mobile. It includes Home, Threads, Entities, Sessions, Review, Ask; lower-priority Export and Settings; context bar or context sheet; main content slot; and optional right utility sidecar on wide screens.
+`SanctumShell` wraps authenticated Sanctum routes on web and mobile. On web it includes top context bar, left rail, main content slot, and optional right utility sidecar on wide screens. The left rail destinations are Home, Threads, Library, Sessions, Stage, Review, Export, and Settings.
 
 `StageShell` wraps Stage routes on web and mobile. It includes Stage header, search, primary scroll area, sticky action bar, and optional wide-screen side panel.
 
-`MobileSanctumShell` is the phone-friendly Sanctum shell with context sheet, bottom nav, and single-column content.
+`MobileSanctumShell` is the phone-friendly Sanctum shell with context sheet, Sanctum/Stage app-level bottom navigation, and single-column content. Inside Sanctum, use compact section navigation for Home, Search/Ask, Threads, Library, Sessions, and Review.
 
 `ContextSwitcher` shows active Workspace, World, and Saga. It supports switching, resumable new-Saga drafts, `+ New saga`, and blocked switching during live sessions.
 
-`TopContextSearch` is the persistent search entry. It opens command palette/full search and keeps scope clear.
+`SearchOrAskOmnibox` is the persistent top-context search and Ask entry. It opens Find results, Ask answer mode, command palette/full search, and keeps scope clear.
+
+`GlobalCreateMenu` is the top-bar `+ Create` menu. It uses type-specific labels such as New Thread, New Character, New Place, New Faction, New Artifact, New Lore Note, New Session, Import notes, New Saga, and New World / Saga.
 
 `CommandPalette` handles keyboard and modal search on desktop.
 
-`SanctumNav` displays Threads, Entities, Sessions, Review, Ask. Review supports pending count.
+`SanctumNav` displays Home, Threads, Library, Sessions, Stage, Review, Export, and Settings. Review supports pending count. Ask is not displayed as a primary rail item by default.
 
-`MobileSurfaceTabBar` on mobile keeps the two primary surfaces accessible: Sanctum and Stage. Inside Sanctum, use a top tab strip, section links, or command/search entry for Home, Search, Threads, Entities, Sessions, Review, and Ask.
+`MobileSurfaceTabBar` on mobile keeps the two primary surfaces accessible: Sanctum and Stage. Inside Sanctum, use a top tab strip, section links, or command/search entry for Home, Search/Ask, Threads, Library, Sessions, and Review.
 
 `BreadcrumbBack` is used in detail and focused creation flows where shell nav alone is insufficient.
 
 `RightUtilitySidecar` is the optional desktop dock for Ask Relic, source/provenance, relationship context, draft warnings, or active inspector content. It is not permanent by default and should close without changing page context.
 
-`AskRelicSidecar` is a specific right utility sidecar for cited, GM-invoked answers. It should feel like a sourced reference tool, not a general-purpose chatbot rail.
+`AskRelicSidecar` is a specific right utility sidecar for cited, GM-invoked answers. It should feel like a sourced reference tool, not a general-purpose chatbot rail, and it should close without changing page context.
 
 `SettingsSubnav` groups Saga, World, Workspace usage, Retention, Notifications, Export, Account.
 
@@ -64,6 +67,8 @@ Navigation components must always communicate scope. The active Workspace/World/
 `PrimaryLoopCTA` is the dashboard's state-aware action: Plan Session 1, Continue prep, Ready/Open Stage, Resume Stage, Open Review, or Plan next session.
 
 `QuickCreateMenu` offers type-specific creation: Character, Place, Faction, Artifact, Thread, Session, note. It should not be a vague plus menu without labels.
+
+`GlobalCreateAction` is the top-bar create trigger. It opens `GlobalCreateMenu` from any primary work surface and defaults creation scope to the active Saga unless the GM explicitly chooses a World/Saga action.
 
 `ReadyForStageButton` marks a session ready. It validates packet completeness and never starts recording.
 
@@ -157,7 +162,9 @@ Feedback components should separate status from instruction. A chip can say `Off
 
 `TagInput`, `RelationshipPicker`, `EntityPicker`, `ThreadPicker`, and `PinnedEntityPicker` support structured linking without visual graphs.
 
-`SearchInput` appears in top context, command palette, library filters, and Stage. Search state must show scope.
+`SearchInput` appears in command palette, Library filters, and Stage. Search state must show scope.
+
+`SearchOrAskInput` appears in the top context omnibox and mobile Search/Ask entry. It preserves the user's query while switching between Find and Ask behavior.
 
 `QuestionInput` is for Ask Relic and must preserve the question on failure.
 

@@ -15,8 +15,9 @@ depends_on:
   - "[[34 - UI Implementation Spec]]"
   - "[[24 - Approval Queue]]"
   - "[[23 - AI Task Registry]]"
+  - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-30
+last_audited: 2026-05-31
 source_file: "Relic Vault/60 - Design Spec Overview.md"
 ---
 
@@ -25,7 +26,7 @@ source_file: "Relic Vault/60 - Design Spec Overview.md"
 
 # Design Spec Overview
 
-This note defines the design-spec layer for Relic MVP. It sits between the broad product and UX contracts and the implementation-facing route/component plans. The owning upstream sources remain [[11 - Product Basepoint]], [[12 - MVP PRD]], [[13 - Design System]], [[30 - Sanctum UX Flow]], [[31 - Session Prep Flow]], [[32 - Stage UX Flow]], [[33 - First Run UX Flow]], [[34 - UI Implementation Spec]], [[24 - Approval Queue]], and [[23 - AI Task Registry]].
+This note defines the design-spec layer for Relic MVP. It sits between the broad product and UX contracts and the implementation-facing route/component plans. The owning upstream sources remain [[11 - Product Basepoint]], [[12 - MVP PRD]], [[13 - Design System]], [[30 - Sanctum UX Flow]], [[31 - Session Prep Flow]], [[32 - Stage UX Flow]], [[33 - First Run UX Flow]], [[34 - UI Implementation Spec]], [[24 - Approval Queue]], [[23 - AI Task Registry]], and [[72 - Navigation Design Spec]].
 
 The design-spec layer has two jobs:
 
@@ -49,12 +50,13 @@ Reusable component guidance lives in [[71 - Component Inventory Design Spec]]. E
 | [[69 - Settings Usage Design Spec]] | Saga, World, Workspace, retention, usage, quota, and export controls. |
 | [[70 - Mobile App Design Spec]] | Mobile adaptation of both Sanctum and Stage without reducing product scope. |
 | [[71 - Component Inventory Design Spec]] | Shared component vocabulary, states, and constraints. |
+| [[72 - Navigation Design Spec]] | Web navigation contract, top context bar, left rail, switcher, and global create. |
 
 The requested `50` numbering could not be used because [[50 - Session Log Index]] already exists and is the canonical operations index. This layer uses `60` through `71` to preserve existing backlinks.
 
 ## Product decisions this layer preserves
 
-The Sanctum dashboard is a clean contemporary/literary active Saga landing page and cockpit, not a generic Workspace overview. It is about the selected World/Saga, the next session, active Threads, recent canon movement, quick creation, and pending review. Workspace and World controls belong in the shell, not as the dashboard's center of gravity. The default desktop dashboard should read as a two-column editorial cockpit with an optional utility sidecar, not a permanent three-column control room.
+The Sanctum dashboard is a clean contemporary/literary active Saga landing page and cockpit, not a generic Workspace overview. It is about the selected World/Saga, the next session, active Threads, recent canon movement, quick creation, and pending review. Workspace and World controls belong in the top context switcher, not as the dashboard's center of gravity. The default desktop dashboard should read as a two-column editorial cockpit with an optional utility sidecar, not a permanent three-column control room.
 
 Session prep lives inside Sanctum. It can open as a fuller editor route, but it is not a third top-level surface and does not get its own navigation mode. Prep uses The Sanctum's parchment base with Amber-forward action accents and Sage thread-state signals.
 
@@ -66,9 +68,9 @@ The Approval Queue is the trust surface. It is where AI and pipeline outputs bec
 
 AI is GM-invoked, not proactive. The only exception is the visible, canon-only prep briefing described in [[31 - Session Prep Flow]] and [[23 - AI Task Registry]]. AI never writes directly to canon. AI suggestions are ephemeral, draft-backed, or routed through documented synthetic approval paths depending on the task.
 
-Search belongs in the top context bar. Ask Relic is a page, collapsible sidecar, or contextual action, not a permanent chatbot column. The AI surface should feel like a sourced utility layer that opens when summoned, then gets out of the way. The GM should always be able to search current Saga canon plus relevant World canon without losing page context.
+Search and Ask belong in the top context bar as a combined `Search or ask...` omnibox with Find/Ask behavior. Ask Relic may also appear as a collapsible sidecar, page, or contextual action, but it is not a primary left-rail destination by default and must never become a permanent chatbot column. The AI surface should feel like a sourced utility layer that opens when summoned, then gets out of the way. The GM should always be able to search current Saga canon plus relevant World canon without losing page context.
 
-World/Saga switching belongs in the shell. The active Workspace, World, and Saga are persistent context, not dashboard content blocks. The shell must make scope visible because every search, AI task, entity list, Stage packet, and queue item depends on it.
+World/Saga switching belongs in the top context switcher. The active Workspace, World, and Saga are persistent context, not dashboard content blocks. The shell must make scope visible because every search, Ask task, Library filter, Stage packet, and queue item depends on it.
 
 Recently edited canon and quick create belong on the dashboard. These are not secondary flourishes: they let the GM continue the loop without remembering where they left off.
 
@@ -134,7 +136,7 @@ Use source badges for compact surfaces, a provenance panel or bottom sheet for m
 
 ## Navigation principles
 
-The top context bar owns Workspace, World, Saga, global search, and quota/usage indicators when relevant. The desktop Sanctum rail should include Home, Threads, Entities, Sessions, Review, and Ask, with Export and Settings treated as lower-priority utility links. Search remains in the top context bar, not the rail. The top context bar owns Workspace, World, Saga, global search, the current session pill, Review badge, Ask entry, and quota/usage indicators when relevant.
+[[72 - Navigation Design Spec]] is the navigation contract. The top context bar owns Relic/Home, Workspace/World/Saga switcher, `Search or ask...` omnibox, `+ Create`, current session pill, Review badge, usage chip when relevant, and account menu. The desktop left rail should include Home, Threads, Library, Sessions, Stage, Review, Export, and Settings. Use **Library**, not **Entities**, as the rail label. Ask is handled through the omnibox, sidecar, page, or contextual actions, not the default left rail.
 
 Dashboard navigation should answer: what is live, what needs review, what should I prep next, what changed recently, and what can I create quickly? It should not try to expose every route.
 
@@ -152,8 +154,10 @@ Use this checklist when reviewing any mockup, Claude Design output, or UI implem
 - Is any AI/canon write gated by review, approval, or a documented GM-direct path?
 - Are sources/provenance visible where trust depends on them?
 - Is search in the top context bar?
-- Is Ask a page, sidecar, or contextual action rather than a permanent chatbot column?
-- Are World/Saga controls in the shell?
+- Is Ask handled through the top omnibox, page, sidecar, or contextual action rather than the default left rail?
+- Are World/Saga controls in the top context switcher?
+- Does the left rail use Home, Threads, Library, Sessions, Stage, Review, Export, Settings?
+- Is global create scoped and type-specific?
 - Are recently edited canon and quick create visible on the dashboard?
 - Are MVP exclusions absent from navigation and primary actions?
 - Are empty/loading/error/offline/quota/conflict states represented?
@@ -163,7 +167,9 @@ Use this checklist when reviewing any mockup, Claude Design output, or UI implem
 When using these specs with Claude Design, start with this shared context:
 
 ```text
-Design Relic, an AI-assisted Saga creation and continuity workspace for tabletop Game Masters. Use the active Relic design system: Parchment #EFEBE4, Cream #F7F4EF, Ink #1A1916, Amber #B8702A, Rust #8A3828, Sage #496640; Cormorant Garamond for names/titles, Instrument Sans for UI, DM Mono for metadata. Preserve two surfaces on both web and mobile: The Sanctum should feel literary, modern, and relaxing for create/organize/prep/review/approve/continue; The Stage should feel clean, focused, and live-session-ready. Build the web app first with the full Sanctum/Stage loop, then adapt the full product to mobile. AI is GM-invoked, never proactive, and never writes canon without explicit GM approval or a documented inline review path. Search lives in the top context bar. Ask Relic is a page/sidecar/contextual action, not a permanent chatbot column. Do not include MVP-excluded features.
+Design Relic, an AI-assisted Saga creation and continuity workspace for tabletop Game Masters. Use the active Relic design system: Parchment #EFEBE4, Cream #F7F4EF, Ink #1A1916, Amber #B8702A, Rust #8A3828, Sage #496640; Cormorant Garamond for names/titles, Instrument Sans for UI, DM Mono for metadata. Preserve two surfaces on both web and mobile: The Sanctum should feel literary, modern, and relaxing for create/organize/prep/review/approve/continue; The Stage should feel clean, focused, and live-session-ready. Build the web app first with the full Sanctum/Stage loop, then adapt the full product to mobile. Use a top context bar for Workspace/World/Saga, Search or Ask, + Create, current session, Review, Usage, and Account. Use a left rail for Home, Threads, Library, Sessions, Stage, Review, Export, Settings. AI is GM-invoked, never proactive, and never writes canon without explicit GM approval or a documented inline review path. Ask Relic is an omnibox mode/page/sidecar/contextual action, not a permanent chatbot column. Do not include MVP-excluded features.
 ```
 
 Then append the relevant screen's `Claude Design prompt` section.
+
+For Claude Design wireframe work, use a small packet rather than the whole vault: this overview, [[72 - Navigation Design Spec]], [[71 - Component Inventory Design Spec]], the relevant screen spec, and [[35 - Web Design Wireframe]] for the first web pass. Add [[70 - Mobile App Design Spec]] only when asking for mobile adaptations.

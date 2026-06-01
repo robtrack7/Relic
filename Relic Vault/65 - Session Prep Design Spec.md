@@ -10,13 +10,14 @@ depends_on:
   - "[[32 - Stage UX Flow]]"
   - "[[23 - AI Task Registry]]"
   - "[[13 - Design System]]"
+  - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-30
+last_audited: 2026-05-31
 source_file: "Relic Vault/65 - Session Prep Design Spec.md"
 ---
 
 > [!info] How to use this spec
-> Use this for the inline dashboard prep workspace and full prep editor route. Read with [[60 - Design Spec Overview]] and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[31 - Session Prep Flow]], [[30 - Sanctum UX Flow]], [[32 - Stage UX Flow]], and [[23 - AI Task Registry]].
+> Use this for the inline dashboard prep workspace and full prep editor route. Read with [[60 - Design Spec Overview]], [[72 - Navigation Design Spec]], and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[31 - Session Prep Flow]], [[30 - Sanctum UX Flow]], [[32 - Stage UX Flow]], and [[23 - AI Task Registry]].
 
 # Session Prep Design Spec
 
@@ -55,7 +56,7 @@ After Ready, the primary action becomes `Open in Stage`.
 
 ## 6. Secondary actions
 
-Secondary actions include Open full editor, Refresh briefing, Brainstorm beats, Draft an NPC, Add pinned entity, Create quick stub, Add checklist item, Open Thread, Open entity, Reset prep, Duplicate as new planned, Archive session, and return to dashboard.
+Secondary actions include Open full editor, Refresh briefing, Brainstorm beats, Draft an NPC, Add pinned Library record, Create quick stub, Add checklist item, Open Thread, Open Library detail, Reset prep, Duplicate as new planned, Archive session, and return to dashboard.
 
 Destructive or broad actions belong in an actions menu.
 
@@ -102,11 +103,11 @@ Accepted prep suggestions update session working state, not canon entity truth u
 
 ## 12. Navigation in
 
-Users arrive from dashboard primary CTA, Sessions index, Plan Session 1 card, Approval Queue completion, Stage preview return, or direct route.
+Users arrive from dashboard primary CTA, current session pill, Sessions index, Plan Session 1 card, Approval Queue completion, Stage preview return, or direct route.
 
 ## 13. Navigation out
 
-Users go to Stage, dashboard, full editor, entity detail, Thread detail, Approval Queue, or Sessions index. Ready for Stage transitions the session to ready but does not start recording or consent.
+Users go to Stage, dashboard, full editor, Library detail, Thread detail, Approval Queue, or Sessions index. Ready for Stage transitions the session to ready but does not start recording or consent.
 
 ## 14. Components to avoid
 

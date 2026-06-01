@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-05-31
 source_file: "Sourced - Downloaded - 260518/relic-ui-implementation-spec-v0_2.md"
 ---
 
@@ -38,6 +38,7 @@ This spec translates the active Relic product, UX, schema, architecture, and des
 - `[[23 - AI Task Registry]]`
 - `[[24 - Approval Queue]]`
 - `[[25 - Pricing and Rate Limits]]`
+- `[[72 - Navigation Design Spec]]`
 
 **Implementation rule:** build the loop first: Create → Organize → Prep → Run → Review → Approve → Continue.
 
@@ -67,16 +68,16 @@ Use IDs in routes for MVP. Slugs may be added later for readability but must not
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId` | Sanctum | Saga home, current prep card, Threads carry-forward | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/threads` | Sanctum | Thread list + read-only Thread Timeline | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/threads/:threadId` | Sanctum | Thread detail, objectives log, related entities, AI assists | P0 |
-| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/entities` | Sanctum | Entity library, filters, search | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/entities` | Sanctum | Library records, filters, search | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/entities/new` | Sanctum | Manual entity create / draft from prompt | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/entities/:entityType/:entityId` | Sanctum | Entity detail editor | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/sessions` | Sanctum | Session list and pipeline status | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/sessions/new` | Sanctum | Create session prep workspace | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/sessions/:sessionId/prep` | Sanctum | Session prep workspace | P0 |
-| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/sessions/:sessionId/stage` | Stage web | Browser Stage fallback | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/sessions/:sessionId/stage` | Stage web | Web Stage surface | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/sessions/:sessionId/review` | Sanctum | Transcript, summary, proposed updates | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/review` | Sanctum | Approval Queue | P0 |
-| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/ask` | Sanctum | GM-invoked Saga-aware Ask surface | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/ask` | Sanctum | GM-invoked Saga-aware Ask page reached from omnibox/context | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/search` | Sanctum | Full search page, command-palette fallback | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/settings` | Sanctum | Saga settings: name, system, profile override, retention | P0 |
 | `/app/w/:workspaceId/world/:worldId/settings` | Sanctum | Lightweight World settings | P0 minimal |
@@ -104,8 +105,8 @@ Mobile is built after the web app and preserves both Sanctum and Stage. It may o
 | `/stage/:sessionId/dice` | Stage sheet | Basic dice utility | P0 |
 | `/stage/:sessionId/end` | Stage modal | End Session confirm + undo | P0 |
 | `/sanctum` | Sanctum | Saga home summary and next action | P0 |
-| `/sanctum/entities` | Sanctum | Entity list/search | P0 |
-| `/sanctum/entities/:entityType/:entityId` | Sanctum | Read/edit detail | P0 |
+| `/sanctum/entities` | Sanctum | Library list/search | P0 |
+| `/sanctum/entities/:entityType/:entityId` | Sanctum | Read/edit Library detail | P0 |
 | `/sanctum/sessions/:sessionId/prep` | Sanctum | Session packet read/edit and Ready for Stage | P0 |
 | `/sanctum/review` | Sanctum | Approval Queue review with mobile source sheets | P0 |
 | `/settings` | Settings | Retention, usage readout, sign out | P0 minimal |
@@ -116,24 +117,25 @@ Mobile is built after the web app and preserves both Sanctum and Stage. It may o
 
 ### 2.1 Sanctum desktop shell
 
-**Use for:** the web implementation of the Sanctum: saga home, Threads, Entities, Sessions, Review, Ask, Settings.
+**Use for:** the web implementation of the Sanctum: saga home, Threads, Library, Sessions, Stage, Review, Export, Settings, and invoked Search/Ask surfaces.
 
 - Parchment background.
 - Left navigation rail, 220–260px.
-- Top context bar: Workspace / World / Saga switcher, search/command entry, usage chip when near quota.
+- Top context bar: Workspace / World / Saga switcher, `Search or ask...` omnibox, `+ Create`, current session pill, Review badge, usage chip when near quota, account menu.
 - Main content column, max readable width 960–1120px unless list/detail layout requires more.
 - Optional right inspector for source/provenance, relationships, draft warnings, quota warnings.
 - Cream cards on Parchment. Literary, modern, relaxing. Amber marks consequential action. Sage marks confirmed/ready. Rust marks destructive/blocked.
 
-Default nav order: **Threads · Entities · Sessions · Review · Ask**. Settings sits low in the rail.
+Default left rail order: **Home · Threads · Library · Sessions · Stage · Review**. Export and Settings sit low in the rail. Ask is invoked through the top omnibox, page, sidecar, or contextual action; it is not a primary rail item by default.
 
 ### 2.2 Sanctum mobile shell
 
-**Use for:** mobile-light support after web: entity review, prep read/edit, approval minimum, settings.
+**Use for:** mobile support after web: Library review, prep read/edit, approval, settings, and invoked Search/Ask.
 
 - Single column.
 - Top context switcher compressed into a sheet.
-- Bottom nav: Home, Search, Sessions, Review, Stage.
+- App-level bottom nav: Sanctum, Stage.
+- Inside Sanctum: compact section navigation for Home, Search/Ask, Threads, Library, Sessions, Review.
 - No persistent right rail; use bottom sheets for source/provenance and filters.
 - Large tap targets, minimum 44px.
 
@@ -203,6 +205,10 @@ Map `[[13 - Design System]]` tokens into shared Tailwind/CSS variables.
 - `SanctumShell`
 - `StageShell`
 - `ContextSwitcher`
+- `SearchOrAskOmnibox`
+- `GlobalCreateMenu`
+- `CurrentSessionPill`
+- `ReviewBadge`
 - `CommandPalette`
 - `SearchInput`
 - `UsageChip`
@@ -329,9 +335,9 @@ Build as the loop dashboard, not a generic project homepage.
 - Current Saga summary.
 - Next session / Plan Session 1 card.
 - Threads carry-forward card.
-- Recent entities.
+- Recent Library records.
 - Pending Review card.
-- Ask entry point.
+- Search/Ask entry point from the top omnibox or contextual card.
 - Usage chip only when near quota or in settings.
 
 ### 5.4 Threads
@@ -341,7 +347,7 @@ Build as the loop dashboard, not a generic project homepage.
 - Read-only Thread Timeline derived from `threads.objectives_log`, sessions, and canon audit.
 - No writable timeline editor.
 
-### 5.5 Entities
+### 5.5 Library
 
 - Library with type filters, search, archived toggle.
 - Detail editor with autosave, source/provenance, relationships, mentions, notes.
@@ -370,6 +376,7 @@ Build as the loop dashboard, not a generic project homepage.
 ### 5.9 Ask
 
 - GM-invoked only.
+- Reached from the top omnibox, contextual action, or fallback page; not the primary left rail.
 - Shows answer state: Canon / Draft / Raw / Transcript sources.
 - No answer may be presented as canon unless grounded in canon.
 - Empty state suggests example questions, not proactive prompts.
@@ -532,12 +539,12 @@ Required components:
 2. **Auth and bootstrap** — sign up, sign in, default Workspace, route guard.
 3. **New saga flow** — form, profile, World choice, help level, blank create.
 4. **Scaffold review** — Build with AI / Bring notes mocked or disabled until AI implementation-plan review, then wire to `scaffold_saga`.
-5. **Sanctum home** — Plan Session 1, Threads carry-forward, recent entities, pending Review.
-6. **Entity library/detail** — CRUD, autosave, state chips, source/provenance placeholders.
+5. **Sanctum home** — Plan Session 1, Threads carry-forward, recent Library records, pending Review.
+6. **Library/detail** — CRUD, autosave, state chips, source/provenance placeholders.
 7. **Threads** — list, detail, read-only timeline.
 8. **Session prep** — objective/opening/notes, pinned entities, Ready for Stage.
-9. **Stage browser fallback** — ready/in-progress packet, pinned cards, search, capture, dice, and End Session in web.
-10. **Mobile Stage app** — after web loop stability, read cached packet, pinned cards, search, capture, dice.
+9. **Web Stage surface** — ready/in-progress packet, pinned cards, search, capture, dice, and End Session in web.
+10. **Mobile app** — after web loop stability, adapt Sanctum and Stage with cached packet, sheets, search/capture, dice, and approval flows.
 11. **Recording** — consent, local chunks, upload state, Mark Moment.
 12. **Post-session pipeline UI** — transcript/review status and failure states.
 13. **Approval Queue** — grouped review, diff, source dock, commit.

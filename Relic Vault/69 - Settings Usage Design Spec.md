@@ -10,13 +10,14 @@ depends_on:
   - "[[21 - Tech Architecture]]"
   - "[[34 - UI Implementation Spec]]"
   - "[[13 - Design System]]"
+  - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-30
+last_audited: 2026-05-31
 source_file: "Relic Vault/69 - Settings Usage Design Spec.md"
 ---
 
 > [!info] How to use this spec
-> Use this for Saga, World, Workspace, retention, export, and usage settings. Read with [[60 - Design Spec Overview]] and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[25 - Pricing and Rate Limits]], [[30 - Sanctum UX Flow]], [[21 - Tech Architecture]], and [[34 - UI Implementation Spec]].
+> Use this for Saga, World, Workspace, retention, export, and usage settings. Read with [[60 - Design Spec Overview]], [[72 - Navigation Design Spec]], and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[25 - Pricing and Rate Limits]], [[30 - Sanctum UX Flow]], [[21 - Tech Architecture]], and [[34 - UI Implementation Spec]].
 
 # Settings Usage Design Spec
 

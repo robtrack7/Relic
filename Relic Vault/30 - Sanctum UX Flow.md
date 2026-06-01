@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-05-31
 source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 ---
 
@@ -32,7 +32,7 @@ source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 
 1. **§2.1 Theme revised.** Cream surface retired as a mode differentiator. Session-prep areas within the Sanctum use Amber-forward accents and Sage thread-state signals to visually distinguish prep context within the Parchment frame. Stage dark treatment is unchanged. Specific token changes called out in §2.1.
 
-2. **§2.2 Navigation revised.** Top-level nav gains `Threads` as a first-position link. `Notes` moves to a sub-section of `Entities`. `Sessions` remains but routes to the sessions index, not session prep workspace. The sidebar pill routes to session prep inline (no separate session prep workspace nav entry). Mobile bottom tab bar simplified to Sanctum · Stage.
+2. **§2.2 Navigation revised.** The web shell follows [[72 - Navigation Design Spec]]: the left rail uses `Home`, `Threads`, `Library`, `Sessions`, `Stage`, `Review`, with `Export` and `Settings` lower in the rail. `Notes` moves to a sub-section of `Library`. `Sessions` remains but routes to the sessions index, not session prep workspace. The session pill routes to session prep inline, Stage, or Review depending on state. Mobile bottom tab bar remains Sanctum · Stage.
 
 3. **§3 Dashboard revised.** The Sanctum home page is session-state-aware. When a session is `planned` or `ready`, the home page renders an inline session-prep workspace (briefing, agenda preview, thread carry-forward, Ready for Stage CTA) as the primary content area, not just a CTA pointing elsewhere. The continuity card pattern is retained for states where no active session exists.
 
@@ -56,7 +56,7 @@ The section order:
 2. Theme, navigation, top-level IA
 3. Saga dashboard (state-aware home)
 4. **Threads surface — new in v0.2** (list + timeline)
-5. Entity library (browse, filter, search)
+5. Library (browse, filter, search)
 6. Entity detail (view, edit, link, archive)
 7. Entity creation (manual, AI-drafted, creative)
 8. Notes (lore, gm_note, summary)
@@ -115,21 +115,36 @@ The Sanctum is the home base for the active World and Saga. Session prep lives h
 
 ### 2.2 Top-level navigation (web)
 
-**v0.2 change: Threads promoted; Notes absorbed into Entities; mobile tab bar simplified.**
+**Navigation patch: align with [[72 - Navigation Design Spec]]. Threads remain first-class, Notes are absorbed into Library, Search/Ask belongs in the top bar, and Stage is a primary work surface in the left rail.**
 
 ```
-Relic / The Sanctum   [World: Thornwood ▾] [Saga: Accord ▾]   [ Threads ] [ Entities ] [ Sessions ] [ Review ] [ Ask ]    [Session 15] [GM]
+Relic   [Workspace / World / Saga ▾]   [Search or ask...]   [+ Create]   [Session 15]   [Review 8]   [Usage]   [GM]
+
+Home
+Threads
+Library
+Sessions
+Stage
+Review
+
+Export
+Settings
 ```
 
 | Link | Routes to | Change from v0.1 |
 |---|---|---|
+| **Home** | Active Saga dashboard (§3) | Active Saga cockpit. |
 | **Threads** | Thread library (§4) | **New position — first in nav.** Threads are the continuity spine. |
-| **Entities** | Entity library (§5) | Was first; now second. Notes accessible as a sub-section within Entities. |
+| **Library** | Library (§5) | Replaces user-facing `Entities` rail label. Notes, sources, and entity types live here. |
 | **Sessions** | Sessions index (§12) | Unchanged. |
+| **Stage** | Stage surface in [[32 - Stage UX Flow]] | Equal-weight live-session work surface. |
 | **Review** | Approval Queue (§9) | Badge with pending count. Unchanged. |
-| **Ask** | RAG-backed Q&A (§10.4) | Unchanged. |
+| **Export** | Export lifecycle | Low-rail utility. |
+| **Settings** | Saga/World/Workspace settings | Low-rail utility. |
 
-**Notes:** no longer a separate nav link. Lore notes, GM notes, and summaries are accessible from within the Entities library (`Entities → Notes` sub-section). The nav had six links in v0.1 (with Notes); five is cleaner, and Notes usage is contextual — GMs access a lore note by navigating to the entity it's attached to, not from a top-level Notes inbox.
+**Ask/Search:** Ask is not a default left-rail item. It is reached through the top `Search or ask...` omnibox, a temporary sidecar/page, or contextual actions from dashboard, detail, Thread, and prep surfaces.
+
+**Notes:** no longer a separate nav link. Lore notes, GM notes, summaries, and sources are accessible from within the Library (`Library → Notes` sub-section). Notes usage is contextual — GMs access a lore note by navigating to the Library record or surface it is attached to, not from a top-level Notes inbox.
 
 **The session pill** (top-right) shows the active or most-recent-prepped session and routes:
 - `in_progress` → Stage.
@@ -145,10 +160,10 @@ Copy adapts: `Session 15 · Prepping` (planned/started), `Session 15 · Ready` (
 **v0.2 change: Bottom tab bar simplified to two tabs.**
 
 - **Bottom tab bar: Sanctum · Stage** (two tabs, not three).
-- Inside Sanctum on mobile: a scrollable top tab strip: `Threads · Entities · Sessions · Review · Ask`.
+- Inside Sanctum on mobile: a scrollable top tab strip or section links: `Home · Search/Ask · Threads · Library · Sessions · Review`.
 - Session prep is reached from the Sanctum home (the inline prep workspace) or from `Sessions` → tap session row → Open prep.
 
-`SNC-FR-1` (updated) — Mobile Sanctum supports: state-aware dashboard (including inline session prep workspace), thread library (list view), thread detail, entity browse/filter/search, entity view, entity edit (single-pane), note view/edit, approval queue review (one-pane per AQ-FR-13), Ask surface, session index, World/Saga switcher. Mobile defers: thread timeline view (web-preferred, accessible but not optimized), two-pane diff, saga export, transcript segment editor, advanced import workflows.
+`SNC-FR-1` (updated) — Mobile Sanctum supports: state-aware dashboard (including inline session prep workspace), thread library (list view), thread detail, Library browse/filter/search, Library detail edit (single-pane), note view/edit, approval queue review (one-pane per AQ-FR-13), Search/Ask surface, session index, World/Saga switcher. Mobile defers: thread timeline view (web-preferred, accessible but not optimized), two-pane diff, saga export, transcript segment editor, advanced import workflows.
 
 ### 2.4 World/Saga switcher
 
@@ -437,23 +452,23 @@ Each thread detail page extends the standard entity detail layout (§6) with thr
 
 ---
 
-## 5. Entity library
+## 5. Library
 
-The Entity library defaults to the active Saga plus relevant World canon. Scope filters are visible but lightweight: `Saga canon`, `World canon`, `All visible`. Sibling Sagas are not included in MVP library/search results.
+The Library defaults to the active Saga plus relevant World canon. Scope filters are visible but lightweight: `Saga canon`, `World canon`, `All visible`. Sibling Sagas are not included in MVP Library/search results.
 
 **World canon filter.** Shows records with `scope='world'` and `saga_id=null` for the active World. **Saga canon filter.** Shows records with `scope='saga'` and the active `saga_id`.
 
 
 Unchanged from v0.1 §4, with one structural note:
 
-**Notes sub-section.** The entity library left rail now shows `Notes` below the six entity types (previously `Notes` was a top-nav link):
+**Notes sub-section.** The Library type rail now shows `Notes` below the six entity types (previously `Notes` was a top-nav link):
 
 ```
 │ Notes      37  │
 │  [ Lore (24) ] [ Summaries (8) ] [ GM notes (5) ]
 ```
 
-The behavior is identical to v0.1 §7 (Notes library). The entry point has moved from top-nav to entity library sub-section.
+The behavior is identical to v0.1 §7 (Notes library). The entry point has moved from top-nav to the Library sub-section.
 
 ---
 
@@ -535,7 +550,7 @@ From the session prep workspace (§3.2) or the entity creation type chooser, the
 
 ## 8. Notes — lore, GM notes, summaries
 
-Unchanged from v0.1 §7. The Notes library is now accessed via `Entities → Notes` rather than a top-nav link. Behavior, filters, and detail views are identical.
+Unchanged from v0.1 §7. The Notes library is now accessed via `Library → Notes` rather than a top-nav link. Behavior, filters, and detail views are identical.
 
 ---
 
@@ -562,7 +577,7 @@ Updated internal references:
 
 - Task name: `answer_saga_question`.
 - Retrieval profile: `sanctum_qa_grounding` (defined in Memory v0.9 §5.6 and mapped from Registry v1.0 §10).
-- `no_answer=true` path: renders *"I don't have enough information about that in the current canon. Try different phrasing or [browse the entity library]."*
+- `no_answer=true` path: renders *"I don't have enough information about that in the current canon. Try different phrasing or [browse the Library]."*
 
 Everything else from v0.1 §9.4–9.6 is unchanged.
 
@@ -732,4 +747,3 @@ The prior downstream-doc revision table is closed by the vault pass. Current act
 ---
 
 *End Sanctum UX Flow v0.2 vault copy. Aligned for MVP coding with Basepoint v3.5, PRD v0.10, Schema v0.8, Approval Queue v0.5, Memory v0.9, AI Registry v1.0, Tech Architecture v1.2, Stage UX v0.6, Session Prep v0.2, and Design System.*
-

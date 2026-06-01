@@ -36,7 +36,7 @@ All active source documents needed for the vault pass are present and linked.
 - Backend/schema work: read [[20 - Entity and Canon Schema]], [[21 - Tech Architecture]], [[25 - Pricing and Rate Limits]], then the relevant UX note.
 - AI/retrieval work: read [[22 - Memory and Retrieval]], [[23 - AI Task Registry]], [[24 - Approval Queue]], and [[25 - Pricing and Rate Limits]] before planning task routing or AI surfaces.
 - UX/UI work: read [[13 - Design System]], [[30 - Sanctum UX Flow]], [[31 - Session Prep Flow]], [[32 - Stage UX Flow]], [[33 - First Run UX Flow]], and [[34 - UI Implementation Spec]].
-- Screen-level design work: read [[60 - Design Spec Overview]], then the relevant screen spec and [[71 - Component Inventory Design Spec]] after the owning UX/UI sources.
+- Screen-level design work: read [[60 - Design Spec Overview]], [[72 - Navigation Design Spec]], then the relevant screen spec and [[71 - Component Inventory Design Spec]] after the owning UX/UI sources.
 - Historical/context work: use archive stubs only to locate original imported files; do not build from archived notes.
 
 ## Read This Before Coding
@@ -74,3 +74,4 @@ All active source documents needed for the vault pass are present and linked.
 - [[45 - Security Findings Register]]
 - [[50 - Session Log Index]]
 - [[60 - Design Spec Overview]]
+- [[72 - Navigation Design Spec]]

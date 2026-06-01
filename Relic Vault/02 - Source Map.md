@@ -58,6 +58,7 @@ These notes translate the active product, UX, and UI sources into compact screen
 | [[69 - Settings Usage Design Spec]] | Saga/World/Workspace settings, usage, retention, export | Secondary design |
 | [[70 - Mobile App Design Spec]] | Mobile adaptation of both Sanctum and Stage | Secondary design |
 | [[71 - Component Inventory Design Spec]] | Shared component vocabulary and state coverage | Secondary design |
+| [[72 - Navigation Design Spec]] | Top context bar, left rail, global create, switcher, and nav tree | Secondary design |
 
 ## Archive / Non-Coding Notes
 

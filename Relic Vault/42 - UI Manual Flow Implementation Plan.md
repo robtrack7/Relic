@@ -11,8 +11,9 @@ depends_on:
   - "[[32 - Stage UX Flow]]"
   - "[[33 - First Run UX Flow]]"
   - "[[34 - UI Implementation Spec]]"
+  - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-05-31
 source_file: "Relic Vault/42 - UI Manual Flow Implementation Plan.md"
 ---
 
@@ -30,6 +31,7 @@ Build the MVP loop as a usable manual product before wiring AI calls: Create -> 
 - [[32 - Stage UX Flow]]
 - [[33 - First Run UX Flow]]
 - [[34 - UI Implementation Spec]]
+- [[72 - Navigation Design Spec]]
 - [[24 - Approval Queue]]
 
 ## Implementation Groups
@@ -39,7 +41,7 @@ Build the MVP loop as a usable manual product before wiring AI calls: Create -> 
 - Map design tokens into shared CSS/Tailwind variables.
 - Build `SanctumShell` for the literary, modern, relaxing Parchment/Cream surface in the web app first.
 - Build the clean, focused `StageShell` in the web app first, then adapt both shells for mobile after the web loop is stable.
-- Implement Workspace/World/Saga context controls, search entry, usage chip placeholder, and state chips.
+- Implement Workspace/World/Saga context controls, `Search or ask...` omnibox, `+ Create`, current session pill, Review badge, usage chip placeholder, and state chips.
 
 ### 2. Auth, Bootstrap, and Start Blank
 
@@ -51,9 +53,9 @@ Build the MVP loop as a usable manual product before wiring AI calls: Create -> 
 ### 3. Sanctum Manual Loop
 
 - Build dashboard states: no sessions, planned/ready session, in-progress session, review-ready session, empty Saga.
-- Build entity library/detail CRUD with manual create, edit, archive, source/provenance placeholders, duplicate warnings, and state chips.
+- Build Library/detail CRUD with manual create, edit, archive, source/provenance placeholders, duplicate warnings, and state chips.
 - Build Threads list, Thread detail, resolution actions, objectives log, and read-only Thread Timeline.
-- Build notes and lore surfaces as sub-sections of Entities.
+- Build notes and lore surfaces as sub-sections of Library.
 
 ### 4. Session Prep Without AI Wiring
 
