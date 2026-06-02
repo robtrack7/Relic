@@ -273,6 +273,8 @@ Detailed plan: [[56 - Backend Module 8 Background Job and Edge Runtime Plan]].
 
 Detailed plan: [[57 - Backend Module 9 AI Task Router and Runtime Plan]].
 
+**Status:** Implemented on 2026-06-02 in `supabase/migrations/20260602001500_ai_task_runtime.sql`, `supabase/functions/ai-task-runner/`, and shared AI Edge runtime files. Focused verification passed for `supabase/tests/ai_task_runtime.sql`, `supabase/tests/access_control.sql`, and `npm run test:scripts`.
+
 **Goal:** Wire AI only after retrieval, quota, and drafts are trustworthy.
 
 **Owns:**
@@ -321,13 +323,13 @@ The fuller rough UI can start now that Module 7 has passed. The manual MVP loop 
 
 Create -> Organize -> Prep -> Run -> Review -> Approve -> Continue.
 
-AI-facing UI should wait until Module 9 passes. Modules 4, 6, and 8 now provide retrieval, quota charging, and async runtime scaffolding; Module 9 still needs source validation, provider routing, AI task execution, and draft creation.
+AI-facing UI can now start as a rough smoke-test surface for `preflight_ai_task(...)`, run status display, manual fallback states, and review of AI-created draft/session outputs. Keep provider-backed generation behind the internal `ai-task-runner` configuration until a local/provider adapter is deliberately exercised.
 
 ## Immediate Work Order
 
-1. Keep Modules 0-8 green under `npm run backend:baseline:reset`.
+1. Keep Modules 0-9 green under `npm run backend:baseline:reset`.
 2. Use the existing web UI for an end-to-end manual smoke test of auth, canon CRUD, session prep, Stage capture, usage summary, audio upload metadata, and transcript-edit surfaces.
-3. Complete Module 9 AI task router/runtime before enabling AI UI.
+3. Add rough UI smoke coverage for AI preflight, manual fallback, run status, and output review.
 4. Complete Module 10 notifications, export generation, and operational loops.
 
 ## Open Follow-Ups

@@ -42,6 +42,14 @@ Verified during Module 9 planning on 2026-06-02:
 - Current web UI still labels AI drafting/runtime actions as disabled.
 - There is no AI task run ledger, task registry table/function, task router Edge Function, provider adapter, task schema catalog, or AI output writer.
 
+Implemented on 2026-06-02:
+
+- `internal.ai_task_contracts()` registers all ten Registry v1.0 tasks with prompt version, quota tier, model tier, retrieval profile, source policy, output mode, and active status.
+- `internal.ai_task_runs` records task scope, prompt/model details, attempts, repair attempts, latency, allowed source IDs, output payload, validation errors, and failure state.
+- `public.preflight_ai_task(...)` exposes scoped browser preflight for task contract and quota state while preserving manual fallback.
+- `internal.validate_ai_source_ids(...)` and `internal.record_ai_task_output(...)` enforce source-ID boundaries and write only the registered output surface.
+- `supabase/functions/ai-task-runner/` adds the internal Edge route, provider adapter boundary, schema validation, one repair retry, and worker failure handling.
+
 ## Registry Tasks
 
 Module 9 owns backend runtime routes for:
@@ -77,19 +85,19 @@ Module 9 owns backend runtime routes for:
 - Create: `supabase/tests/ai_task_runtime.sql`
 - Create/update script tests if needed.
 
-- [ ] **Step 1: Prove registry completeness**
+- [x] **Step 1: Prove registry completeness**
 
 Assert all ten Registry v1.0 task names exist with prompt version, quota tier, model tier, retrieval profile, source policy, output mode, and active status.
 
-- [ ] **Step 2: Prove quota preflight and manual fallback**
+- [x] **Step 2: Prove quota preflight and manual fallback**
 
 Assert AI task preflight blocks quota-exhausted work without blocking manual edit/approval flows.
 
-- [ ] **Step 3: Prove source validation**
+- [x] **Step 3: Prove source validation**
 
 Assert task output source IDs must come from retrieved source IDs or task input source IDs, and hallucinated source IDs fail validation.
 
-- [ ] **Step 4: Prove output write boundaries**
+- [x] **Step 4: Prove output write boundaries**
 
 Assert:
 
@@ -99,7 +107,7 @@ Assert:
 - `synthesize_session` creates pending drafts and review artifacts only.
 - Ephemeral tasks store output in the run ledger and do not write canon/drafts unless accepted later through another path.
 
-- [ ] **Step 5: Prove task logs and failure states**
+- [x] **Step 5: Prove task logs and failure states**
 
 Assert task runs record prompt version, model tier, resolved model, scope IDs, latency, usage event linkage, validation state, failure reason, and retry count.
 
@@ -109,15 +117,15 @@ Assert task runs record prompt version, model tier, resolved model, scope IDs, l
 
 - Create: `supabase/migrations/<timestamp>_ai_task_runtime.sql`
 
-- [ ] **Step 1: Add task registry table/function**
+- [x] **Step 1: Add task registry table/function**
 
 Create `internal.ai_task_registry` seed data or a stable `internal.ai_task_contracts()` function for all Registry v1.0 tasks.
 
-- [ ] **Step 2: Add task run ledger**
+- [x] **Step 2: Add task run ledger**
 
 Create `internal.ai_task_runs` with Workspace / World / Saga / Session scope, task name, prompt version, model tier, resolved model, retrieval profile, quota tier, status, attempts, latency, source IDs, usage event id, output JSON, validation errors, and sanitized failure reason.
 
-- [ ] **Step 3: Add browser-callable task preflight RPC**
+- [x] **Step 3: Add browser-callable task preflight RPC**
 
 Create `public.preflight_ai_task(...)` to validate scope, load the contract, call `check_quota_preflight`, and return allowed/severity plus manual fallback messaging.
 
@@ -127,15 +135,15 @@ Create `public.preflight_ai_task(...)` to validate scope, load the contract, cal
 
 - Modify in migration and shared Edge files.
 
-- [ ] **Step 1: Add JSON schema catalog**
+- [x] **Step 1: Add JSON schema catalog**
 
 Represent task schemas in Edge runtime source with task-specific validators. Keep the first version deliberately strict and small enough to maintain.
 
-- [ ] **Step 2: Add source ID validator**
+- [x] **Step 2: Add source ID validator**
 
 Validate that every returned source ID exists in the allowed source set from retrieval or task input. Reject hallucinated source IDs before writing any output.
 
-- [ ] **Step 3: Add one repair retry**
+- [x] **Step 3: Add one repair retry**
 
 On parse/schema/source validation failure, run one repair attempt with original output, schema errors, and allowed source IDs. If repair fails, mark run failed and preserve manual fallback.
 
@@ -145,19 +153,19 @@ On parse/schema/source validation failure, run one repair attempt with original 
 
 - Modify in migration and Edge runtime.
 
-- [ ] **Step 1: Prep outputs**
+- [x] **Step 1: Prep outputs**
 
 Implement `compose_prep_briefing` and `generate_session_prep` writers. `compose_prep_briefing` must use canon-only retrieval and reject pending draft content.
 
-- [ ] **Step 2: Draft outputs**
+- [x] **Step 2: Draft outputs**
 
 Implement draft creation for `draft_entity_from_prompt`, `propose_quick_stub_fleshing`, and `synthesize_session` with `draft_sources` and no direct canon mutation.
 
-- [ ] **Step 3: Ephemeral outputs**
+- [x] **Step 3: Ephemeral outputs**
 
 Implement ledger-only outputs for `propose_scene_beats`, `propose_thread_complication`, `propose_npc_for_scene`, and `answer_saga_question`. `answer_saga_question` must return `no_answer=true` unless factual answers have citations.
 
-- [ ] **Step 4: Scaffold output**
+- [x] **Step 4: Scaffold output**
 
 Store `scaffold_saga` output in `workshop_sessions.draft_payload`; commit remains a separate reviewed action.
 
@@ -168,19 +176,19 @@ Store `scaffold_saga` output in `workshop_sessions.draft_payload`; commit remain
 - Create: `supabase/functions/ai-task-runner/index.ts`
 - Create/update: `supabase/functions/_shared/ai-*.ts`
 
-- [ ] **Step 1: Internal auth and scoped user context**
+- [x] **Step 1: Internal auth and scoped user context**
 
 Use Module 8 internal auth and scoped JWT helpers. Browser-triggered calls must create a run row, then worker execution uses scoped user identity for user-data reads/writes.
 
-- [ ] **Step 2: Retrieval and context assembly**
+- [x] **Step 2: Retrieval and context assembly**
 
 Call `retrieve_for_task` only through the registered retrieval profile. Do not query embeddings directly from Edge code.
 
-- [ ] **Step 3: LiteLLM provider adapter**
+- [x] **Step 3: LiteLLM provider adapter**
 
 Route through configured LiteLLM endpoint and model tier names. Never expose provider/model choice to users. Add a deterministic test adapter for local validation.
 
-- [ ] **Step 4: Usage metering**
+- [x] **Step 4: Usage metering**
 
 Record AI usage events with prompt version, task name, provider/model metadata, token/cost estimates, and `user_charge=false` on failed provider calls without usable output.
 
@@ -190,7 +198,7 @@ Record AI usage events with prompt version, task name, provider/model metadata, 
 
 - Modify: vault status notes
 
-- [ ] **Step 1: Run focused SQL tests**
+- [x] **Step 1: Run focused SQL tests**
 
 Run:
 
@@ -198,7 +206,7 @@ Run:
 npm run test:supabase
 ```
 
-- [ ] **Step 2: Run script/source tests**
+- [x] **Step 2: Run script/source tests**
 
 Run:
 
@@ -207,7 +215,7 @@ npm run test:scripts
 npm run verify
 ```
 
-- [ ] **Step 3: Run web tests**
+- [x] **Step 3: Run web tests**
 
 Run:
 
@@ -215,7 +223,7 @@ Run:
 npx pnpm@10.11.0 --filter @relic/web test
 ```
 
-- [ ] **Step 4: Run full backend baseline**
+- [x] **Step 4: Run full backend baseline**
 
 Run:
 
@@ -223,7 +231,7 @@ Run:
 npm run backend:baseline:reset
 ```
 
-- [ ] **Step 5: Update vault status**
+- [x] **Step 5: Update vault status**
 
 Record passing verification in this plan and [[46 - Backend Audit and Module Plan]].
 

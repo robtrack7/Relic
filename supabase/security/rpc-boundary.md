@@ -53,6 +53,7 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `get_pending_drafts(...)` | Read scoped pending drafts. |
 | `get_workspace_usage_summary(...)` | Read scoped usage summary. |
 | `check_quota_preflight(...)` | Check quota before metered work. |
+| `preflight_ai_task(...)` | Check Registry v1.0 task contract and quota before starting AI work. |
 | `record_usage_event(...)` | Record an idempotent usage event and update monthly rollups. |
 | `search_for_ui(...)` | Run scoped lexical UI search. |
 | `retrieve_for_task(...)` | Run scoped retrieval for AI/task contexts. |
@@ -80,6 +81,7 @@ These public-schema helpers are `security definer` because they are called by sc
 - `write_manual_canon_source(...)`
 - `write_manual_canon_audit(...)`
 - `materialize_embedding_job_for_test(...)`
+- AI worker wrappers: `get_ai_task_run_for_worker(...)`, `record_ai_task_output_for_worker(...)`, `mark_ai_task_run_failed_for_worker(...)`, and `set_ai_task_usage_for_worker(...)`
 - validation trigger helpers for session pins, active threads, notes, relationships, mentions, sources, and draft sources
 
 Manual canon writes must create a synthetic `gm_instruction` source and a `canon_audit` row in the same transaction as the row mutation. Update and archive calls must include the live `expected_version` value from the loaded row.
@@ -87,6 +89,8 @@ Manual canon writes must create a synthetic `gm_instruction` source and a `canon
 Approval Queue commits must apply create/update/archive-request drafts and write `canon_audit` rows with `actor_kind='gm_via_ai_approval'`, `draft_id`, and cited `draft_sources`. Rejections and merge identity decisions must not mutate canon directly.
 
 Embedding helpers must only enqueue or materialize chunk text from embeddable fields. `gm_notes` columns and `note_type='gm_note'` notes are excluded from embedding chunks. Provider workers may fill `embeddings.embedding`, but retrieval must continue to function lexically without provider keys.
+
+AI task execution must start with `preflight_ai_task(...)`, then run through the internal Edge task runner. Worker-only wrappers expose the internal `ai_task_runs` ledger to service-role workers without granting browser execution. AI output writers must validate source IDs before writing and may only write to the task's registered output surface.
 
 ## Verification
 

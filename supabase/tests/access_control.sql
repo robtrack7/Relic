@@ -52,6 +52,7 @@ values
   ('get_pending_drafts', true, 'Scoped approval queue read RPC.'),
   ('get_workspace_usage_summary', true, 'Scoped usage summary read RPC.'),
   ('check_quota_preflight', true, 'Scoped quota preflight RPC.'),
+  ('preflight_ai_task', true, 'Scoped AI task registry and quota preflight RPC.'),
   ('record_usage_event', true, 'Scoped idempotent usage event writer RPC.'),
   ('search_for_ui', true, 'Scoped lexical UI search RPC.'),
   ('retrieve_for_task', true, 'Scoped retrieval RPC with hard-canon filters.');
@@ -110,8 +111,13 @@ values
   ('get_session_active_threads', 'Scoped active threads read RPC.'),
   ('get_pending_drafts', 'Approval queue read RPC.'),
   ('check_quota_preflight', 'Quota preflight read RPC.'),
+  ('preflight_ai_task', 'AI task registry and quota preflight RPC.'),
   ('get_workspace_usage_summary', 'Usage summary read RPC.'),
   ('record_usage_event', 'Usage event writer RPC.'),
+  ('get_ai_task_run_for_worker', 'Worker-only AI task run reader wrapper.'),
+  ('record_ai_task_output_for_worker', 'Worker-only AI task output writer wrapper.'),
+  ('mark_ai_task_run_failed_for_worker', 'Worker-only AI task failure writer wrapper.'),
+  ('set_ai_task_usage_for_worker', 'Worker-only AI task usage event linker.'),
   ('search_for_ui', 'Scoped UI search RPC.'),
   ('retrieve_for_task', 'Scoped retrieval RPC.');
 

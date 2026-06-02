@@ -34,7 +34,11 @@ test("module 8 edge runtime function tree exists", () => {
     "supabase/functions/_shared/service-client.ts",
     "supabase/functions/_shared/scoped-client.ts",
     "supabase/functions/_shared/worker.ts",
+    "supabase/functions/_shared/ai-contracts.ts",
+    "supabase/functions/_shared/ai-schemas.ts",
+    "supabase/functions/_shared/ai-provider.ts",
     "supabase/functions/issue-scoped-jwt/index.ts",
+    "supabase/functions/ai-task-runner/index.ts",
     "supabase/functions/embed-row-dispatch/index.ts",
     "supabase/functions/transcribe-session/index.ts",
     "supabase/functions/cleanup-audio/index.ts",
@@ -47,6 +51,17 @@ test("module 8 edge runtime function tree exists", () => {
   for (const file of expectedFiles) {
     assert.equal(existsSync(join(root, file)), true, `${file} should exist`);
   }
+});
+
+test("ai task runner uses internal auth and provider adapter boundaries", () => {
+  const runner = read("supabase/functions/ai-task-runner/index.ts");
+  const provider = read("supabase/functions/_shared/ai-provider.ts");
+
+  assert.match(runner, /requireInternalAuth/, "AI task runner should require internal auth");
+  assert.match(runner, /callAiProvider/, "AI task runner should use the shared provider adapter");
+  assert.doesNotMatch(provider, /new\s+OpenAI\s*\(/i, "provider adapter should not construct OpenAI clients directly");
+  assert.doesNotMatch(provider, /new\s+Anthropic\s*\(/i, "provider adapter should not construct Anthropic clients directly");
+  assert.doesNotMatch(provider, /fetch\s*\(\s*["'`]https?:\/\//i, "provider adapter should not hardcode provider URLs");
 });
 
 test("only issue-scoped-jwt reads the Supabase JWT secret", () => {

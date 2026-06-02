@@ -48,7 +48,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[54 - Backend Module 6 Usage Quota and Metering Plan]] | Detailed implementation plan for quota preflight, usage event charging, monthly rollups, overrides, and usage summaries | Planning |
 | [[55 - Backend Module 7 Storage Audio Transcription Cleanup Plan]] | Detailed implementation plan for Storage RLS, audio chunks, transcription jobs, transcript edits, retention, and cleanup jobs | Planning |
 | [[56 - Backend Module 8 Background Job and Edge Runtime Plan]] | Detailed implementation plan for async job claiming, retries, dead letters, scoped JWTs, and Edge Function runtime scaffolding | Planning |
-| [[57 - Backend Module 9 AI Task Router and Runtime Plan]] | Detailed implementation plan for Registry v1.0 AI task routing, validation, quota, retrieval, output writers, and run logging | Planning |
+| [[57 - Backend Module 9 AI Task Router and Runtime Plan]] | Completed implementation record for Registry v1.0 AI task routing, validation, quota, retrieval, output writers, provider adapter boundary, and run logging | Planning |
 | [[50 - Session Log Index]] | Session closeout trail and implementation continuity logs | Operations |
 
 ## Design Specification Sources
