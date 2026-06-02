@@ -40,6 +40,14 @@ Verified during Module 10 planning on 2026-06-02:
 - `export-saga`, `cleanup-audio`, `cleanup-saga`, and `send-notification` Edge Functions still return Module 8 placeholder retry responses.
 - There is no browser-scoped export request RPC, export status/read RPC, signed export download RPC, notification preference/device RPC, pipeline-ready/failed notification enqueue trigger, stale-pipeline scanner, or notification provider adapter.
 
+Implemented on 2026-06-02:
+
+- `public.request_saga_export(...)`, `get_saga_export_status(...)`, and `get_saga_export_download(...)` expose scoped export request/status/download boundaries.
+- `internal.complete_export_job(...)` completes export jobs, stores download state, and records idempotent export usage.
+- Pipeline-ready/failed notification enqueue, stale-pipeline scanning, deterministic notification dispatch, and cleanup completion helpers are wired in Postgres.
+- `update_notification_preferences(...)` and `register_push_device(...)` expose the rough UI preference/device backend.
+- Export, cleanup, and notification Edge workers now use deterministic shared adapters instead of Module 8 retry placeholders.
+
 ## Files
 
 - Create: `supabase/tests/operations_notifications_export.sql`
@@ -56,106 +64,106 @@ Verified during Module 10 planning on 2026-06-02:
 
 ## Task 1: Add Failing Operations Tests
 
-- [ ] **Step 1: Prove export request and quota preflight**
+- [x] **Step 1: Prove export request and quota preflight**
 
 Assert `request_saga_export(...)` validates Workspace / World / Saga scope, blocks exhausted `exports_monthly` quota, enforces one active export job per Saga, writes one idempotent `internal.export_jobs` row, and records export usage exactly once when a job completes.
 
-- [ ] **Step 2: Prove export status and download boundary**
+- [x] **Step 2: Prove export status and download boundary**
 
 Assert `get_saga_export_status(...)` and `get_saga_export_download(...)` return only scoped export metadata, hide internal payloads, reject expired/failed jobs, and preserve signed-download URL generation behind worker/service context.
 
-- [ ] **Step 3: Prove pipeline notification enqueue**
+- [x] **Step 3: Prove pipeline notification enqueue**
 
 Assert pipeline state changes to `ready_for_review` and `failed` enqueue one `pipeline_ready` or `pipeline_failed` notification, dedupe by idempotency key, and suppress notifications while a Session is `in_progress` or `ended_pending_undo`.
 
-- [ ] **Step 4: Prove stale pipeline scan**
+- [x] **Step 4: Prove stale pipeline scan**
 
 Assert stale scan marks 30-day and 90-day fields, enqueues the matching notification once, and never auto-archives drafts or pipeline rows.
 
-- [ ] **Step 5: Prove notification dispatch boundaries**
+- [x] **Step 5: Prove notification dispatch boundaries**
 
 Assert notification dispatch reads latest GM preferences at send time, skips disabled channels, marks sent/skipped/failed with sanitized failure reasons, and dead-letters after retry exhaustion.
 
-- [ ] **Step 6: Prove cleanup finalization**
+- [x] **Step 6: Prove cleanup finalization**
 
 Assert audio, Saga, and export cleanup jobs mark completion idempotently, skip notifications for deleted Sagas, and never delete rows outside the job's Workspace / World / Saga path.
 
 ## Task 2: Implement Export RPCs and Job Contracts
 
-- [ ] **Step 1: Add request RPC**
+- [x] **Step 1: Add request RPC**
 
 Create `public.request_saga_export(...)` to assert Saga access, run quota preflight for `export`, enforce one active export job, enqueue `internal.export_jobs`, and return export id/status.
 
-- [ ] **Step 2: Add status/download RPCs**
+- [x] **Step 2: Add status/download RPCs**
 
 Create scoped read RPCs for export job state and signed download readiness. Download URLs must not expose service credentials or internal Storage paths to unauthorized users.
 
-- [ ] **Step 3: Add export completion helper**
+- [x] **Step 3: Add export completion helper**
 
 Add worker-only completion helper that stores `storage_path`, marks complete, sets TTL, and records export usage with an idempotency key.
 
 ## Task 3: Implement Notification Enqueue and Preferences
 
-- [ ] **Step 1: Add preference/device RPCs**
+- [x] **Step 1: Add preference/device RPCs**
 
 Expose scoped notification preference and push-device registration/update/delete RPCs if missing from the schema boundary.
 
-- [ ] **Step 2: Add pipeline notification enqueue**
+- [x] **Step 2: Add pipeline notification enqueue**
 
 Add trigger/helper behavior for `pipeline_ready` and `pipeline_failed`, with idempotency keys and active-session suppression.
 
-- [ ] **Step 3: Add stale scan helper**
+- [x] **Step 3: Add stale scan helper**
 
 Add `internal.scan_stale_pipelines(...)` to mark 30-day/90-day stale metadata and enqueue notifications without auto-archiving.
 
 ## Task 4: Implement Edge Workers
 
-- [ ] **Step 1: Export worker**
+- [x] **Step 1: Export worker**
 
 Replace the export placeholder with a deterministic archive builder in test mode, scoped data reads, Storage upload abstraction, storage path writeback, and usage charging.
 
-- [ ] **Step 2: Cleanup workers**
+- [x] **Step 2: Cleanup workers**
 
 Replace cleanup placeholders with Storage cleanup adapters for audio, Saga, and expired exports. Mark jobs complete with deleted/skipped path counts and keep behavior idempotent.
 
-- [ ] **Step 3: Notification worker**
+- [x] **Step 3: Notification worker**
 
 Replace notification placeholder with email/push adapters. In test mode, record provider intent in job payload and mark sent/skipped according to latest preferences.
 
 ## Task 5: Verify Module 10
 
-- [ ] **Step 1: Run focused SQL tests**
+- [x] **Step 1: Run focused SQL tests**
 
 ```powershell
 supabase test db supabase/tests/operations_notifications_export.sql
 ```
 
-- [ ] **Step 2: Run full Supabase tests**
+- [x] **Step 2: Run full Supabase tests**
 
 ```powershell
 npm run test:supabase
 ```
 
-- [ ] **Step 3: Run script/source tests and repo verify**
+- [x] **Step 3: Run script/source tests and repo verify**
 
 ```powershell
 npm run test:scripts
 npm run verify
 ```
 
-- [ ] **Step 4: Run web tests**
+- [x] **Step 4: Run web tests**
 
 ```powershell
 npx pnpm@10.11.0 --filter @relic/web test
 ```
 
-- [ ] **Step 5: Run full backend baseline**
+- [x] **Step 5: Run full backend baseline**
 
 ```powershell
 npm run backend:baseline:reset
 ```
 
-- [ ] **Step 6: Update vault status**
+- [x] **Step 6: Update vault status**
 
 Record passing verification in this plan and [[46 - Backend Audit and Module Plan]].
 

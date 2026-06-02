@@ -300,6 +300,8 @@ Detailed plan: [[57 - Backend Module 9 AI Task Router and Runtime Plan]].
 
 Detailed plan: [[58 - Backend Module 10 Notifications Export Operations Plan]].
 
+**Status:** Implemented on 2026-06-02 in `supabase/migrations/20260602004500_operations_notifications_export.sql` and the export, cleanup, and notification Edge workers. `npm run test:supabase` passed with 255 tests.
+
 **Goal:** Close the non-core loops that keep GM workflows from stalling.
 
 **Owns:**
@@ -325,14 +327,14 @@ The fuller rough UI can start now that Module 7 has passed. The manual MVP loop 
 
 Create -> Organize -> Prep -> Run -> Review -> Approve -> Continue.
 
-AI-facing UI can now start as a rough smoke-test surface for `preflight_ai_task(...)`, run status display, manual fallback states, and review of AI-created draft/session outputs. Keep provider-backed generation behind the internal `ai-task-runner` configuration until a local/provider adapter is deliberately exercised.
+The rough UI can now start testing the full backend-backed MVP loop: manual canon, prep, Stage data, review/approval, usage, audio/transcript metadata, AI preflight/output review, notifications, exports, and operational status. Keep real provider credentials and production delivery adapters behind explicit environment configuration until they are intentionally exercised.
 
 ## Immediate Work Order
 
-1. Keep Modules 0-9 green under `npm run backend:baseline:reset`.
-2. Use the existing web UI for an end-to-end manual smoke test of auth, canon CRUD, session prep, Stage capture, usage summary, audio upload metadata, and transcript-edit surfaces.
-3. Add rough UI smoke coverage for AI preflight, manual fallback, run status, and output review.
-4. Complete Module 10 notifications, export generation, and operational loops.
+1. Keep Modules 0-10 green under `npm run backend:baseline:reset`.
+2. Use the existing web UI for an end-to-end smoke test of auth, canon CRUD, session prep, Stage capture, usage summary, audio upload metadata, transcript-edit surfaces, AI preflight/run output review, export request/status/download, and notification preferences.
+3. Add rough UI smoke coverage for operational states: queued/running/complete/failed jobs, stale review warnings, and cleanup/export expiry states.
+4. Defer polish and real provider delivery until the rough UI proves the full loop.
 
 ## Open Follow-Ups
 

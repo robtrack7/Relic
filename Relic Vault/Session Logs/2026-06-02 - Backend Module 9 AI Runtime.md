@@ -23,6 +23,7 @@ Backlink: [[50 - Session Log Index]]
 - Added AI Edge runtime scaffold with provider adapter boundary, schema validation, one repair retry, usage event recording, and failure handling.
 - Updated rough UI timing: UI can now test AI preflight/manual fallback, run status, and output review surfaces while provider-backed generation remains internally configured.
 - Created [[58 - Backend Module 10 Notifications Export Operations Plan]] as the next backend module plan before implementation.
+- Implemented Module 10 notifications, export request/status/download, stale pipeline scan, cleanup finalization, and export/cleanup/notification Edge worker adapters.
 
 ## Changed
 
@@ -40,6 +41,12 @@ Backlink: [[50 - Session Log Index]]
 - [[46 - Backend Audit and Module Plan]]
 - [[57 - Backend Module 9 AI Task Router and Runtime Plan]]
 - [[58 - Backend Module 10 Notifications Export Operations Plan]]
+- `supabase/migrations/20260602004500_operations_notifications_export.sql`
+- `supabase/tests/operations_notifications_export.sql`
+- `supabase/functions/export-saga/index.ts`
+- `supabase/functions/send-notification/index.ts`
+- `supabase/functions/cleanup-audio/index.ts`
+- `supabase/functions/cleanup-saga/index.ts`
 
 ## Verification
 
@@ -50,12 +57,12 @@ Backlink: [[50 - Session Log Index]]
 - `npx pnpm@10.11.0 --filter @relic/web test`: passed.
 - `npm run test:supabase`: passed, 226 tests.
 - `npm run backend:baseline:reset`: passed with `RELIC_BACKEND_BASELINE_OK`; the known Supabase reset restart 502 was handled by the baseline script.
+- Module 10 verification after implementation: `npm run test:supabase` passed with 255 tests and `npm run backend:baseline:reset` passed with `RELIC_BACKEND_BASELINE_OK`.
 - Obsidian link check: passed.
 - Stale-term scan on touched vault notes: passed.
 - Version-reference scan: only the intentional normalization line in [[02 - Source Map]].
 
 ## Open Follow-Ups
 
-- Module 10 remains: notifications, export generation, stale operational loops, and related dispatch behavior.
-- Rough UI can start testing backend-backed AI preflight/manual fallback, run status, and output review before provider-backed generation is enabled.
-- Next execution step is Module 10 RED tests for export, notifications, stale pipeline scan, and cleanup workers.
+- Backend Modules 0-10 are complete for the rough-UI backend milestone.
+- Next execution step is rough UI smoke testing against auth, manual loop, AI preflight/output review, notifications, exports, stale warnings, and job-state displays.

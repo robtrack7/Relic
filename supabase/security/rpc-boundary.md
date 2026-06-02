@@ -54,6 +54,11 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `get_workspace_usage_summary(...)` | Read scoped usage summary. |
 | `check_quota_preflight(...)` | Check quota before metered work. |
 | `preflight_ai_task(...)` | Check Registry v1.0 task contract and quota before starting AI work. |
+| `request_saga_export(...)` | Request a scoped Saga export after export quota preflight. |
+| `get_saga_export_status(...)` | Read scoped export job state without exposing internal Storage paths. |
+| `get_saga_export_download(...)` | Read scoped completed export download readiness. |
+| `update_notification_preferences(...)` | Update the authenticated GM's notification preferences. |
+| `register_push_device(...)` | Register or refresh an authenticated GM push device token. |
 | `record_usage_event(...)` | Record an idempotent usage event and update monthly rollups. |
 | `search_for_ui(...)` | Run scoped lexical UI search. |
 | `retrieve_for_task(...)` | Run scoped retrieval for AI/task contexts. |
@@ -91,6 +96,10 @@ Approval Queue commits must apply create/update/archive-request drafts and write
 Embedding helpers must only enqueue or materialize chunk text from embeddable fields. `gm_notes` columns and `note_type='gm_note'` notes are excluded from embedding chunks. Provider workers may fill `embeddings.embedding`, but retrieval must continue to function lexically without provider keys.
 
 AI task execution must start with `preflight_ai_task(...)`, then run through the internal Edge task runner. Worker-only wrappers expose the internal `ai_task_runs` ledger to service-role workers without granting browser execution. AI output writers must validate source IDs before writing and may only write to the task's registered output surface.
+
+Export and notification operations use scoped browser RPCs for request/status/preference/device state. Worker-only internals own export completion, stale-pipeline scanning, notification dispatch, and cleanup finalization.
+
+Worker-only wrappers for operations are `complete_export_job_for_worker(...)`, `dispatch_notification_for_worker(...)`, and `complete_cleanup_job_for_worker(...)`; they are not granted to browser roles.
 
 ## Verification
 
