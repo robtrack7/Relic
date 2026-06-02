@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Relic — Web App Wireframes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Instrument+Sans:ital,wdth,wght@0,75..100,400;0,75..100,500;0,75..100,600;1,75..100,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="wf-styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  html, body, #root { height: 100%; margin: 0; padding: 0; }
+  body { overflow: hidden; }
+  /* Grain texture */
+  body::after {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+    opacity: 0.018;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="wf-bits.jsx"></script>
+<script type="text/babel" src="wf-shell.jsx"></script>
+<script type="text/babel" src="wf-surfaces-1.jsx"></script>
+<script type="text/babel" src="wf-surfaces-2.jsx"></script>
+<script type="text/babel" src="wf-surfaces-3.jsx"></script>
+<script type="text/babel" src="wf-surfaces-4.jsx"></script>
+
+<script type="text/babel">
+// ═══════════════════════════════════════════════════════════════
+// RELIC WIREFRAMES — Main App
+// ═══════════════════════════════════════════════════════════════
+
+const SCREENS = [
+  // ── Overview ─────────────────────────────────────────────────
+  { group:"Overview", id:"sitemap",     label:"Screen inventory",          render:()=><SitemapView /> },
+  { group:"Overview", id:"flow",        label:"User flow map",             render:()=><FlowMapView /> },
+
+  // ── Shell states ─────────────────────────────────────────────
+  { group:"Shell",    id:"sh-default",  label:"Default shell",             render:()=><ShellStateDemo variant="shell-default" /> },
+  { group:"Shell",    id:"sh-rail",     label:"Collapsed rail nav",        render:()=><ShellStateDemo variant="shell-rail" /> },
+  { group:"Shell",    id:"sh-loomcol",  label:"Loom collapsed",            render:()=><ShellStateDemo variant="shell-loom-closed" /> },
+  { group:"Shell",    id:"sh-usage",    label:"Usage warning",             render:()=><ShellStateDemo variant="shell-usage-warn" /> },
+  { group:"Shell",    id:"sh-search",   label:"Search palette open",       render:()=><ShellStateDemo variant="shell-search" /> },
+  { group:"Shell",    id:"sh-create",   label:"Create menu open",          render:()=><ShellStateDemo variant="shell-create" /> },
+  { group:"Shell",    id:"sh-switcher", label:"Switcher open",             render:()=><ShellStateDemo variant="shell-switcher" /> },
+
+  // ── Home ─────────────────────────────────────────────────────
+  { group:"Home",     id:"h-empty",     label:"Empty saga",                render:()=><HomeEmpty /> },
+  { group:"Home",     id:"h-nosess",    label:"No session planned",        render:()=><HomeNoSession /> },
+  { group:"Home",     id:"h-planned",   label:"Session planned · Prepping",render:()=><HomePlanned /> },
+  { group:"Home",     id:"h-ready",     label:"Ready for Stage",           render:()=><HomeReady /> },
+  { group:"Home",     id:"h-active",    label:"Session active",            render:()=><HomeActive /> },
+  { group:"Home",     id:"h-review",    label:"Review ready",              render:()=><HomeReviewReady /> },
+
+  // ── Threads ──────────────────────────────────────────────────
+  { group:"Threads",  id:"t-list",      label:"Thread list + detail",      render:()=><ThreadsView detail={true} selected={1} /> },
+  { group:"Threads",  id:"t-loose",     label:"Loose thread selected",     render:()=><ThreadsView detail={true} selected={2} /> },
+  { group:"Threads",  id:"t-resolved",  label:"Resolved thread selected",  render:()=><ThreadsView detail={true} selected={5} /> },
+  { group:"Threads",  id:"t-empty",     label:"Empty threads",             render:()=><ThreadsView detail={false} emptyState={true} /> },
+
+  // ── Library ──────────────────────────────────────────────────
+  { group:"Library",  id:"l-all",       label:"Library overview — all",    render:()=><LibraryOverview filter="all" /> },
+  { group:"Library",  id:"l-npc",       label:"Filtered: Characters",      render:()=><LibraryOverview filter="npc" /> },
+  { group:"Library",  id:"l-archived",  label:"Archived entities",         render:()=><LibraryOverview filter="archived" /> },
+  { group:"Library",  id:"l-empty",     label:"Empty library",             render:()=><LibraryOverview filter="all" empty={true} /> },
+  { group:"Library",  id:"l-detail",    label:"Entity detail — view",      render:()=><EntityDetail /> },
+  { group:"Library",  id:"l-edit",      label:"Entity detail — edit",      render:()=><EntityDetail edit={true} /> },
+  { group:"Library",  id:"l-dup",       label:"Duplicate warning",         render:()=><EntityDetail dup={true} /> },
+  { group:"Library",  id:"l-arch-det",  label:"Archived entity detail",    render:()=><EntityDetail archived={true} /> },
+  { group:"Library",  id:"l-new",       label:"New entity flow",           render:()=><LibraryNewEntity /> },
+  { group:"Library",  id:"l-prompt",    label:"Draft from prompt",         render:()=><LibraryNewEntity fromPrompt={true} /> },
+
+  // ── Prepare ──────────────────────────────────────────────────
+  { group:"Prepare",  id:"p-prep",      label:"Prep workspace",            render:()=><PrepareView /> },
+  { group:"Prepare",  id:"p-ready",     label:"Prep ready state",          render:()=><PrepareView ready={true} /> },
+  { group:"Prepare",  id:"p-locked",    label:"Prep locked — live",        render:()=><PrepareView locked={true} /> },
+
+  // ── Sessions ─────────────────────────────────────────────────
+  { group:"Sessions", id:"s-index",     label:"Session index",             render:()=><SessionsIndex /> },
+  { group:"Sessions", id:"s-detail",    label:"Session detail — reviewed", render:()=><SessionDetail /> },
+  { group:"Sessions", id:"s-pipeline",  label:"Pipeline — processing",     render:()=><SessionPipeline pipelineState="processing" /> },
+  { group:"Sessions", id:"s-complete",  label:"Pipeline — complete",       render:()=><SessionPipeline pipelineState="complete" /> },
+  { group:"Sessions", id:"s-failed",    label:"Pipeline — failed",         render:()=><SessionPipeline pipelineState="failed" /> },
+
+  // ── Stage ────────────────────────────────────────────────────
+  { group:"Stage",    id:"stg-ready",   label:"Stage — ready",             render:()=><StageView variant="ready" /> },
+  { group:"Stage",    id:"stg-active",  label:"Stage — active",            render:()=><StageView variant="active" /> },
+  { group:"Stage",    id:"stg-end",     label:"End session confirm",       render:()=><StageView variant="active" endConfirm={true} /> },
+  { group:"Stage",    id:"stg-undo",    label:"60-second undo",            render:()=><StageView variant="active" showUndo={true} /> },
+
+  // ── Review ───────────────────────────────────────────────────
+  { group:"Review",   id:"rv-queue",    label:"Review queue",              render:()=><ReviewView selected={0} /> },
+  { group:"Review",   id:"rv-conflict", label:"With conflict panel",       render:()=><ReviewView selected={1} /> },
+  { group:"Review",   id:"rv-lowconf",  label:"Low confidence draft",      render:()=><ReviewView selected={5} /> },
+  { group:"Review",   id:"rv-empty",    label:"Empty queue",               render:()=><ReviewView emptyState={true} /> },
+
+  // ── Export ───────────────────────────────────────────────────
+  { group:"Export",   id:"ex-form",     label:"Export form",               render:()=><ExportView exportState="form" /> },
+  { group:"Export",   id:"ex-proc",     label:"Processing",                render:()=><ExportView exportState="processing" /> },
+  { group:"Export",   id:"ex-ready",    label:"Ready to download",         render:()=><ExportView exportState="ready" /> },
+  { group:"Export",   id:"ex-expired",  label:"Expired",                   render:()=><ExportView exportState="expired" /> },
+  { group:"Export",   id:"ex-failed",   label:"Failed",                    render:()=><ExportView exportState="failed" /> },
+
+  // ── Settings ─────────────────────────────────────────────────
+  { group:"Settings", id:"set-saga",    label:"Saga settings",             render:()=><SettingsView section="Saga settings" /> },
+  { group:"Settings", id:"set-world",   label:"World settings",            render:()=><SettingsView section="World settings" /> },
+  { group:"Settings", id:"set-ws",      label:"Workspace settings",        render:()=><SettingsView section="Workspace settings" /> },
+  { group:"Settings", id:"set-usage",   label:"Usage",                     render:()=><SettingsView section="Usage" /> },
+  { group:"Settings", id:"set-ret",     label:"Retention",                 render:()=><SettingsView section="Retention" /> },
+  { group:"Settings", id:"set-notif",   label:"Notifications",             render:()=><SettingsView section="Notifications" /> },
+  { group:"Settings", id:"set-exp",     label:"Export preferences",        render:()=><SettingsView section="Export preferences" /> },
+  { group:"Settings", id:"set-acct",    label:"Account",                   render:()=><SettingsView section="Account" /> },
+
+  // ── System states ────────────────────────────────────────────
+  { group:"States",   id:"st-load",     label:"Loading",                   render:()=><SystemStatesView variant="loading" /> },
+  { group:"States",   id:"st-offline",  label:"Offline / network failed",  render:()=><SystemStatesView variant="offline" /> },
+  { group:"States",   id:"st-quota",    label:"Quota blocked",             render:()=><SystemStatesView variant="quota-blocked" /> },
+  { group:"States",   id:"st-saving",   label:"Autosave — Saving",         render:()=><SystemStatesView variant="autosave-saving" /> },
+  { group:"States",   id:"st-saved",    label:"Autosave — Saved",          render:()=><SystemStatesView variant="autosave-saved" /> },
+  { group:"States",   id:"st-queued",   label:"Autosave — Offline queued", render:()=><SystemStatesView variant="autosave-queued" /> },
+  { group:"States",   id:"st-emp-th",   label:"Empty — Threads",           render:()=><SystemStatesView variant="empty-threads" /> },
+  { group:"States",   id:"st-emp-lib",  label:"Empty — Library",           render:()=><SystemStatesView variant="empty-library" /> },
+  { group:"States",   id:"st-emp-rv",   label:"Empty — Review queue",      render:()=><SystemStatesView variant="empty-review" /> },
+  { group:"States",   id:"st-danger",   label:"Destructive warning",       render:()=><SystemStatesView variant="destructive-warning" /> },
+];
+
+const GROUPS = [...new Set(SCREENS.map(s => s.group))];
+const STORAGE_KEY = "relic-wf-screen";
+
+function App() {
+  const saved = sessionStorage.getItem(STORAGE_KEY);
+  const [activeId, setActiveId] = React.useState(saved || "sitemap");
+  const [search, setSearch] = React.useState("");
+
+  const active = SCREENS.find(s => s.id === activeId) || SCREENS[0];
+
+  function select(id) {
+    setActiveId(id);
+    sessionStorage.setItem(STORAGE_KEY, id);
+  }
+  React.useEffect(() => { window.selectWireframeScreen = select; }, [select]);
+
+  const filtered = search.trim()
+    ? SCREENS.filter(s => s.label.toLowerCase().includes(search.toLowerCase()) || s.group.toLowerCase().includes(search.toLowerCase()))
+    : null;
+
+  return (
+    <div className="wf-root">
+      {/* Picker sidebar */}
+      <div className="wf-picker">
+        <div className="wf-picker-head">
+          <span className="wf-logo">c</span>
+          <div>
+            <div style={{color:"rgba(255,255,255,0.55)",fontSize:12,fontFamily:"var(--font-ui)",fontWeight:500,lineHeight:1}}>Relic</div>
+            <div className="wf-picker-title">Wireframes · v0.4</div>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div style={{padding:"8px 10px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+          <div style={{display:"flex",alignItems:"center",gap:7,padding:"5px 9px",background:"rgba(255,255,255,0.05)",borderRadius:"var(--radius-md)",border:"1px solid rgba(255,255,255,0.07)"}}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/></svg>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Filter screens…"
+              style={{border:"none",background:"transparent",outline:"none",fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"var(--font-ui)",flex:1}}
+            />
+            {search && <button onClick={()=>setSearch("")} style={{color:"rgba(255,255,255,0.25)",fontSize:12,lineHeight:1}}>×</button>}
+          </div>
+        </div>
+
+        {/* Screen list */}
+        <div style={{flex:1,overflowY:"auto"}}>
+          {filtered ? (
+            <div>
+              <div className="wf-group-label">Results ({filtered.length})</div>
+              {filtered.map(s=>(
+                <div key={s.id} className={"wf-item"+(s.id===activeId?" active":"")} onClick={()=>select(s.id)}>
+                  <span style={{color:"rgba(255,255,255,0.22)",fontSize:10,marginRight:3}}>{s.group} ·</span>{s.label}
+                </div>
+              ))}
+            </div>
+          ) : (
+            GROUPS.map(group=>(
+              <div key={group} className="wf-group">
+                <div className="wf-group-label">{group}</div>
+                {SCREENS.filter(s=>s.group===group).map(s=>(
+                  <div key={s.id} className={"wf-item"+(s.id===activeId?" active":"")} onClick={()=>select(s.id)}>
+                    {s.label}
+                  </div>
+                ))}
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="wf-footer">{SCREENS.length} screens · MVP scope</div>
+      </div>
+
+      {/* App render area */}
+      <div className="wf-app-area" style={{background:"var(--bg-1)"}}>
+        {/* Breadcrumb bar */}
+        <div style={{height:32,flexShrink:0,background:"rgba(26,25,22,0.85)",display:"flex",alignItems:"center",gap:9,padding:"0 16px",borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:8,letterSpacing:"0.14em",textTransform:"uppercase",color:"rgba(255,255,255,0.22)"}}>Relic Wireframes</span>
+          <span style={{color:"rgba(255,255,255,0.1)"}}>→</span>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:8,letterSpacing:"0.12em",textTransform:"uppercase",color:"rgba(255,255,255,0.35)"}}>{active.group}</span>
+          <span style={{color:"rgba(255,255,255,0.1)"}}>→</span>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:8,letterSpacing:"0.12em",textTransform:"uppercase",color:"rgba(255,255,255,0.55)"}}>{active.label}</span>
+          <div style={{marginLeft:"auto",display:"flex",gap:8,alignItems:"center"}}>
+            <span style={{fontFamily:"var(--font-mono)",fontSize:7,letterSpacing:"0.1em",color:"rgba(255,255,255,0.18)",textTransform:"uppercase"}}>Lucide icons stand-in until bespoke set ships</span>
+          </div>
+        </div>
+
+        {/* Surface render */}
+        <div style={{flex:1,overflow:"hidden",position:"relative"}}>
+          <div style={{position:"absolute",inset:0,overflow:"hidden"}}>
+            {active.render()}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
