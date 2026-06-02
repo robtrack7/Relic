@@ -51,6 +51,7 @@ Reusable component guidance lives in [[71 - Component Inventory Design Spec]]. E
 | [[70 - Mobile App Design Spec]] | Mobile adaptation of both Sanctum and Stage without reducing product scope. |
 | [[71 - Component Inventory Design Spec]] | Shared component vocabulary, states, and constraints. |
 | [[72 - Navigation Design Spec]] | Web navigation contract, top context bar, left rail, switcher, and global create. |
+| [[73 - Figma UI Import Readiness]] | Figma-to-React handoff contract, route mapping, and backend wiring audit checklist. |
 
 The requested `50` numbering could not be used because [[50 - Session Log Index]] already exists and is the canonical operations index. This layer uses `60` through `71` to preserve existing backlinks.
 
@@ -175,4 +176,4 @@ Design Relic, an AI-assisted Saga creation and continuity workspace for tabletop
 
 Then append the relevant screen's `Claude Design prompt` section.
 
-For Claude Design wireframe work, use a small packet rather than the whole vault: this overview, [[72 - Navigation Design Spec]], [[71 - Component Inventory Design Spec]], the relevant screen spec, and [[35 - Web Design Wireframe]] for the first web pass. Add [[70 - Mobile App Design Spec]] only when asking for mobile adaptations.
+For Claude Design and Figma wireframe work, use a small packet rather than the whole vault: this overview, [[72 - Navigation Design Spec]], [[71 - Component Inventory Design Spec]], [[73 - Figma UI Import Readiness]], the relevant screen spec, and [[35 - Web Design Wireframe]] for the first web pass. Add [[70 - Mobile App Design Spec]] only when asking for mobile adaptations.

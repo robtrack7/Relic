@@ -45,3 +45,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-06-02 - Backend Module 9 AI Runtime]]
 - [[Session Logs/2026-06-02 - Web Design System v0.4 and Figma Import]]
 - [[Session Logs/2026-06-02 - Figma Workflow Wireframes]]
+- [[Session Logs/2026-06-02 - Figma UI Import Readiness]]

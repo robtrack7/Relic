@@ -71,6 +71,7 @@ These notes translate the active product, UX, and UI sources into compact screen
 | [[70 - Mobile App Design Spec]] | Mobile adaptation of both Sanctum and Stage | Secondary design |
 | [[71 - Component Inventory Design Spec]] | Shared component vocabulary and state coverage | Secondary design |
 | [[72 - Navigation Design Spec]] | Top context bar, left rail, global create, switcher, and nav tree | Secondary design |
+| [[73 - Figma UI Import Readiness]] | Figma-to-React handoff contract, route mapping, backend wiring checklist | Secondary design |
 
 ## Archive / Non-Coding Notes
 

@@ -33,6 +33,11 @@ The initial web app lives in `apps/web` and implements the manual Sanctum spine:
 auth, bootstrap, Start Blank, manual canon CRUD, session prep, browser Stage
 fallback, Review shell, Search shell, and lightweight settings.
 
+For Figma-to-React handoff work, use `docs/ui-figma-import.md` and
+`Relic Vault/73 - Figma UI Import Readiness.md`. Import one route or component
+family at a time, keep existing loaders/actions in place, and adapt generated
+React to the backend contracts before replacing live UI.
+
 Install dependencies and run local web checks with pnpm:
 
 ```bash
