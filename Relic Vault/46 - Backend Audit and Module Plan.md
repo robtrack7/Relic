@@ -271,6 +271,8 @@ Detailed plan: [[56 - Backend Module 8 Background Job and Edge Runtime Plan]].
 
 ### Module 9 - AI Task Router and Runtime
 
+Detailed plan: [[57 - Backend Module 9 AI Task Router and Runtime Plan]].
+
 **Goal:** Wire AI only after retrieval, quota, and drafts are trustworthy.
 
 **Owns:**
