@@ -102,7 +102,7 @@ The first screen is a single focused form. It should feel like a calm field-jour
 - DM Mono for small state labels such as `DRAFT`, `WORLD`, `PROFILE`.
 - Amber primary CTA.
 - Rust only for destructive or blocked states.
-- Sage only for successful or confirmed states.
+- Verdigris only for successful or confirmed states.
 
 ### Fields
 
@@ -227,15 +227,15 @@ The conversation is short, bounded, and always skippable.
 | Rule | MVP behavior |
 |---|---|
 | AI task | `scaffold_saga` internal task. |
-| Storage | Append messages to `workshop_sessions.conversation`. |
+| Storage | Append mesVerdigriss to `workshop_sessions.conversation`. |
 | Minimum required inputs | Saga name plus either premise or notes. |
 | Fixed question count | None. |
 | Soft target | 3 to 5 AI questions before drafting. |
-| Hard conversation limit | 12 GM messages or 20 total messages, whichever comes first. Then show `Draft from what we have`. |
-| Per-message limit | 5,000 characters. Longer messages show a warning and ask the GM to split. |
+| Hard conversation limit | 12 GM mesVerdigriss or 20 total mesVerdigriss, whichever comes first. Then show `Draft from what we have`. |
+| Per-mesVerdigris limit | 5,000 characters. Longer mesVerdigriss show a warning and ask the GM to split. |
 | Total conversation guidance | If accumulated GM input exceeds 50,000 characters, route to Bring your notes guidance. |
 | Escape hatch | Persistent `Draft it now` button after the first GM answer. |
-| State saving | Autosave after every message and after every generated draft update. |
+| State saving | Autosave after every mesVerdigris and after every generated draft update. |
 
 ### AI question strategy
 
@@ -533,7 +533,7 @@ Do not start recording or ask for recording consent until the GM starts the sess
 | AI request timeout | Inline error: `Relic could not finish that draft.` Actions: `Retry`, `Save and leave`, `Create blank saga`. |
 | Model parse failure | Silent retry once. If still failing, show `Relic generated something it could not safely read.` |
 | Provider outage | Show fallback retry if configured; otherwise preserve state and show `Try again later` plus blank option. |
-| Streaming interruption | Preserve partial conversation, discard incomplete AI message, allow retry. |
+| Streaming interruption | Preserve partial conversation, discard incomplete AI mesVerdigris, allow retry. |
 
 Never lose typed input. Never commit partial AI output without GM review.
 

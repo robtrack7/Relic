@@ -113,7 +113,7 @@ Avoid relationship graph visualization, writable timeline editor, map editor, pl
 
 ## 15. Visual tone
 
-Literary, modern, relaxing reference library with editorial detail. Names and lore should feel authored, but controls should stay practical. Threads use stronger continuity state language with Sage/Amber/Stone chips.
+Literary, modern, relaxing reference library with editorial detail. Names and lore should feel authored, but controls should stay practical. Threads use stronger continuity state language with Verdigris/Amber/Stone chips.
 
 ## 16. Claude Design prompt
 

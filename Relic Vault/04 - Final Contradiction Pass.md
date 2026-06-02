@@ -39,7 +39,8 @@ AI task surfaces still require implementation-plan review before coding, but the
 ## Current UI Planning Addendum
 
 - [[35 - Web Design Wireframe]] records the authenticated web-app design structure for the first design-system implementation pass.
-- The refined Claude design package is treated as visual vocabulary and asset source only; [[13 - Design System]] and active UX specs remain canonical.
+- The refined Claude Design package `Relic Design System (web) v0.4` was imported into [[14 - Design System Source.html]] on 2026-06-02. [[13 - Design System]] and active UX specs remain canonical.
+- v0.4 names Verdigris `#2F6B6E` as the active/synced/success token. Older active notes may have used Sage for this role; current design and implementation should use Verdigris terminology.
 - The web shell resolves Search/Relic Guide tension by keeping Search in the top context bar and Relic Guide as an always-available sidecar/sheet, not a primary rail item.
 - The first implementation pass is scoped to tokens, local fonts/assets, shared primitives, The Sanctum shell, Prepare workflow, and the web Stage surface. It does not wire provider calls, autonomous AI behavior, live Stage captions, or deferred V1 surfaces.
 

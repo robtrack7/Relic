@@ -7,13 +7,15 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-18
-source_file: "Sourced - Downloaded - 260518/relic-design-system.html"
+last_audited: 2026-06-02
+source_file: "Claude Design - Relic Design System/Relic Design System (web) v0.4/uploads/14 - Design System Source.html"
 ---
 
 # Relic Design System
 
 Use the HTML design system source here: [14 - Design System Source.html](<14 - Design System Source.html>).
+
+The active web design-system source is Relic Design System (web) v0.4, imported from Claude Design on 2026-06-02. v0.4 adds the shared app shell, Workspace/World/Saga top context switchers, the left rail vocabulary, The Loom AI carriage, and the richer Sanctum Home, Prepare, and Stage screen patterns.
 
 This wrapper exists so Obsidian links and backlinks resolve cleanly while preserving the original HTML file as the visual/token artifact.
 
@@ -23,6 +25,7 @@ This wrapper exists so Obsidian links and backlinks resolve cleanly while preser
 - Sanctum tone: literary, modern, relaxing; this surface exists on web and mobile.
 - Stage tone: clean and focused; this surface exists on web and mobile.
 - Design examples updated in the vault to use Saga wording instead of Campaign wording.
+- Verdigris `#2F6B6E` is the active/synced/success token. Older notes may refer to this role as Sage; active design work should use Verdigris.
 
 ## Read With
 

@@ -58,7 +58,7 @@ The requested `50` numbering could not be used because [[50 - Session Log Index]
 
 The Sanctum dashboard is a clean contemporary/literary active Saga landing page and cockpit, not a generic Workspace overview. It is about the selected World/Saga, the next session, active Threads, recent canon movement, quick creation, and pending review. Workspace and World controls belong in the top context switcher, not as the dashboard's center of gravity. The default desktop dashboard should read as a two-column editorial cockpit with an optional utility sidecar, not a permanent three-column control room.
 
-Session prep lives inside Sanctum. It is reached through `Prepare`, Home next-action cards, Sessions, and the current session pill, but it is not a third product surface. Prep uses The Sanctum's parchment base with Amber-forward action accents and Sage thread-state signals.
+Session prep lives inside Sanctum. It is reached through `Prepare`, Home next-action cards, Sessions, and the current session pill, but it is not a third product surface. Prep uses The Sanctum's parchment base with Amber-forward action accents and Verdigris thread-state signals.
 
 The Stage is the clean, focused live-session surface on web and mobile. It is optimized for glance reading, quick capture, search, pinned cards, recording, Mark Moment, dice, and End Session. It is reached from Prepare and live-session context, not from the default left rail. It must not become a tactical board, encounter manager, live transcript viewer, or proactive AI cockpit.
 
@@ -85,7 +85,7 @@ Relic has two product surfaces:
 
 The Sanctum uses Parchment as the frame and Cream as card/elevated surface. It should feel literary, modern, and relaxing while still structured enough for serious continuity work. The Stage uses Ink as the base, Cream foreground, Amber for current action/state, Rust for recording or blocked/destructive states, and should remain clean and focused.
 
-Session prep is visually distinguished within The Sanctum by Amber density, agenda left rules, Ready for Stage CTA treatment, and Sage/Amber/Stone thread chips. It does not use a separate mode palette.
+Session prep is visually distinguished within The Sanctum by Amber density, agenda left rules, Ready for Stage CTA treatment, and Verdigris/Amber/Stone thread chips. It does not use a separate mode palette.
 
 ## Design language
 
@@ -170,7 +170,7 @@ Use this checklist when reviewing any mockup, Claude Design output, or UI implem
 When using these specs with Claude Design, start with this shared context:
 
 ```text
-Design Relic, an AI-assisted Saga creation and continuity workspace for tabletop Game Masters. Use the active Relic design system: Parchment #EFEBE4, Cream #F7F4EF, Ink #1A1916, Amber #B8702A, Rust #8A3828, Sage #496640; Cormorant Garamond for names/titles, Instrument Sans for UI, DM Mono for metadata. Preserve two surfaces on both web and mobile: The Sanctum should feel literary, modern, and relaxing for create/organize/prep/review/approve/continue; The Stage should feel clean, focused, and live-session-ready. Build the web app first with the full Sanctum/Stage loop, then adapt the full product to mobile. Use a top context bar for Workspace/World/Saga, Search, Relic Guide, + Create, current session, Review, Usage, and Account. Use a left rail for Home, Threads, Library, Prepare, Sessions, Review, Export, Settings. Stage is reached from Prepare, current session state, Home next-action cards, notifications/deep links, app resume, and a bright Return to Stage affordance while live. AI is GM-invoked, never proactive, and never writes canon without explicit GM approval or a documented inline review path. Relic Guide is an always-available collapsible sidecar/sheet that can answer with citations and prepare real create/edit actions, but canon mutation requires inline GM review or Approval Queue. Do not include MVP-excluded features.
+Design Relic, an AI-assisted Saga creation and continuity workspace for tabletop Game Masters. Use the active Relic design system: Parchment #EFEBE4, Cream #F7F4EF, Ink #1A1916, Amber #B8702A, Rust #8A3828, Verdigris #2F6B6E; Cormorant Garamond for names/titles, Instrument Sans for UI, DM Mono for metadata. Preserve two surfaces on both web and mobile: The Sanctum should feel literary, modern, and relaxing for create/organize/prep/review/approve/continue; The Stage should feel clean, focused, and live-session-ready. Build the web app first with the full Sanctum/Stage loop, then adapt the full product to mobile. Use a top context bar for Workspace/World/Saga, Search, Relic Guide, + Create, current session, Review, Usage, and Account. Use a left rail for Home, Threads, Library, Prepare, Sessions, Review, Export, Settings. Stage is reached from Prepare, current session state, Home next-action cards, notifications/deep links, app resume, and a bright Return to Stage affordance while live. AI is GM-invoked, never proactive, and never writes canon without explicit GM approval or a documented inline review path. Relic Guide is an always-available collapsible sidecar/sheet that can answer with citations and prepare real create/edit actions, but canon mutation requires inline GM review or Approval Queue. Do not include MVP-excluded features.
 ```
 
 Then append the relevant screen's `Claude Design prompt` section.

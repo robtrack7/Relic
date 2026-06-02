@@ -24,7 +24,7 @@
     --amber-light:#D4904C;
     --amber-dim:  #EED9BF;
     --rust:       #8A3828;
-    --sage:       #496640;
+    --verdigris:       #2F6B6E;
     --font-display: 'Cormorant Garamond', Georgia, serif;
     --font-ui:      'Instrument Sans', system-ui, sans-serif;
     --font-mono:    'DM Mono', 'Courier New', monospace;
@@ -34,12 +34,12 @@
     --radius-sm:2px; --radius-md:4px; --radius-lg:8px;
     --shadow-card: 0 1px 2px rgba(26,25,22,0.06), 0 3px 12px rgba(26,25,22,0.05);
     --shadow-elevated: 0 2px 6px rgba(26,25,22,0.08), 0 8px 28px rgba(26,25,22,0.07);
-    /* v0.3 tokens */
-    --sage-dim: #D2DBC9;
+    /* v0.4 tokens */
+    --verdigris-dim: #CCDDDC;
     --rust-dim: #F0D9D4;
     --sanctum-prep-cta: var(--amber);
-    --thread-active-bg: var(--sage-dim);
-    --thread-active-fg: var(--sage);
+    --thread-active-bg: var(--verdigris-dim);
+    --thread-active-fg: var(--verdigris);
     --thread-loose-bg: var(--amber-dim);
     --thread-loose-fg: var(--amber);
     --thread-dormant-bg: var(--stone-100);
@@ -142,11 +142,11 @@
   .badge::before { content:''; display:block; width:4px; height:4px; border-radius:50%; background:currentColor; opacity:0.6; }
   .badge-stone { background:var(--stone-100); color:var(--stone-700); }
   .badge-amber { background:var(--amber-dim); color:var(--amber); }
-  .badge-sage  { background:#E6EFE4; color:var(--sage); }
+  .badge-verdigris  { background:#E6EFE4; color:var(--verdigris); }
   .badge-rust  { background:#F5E6E3; color:var(--rust); }
   .badge-ink   { background:var(--ink); color:var(--cream); }
   .badge-ink::before { opacity:0.4; }
-  /* v0.3: thread-state chips */
+  /* v0.4: thread-state chips */
   .badge-thread-active   { background:var(--thread-active-bg); color:var(--thread-active-fg); }
   .badge-thread-loose    { background:var(--thread-loose-bg); color:var(--thread-loose-fg); }
   .badge-thread-dormant  { background:var(--thread-dormant-bg); color:var(--thread-dormant-fg); }
@@ -159,9 +159,9 @@
   .card::before { content:''; position:absolute; top:0; left:0; width:3px; height:100%; }
   .card-npc::before    { background:var(--amber); }
   .card-location::before { background:#6B8FA3; }
-  .card-quest::before  { background:var(--sage); }
+  .card-quest::before  { background:var(--verdigris); }
   .card-faction::before { background:#7B5EA7; }
-  /* v0.3: prep-area card — amber left rule for session prep CTAs */
+  /* v0.4: prep-area card — amber left rule for session prep CTAs */
   .card-prep::before   { background:var(--amber); border-left-width:4px; }
   .card-eyebrow { font-family:var(--font-mono); font-size:9px; letter-spacing:0.18em; text-transform:uppercase; color:var(--stone-500); margin-bottom:var(--space-2); }
   .card-title { font-family:var(--font-display); font-size:22px; font-weight:400; color:var(--ink); margin-bottom:var(--space-2); line-height:1.15; letter-spacing:-0.01em; }
@@ -175,12 +175,12 @@
   .approval-item::before { content:''; position:absolute; top:0; left:0; width:3px; height:100%; }
   .approval-item.is-danger::before  { background:var(--rust); }
   .approval-item.is-new::before     { background:var(--amber); }
-  .approval-item.is-progress::before { background:var(--sage); }
+  .approval-item.is-progress::before { background:var(--verdigris); }
   .approval-type { font-family:var(--font-mono); font-size:9px; letter-spacing:0.16em; text-transform:uppercase; color:var(--stone-500); margin-bottom:3px; }
   .approval-title { font-family:var(--font-display); font-size:20px; font-weight:400; color:var(--ink); margin-bottom:var(--space-2); line-height:1.2; }
   .approval-diff { font-size:13px; color:var(--stone-700); margin-bottom:var(--space-3); line-height:1.55; }
   .diff-old { text-decoration:line-through; color:var(--rust); opacity:0.8; }
-  .diff-new { color:var(--sage); font-weight:500; }
+  .diff-new { color:var(--verdigris); font-weight:500; }
   .approval-source { font-family:var(--font-mono); font-size:10px; color:var(--stone-500); margin-bottom:var(--space-4); display:flex; align-items:center; gap:var(--space-2); }
   .approval-source::before { content:''; display:inline-block; width:12px; height:1px; background:var(--stone-500); }
   .approval-actions { display:flex; gap:var(--space-2); }
@@ -242,11 +242,11 @@
       <div class="intro-title">Relic<em>Visual Identity</em></div>
     </div>
     <div>
-      <p class="intro-sub">Literary, modern, relaxing in The Sanctum. Clean and focused in The Stage. Both surfaces belong on web and mobile; the web app is simply built first. Built for GMs who care about craft.</p>
+      <p class="intro-sub">Light editorial, retro-modern. Two modes — The Sanctum (home, prep, worldbuilding) and The Stage (live play) — share one design language: calm, deliberate, slightly literary. Built for GMs who care about craft.</p>
       <div class="intro-meta">
         Fonts — Cormorant Garamond · Instrument Sans · DM Mono<br>
         Accent — Amber #B8702A · Ground — Parchment #EFEBE4<br>
-        v0.3 — May 2026 — Cream retired as mode differentiator
+        v0.4 — June 2026 — Cream retired as mode differentiator
       </div>
     </div>
   </div>
@@ -299,7 +299,7 @@
       <div class="swatch"><div class="swatch-color" style="background:#B8702A"></div><div class="swatch-label"><span class="swatch-name">Amber</span><span class="swatch-value">#B8702A</span></div></div>
       <div class="swatch"><div class="swatch-color" style="background:#EED9BF;border:1px solid #E4DDD4"></div><div class="swatch-label"><span class="swatch-name">Amber Dim</span><span class="swatch-value">#EED9BF</span></div></div>
       <div class="swatch"><div class="swatch-color" style="background:#8A3828"></div><div class="swatch-label"><span class="swatch-name">Rust</span><span class="swatch-value">#8A3828</span></div></div>
-      <div class="swatch"><div class="swatch-color" style="background:#496640"></div><div class="swatch-label"><span class="swatch-name">Sage</span><span class="swatch-value">#496640</span></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#2F6B6E"></div><div class="swatch-label"><span class="swatch-name">Verdigris</span><span class="swatch-value">#2F6B6E</span></div></div>
     </div>
   </div>
 
@@ -359,7 +359,7 @@
       <span class="badge badge-amber">Canon</span>
       <span class="badge badge-stone">Draft</span>
       <span class="badge badge-stone">Stub</span>
-      <span class="badge badge-sage">Revealed</span>
+      <span class="badge badge-verdigris">Revealed</span>
       <span class="badge badge-rust">Deceased</span>
       <span class="badge badge-ink">GM Only</span>
       <span class="badge badge-stone">NPC</span>
@@ -368,7 +368,7 @@
       <span class="badge badge-stone">Item</span>
       <span class="badge badge-amber">Session 15</span>
     </div>
-    <div style="margin-top:var(--space-4);font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--stone-500);margin-bottom:var(--space-3);">Thread state chips — v0.3</div>
+    <div style="margin-top:var(--space-4);font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--stone-500);margin-bottom:var(--space-3);">Thread state chips — v0.4</div>
     <div class="badge-row">
       <span class="badge badge-thread-active">◆ Active</span>
       <span class="badge badge-thread-loose">◈ Loose</span>
@@ -390,7 +390,7 @@
         <div class="card-eyebrow">Location · Tavern</div>
         <div class="card-title">The Drowning Rat</div>
         <div class="card-desc">A waterfront inn known for cheap ale and expensive secrets. The party's base of operations since Session 3.</div>
-        <div class="card-footer"><span class="card-meta">Ashfen · 4 pins</span><span class="badge badge-sage">Revealed</span></div>
+        <div class="card-footer"><span class="card-meta">Ashfen · 4 pins</span><span class="badge badge-verdigris">Revealed</span></div>
       </div>
       <div class="card card-quest">
         <div class="card-eyebrow">Quest · Active</div>
@@ -479,7 +479,7 @@
   </div>
 
   <div class="section">
-    <div class="section-label">Mode Surfaces — v0.3</div>
+    <div class="section-label">Mode Surfaces — v0.4</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);">
       <div>
         <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--stone-500);margin-bottom:var(--space-3);">The Sanctum — default</div>
@@ -510,15 +510,15 @@
   </div>
 
   <div class="section">
-    <div class="section-label">Thread Timeline — v0.3 (read-only)</div>
+    <div class="section-label">Thread Timeline — v0.4 (read-only)</div>
     <div style="background:var(--cream);border:1px solid var(--stone-300);border-radius:var(--radius-lg);padding:var(--space-6);overflow-x:auto;">
       <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--stone-500);margin-bottom:var(--space-5);">Derived from objectives_log + canon_audit. No new schema.</div>
       <div style="font-family:var(--font-mono);font-size:11px;color:var(--stone-700);white-space:pre;line-height:2.2;">              S11       S12       S13       S14       S15
               ──        ──        ──        ──        ─ ─
-<span style="color:var(--sage);">Thornwood     ●─────────────────────●────────●──────────  </span><span class="badge badge-thread-active">active</span>
+<span style="color:var(--verdigris);">Thornwood     ●─────────────────────●────────●──────────  </span><span class="badge badge-thread-active">active</span>
 <span style="color:var(--stone-500);">              ↑ start              ↑ obj1    ↑ obj2</span>
 
-<span style="color:var(--sage);">Pale Broker   ─────────●────────────────────────────────  </span><span class="badge badge-thread-active">active</span>
+<span style="color:var(--verdigris);">Pale Broker   ─────────●────────────────────────────────  </span><span class="badge badge-thread-active">active</span>
 <span style="color:var(--stone-500);">                       ↑ start</span>
 
 <span style="color:var(--amber);">Orphan's aunt                              ◈──────────  </span><span class="badge badge-thread-loose">loose</span>
@@ -533,12 +533,12 @@
   <div class="section">
     <div class="section-label">Design Principles</div>
     <div class="principles">
-      <div class="principle"><div class="principle-num">01</div><div class="principle-title">Literary calm</div><div class="principle-desc">The Sanctum should feel modern, relaxing, and authored. Whitespace is not empty — it is breathing room for the GM's imagination.</div></div>
+      <div class="principle"><div class="principle-num">01</div><div class="principle-title">Editorial restraint</div><div class="principle-desc">Every element earns its place. Whitespace is not empty — it is breathing room for the GM's imagination.</div></div>
       <div class="principle"><div class="principle-num">02</div><div class="principle-title">Warm, not cold</div><div class="principle-desc">Parchment and stone over white and grey. Relic should feel like a well-made object, not a dashboard.</div></div>
       <div class="principle"><div class="principle-num">03</div><div class="principle-title">Literary hierarchy</div><div class="principle-desc">Cormorant Garamond carries the world's names. Instrument Sans carries the UI. They never compete.</div></div>
       <div class="principle"><div class="principle-num">04</div><div class="principle-title">Amber as structure</div><div class="principle-desc">Amber is geometric and consequential — used structurally, not decoratively. It marks canon and the things that matter.</div></div>
       <div class="principle"><div class="principle-num">05</div><div class="principle-title">The GM is the author</div><div class="principle-desc">UI language is deferential. "Suggest," "draft," "propose." Never silent, never automatic.</div></div>
-      <div class="principle"><div class="principle-num">06</div><div class="principle-title">The Stage stays focused</div><div class="principle-desc">Clean, dark, high-contrast. On The Stage, every decoration costs attention. None are paid.</div></div>
+      <div class="principle"><div class="principle-num">06</div><div class="principle-title">The Stage strips back</div><div class="principle-desc">Dark, fast, high-contrast. On The Stage, every decoration costs milliseconds. None are paid.</div></div>
     </div>
   </div>
 

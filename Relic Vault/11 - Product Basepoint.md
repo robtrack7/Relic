@@ -31,7 +31,7 @@ This document defines the locked direction for Relic. It guides product, UX, arc
 **v3.4 (May 2026).** Five targeted revisions informed by master flow interrogation and revision process:
 
 1. **§5 Mode model revised.** session prep workspace is no longer a peer top-level mode — it is an embedded surface inside the Sanctum home page when a session is active. The bottom tab bar on mobile becomes Sanctum · Stage (two tabs, not three). session prep workspace's prep editor is still a distinct surface within Sanctum but not a mode the GM switches into.
-2. **§5 / §14 Cream theme retired.** session prep workspace no longer has its own Cream surface treatment as a mode differentiator. Session prep areas within the Sanctum use Amber-forward card accents and Sage for thread-state signals to visually distinguish prep context within the Parchment frame. Stage dark treatment is unchanged.
+2. **§5 / §14 Cream theme retired.** session prep workspace no longer has its own Cream surface treatment as a mode differentiator. Session prep areas within the Sanctum use Amber-forward card accents and Verdigris for thread-state signals to visually distinguish prep context within the Parchment frame. Stage dark treatment is unchanged.
 3. **§6 Saga creation simplified.** "The Saga Creation" branding retired as a user-facing name. Saga creation is now a focused "New saga" flow with a help-level choice (three options). No-AI path removed — GMs who want no AI assistance use the Start Blank option; AI features remain available on-demand from any screen. Tutorial-as-saga concept retained but entry is now through the new-saga flow, not a named "Saga Creation mode."
 4. **§8 / §10 AI creative tasks added to MVP scope.** AI is a button the GM can press across creative and editorial domains. New MVP AI tasks added: `propose_scene_beats`, `propose_thread_complication`, `propose_npc_for_scene`. `propose_quick_stub_fleshing` promoted from V1 to MVP. All are GM-invoked only, never auto-run.
 5. **§8 Threads promoted to continuity spine.** Threads are the canonical continuity entity; the Sanctum gives them a top-level nav position. A Thread Timeline view (read-only, derived from existing `objectives_log` and `resolution_state` data) ships in MVP. The "timeline editor" MVP exclusion in §12 is revised to exclude only a writable timeline editor; the read-only thread timeline is in MVP.
@@ -348,14 +348,14 @@ Design system file: `[[13 - Design System]]` — always reference before buildin
 
 **Typefaces:** Cormorant Garamond (display) · Instrument Sans (UI) · DM Mono (mono).
 
-**Palette:** Parchment #EFEBE4 · Cream #F7F4EF · Ink #1A1916 · Amber #B8702A · Rust #8A3828 · Sage #496640.
+**Palette:** Parchment #EFEBE4 · Cream #F7F4EF · Ink #1A1916 · Amber #B8702A · Rust #8A3828 · Verdigris #2F6B6E.
 
 **v3.4: Mode surface treatment revised.**
 
 | Surface | Base | Distinguishing elements |
 |---|---|---|
 | **Sanctum** | Parchment #EFEBE4 | Cream cards on Parchment background. Literary, modern, relaxing. |
-| **Session prep (within Sanctum)** | Parchment #EFEBE4 | Amber-forward accents: prep CTAs, Ready for Stage button, agenda fields use Amber left-rules. Sage used for thread-state indicators (active, loose, resolved). No separate Cream surface — prep is visually differentiated by Amber/Sage accent density, not a different background color. |
+| **Session prep (within Sanctum)** | Parchment #EFEBE4 | Amber-forward accents: prep CTAs, Ready for Stage button, agenda fields use Amber left-rules. Verdigris used for thread-state indicators (active, loose, resolved). No separate Cream surface — prep is visually differentiated by Amber/Verdigris accent density, not a different background color. |
 | **Stage** | Ink #1A1916 | Clean, focused, high-contrast Cream foreground. Amber for action state. Rust reserved for recording state. |
 
 The Cream surface as a separate mode differentiator is retired. Cream remains available as a card surface within the Sanctum frame. The Stage dark treatment is unchanged.

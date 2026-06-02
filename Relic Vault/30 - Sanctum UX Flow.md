@@ -30,7 +30,7 @@ source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 
 **v0.2 (May 2026).** Five targeted revisions from Basepoint v3.4 and the master flow interrogation:
 
-1. **§2.1 Theme revised.** Cream surface retired as a mode differentiator. Session-prep areas within the Sanctum use Amber-forward accents and Sage thread-state signals to visually distinguish prep context within the Parchment frame. Stage dark treatment is unchanged. Specific token changes called out in §2.1.
+1. **§2.1 Theme revised.** Cream surface retired as a mode differentiator. Session-prep areas within the Sanctum use Amber-forward accents and Verdigris thread-state signals to visually distinguish prep context within the Parchment frame. Stage dark treatment is unchanged. Specific token changes called out in §2.1.
 
 2. **§2.2 Navigation revised.** The web shell follows [[72 - Navigation Design Spec]]: the left rail uses `Home`, `Threads`, `Library`, `Prepare`, `Sessions`, `Review`, with `Export` and `Settings` lower in the rail. `Notes` moves to a sub-section of `Library`. `Prepare` routes to the active or next planned session prep workspace. `Sessions` remains the index/lifecycle manager. Stage is reached from Prepare, session state, Home cards, notifications/deep links, app resume, and a bright Return to Stage affordance while live. Mobile shows Stage in bottom navigation only when a session is ready/live.
 
@@ -98,7 +98,7 @@ The Sanctum is the home base for the active World and Saga. Session prep lives h
 | Surface | Background | Accents |
 |---|---|---|
 | **Sanctum** | Parchment `#EFEBE4` with noise overlay | Literary, modern, relaxing. Cream `#F7F4EF` for card surfaces. |
-| **Session prep area (inline within Sanctum)** | Parchment `#EFEBE4` — same as default | **Amber-forward:** prep action CTAs, agenda field left-rules, Ready for Stage button all use Amber `#B8702A`. Thread-state chips use Sage `#496640` (active), Amber (loose), Stone (dormant), Stone muted (resolved). |
+| **Session prep area (inline within Sanctum)** | Parchment `#EFEBE4` — same as default | **Amber-forward:** prep action CTAs, agenda field left-rules, Ready for Stage button all use Amber `#B8702A`. Thread-state chips use Verdigris `#2F6B6E` (active), Amber (loose), Stone (dormant), Stone muted (resolved). |
 | **Stage** | Ink `#1A1916` | Clean and focused. Cream foreground, Amber action state, Rust recording state. |
 
 **Why:** session prep workspace as a mode (with its own Cream surface) implied a mode-switch the GM had to consciously make. Session prep is not a separate mode — it is what the GM does *within* the Sanctum when a session is upcoming. Amber density does the work of visual differentiation without requiring a separate palette. The GM does not have to "go to session prep workspace"; they are already home.
@@ -106,7 +106,7 @@ The Sanctum is the home base for the active World and Saga. Session prep lives h
 **Design system tokens needed for v0.2:**
 
 - `sanctum-prep-cta` — Amber `#B8702A`, used for all prep-forward CTAs (Ready for Stage, Draft session prep, Save prep).
-- `thread-active-chip` — Sage `#496640` bg `sage-dim`, used for `resolution_state='active'` thread chips.
+- `thread-active-chip` — Verdigris `#2F6B6E` bg `verdigris-dim`, used for `resolution_state='active'` thread chips.
 - `thread-loose-chip` — Amber `#B8702A` bg `amber-dim`, used for `is_loose_thread=true` chips.
 - `thread-dormant-chip` — Stone-300 bg stone-100, used for `resolution_state='dormant'`.
 - `thread-resolved-chip` — Stone muted, used for `resolution_state='resolved'` or `'failed'`.
@@ -368,7 +368,7 @@ Each row is tappable and routes to the relevant entity or thread detail.
 
 `SNC-FR-34` — Default filter is `Active + Loose` combined. Dormant and Resolved are collapsed accordion sections (one-tap to expand). Failed threads render inside Resolved.
 
-`SNC-FR-35` — Thread rows show: name (Cormorant 18px), kind badge (mono), objective count (with completed), last-touched session number, and 2-line summary. Canon chip applies (`◆` amber dot for active, `◈` amber open-diamond for loose, `○` stone for dormant, `✓` sage for resolved).
+`SNC-FR-35` — Thread rows show: name (Cormorant 18px), kind badge (mono), objective count (with completed), last-touched session number, and 2-line summary. Canon chip applies (`◆` amber dot for active, `◈` amber open-diamond for loose, `○` stone for dormant, `✓` Verdigris for resolved).
 
 ### 4.3 Thread timeline view
 
@@ -724,7 +724,7 @@ All v0.1 acceptance criteria (`SNC-AC-1` through `SNC-AC-10`) are unchanged.
 
 `SNC-AC-15` — `propose_quick_stub_fleshing` CTA only appears when `is_stub=true` AND transcript evidence exists. Acceptance writes an update draft that clears `is_stub=false` on approval.
 
-`SNC-AC-16` — `answer_saga_question` never renders an answer without citations. `no_answer=true` path renders the standard "I don't have enough information" message, not an empty answer body.
+`SNC-AC-16` — `answer_saga_question` never renders an answer without citations. `no_answer=true` path renders the standard "I don't have enough information" mesVerdigris, not an empty answer body.
 
 `SNC-AC-17` — The inline session prep workspace on the Sanctum home page is editable (autosaves). Changes persist identically to the full-editor page.
 
@@ -739,7 +739,7 @@ The prior downstream-doc revision table is closed by the vault pass. Current act
 | Doc | Required change | Severity |
 |---|---|---|
 | **PRD v0.10** | Active and aligned. Legacy requirement aliases remain only for migration traceability. | Complete |
-| **Stage UX Flow v0.6** | Resolved in vault pass: prep lives inside the Sanctum parchment frame with Amber/Sage accents, not an independent Cream mode. | Complete |
+| **Stage UX Flow v0.6** | Resolved in vault pass: prep lives inside the Sanctum parchment frame with Amber/Verdigris accents, not an independent Cream mode. | Complete |
 | **Session Prep Flow v0.2** | Resolved: legacy session prep workspace spec is archived; canonical prep editor surface lives at `/saga/<id>/sessions/<id>/prep`. | Complete |
 | **AI Task Registry v1.0** | Standalone contract source for all AI tasks. | Complete |
 | **Basepoint v3.5** | Active and aligned. | Complete |

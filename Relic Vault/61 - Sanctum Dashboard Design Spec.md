@@ -119,7 +119,7 @@ Avoid generic metrics dashboards, full Workspace admin cards, permanent chatbot 
 
 ## 15. Visual tone
 
-Literary, modern, relaxing, and decisive. The dashboard should feel like a prepared desk for the active Saga on any platform: parchment frame, cream cards, restrained Amber action, Sage thread signals, Cormorant for Saga/session names, DM Mono for state and provenance.
+Literary, modern, relaxing, and decisive. The dashboard should feel like a prepared desk for the active Saga on any platform: parchment frame, cream cards, restrained Amber action, Verdigris thread signals, Cormorant for Saga/session names, DM Mono for state and provenance.
 
 ## 16. Claude Design prompt
 

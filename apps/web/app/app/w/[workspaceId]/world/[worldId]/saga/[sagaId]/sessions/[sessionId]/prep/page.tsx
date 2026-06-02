@@ -26,7 +26,15 @@ export default async function PrepPage({ params }: { params: Promise<SessionPara
   const activeThreadIds = new Set(activeThreads.map((thread) => thread?.id));
 
   return (
-    <SanctumShell params={ids} workspace={workspace} world={world} saga={saga} active="sessions">
+    <SanctumShell
+      params={ids}
+      workspace={workspace}
+      world={world}
+      saga={saga}
+      active="prepare"
+      currentSession={{ id: session.id, name: session.name, status: session.status }}
+      loomMode="prep"
+    >
       <section className="topbar">
         <div><div className="eyebrow">Session prep</div><h1 className="page-title">{session.name}</h1><span className="chip amber">{session.status}</span></div>
         {session.status !== "planned" ? <Link className="button-ghost" href={`${sagaPath(ids)}/sessions/${session.id}/stage`}>Open Stage</Link> : null}
@@ -35,13 +43,28 @@ export default async function PrepPage({ params }: { params: Promise<SessionPara
       <form className="form-stack" action={updateSessionPrepAction}>
         <HiddenContextFields params={ids} />
         <input type="hidden" name="sessionId" value={session.id} />
-        <section className="card accent form-stack">
-          <h2 className="section-title">Agenda</h2>
-          <label className="field"><span>Name</span><input className="input" name="name" defaultValue={session.name} disabled={locked} /></label>
-          <label className="field"><span>Objective</span><input className="input" name="objective" defaultValue={session.objective ?? ""} disabled={locked} /></label>
-          <label className="field"><span>Opening scene</span><textarea className="textarea" name="openingScene" defaultValue={session.opening_scene ?? ""} disabled={locked} /></label>
-          <label className="field"><span>Scene notes</span><textarea className="textarea" name="sceneNotes" defaultValue={session.scene_notes ?? ""} disabled={locked} /></label>
-          <label className="field"><span>Checklist, one item per line</span><textarea className="textarea" name="prepChecklist" defaultValue={checklist} disabled={locked} /></label>
+        <section className="prep-grid">
+          <div className="prep-stack">
+            <article className="card accent form-stack">
+              <span className="section-label">Session overview</span>
+              <label className="field"><span>Name</span><input className="input" name="name" defaultValue={session.name} disabled={locked} /></label>
+              <label className="field"><span>Objective</span><input className="input" name="objective" defaultValue={session.objective ?? ""} disabled={locked} /></label>
+              <label className="field"><span>Opening scene</span><textarea className="textarea" name="openingScene" defaultValue={session.opening_scene ?? ""} disabled={locked} /></label>
+              <label className="field"><span>Scene notes</span><textarea className="textarea" name="sceneNotes" defaultValue={session.scene_notes ?? ""} disabled={locked} /></label>
+            </article>
+            <article className="card form-stack">
+              <span className="section-label">Prep checklist</span>
+              <label className="field"><span>Checklist, one item per line</span><textarea className="textarea" name="prepChecklist" defaultValue={checklist} disabled={locked} /></label>
+            </article>
+          </div>
+          <div className="card session-packet-panel">
+            <span className="section-label">Session packet</span>
+            <div className="packet-tiles">
+              <div><span>Briefing</span><p>{session.scene_notes || "Add scene notes or a canon-only briefing before Stage."}</p></div>
+              <div><span>Objective</span><p>{session.objective || "No objective yet."}</p></div>
+              <div><span>Opening scene</span><p>{session.opening_scene || "No opening scene yet."}</p></div>
+            </div>
+          </div>
         </section>
         <section className="content-grid">
           <div className="card">

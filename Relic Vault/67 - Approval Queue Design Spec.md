@@ -106,7 +106,7 @@ Users arrive from dashboard pending review card, Review rail item, post-session 
 
 ## 13. Navigation out
 
-Users go to target Library detail, source transcript segment, session review page, dashboard, session prep, or Settings usage if quota affects rerun options.
+Users go to target Library detail, source transcript segment, session review page, dashboard, session prep, or Settings uVerdigris if quota affects rerun options.
 
 ## 14. Components to avoid
 
@@ -114,7 +114,7 @@ Avoid prominent Approve All, automatic canon commit, hidden source panels, chatb
 
 ## 15. Visual tone
 
-Trustworthy editorial desk inside the literary, modern, relaxing Sanctum. It should feel deliberate and evidence-backed. Use Cream review surfaces, clear before/after diff styling, Amber for action, Sage for approved/safe state, Rust for destructive/archive/broken-source warnings.
+Trustworthy editorial desk inside the literary, modern, relaxing Sanctum. It should feel deliberate and evidence-backed. Use Cream review surfaces, clear before/after diff styling, Amber for action, Verdigris for approved/safe state, Rust for destructive/archive/broken-source warnings.
 
 ## 16. Claude Design prompt
 

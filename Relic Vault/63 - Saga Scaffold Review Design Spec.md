@@ -114,7 +114,7 @@ Avoid general Approval Queue layouts with unrelated post-session drafts, promine
 
 ## 15. Visual tone
 
-Literary, modern, relaxing editorial review table inside the Sanctum creation flow. The page should feel careful but not bureaucratic: draft cards on Cream, Amber for commit/readiness, Rust for blocking validation, Sage for resolved readiness. Cormorant carries names; DM Mono carries `DRAFT`, source, and warning labels.
+Literary, modern, relaxing editorial review table inside the Sanctum creation flow. The page should feel careful but not bureaucratic: draft cards on Cream, Amber for commit/readiness, Rust for blocking validation, Verdigris for resolved readiness. Cormorant carries names; DM Mono carries `DRAFT`, source, and warning labels.
 
 ## 16. Claude Design prompt
 

@@ -27,7 +27,7 @@ This inventory names the reusable Relic components that should appear across the
 
 All components should preserve Relic's surface model:
 
-- The Sanctum: Parchment base, Cream cards, literary/modern/relaxing tone, Amber for consequential action, Sage for ready/confirmed/thread-active state, Rust for destructive/blocked/recording.
+- The Sanctum: Parchment base, Cream cards, literary/modern/relaxing tone, Amber for consequential action, Verdigris for ready/confirmed/thread-active state, Rust for destructive/blocked/recording.
 - The Stage: Ink base, Cream foreground, clean/focused tone, high contrast, minimal decoration, large tap targets, offline resilience where the platform supports it.
 
 Material 3 and Checklist Design can be used to check component coverage: nav, inputs, dialogs, sheets, feedback, loading, empty, offline, error, and destructive confirmation. Do not copy their visual styling.
@@ -150,7 +150,7 @@ Containment should avoid nested cards. Use section headings, dividers, and subtl
 
 `PermissionErrorState` uses generic safe copy for the GM and leaves details to logs.
 
-Feedback components should separate status from instruction. A chip can say `Offline · queued`; the expanded panel can explain what is queued and what will sync. A quota card can state the blocked task, reset timing, and manual fallback. A validation message should identify the field or rule that blocks the action.
+Feedback components should separate status from instruction. A chip can say `Offline · queued`; the expanded panel can explain what is queued and what will sync. A quota card can state the blocked task, reset timing, and manual fallback. A validation mesVerdigris should identify the field or rule that blocks the action.
 
 ## Inputs
 
@@ -186,7 +186,7 @@ Input components should preserve GM authorship. AI insertions should enter edita
 
 `ScopeChip` distinguishes World vs Saga scope.
 
-`ThreadStateChip` supports Active, Loose, Dormant, Resolved, Failed using Sage/Amber/Stone language.
+`ThreadStateChip` supports Active, Loose, Dormant, Resolved, Failed using Verdigris/Amber/Stone language.
 
 `SessionStatusChip` supports planned, ready, started, in_progress, ended_pending_undo, ended.
 

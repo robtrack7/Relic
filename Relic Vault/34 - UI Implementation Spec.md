@@ -184,8 +184,8 @@ Map `[[13 - Design System]]` tokens into shared Tailwind/CSS variables.
 | Amber dim | `--amber-dim #EED9BF` | `relic.amberDim` | warning/loose-thread tint |
 | Rust | `--rust #8A3828` | `relic.rust` | destructive, recording, blocked |
 | Rust dim | `--rust-dim #F0D9D4` | `relic.rustDim` | destructive warning tint |
-| Sage | `--sage #496640` | `relic.sage` | success, approved, ready |
-| Sage dim | `--sage-dim #D2DBC9` | `relic.sageDim` | active-thread tint |
+| Verdigris | `--verdigris #2F6B6E` | `relic.verdigris` | success, approved, ready |
+| Verdigris dim | `--verdigris-dim #CCDDDC` | `relic.verdigrisDim` | active-thread tint |
 
 **Fonts:**
 

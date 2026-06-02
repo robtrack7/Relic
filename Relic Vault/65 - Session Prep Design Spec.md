@@ -116,10 +116,10 @@ Avoid treating prep as a third product surface, tactical scene maps, initiative 
 
 ## 15. Visual tone
 
-Prepared, practical, and active within the literary, modern, relaxing Sanctum. Use denser Amber structure and Sage Thread state without losing the calm desk-like tone. The page should feel like a tabletop prep packet being assembled, not a task-management board.
+Prepared, practical, and active within the literary, modern, relaxing Sanctum. Use denser Amber structure and Verdigris Thread state without losing the calm desk-like tone. The page should feel like a tabletop prep packet being assembled, not a task-management board.
 
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's Prepare workspace inside The Sanctum for web and mobile. Show both an inline dashboard version and fuller editor logic through the same literary, modern, relaxing design language. Include canon-only prep briefing with source stamp, Thread carry-forward, agenda fields, pinned entities, checklist, packet preview, Relic Guide sidecar/sheet, AI-invoked Draft this session, Brainstorm beats, Draft an NPC, and Ready for Stage. Use Parchment base with Amber prep accents and Sage thread chips. Make clear that Prepare is a Sanctum workflow and bridge to Stage, not a third product surface. Relic Guide can prepare real create/edit actions, but canon changes require inline GM review or Approval Queue. Mobile should use stacked sections and sheets without reducing the workflow. Exclude initiative, encounter, tactical map, VTT, live transcription, player, and custom calendar features.
+Create Relic's Prepare workspace inside The Sanctum for web and mobile. Show both an inline dashboard version and fuller editor logic through the same literary, modern, relaxing design language. Include canon-only prep briefing with source stamp, Thread carry-forward, agenda fields, pinned entities, checklist, packet preview, Relic Guide sidecar/sheet, AI-invoked Draft this session, Brainstorm beats, Draft an NPC, and Ready for Stage. Use Parchment base with Amber prep accents and Verdigris thread chips. Make clear that Prepare is a Sanctum workflow and bridge to Stage, not a third product surface. Relic Guide can prepare real create/edit actions, but canon changes require inline GM review or Approval Queue. Mobile should use stacked sections and sheets without reducing the workflow. Exclude initiative, encounter, tactical map, VTT, live transcription, player, and custom calendar features.
 ```

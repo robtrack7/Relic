@@ -57,7 +57,7 @@ Material corrections:
 | Schema | v0.8 | §3 entities, §6 notes (`quick_capture`, `summary`), shared columns, session lifecycle, `session_marked_moments` |
 | Tech Arch | v1.2 | Offline sync, mobile architecture, Stage role, recording/upload/background jobs |
 | Registry | v1.0 | `search_for_ui`, `synthesize_session`, `compose_prep_briefing`, and stub-fleshing references. |
-| Design System | v0.3 | `[[13 - Design System]]` Stage mobile pattern and Stage-specific tokens |
+| Design System | v0.4 | `[[13 - Design System]]` Stage mobile pattern and Stage-specific tokens |
 | Approval Queue | v0.5 | Summary note handling and downstream draft/canon processing |
 | Session Prep Flow | v0.2 | Ready-for-Stage packet, prep locking, fallback one-line summary handoff |
 
@@ -104,12 +104,12 @@ The Stage is the table surface. It exists for one moment: a GM is mid-session, w
 
 **Sanctum theme** is independent. Defaults Parchment-light. A dark Sanctum is V1+.
 
-**Session prep workspace treatment:** prep lives inside the Sanctum parchment frame. It uses Amber-forward card accents and Sage thread-state indicators, not an independent Cream mode.
+**Session prep workspace treatment:** prep lives inside the Sanctum parchment frame. It uses Amber-forward card accents and Verdigris thread-state indicators, not an independent Cream mode.
 
 **Token requirement:** the design system must define or preserve Stage-specific tokens for:
-- Sage-tinted offline chip background and border
+- Verdigris-tinted offline chip background and border
 - Stone-900 inset surface for expanded entity cards
-- Two-stage offline chip color variants (sage → amber → rust as queue depth grows)
+- Two-stage offline chip color variants (Verdigris → amber → rust as queue depth grows)
 - High-ambient-light variant of the record dot (thin Ink outline)
 
 ---
@@ -273,7 +273,7 @@ Voice         parsed from gm_notes tag "voice:"     ← V0, see §7.5
 Knows         3 most recent canon-audit changes for this character
 Wants         parsed from gm_notes tag "wants:"     ← V0, see §7.5
 Links         names of related entities via mentions table, up to 5
-GM notes      gm_notes column (excluding parsed tags), Sage tint, mono small  ← visible to GM only
+GM notes      gm_notes column (excluding parsed tags), Verdigris tint, mono small  ← visible to GM only
 ```
 
 **Place**
@@ -286,7 +286,7 @@ Status        places.status · scene-presence
 Contains      child places (places.parent_place_id), up to 3
 Inhabitants   characters with home_place_id = this, up to 5
 Links         names of related entities via mentions, up to 5
-GM notes      gm_notes column, Sage tint
+GM notes      gm_notes column, Verdigris tint
 ```
 
 **Faction**
@@ -299,7 +299,7 @@ Status        factions.status
 Seat          factions.seat_place_id name (clickable link)
 Members       characters via relationships kind='member-of', up to 5
 Links         related entities, up to 5
-GM notes      gm_notes column, Sage tint
+GM notes      gm_notes column, Verdigris tint
 ```
 
 **Artifact**
@@ -312,7 +312,7 @@ Held by       artifacts.current_holder_character_id name (clickable)
 Located       artifacts.current_location_place_id name (clickable)
 Properties    first paragraph of artifacts.narrative, truncated to 200 chars
 Links         related entities, up to 5
-GM notes      gm_notes column, Sage tint
+GM notes      gm_notes column, Verdigris tint
 ```
 
 **Thread**
@@ -324,7 +324,7 @@ Objective     threads.objective (or first line of narrative)
 Status        threads.status · resolution_state
 Loose since   sessions.title of last session this thread appeared in (if loose)
 Connected     entities referenced via mentions, up to 5
-GM notes      gm_notes column, Sage tint
+GM notes      gm_notes column, Verdigris tint
 ```
 
 **Out of scope for V0 Stage Card:**
@@ -518,7 +518,7 @@ When a stub appears on Stage (pinned or in search results), a small `STUB` mono 
 ▣ Erran the Quartermaster       NPC · STUB
 ```
 
-Sage tint for the pill. Indicates "this needs fleshing post-session."
+Verdigris tint for the pill. Indicates "this needs fleshing post-session."
 
 ### 10.4 Type defaults
 
@@ -818,7 +818,7 @@ While session ∈ {`in_progress`, `ended_pending_undo`}: no push or email notifi
 └──────────────────────────────────────────────────┘
 ```
 
-Typography: card title Cormorant 20pt italic ink; body Instrument Sans 14pt stone-700; text field single line, 200-char soft cap; Save amber CTA full-width on mobile; Skip ghost; countdown mono 11pt stone-500; card surface sage-bordered cream card (`session-ended-card` design system token).
+Typography: card title Cormorant 20pt italic ink; body Instrument Sans 14pt stone-700; text field single line, 200-char soft cap; Save amber CTA full-width on mobile; Skip ghost; countdown mono 11pt stone-500; card surface Verdigris-bordered cream card (`session-ended-card` design system token).
 
 **Behavior.**
 
@@ -885,7 +885,7 @@ Small chip in Stage header:
 | Network | Queue depth | Chip |
 |---|---|---|
 | Online | — | Hidden (silence = good) |
-| Offline | <20 items, <5min | Sage: "Offline · captures queued" |
+| Offline | <20 items, <5min | Verdigris: "Offline · captures queued" |
 | Offline | 20-100 items OR >5min | Amber: "Offline · sync pending" |
 | Offline | >100 items OR storage warning | Rust: "Offline · storage filling" |
 | Reconnecting | — | Amber: "Syncing · N items" |

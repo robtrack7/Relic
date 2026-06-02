@@ -19,7 +19,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 |---|---|---|
 | [[11 - Product Basepoint]] | Product north star, scope, naming, exclusions | Primary |
 | [[12 - MVP PRD]] | P0 requirements and acceptance framing | Primary |
-| [[13 - Design System]] | UI tokens, typography, palette, component feel; wrapper for [[14 - Design System Source.html]] | Primary design |
+| [[13 - Design System]] | v0.4 web UI tokens, typography, palette, app shell, Loom carriage, component feel; wrapper for [[14 - Design System Source.html]] | Primary design |
 | [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch | Implementation |
 | [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, deployment, monitoring | Implementation |
 | [[22 - Memory and Retrieval]] | Embeddings, retrieval, task profiles, context assembly | Implementation |
