@@ -84,5 +84,6 @@ All active source documents needed for the vault pass are present and linked.
 - [[55 - Backend Module 7 Storage Audio Transcription Cleanup Plan]]
 - [[56 - Backend Module 8 Background Job and Edge Runtime Plan]]
 - [[57 - Backend Module 9 AI Task Router and Runtime Plan]]
+- [[58 - Backend Module 10 Notifications Export Operations Plan]]
 - [[60 - Design Spec Overview]]
 - [[72 - Navigation Design Spec]]

@@ -298,6 +298,8 @@ Detailed plan: [[57 - Backend Module 9 AI Task Router and Runtime Plan]].
 
 ### Module 10 - Notifications, Export, and Operational Loops
 
+Detailed plan: [[58 - Backend Module 10 Notifications Export Operations Plan]].
+
 **Goal:** Close the non-core loops that keep GM workflows from stalling.
 
 **Owns:**

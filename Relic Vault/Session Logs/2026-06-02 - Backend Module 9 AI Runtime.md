@@ -22,6 +22,7 @@ Backlink: [[50 - Session Log Index]]
 - Added Registry v1.0 task contracts, AI run ledger, scoped AI preflight, source-ID validation, output writers, and worker-only run wrappers.
 - Added AI Edge runtime scaffold with provider adapter boundary, schema validation, one repair retry, usage event recording, and failure handling.
 - Updated rough UI timing: UI can now test AI preflight/manual fallback, run status, and output review surfaces while provider-backed generation remains internally configured.
+- Created [[58 - Backend Module 10 Notifications Export Operations Plan]] as the next backend module plan before implementation.
 
 ## Changed
 
@@ -38,6 +39,7 @@ Backlink: [[50 - Session Log Index]]
 - [[04 - Final Contradiction Pass]]
 - [[46 - Backend Audit and Module Plan]]
 - [[57 - Backend Module 9 AI Task Router and Runtime Plan]]
+- [[58 - Backend Module 10 Notifications Export Operations Plan]]
 
 ## Verification
 
@@ -56,3 +58,4 @@ Backlink: [[50 - Session Log Index]]
 
 - Module 10 remains: notifications, export generation, stale operational loops, and related dispatch behavior.
 - Rough UI can start testing backend-backed AI preflight/manual fallback, run status, and output review before provider-backed generation is enabled.
+- Next execution step is Module 10 RED tests for export, notifications, stale pipeline scan, and cleanup workers.
