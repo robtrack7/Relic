@@ -47,3 +47,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-06-02 - Figma Workflow Wireframes]]
 - [[Session Logs/2026-06-02 - Figma UI Import Readiness]]
 - [[Session Logs/2026-06-02 - Relic Web Draft Dashboard Import]]
+- [[Session Logs/2026-06-02 - Relic Web Draft Prep Stage Integration]]
