@@ -41,6 +41,18 @@ Verified during Module 8 planning on 2026-06-01:
 - Module 7 adds transcription and cleanup contracts but no Edge dispatcher.
 - There is no scoped JWT issuer, shared Edge auth utility, worker runtime scaffold, or tests proving internal-token enforcement.
 
+## Implementation Status
+
+Implemented on 2026-06-02 in `supabase/migrations/20260601235500_job_runtime.sql` and `supabase/functions/`.
+
+- Internal queue tables now have normalized scheduling, lock, attempt, and idempotency metadata where needed.
+- Claim helpers for embedding, transcription, cleanup, export, and notification jobs mark due work `running` with `FOR UPDATE SKIP LOCKED` semantics.
+- Generic completion, retry, dead-letter, failure-surfacing, and stalled-job watchdog helpers are covered by pgTAP.
+- `issue-scoped-jwt` is the only Edge Function that reads `SUPABASE_JWT_SECRET`; shared helpers enforce internal bearer auth and scoped-client issuance.
+- Dispatcher stubs exist for embeddings, transcription, cleanup, export, notifications, and transcript re-embedding without provider-specific work.
+- Source-safety tests verify the Edge Function tree, secret hygiene, shared runtime usage, and scoped-JWT secret isolation.
+- Verification: `npm run test:supabase` passed with 193 tests, `npm run test:scripts` passed with 7 tests, `npm run verify` passed, `npx pnpm@10.11.0 --filter @relic/web test` passed with 14 tests, and `npm run backend:baseline:reset` completed with `RELIC_BACKEND_BASELINE_OK`.
+
 ## Files
 
 - Create: `Relic Vault/56 - Backend Module 8 Background Job and Edge Runtime Plan.md`
@@ -60,11 +72,11 @@ Verified during Module 8 planning on 2026-06-01:
 
 - Create: `supabase/tests/job_runtime.sql`
 
-- [ ] **Step 1: Seed queue fixtures**
+- [x] **Step 1: Seed queue fixtures**
 
 Create representative pending jobs for embedding, transcription, cleanup, export, and notification queues.
 
-- [ ] **Step 2: Prove claim semantics**
+- [x] **Step 2: Prove claim semantics**
 
 Assert claim helpers:
 
@@ -74,7 +86,7 @@ Assert claim helpers:
 - Increment attempts only on retry/failure, not on claim.
 - Use `FOR UPDATE SKIP LOCKED` behavior where concurrent claims do not return the same job.
 
-- [ ] **Step 3: Prove retry and backoff semantics**
+- [x] **Step 3: Prove retry and backoff semantics**
 
 Assert transient failure helpers:
 
@@ -83,7 +95,7 @@ Assert transient failure helpers:
 - Set next schedule/debounce time according to queue-specific retry policy.
 - Preserve a sanitized failure reason.
 
-- [ ] **Step 4: Prove dead-letter semantics**
+- [x] **Step 4: Prove dead-letter semantics**
 
 Assert exhausted jobs:
 
@@ -91,7 +103,7 @@ Assert exhausted jobs:
 - Insert one `internal.dead_letter_jobs` row with job table, job id, payload, and sanitized failure reason.
 - Do not duplicate dead-letter rows on repeated failure handling.
 
-- [ ] **Step 5: Prove GM-visible state updates**
+- [x] **Step 5: Prove GM-visible state updates**
 
 Assert transcription, cleanup/export, and pipeline-facing failures surface to the relevant product row where the UI can show retry/failure state.
 
@@ -101,11 +113,11 @@ Assert transcription, cleanup/export, and pipeline-facing failures surface to th
 
 - Create: `supabase/migrations/<timestamp>_job_runtime.sql`
 
-- [ ] **Step 1: Normalize queue metadata**
+- [x] **Step 1: Normalize queue metadata**
 
 Add missing `scheduled_at`, `started_at`, `updated_at`, `max_attempts`, `locked_by`, and `locked_at` columns where needed without changing existing public contracts.
 
-- [ ] **Step 2: Add queue-specific claim helpers**
+- [x] **Step 2: Add queue-specific claim helpers**
 
 Create internal claim helpers for:
 
@@ -117,11 +129,11 @@ Create internal claim helpers for:
 
 Use queue-specific due-time columns and `FOR UPDATE SKIP LOCKED`.
 
-- [ ] **Step 3: Add completion/failure helpers**
+- [x] **Step 3: Add completion/failure helpers**
 
 Create internal helpers that complete, retry, or dead-letter jobs with queue-specific attempt limits and backoff curves from [[21 - Tech Architecture]].
 
-- [ ] **Step 4: Add stalled-job watchdog**
+- [x] **Step 4: Add stalled-job watchdog**
 
 Create an internal function to reset stale `running` jobs to `pending` when `locked_at` exceeds the queue's timeout threshold.
 
@@ -133,19 +145,19 @@ Create an internal function to reset stale `running` jobs to `pending` when `loc
 - Create `supabase/functions/issue-scoped-jwt/index.ts`.
 - Create dispatcher stubs.
 
-- [ ] **Step 1: Shared internal auth**
+- [x] **Step 1: Shared internal auth**
 
 Add a helper that checks `Authorization: Bearer <INTERNAL_TOKEN>` and returns typed errors without logging token values.
 
-- [ ] **Step 2: Scoped JWT issuer**
+- [x] **Step 2: Scoped JWT issuer**
 
 Implement `issue-scoped-jwt` as the only function that reads `SUPABASE_JWT_SECRET`. It validates internal auth, requires `gm_user_id` and `purpose`, returns a short-lived authenticated JWT, and never grants service-role claims.
 
-- [ ] **Step 3: Scoped Supabase client helper**
+- [x] **Step 3: Scoped Supabase client helper**
 
 Add a helper for worker functions to request a scoped JWT from `issue-scoped-jwt` and construct a Supabase client using the anon key plus the scoped bearer token.
 
-- [ ] **Step 4: Worker runtime wrapper**
+- [x] **Step 4: Worker runtime wrapper**
 
 Add a shared wrapper that:
 
@@ -161,19 +173,19 @@ Add a shared wrapper that:
 
 - Create worker folders under `supabase/functions/`.
 
-- [ ] **Step 1: Embedding dispatcher stub**
+- [x] **Step 1: Embedding dispatcher stub**
 
 Scaffold `embed-row-dispatch` so it claims embedding jobs and reaches a handler boundary. Provider embedding calls remain disabled until configured; test mode can mark a job failed/retryable without user-data writes.
 
-- [ ] **Step 2: Transcription dispatcher stub**
+- [x] **Step 2: Transcription dispatcher stub**
 
 Scaffold `transcribe-session` around Module 7 transcription helpers. Do not call Whisper yet unless explicit test-mode input is supplied.
 
-- [ ] **Step 3: Cleanup dispatcher stub**
+- [x] **Step 3: Cleanup dispatcher stub**
 
 Scaffold cleanup workers that can claim jobs and expose the service-role exception for post-delete Storage cleanup. Actual Storage deletion can be implemented behind the stub with idempotent behavior.
 
-- [ ] **Step 4: Export and notification stubs**
+- [x] **Step 4: Export and notification stubs**
 
 Scaffold dispatchers sufficiently for claim/retry/dead-letter behavior. Module 10 owns full export generation and notification provider integration.
 
@@ -183,15 +195,15 @@ Scaffold dispatchers sufficiently for claim/retry/dead-letter behavior. Module 1
 
 - Create or modify script tests if needed.
 
-- [ ] **Step 1: Secret hygiene tests**
+- [x] **Step 1: Secret hygiene tests**
 
 Assert function source files reference secret env var names but do not contain literal secret values, local keys, or checked-in bearer tokens.
 
-- [ ] **Step 2: Internal auth tests**
+- [x] **Step 2: Internal auth tests**
 
 Add lightweight tests for internal auth helper behavior if the repo test harness can run them without Deno deployment.
 
-- [ ] **Step 3: Function tree verification**
+- [x] **Step 3: Function tree verification**
 
 Update repo verification if needed so expected function folders and shared files are present.
 
@@ -201,7 +213,7 @@ Update repo verification if needed so expected function folders and shared files
 
 - Modify: vault status notes
 
-- [ ] **Step 1: Run focused SQL tests**
+- [x] **Step 1: Run focused SQL tests**
 
 Run:
 
@@ -209,7 +221,7 @@ Run:
 npm run test:supabase
 ```
 
-- [ ] **Step 2: Run script/source tests**
+- [x] **Step 2: Run script/source tests**
 
 Run:
 
@@ -218,7 +230,7 @@ npm run test:scripts
 npm run verify
 ```
 
-- [ ] **Step 3: Run web tests**
+- [x] **Step 3: Run web tests**
 
 Run:
 
@@ -226,7 +238,7 @@ Run:
 npx pnpm@10.11.0 --filter @relic/web test
 ```
 
-- [ ] **Step 4: Run full backend baseline**
+- [x] **Step 4: Run full backend baseline**
 
 Run:
 
@@ -234,7 +246,7 @@ Run:
 npm run backend:baseline:reset
 ```
 
-- [ ] **Step 5: Update vault status**
+- [x] **Step 5: Update vault status**
 
 Record passing verification in this plan and [[46 - Backend Audit and Module Plan]].
 

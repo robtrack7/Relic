@@ -249,6 +249,8 @@ Detailed plan: [[55 - Backend Module 7 Storage Audio Transcription Cleanup Plan]
 
 Detailed plan: [[56 - Backend Module 8 Background Job and Edge Runtime Plan]].
 
+**Status:** Implemented on 2026-06-02 in `supabase/migrations/20260601235500_job_runtime.sql` and `supabase/functions/`; `npm run backend:baseline:reset` passed with `RELIC_BACKEND_BASELINE_OK`.
+
 **Goal:** Build the async backbone shared by AI, embeddings, storage, and notifications.
 
 **Owns:**
@@ -317,14 +319,14 @@ The fuller rough UI can start now that Module 7 has passed. The manual MVP loop 
 
 Create -> Organize -> Prep -> Run -> Review -> Approve -> Continue.
 
-AI-facing UI should wait until Modules 8 and 9 pass. Modules 4 and 6 now provide retrieval and quota charging; Modules 8 and 9 still need async execution, source validation, provider routing, and draft creation.
+AI-facing UI should wait until Module 9 passes. Modules 4, 6, and 8 now provide retrieval, quota charging, and async runtime scaffolding; Module 9 still needs source validation, provider routing, AI task execution, and draft creation.
 
 ## Immediate Work Order
 
-1. Keep Modules 0-7 green under `npm run backend:baseline:reset`.
+1. Keep Modules 0-8 green under `npm run backend:baseline:reset`.
 2. Use the existing web UI for an end-to-end manual smoke test of auth, canon CRUD, session prep, Stage capture, usage summary, audio upload metadata, and transcript-edit surfaces.
-3. Complete Module 8 background job and Edge Function runtime.
-4. Complete Module 9 AI task router/runtime before enabling AI UI.
+3. Complete Module 9 AI task router/runtime before enabling AI UI.
+4. Complete Module 10 notifications, export generation, and operational loops.
 
 ## Open Follow-Ups
 
