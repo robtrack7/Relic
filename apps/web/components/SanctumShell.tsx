@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOutAction } from "@/app/actions";
+import { RelicIcon } from "@/components/RelicIcon";
 import { sagaPath } from "@/lib/routes";
 import type { IdParams } from "@/lib/types";
 
@@ -15,6 +16,15 @@ type ShellProps = {
   children: React.ReactNode;
 };
 
+function sessionPillClass(status: string | undefined): string {
+  if (!status) return "sess-pill none";
+  if (status === "planned") return "sess-pill prepping";
+  if (status === "ready") return "sess-pill ready";
+  if (status === "started" || status === "in_progress") return "sess-pill active";
+  if (status === "ended_pending_undo" || status === "ended") return "sess-pill review";
+  return "sess-pill none";
+}
+
 export function SanctumShell({
   params,
   workspace,
@@ -24,113 +34,202 @@ export function SanctumShell({
   currentSession,
   reviewCount = 0,
   loomMode = "ask",
-  children
+  children,
 }: ShellProps) {
   const root = sagaPath(params);
-  const prepareHref = currentSession ? `${root}/sessions/${currentSession.id}/prep` : `${root}/sessions`;
-  const nav = [
-    ["home", "Home", root],
-    ["threads", "Threads", `${root}/threads`],
-    ["library", "Library", `${root}/entities`],
-    ["prepare", "Prepare", prepareHref],
-    ["sessions", "Sessions", `${root}/sessions`],
-    ["review", "Review", `${root}/review`]
-  ] as const;
-  const lowerNav = [
-    ["export", "Export", `${root}/export`],
-    ["settings", "Settings", `${root}/settings`]
-  ] as const;
-  const normalizedActive = active === "entities" ? "library" : active;
-  const sessionLabel = currentSession ? `${currentSession.name} · ${currentSession.status}` : "No session planned";
+  const prepareHref = currentSession
+    ? `${root}/sessions/${currentSession.id}/prep`
+    : `${root}/sessions`;
+
   const sessionHref = currentSession
     ? ["ready", "started", "in_progress", "ended_pending_undo"].includes(currentSession.status)
       ? `${root}/sessions/${currentSession.id}/stage`
       : `${root}/sessions/${currentSession.id}/prep`
     : `${root}/sessions`;
 
+  const sessionLabel = currentSession
+    ? `${currentSession.name} · ${currentSession.status}`
+    : "No session";
+
+  const normalizedActive = active === "entities" ? "library" : active;
+
+  const mainNav = [
+    { key: "home", label: "Home", href: root, icon: "home" as const },
+    { key: "threads", label: "Threads", href: `${root}/threads`, icon: "threads" as const },
+    { key: "library", label: "Library", href: `${root}/entities`, icon: "library" as const },
+    { key: "prepare", label: "Prepare", href: prepareHref, icon: "prepare" as const },
+    { key: "sessions", label: "Sessions", href: `${root}/sessions`, icon: "sessions" as const },
+    { key: "review", label: "Review", href: `${root}/review`, icon: "review" as const },
+  ] as const;
+
+  const lowerNav = [
+    { key: "export", label: "Export", href: `${root}/export`, icon: "export" as const },
+    { key: "settings", label: "Settings", href: `${root}/settings`, icon: "settings" as const },
+  ] as const;
+
   return (
-    <div className="sanctum-app-shell">
-      <header className="sanctum-topbar">
-        <Link className="brand" href={root} aria-label="Relic">
-          <img className="brand-wordmark" src="/brand/wordmark.svg" alt="Relic" />
-        </Link>
-        <div className="context-switchers" aria-label="Workspace, World, and Saga context">
-          <button className="context-switcher" type="button">
-            <span>Workspace</span>
-            <strong>{workspace.name}</strong>
-          </button>
-          <button className="context-switcher" type="button">
-            <span>World</span>
-            <strong>{world.name}</strong>
-          </button>
-          <button className="context-switcher" type="button">
-            <span>Saga</span>
-            <strong>{saga.name}</strong>
-          </button>
+    <div className="relic" style={{ height: "100dvh" }}>
+      {/* Top bar */}
+      <header className="topbar">
+        <div className="topbar-brand">
+          <Link href={root} aria-label="Relic home">
+            <img src="/brand/wordmark.svg" alt="Relic" height={22} style={{ display: "block" }} />
+          </Link>
         </div>
-        <form className="topbar-search" action={`${root}/search`} role="search">
-          <label className="sr-only" htmlFor="global-saga-search">Search saga canon</label>
-          <input id="global-saga-search" name="q" type="search" placeholder="Search saga canon..." aria-label="Search saga canon" />
-        </form>
-        <button className="topbar-button" type="button">Guide</button>
-        <button className="topbar-button is-primary" type="button">Create</button>
-        <Link className="session-pill" href={sessionHref}>{sessionLabel}</Link>
-        <Link className="review-pill" href={`${root}/review`}>Review {reviewCount}</Link>
-        <form action={signOutAction}>
-          <button className="account-button" type="submit" aria-label="Sign out">GM</button>
-        </form>
+
+        <div className="switchers" aria-label="Workspace, World, and Saga context">
+          <div className="switcher">
+            <span className="switcher-label">Workspace</span>
+            <button className="switcher-btn" type="button">
+              <span className="sw-ico"><RelicIcon name="crown" size={12} /></span>
+              <span className="switcher-name">{workspace.name}</span>
+              <span className="sw-chev"><RelicIcon name="chevronDown" size={11} /></span>
+            </button>
+          </div>
+          <span className="sw-sep">/</span>
+          <div className="switcher">
+            <span className="switcher-label">World</span>
+            <button className="switcher-btn" type="button">
+              <span className="sw-ico wld"><RelicIcon name="flame" size={12} /></span>
+              <span className="switcher-name">{world.name}</span>
+              <span className="sw-chev"><RelicIcon name="chevronDown" size={11} /></span>
+            </button>
+          </div>
+          <span className="sw-sep">/</span>
+          <div className="switcher">
+            <span className="switcher-label">Saga</span>
+            <button className="switcher-btn" type="button">
+              <span className="sw-ico"><RelicIcon name="sessions" size={12} /></span>
+              <span className="switcher-name">{saga.name}</span>
+              <span className="sw-chev"><RelicIcon name="chevronDown" size={11} /></span>
+            </button>
+          </div>
+        </div>
+
+        <div className="topbar-right">
+          <form action={`${root}/search`} role="search" className="search-btn" style={{ cursor: "text" }}>
+            <RelicIcon name="search" size={13} />
+            <input
+              name="q"
+              type="search"
+              placeholder="Search saga canon…"
+              aria-label="Search saga canon"
+              style={{ background: "transparent", border: "none", outline: "none", fontSize: 12, color: "var(--stone-500)", width: 140 }}
+            />
+            <span className="kbd-hint">⌘K</span>
+          </form>
+
+          <button className="icon-btn" type="button" aria-label="Relic Guide">
+            <RelicIcon name="spark" size={16} />
+          </button>
+
+          <Link href={sessionHref} className={sessionPillClass(currentSession?.status)}>
+            <span className="dot amber" />
+            {sessionLabel}
+          </Link>
+
+          {reviewCount > 0 && (
+            <Link href={`${root}/review`} className="review-bdg">
+              <RelicIcon name="review" size={12} />
+              {reviewCount} pending
+            </Link>
+          )}
+
+          <button className="create-btn" type="button">
+            <RelicIcon name="plus" size={13} />
+            Create
+          </button>
+
+          <form action={signOutAction}>
+            <button className="icon-btn" type="submit" aria-label="Sign out" title="Sign out">
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 600 }}>GM</span>
+            </button>
+          </form>
+        </div>
       </header>
-      <aside className="sanctum-rail">
-        <div className="eyebrow">The Sanctum</div>
-        <nav className="nav-list" aria-label="Sanctum">
-          {nav.map(([key, label, href]) => (
+
+      <div className="body-row">
+        {/* Side nav */}
+        <nav className="sidenav" aria-label="Sanctum">
+          <span className="sidenav-label">The Sanctum</span>
+
+          {mainNav.map(({ key, label, href, icon }) => (
             <Link
               key={key}
-              className={`nav-link ${normalizedActive === key ? "active" : ""}`}
               href={href}
+              className={`nav-item${normalizedActive === key ? " is-active" : ""}`}
             >
-              {label}
-              {key === "review" && reviewCount ? <span className="nav-count">{reviewCount}</span> : null}
+              <span className="nav-ico"><RelicIcon name={icon} size={15} /></span>
+              <span className="nav-text">{label}</span>
+              {key === "review" && reviewCount > 0 ? (
+                <span className="nav-count">{reviewCount}</span>
+              ) : null}
             </Link>
           ))}
-          <span className="nav-spacer" aria-hidden="true" />
-          {lowerNav.map(([key, label, href]) => (
-            <Link key={key} className={`nav-link ${normalizedActive === key ? "active" : ""}`} href={href}>
-              {label}
+
+          <span className="nav-spacer" />
+          <div className="nav-sep" />
+
+          {lowerNav.map(({ key, label, href, icon }) => (
+            <Link
+              key={key}
+              href={href}
+              className={`nav-item${normalizedActive === key ? " is-active" : ""}`}
+            >
+              <span className="nav-ico"><RelicIcon name={icon} size={15} /></span>
+              <span className="nav-text">{label}</span>
             </Link>
           ))}
         </nav>
-        <div className="context-block">
-          <span className="chip amber">Usage ready</span>
-          <span className="small muted">Manual viewing, editing, and approval stay available even when metered work is blocked.</span>
-        </div>
-      </aside>
-      <main className="sanctum-main">{children}</main>
-      <aside className={`loom-sidecar loom-${loomMode}`} aria-label="The Loom">
-        <div className="loom-header">
-          <span className="loom-spark">+</span>
-          <div>
-            <h2>The Loom</h2>
-            <p>{loomMode === "prep" ? "Your AI partner for sharper prep." : "Search, brainstorm, and weave new canon."}</p>
+
+        {/* Main content */}
+        <main className="main">
+          <div className="main-inner">{children}</div>
+        </main>
+
+        {/* Loom sidecar */}
+        <aside className="loom-carriage exp" aria-label="The Loom">
+          <div className="loom-head">
+            <span className="loom-title">
+              <RelicIcon name="spark" size={12} /> The Loom
+            </span>
+            <div className="loom-mode-tabs">
+              <button type="button" className={`loom-tab${loomMode === "ask" ? " active" : ""}`}>Ask</button>
+              <button type="button" className={`loom-tab${loomMode === "prep" ? " active" : ""}`}>Prep</button>
+            </div>
           </div>
-        </div>
-        <div className="loom-card">
-          <span className="section-label">{loomMode === "prep" ? "Prep suggestion" : "The Loom"}</span>
-          <p>{loomMode === "prep"
-            ? "Review continuity, draft scenes, and prepare changes. Canon still waits for GM approval."
-            : "Ask a sourced question or draft an idea. The Loom will not touch canon until you commit it."}</p>
-        </div>
-        <div className="loom-prompts">
-          <button type="button">Show unresolved threads</button>
-          <button type="button">Draft the next scene</button>
-          <button type="button">Find canon risks</button>
-        </div>
-        <form className="loom-composer">
-          <label className="sr-only" htmlFor="loom-prompt">Ask The Loom</label>
-          <input id="loom-prompt" placeholder={loomMode === "prep" ? "Ask about this prep..." : "Ask anything about this saga..."} />
-          <button type="button">Send</button>
-        </form>
-      </aside>
+          <div className="loom-body">
+            <div className="loom-draft-card">
+              <div className="loom-draft-label">The Loom</div>
+              <div className="loom-draft-text">
+                {loomMode === "prep"
+                  ? "Review continuity, draft scenes, and prepare changes. Canon still waits for GM approval."
+                  : "Search, brainstorm, and weave new canon."}
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              <button className="btn btn-ghost btn-sm" type="button" style={{ justifyContent: "flex-start", fontSize: 11 }}>Show unresolved threads</button>
+              <button className="btn btn-ghost btn-sm" type="button" style={{ justifyContent: "flex-start", fontSize: 11 }}>Draft the next scene</button>
+              <button className="btn btn-ghost btn-sm" type="button" style={{ justifyContent: "flex-start", fontSize: 11 }}>Find canon risks</button>
+            </div>
+          </div>
+          <div className="loom-foot">
+            <form className="loom-composer">
+              <label className="sr-only" htmlFor="loom-prompt">Ask The Loom</label>
+              <textarea
+                id="loom-prompt"
+                rows={1}
+                placeholder={loomMode === "prep" ? "Ask about this prep…" : "Ask anything about this saga…"}
+                style={{ fontFamily: "var(--font-ui)" }}
+              />
+              <button type="button" className="loom-send" aria-label="Send">
+                <RelicIcon name="send" size={13} />
+              </button>
+            </form>
+            <p className="loom-disclaimer">AI output is never canon without GM approval.</p>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

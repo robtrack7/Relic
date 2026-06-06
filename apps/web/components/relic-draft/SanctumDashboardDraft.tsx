@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createSessionAction } from "@/app/actions";
-import { EntityCard } from "@/components/EntityCard";
+import { RelicIcon } from "@/components/RelicIcon";
 import { HiddenContextFields } from "@/components/HiddenContextFields";
 import { sagaPath } from "@/lib/routes";
 import type { EntitySummary, IdParams } from "@/lib/types";
@@ -27,142 +27,267 @@ type SanctumDashboardDraftProps = {
   reviewCount: number;
 };
 
+function entityTypeClass(type: string): string {
+  const map: Record<string, string> = {
+    character: "e-npc",
+    place: "e-location",
+    faction: "e-faction",
+    artifact: "e-artifact",
+    thread: "e-lore",
+    note: "e-note",
+  };
+  return map[type] ?? "e-note";
+}
+
 export function SanctumDashboardDraft({
   params,
   saga,
   activeSession,
   recentEntities,
-  reviewCount
+  reviewCount,
 }: SanctumDashboardDraftProps) {
   const root = sagaPath(params);
+  const status = activeSession?.status;
+  const isLive = status === "started" || status === "in_progress";
+  const isReady = status === "ready";
+  const isPlanned = status === "planned";
+  const isReview = status === "ended_pending_undo" || status === "ended";
   const systemLabel = saga.game_system || "System-agnostic";
-  const loopState = activeSession ? activeSession.status : "needs prep";
-  const nextActionLabel = activeSession
-    ? activeSession.status === "planned"
-      ? "Continue prep"
-      : "Open Stage"
-    : "Plan Session 1";
-  const nextActionHref = activeSession
-    ? activeSession.status === "planned"
-      ? `${root}/sessions/${activeSession.id}/prep`
-      : `${root}/sessions/${activeSession.id}/stage`
-    : `${root}/sessions/new`;
 
   return (
-    <div className="draft-dashboard">
-      <section className="draft-hero" aria-labelledby="saga-dashboard-title">
-        <div className="draft-hero-copy">
-          <div className="eyebrow">Relic Web Draft import</div>
-          <h1 id="saga-dashboard-title" className="draft-display-title">{saga.name}</h1>
-          <p className="draft-lede">
-            {saga.premise || `${systemLabel} saga cockpit for create, prep, run, review, approve, and continue.`}
-          </p>
-          <div className="draft-hero-actions">
-            <Link className="button" href={nextActionHref}>{nextActionLabel}</Link>
-            <Link className="button-ghost" href={`${root}/entities/new`}>New canon record</Link>
+    <div>
+      {/* Page head */}
+      <div className="page-head">
+        <div>
+          <div className="page-eyebrow">
+            <span className={`dot${isLive ? " live pulse" : isReady ? " amber" : isPlanned ? " amber" : ""}`} />
+            {systemLabel} · {saga.name}
+          </div>
+          <div className="page-title">{saga.name}</div>
+          {saga.premise && <div className="page-sub">{saga.premise}</div>}
+        </div>
+        <div className="page-actions">
+          {isLive && activeSession ? (
+            <Link className="btn btn-amber" href={`${root}/sessions/${activeSession.id}/stage`}>
+              Return to Stage
+            </Link>
+          ) : isPlanned && activeSession ? (
+            <Link className="btn btn-secondary" href={`${root}/sessions/${activeSession.id}/prep`}>
+              <RelicIcon name="prepare" size={13} /> Open Prepare
+            </Link>
+          ) : isReview ? (
+            <Link className="btn btn-ink" href={`${root}/review`}>
+              <RelicIcon name="review" size={13} /> Open review queue
+            </Link>
+          ) : !activeSession ? (
+            <Link className="btn btn-secondary" href={`${root}/sessions/new`}>
+              <RelicIcon name="sessions" size={13} /> Plan next session
+            </Link>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Live banner */}
+      {isLive && activeSession && (
+        <div className="live-banner">
+          <div className="live-banner-left">
+            <span className="dot live pulse" />
+            <div>
+              <div className="live-label">Session in progress</div>
+              <div className="live-name">{activeSession.name}</div>
+            </div>
+          </div>
+          <Link className="btn btn-amber" href={`${root}/sessions/${activeSession.id}/stage`}>
+            Return to Stage
+          </Link>
+        </div>
+      )}
+
+      <div className="home-grid">
+        {/* Left column */}
+        <div className="home-col-left">
+          {/* Recent canon */}
+          {recentEntities.length > 0 && (
+            <div className="card list-card">
+              <div className="sec-label">
+                <RelicIcon name="library" size={12} />
+                Recent canon
+                <span className="count">{recentEntities.length}</span>
+              </div>
+              {recentEntities.slice(0, 5).map((entity) => (
+                <Link
+                  key={`${entity.entityType}:${entity.id}`}
+                  href={`${root}/entities/${entity.entityType}/${entity.id}`}
+                  className="th-row"
+                  style={{ textDecoration: "none" }}
+                >
+                  <div className={`th-ico ${entityTypeClass(entity.entityType)}`} style={{ background: "var(--bg-3)", border: "1px solid var(--border-2)", borderRadius: "var(--radius-md)", width: 34, height: 34, display: "grid", placeItems: "center", flexShrink: 0 }}>
+                    <RelicIcon name="file" size={14} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="th-name">{entity.name}</div>
+                    <div className="th-state" style={{ color: "var(--stone-500)" }}>
+                      {entity.entityType}
+                      {entity.is_stub ? " · stub" : ""}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+              <div className="list-foot">
+                <Link className="btn btn-ghost btn-sm" href={`${root}/entities`}>Open Library</Link>
+              </div>
+            </div>
+          )}
+
+          {/* Review queue */}
+          {reviewCount > 0 && (
+            <div className="card list-card">
+              <div className="sec-label">
+                <RelicIcon name="review" size={12} />
+                Pending review
+                <span className="count" style={{ color: "var(--rust)" }}>{reviewCount}</span>
+              </div>
+              <div className="rev-item">
+                <div className="rev-title">{reviewCount} item{reviewCount !== 1 ? "s" : ""} awaiting review</div>
+                <div className="rev-desc">Nothing enters canon until you approve it.</div>
+              </div>
+              <div className="list-foot">
+                <Link className="btn btn-ghost btn-sm" href={`${root}/review`}>Open Review</Link>
+              </div>
+            </div>
+          )}
+
+          {/* Quick create */}
+          <div className="card list-card">
+            <div className="sec-label">
+              <RelicIcon name="plus" size={12} />
+              Quick create
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, paddingTop: 10 }}>
+              <Link className="btn btn-secondary btn-sm" href={`${root}/threads`}>Thread</Link>
+              <Link className="btn btn-secondary btn-sm" href={`${root}/entities/new?type=character`}>Character</Link>
+              <Link className="btn btn-secondary btn-sm" href={`${root}/entities/new?type=place`}>Place</Link>
+              <Link className="btn btn-secondary btn-sm" href={`${root}/sessions/new`}>Session</Link>
+            </div>
           </div>
         </div>
-        <aside className="draft-status-panel" aria-label="Current saga state">
-          <span className="chip amber">{loopState}</span>
-          <dl>
-            <div>
-              <dt>System</dt>
-              <dd>{systemLabel}</dd>
-            </div>
-            <div>
-              <dt>Review</dt>
-              <dd>{reviewCount} pending</dd>
-            </div>
-            <div>
-              <dt>Recent canon</dt>
-              <dd>{recentEntities.length} records</dd>
-            </div>
-          </dl>
-        </aside>
-      </section>
 
-      <section className="draft-dashboard-grid" aria-label="Dashboard work areas">
-        <article className="draft-loop-card">
-          <div className="draft-section-head">
-            <span className="section-label">Next action</span>
-            {activeSession ? <span className="chip amber">{activeSession.status}</span> : <span className="chip sage">Manual ready</span>}
-          </div>
+        {/* Main column — session packet */}
+        <div>
+          {/* Ready banner */}
+          {isReady && (
+            <div className="prep-ready-banner" style={{ marginBottom: 12 }}>
+              <RelicIcon name="check" size={18} />
+              <div>
+                <div className="prep-ready-banner-label">Prep complete · Stage packet ready</div>
+                <div style={{ fontSize: 11, color: "var(--stone-700)", marginTop: 2 }}>
+                  {activeSession?.name} · Briefing and objective locked
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Review notice */}
+          {isReview && (
+            <div className="prep-locked-banner" style={{ marginBottom: 12 }}>
+              <RelicIcon name="review" size={18} />
+              <div>
+                <strong>Session complete · Review required</strong>
+                <div style={{ fontSize: 11, marginTop: 2 }}>
+                  {reviewCount} item{reviewCount !== 1 ? "s" : ""} awaiting your approval before entering canon.
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeSession ? (
-            <>
-              <h2 className="section-title">{activeSession.name}</h2>
-              <p className="muted">
-                {activeSession.objective || activeSession.opening_scene || "Prep is ready for details before Stage."}
-              </p>
-              <div className="draft-packet">
-                <div>
-                  <span>Objective</span>
-                  <p>{activeSession.objective || "Add the session objective before Stage."}</p>
-                </div>
-                <div>
-                  <span>Opening</span>
-                  <p>{activeSession.opening_scene || "No opening scene yet."}</p>
+            <div className="card packet">
+              <div className="packet-top">
+                <div className="packet-eyebrow">
+                  <span className={`dot${isLive ? " live pulse" : isReady ? " amber" : ""}`} />
+                  {activeSession.name} · {activeSession.status}
                 </div>
               </div>
-              <div className="button-row">
-                <Link className="button" href={`${root}/sessions/${activeSession.id}/prep`}>Continue prep</Link>
-                {activeSession.status !== "planned" ? (
-                  <Link className="button-ghost" href={`${root}/sessions/${activeSession.id}/stage`}>Open Stage</Link>
-                ) : null}
-              </div>
-            </>
-          ) : (
-            <>
-              <h2 className="section-title">Plan your first session</h2>
-              <p className="muted">Start with a light packet. The Stage opens after you mark the session Ready.</p>
-              <form className="draft-inline-form" action={createSessionAction}>
-                <HiddenContextFields params={params} />
-                <input type="hidden" name="name" value="Session 1" />
-                <label className="field">
-                  <span>Objective</span>
-                  <input className="input" name="objective" placeholder="What should the first session accomplish?" />
-                </label>
-                <button className="button" type="submit">Plan Session 1</button>
-              </form>
-            </>
-          )}
-        </article>
+              <div className="packet-title">{activeSession.name}</div>
 
-        <aside className="draft-side-stack">
-          <article className="card">
-            <span className="chip sage">Review</span>
-            <h2 className="section-title">{reviewCount} pending items</h2>
-            <p className="muted">Drafts become canon only through explicit GM approval.</p>
-            <Link className="button-ghost" href={`${root}/review`}>Open Review</Link>
-          </article>
-          <article className="card">
-            <span className="chip amber">Quick create</span>
-            <h2 className="section-title">Capture momentum</h2>
-            <div className="quick-create-grid">
-              <Link className="button-ghost" href={`${root}/threads`}>Thread</Link>
-              <Link className="button-ghost" href={`${root}/entities/new?type=character`}>Character</Link>
-              <Link className="button-ghost" href={`${root}/entities/new?type=place`}>Place</Link>
-              <Link className="button-ghost" href={`${root}/sessions/new`}>Session</Link>
+              {(activeSession.objective || activeSession.opening_scene) && (
+                <div className="packet-tiles">
+                  {activeSession.objective && (
+                    <div className="tile">
+                      <div className="tile-head">
+                        <span className="tile-ico"><RelicIcon name="target" size={13} /></span>
+                        <span className="tile-label">Objective</span>
+                      </div>
+                      <div className="tile-body">{activeSession.objective}</div>
+                    </div>
+                  )}
+                  {activeSession.opening_scene && (
+                    <div className="tile">
+                      <div className="tile-head">
+                        <span className="tile-ico"><RelicIcon name="flame" size={13} /></span>
+                        <span className="tile-label">Opening scene</span>
+                      </div>
+                      <div className="tile-body">{activeSession.opening_scene}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="packet-cta">
+                {isReady ? (
+                  <Link className="cta-stage" href={`${root}/sessions/${activeSession.id}/stage`}>
+                    Open in Stage
+                  </Link>
+                ) : isLive ? (
+                  <Link className="cta-stage" href={`${root}/sessions/${activeSession.id}/stage`}>
+                    Return to Stage
+                  </Link>
+                ) : isReview ? (
+                  <Link className="cta-stage" href={`${root}/review`} style={{ background: "var(--rust)" }}>
+                    Review session
+                  </Link>
+                ) : (
+                  <Link className="cta-stage" href={`${root}/sessions/${activeSession.id}/prep`}>
+                    Continue prep
+                  </Link>
+                )}
+                {!isLive && !isReview && (
+                  <Link className="btn btn-icon btn" href={`${root}/sessions/${activeSession.id}/prep`} aria-label="Open prepare">
+                    <RelicIcon name="chevronRight" size={16} />
+                  </Link>
+                )}
+              </div>
             </div>
-          </article>
-        </aside>
-      </section>
-
-      <section className="draft-recent-section">
-        <div className="draft-section-head">
-          <div>
-            <span className="section-label">Recent canon</span>
-            <h2 className="section-title">What changed lately</h2>
-          </div>
-          <Link className="button-ghost" href={`${root}/entities`}>Open Library</Link>
-        </div>
-        <div className="entity-list">
-          {recentEntities.length ? (
-            recentEntities.map((entity) => <EntityCard key={`${entity.entityType}:${entity.id}`} params={params} entity={entity} />)
           ) : (
-            <div className="card">Start with a character, place, faction, artifact, or thread.</div>
+            /* No session — create first */
+            <div className="card packet" style={{ borderLeft: "4px solid var(--stone-300)" }}>
+              <div className="packet-top">
+                <div className="packet-eyebrow">
+                  <span className="dot" /> No session planned
+                </div>
+              </div>
+              <div style={{ padding: "20px 0 8px", textAlign: "center" }}>
+                <div style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 18, color: "var(--stone-500)", marginBottom: 16 }}>
+                  Your saga is ready. Plan your first session to begin.
+                </div>
+                <form action={createSessionAction}>
+                  <HiddenContextFields params={params} />
+                  <input type="hidden" name="name" value="Session 1" />
+                  <div style={{ display: "flex", flexDirection: "column", gap: 9, maxWidth: 340, margin: "0 auto" }}>
+                    <label className="field">
+                      <span>Session objective</span>
+                      <input className="input" name="objective" placeholder="What should the first session accomplish?" />
+                    </label>
+                    <button className="btn btn-ink" type="submit" style={{ justifyContent: "center", gap: 8 }}>
+                      <RelicIcon name="sessions" size={14} /> Plan Session 1
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           )}
         </div>
-      </section>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { markMomentAction, quickCaptureAction, quickStubAction, setSessionStatusAction } from "@/app/actions";
+import { RelicIcon } from "@/components/RelicIcon";
 import { HiddenContextFields } from "@/components/HiddenContextFields";
 import { parseGmNotesTags } from "@/lib/stage";
 import { sagaPath } from "@/lib/routes";
@@ -36,6 +37,17 @@ function nextLiveStatus(status: string) {
   return status === "ready" ? "started" : "in_progress";
 }
 
+function entityPortraitColor(type: string): string {
+  const map: Record<string, string> = {
+    character: "var(--hue-npc)",
+    place: "var(--hue-location)",
+    faction: "var(--hue-faction)",
+    artifact: "#8b6914",
+    thread: "var(--hue-thread)",
+  };
+  return map[type] ?? "var(--stone-700)";
+}
+
 export function StageRuntimeDraft({
   params,
   saga,
@@ -43,172 +55,342 @@ export function StageRuntimeDraft({
   pinned,
   activeThreads,
   results,
-  query
+  query,
 }: StageRuntimeDraftProps) {
   const root = sagaPath(params);
   const live = ["started", "in_progress"].includes(session.status);
-  const visiblePinned = pinned.filter((item): item is { pin: { entity_type: string; entity_id: string }; entity: EntitySummary } => Boolean(item.entity));
+  const visiblePinned = pinned.filter(
+    (item): item is { pin: { entity_type: string; entity_id: string }; entity: EntitySummary } =>
+      Boolean(item.entity)
+  );
   const selectedEntity = visiblePinned[0]?.entity;
   const selectedTags = selectedEntity ? parseGmNotesTags(selectedEntity.gm_notes) : null;
+  const threads = activeThreads.filter((t): t is EntitySummary => Boolean(t));
 
   return (
-    <main className="stage-draft-shell">
-      <header className="stage-draft-topbar">
-        <div>
-          <span className="stage-draft-kicker">The Stage · {saga.name}</span>
-          <h1>{session.name}</h1>
+    <div className="stage-shell" style={{ height: "100dvh" }}>
+      {/* Stage top bar */}
+      <header className="stage-topbar">
+        <div className="stage-session-label">
+          <span className="stage-session-num">Stage · {saga.name}</span>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 17, color: "var(--stage-fg-1)", fontWeight: 400, margin: 0, letterSpacing: "-0.01em" }}>{session.name}</h1>
         </div>
-        <div className="stage-draft-state">
-          <span className={live ? "stage-draft-chip live" : "stage-draft-chip"}>{statusLabel(session.status)}</span>
-          {live ? <span className="stage-draft-chip recording">Recording ready</span> : null}
+
+        <div className="stage-chips">
+          {live ? (
+            <span className="stage-chip-live">
+              <span className="dot live pulse" />
+              {statusLabel(session.status)}
+            </span>
+          ) : (
+            <span className="stage-chip-live">{statusLabel(session.status)}</span>
+          )}
+          {live && <span className="stage-chip-rec"><span className="dot" />Recording ready</span>}
+        </div>
+
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
           <form action={setSessionStatusAction}>
             <HiddenContextFields params={params} />
             <input type="hidden" name="sessionId" value={session.id} />
             <input type="hidden" name="status" value={nextLiveStatus(session.status)} />
-            <button className="button" type="submit">{session.status === "ready" ? "Start Session" : live ? "Live" : "Go live"}</button>
+            <button className="btn btn-amber btn-sm" type="submit">
+              {session.status === "ready" ? "Start Session" : live ? "Live" : "Go live"}
+            </button>
           </form>
-          <Link className="stage-draft-sanctum" href={root}>Sanctum</Link>
+          <Link className="stage-sanctum-btn" href={root}>
+            <RelicIcon name="home" size={13} />
+            Sanctum
+          </Link>
         </div>
       </header>
 
-      <div className="stage-draft-body">
-        <section className="stage-draft-main">
-          <form className="stage-draft-search" action="">
-            <label className="sr-only" htmlFor="stage-search">Search saga during play</label>
-            <input id="stage-search" name="q" defaultValue={query} placeholder="Search saga..." />
-            <button type="submit">Search</button>
-          </form>
+      <div className="stage-body">
+        {/* Main stage area */}
+        <div className="stage-main-wrap">
+          <div className="stage-main">
+            <div className="stage-main-top">
+              {/* Search bar */}
+              <form action="" style={{ marginBottom: 4 }}>
+                <label className="sr-only" htmlFor="stage-search">Search saga during play</label>
+                <div className="stage-search">
+                  <RelicIcon name="search" size={14} />
+                  <input
+                    id="stage-search"
+                    name="q"
+                    defaultValue={query}
+                    placeholder="Search saga…"
+                    style={{ flex: 1, background: "transparent", border: "none", outline: "none", fontSize: 12, color: "var(--stage-fg-2)", fontFamily: "var(--font-ui)" }}
+                  />
+                </div>
+              </form>
 
-          {results.length ? (
-            <section className="stage-draft-results" aria-label="Search results">
-              {results.map((result) => (
-                <p key={`${result.source_kind}:${result.source_entity_id}`}>{result.snippet}</p>
-              ))}
-            </section>
-          ) : null}
+              {/* Search results */}
+              {results.length > 0 && (
+                <div className="stage-card" aria-label="Search results">
+                  <div className="stage-sec-label">Results</div>
+                  {results.slice(0, 4).map((r) => (
+                    <div key={`${r.source_kind}:${r.source_entity_id}`} className="agenda-item">
+                      <span className="agenda-txt">{r.snippet}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-          <section className="stage-draft-agenda" aria-label="Agenda">
-            <div className="stage-draft-section-head">
-              <span>Agenda</span>
-              <em>Packet from Prepare</em>
+              {/* Agenda */}
+              <div className="stage-card" role="region" aria-label="Agenda">
+                <div className="stage-sec-label">
+                  <span>Agenda</span>
+                  <span className="stage-text-btn">From packet</span>
+                </div>
+                {session.objective && (
+                  <div className="agenda-item">
+                    <span className="agenda-num">1</span>
+                    <span className="agenda-txt">{session.objective}</span>
+                  </div>
+                )}
+                {session.opening_scene && (
+                  <div className="agenda-item">
+                    <span className="agenda-num">2</span>
+                    <span className="agenda-txt">{session.opening_scene}</span>
+                  </div>
+                )}
+                {session.scene_notes && (
+                  <div className="agenda-item">
+                    <span className="agenda-num">3</span>
+                    <span className="agenda-txt">{session.scene_notes}</span>
+                  </div>
+                )}
+                {!session.objective && !session.opening_scene && (
+                  <div className="agenda-item">
+                    <span className="agenda-txt" style={{ fontStyle: "italic", opacity: 0.5 }}>
+                      No packet set. Return to Prepare to add the agenda.
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Pinned entities strip */}
+              <div>
+                <div className="stage-sec-label">
+                  <span>Pinned</span>
+                  <span className="stage-text-btn">{visiblePinned.length} records</span>
+                </div>
+                <div className="pinned-strip" aria-label="Pinned entities">
+                  {visiblePinned.length ? visiblePinned.map(({ entity }) => (
+                    <div key={`${entity.entityType}:${entity.id}`} className="pinned-card">
+                      <div
+                        className="pinned-portrait"
+                        style={{ background: entityPortraitColor(entity.entityType), opacity: 0.18, borderRadius: "var(--radius-sm)" }}
+                      />
+                      <div className="pinned-name">{entity.name}</div>
+                      <div className="pinned-type-txt">{entity.entityType}</div>
+                    </div>
+                  )) : (
+                    <div style={{ fontSize: 11, color: "var(--stage-fg-3)", fontStyle: "italic" }}>
+                      No pinned entities. Add them in Prepare.
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="stage-draft-agenda-grid">
-              <article>
-                <span>Objective</span>
-                <p>{session.objective || "No objective set."}</p>
-              </article>
-              <article>
-                <span>Opening scene</span>
-                <p>{session.opening_scene || "No opening scene set."}</p>
-              </article>
-              <article>
-                <span>Scene notes</span>
-                <p>{session.scene_notes || "No scene notes set."}</p>
-              </article>
-            </div>
-          </section>
 
-          <section className="stage-draft-pinned" aria-label="Pinned entities">
-            <div className="stage-draft-section-head">
-              <span>Pinned</span>
-              <em>{visiblePinned.length} records</em>
+            {/* Selected entity expanded */}
+            <div className="stage-pinned-entity">
+              {selectedEntity ? (
+                <div className="entity-expanded">
+                  {/* Left column — portrait */}
+                  <div className="ent-col-left">
+                    <div className="ent-portrait">
+                      <div className="ent-portrait-watermark" style={{ fontSize: 80, fontFamily: "var(--font-display)" }}>
+                        {selectedEntity.name[0]}
+                      </div>
+                      <div className="ent-portrait-gradient" />
+                      <div className="ent-portrait-foot">
+                        <span className="entity-name">{selectedEntity.name}</span>
+                        <span className="entity-meta">{selectedEntity.entityType}</span>
+                      </div>
+                    </div>
+                    {selectedTags && (selectedTags.voice || selectedTags.wants) && (
+                      <div className="ent-meta-block">
+                        {selectedTags.voice && (
+                          <div className="entity-gm-note"><strong>Voice</strong> {selectedTags.voice}</div>
+                        )}
+                        {selectedTags.wants && (
+                          <div className="entity-gm-note"><strong>Wants</strong> {selectedTags.wants}</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {/* Middle column — description */}
+                  <div className="ent-col-mid">
+                    {selectedEntity.summary && (
+                      <div className="ent-section">
+                        <span className="ent-section-label">Summary</span>
+                        <p className="ent-section-text">{selectedEntity.summary}</p>
+                      </div>
+                    )}
+                    {selectedEntity.narrative && (
+                      <div className="ent-section">
+                        <span className="ent-section-label">Narrative</span>
+                        <p className="ent-section-text ent-section-flavor">{selectedEntity.narrative}</p>
+                      </div>
+                    )}
+                    {selectedTags?.body && (
+                      <div className="ent-section">
+                        <span className="ent-section-label">GM notes</span>
+                        <p className="ent-section-text">{selectedTags.body}</p>
+                      </div>
+                    )}
+                  </div>
+                  {/* Right column — threads */}
+                  <div className="ent-col-right">
+                    {threads.length > 0 && (
+                      <div className="ent-right-section">
+                        <div className="ent-section-label">Active threads</div>
+                        {threads.map((thread) => (
+                          <div key={thread.id} className="ent-link-item">
+                            <RelicIcon name="threads" size={11} />
+                            {thread.name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <Link
+                      className="ent-open-btn"
+                      href={`${root}/entities/${selectedEntity.entityType}/${selectedEntity.id}`}
+                    >
+                      Open in Library <RelicIcon name="arrowRight" size={10} />
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="stage-card" style={{ textAlign: "center", padding: "32px 16px" }}>
+                  <div style={{ fontSize: 13, color: "var(--stage-fg-3)", fontStyle: "italic" }}>
+                    Pin entities in Prepare to see them here during play.
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="stage-draft-pinned-strip">
-              {visiblePinned.length ? visiblePinned.map(({ entity }) => (
-                <article key={`${entity.entityType}:${entity.id}`} className="stage-draft-pin">
-                  <span>{entity.entityType}</span>
-                  <strong>{entity.name}</strong>
-                  <em>{entity.is_stub ? "Stub" : "Canon"}</em>
-                </article>
-              )) : <p>No pinned entities yet. Return to Prepare to pin the table packet.</p>}
-            </div>
-          </section>
-
-          <section className="stage-draft-detail" aria-label="Selected pinned detail">
-            {selectedEntity ? (
-              <>
-                <article className="stage-draft-entity-card">
-                  <span className="stage-draft-card-label">{selectedEntity.entityType}</span>
-                  <h2>{selectedEntity.name}</h2>
-                  <p>{selectedEntity.summary || "No summary yet."}</p>
-                  {selectedTags?.voice ? <div><span>Voice</span><p>{selectedTags.voice}</p></div> : null}
-                  {selectedTags?.wants ? <div><span>Wants</span><p>{selectedTags.wants}</p></div> : null}
-                  {selectedTags?.body ? <div><span>GM notes</span><p>{selectedTags.body}</p></div> : null}
-                </article>
-                <aside className="stage-draft-thread-stack">
-                  <span className="stage-draft-card-label">Threads</span>
-                  {activeThreads.filter(Boolean).map((thread) => thread ? (
-                    <article key={thread.id}>
-                      <strong>{thread.name}</strong>
-                      <p>{thread.summary || "No thread summary yet."}</p>
-                    </article>
-                  ) : null)}
-                </aside>
-              </>
-            ) : (
-              <article className="stage-draft-entity-card">
-                <span className="stage-draft-card-label">Packet</span>
-                <h2>No pinned card selected</h2>
-                <p>Stage remains usable. Pin entities in Prepare when the session packet is ready.</p>
-              </article>
-            )}
-          </section>
-        </section>
-
-        <aside className="stage-draft-loom" aria-label="The Loom">
-          <div>
-            <span className="stage-draft-card-label">Live context</span>
-            <p>{activeThreads.filter(Boolean).length} active threads and {visiblePinned.length} pinned records are available for cited questions.</p>
           </div>
-          <form className="stage-draft-form" action={quickCaptureAction}>
-            <HiddenContextFields params={params} />
-            <input type="hidden" name="sessionId" value={session.id} />
-            <label className="field">
-              <span>Quick capture</span>
-              <textarea className="textarea" name="body" placeholder="Capture a table note..." />
-            </label>
-            <button className="button" type="submit">Capture</button>
-          </form>
-          <form className="stage-draft-form" action={quickStubAction}>
-            <HiddenContextFields params={params} />
-            <input type="hidden" name="sessionId" value={session.id} />
-            <label className="field">
-              <span>Quick stub</span>
-              <input className="input" name="name" placeholder="Name" />
-            </label>
-            <select className="select" name="entityType" defaultValue="character">
-              <option value="character">Character</option>
-              <option value="place">Place</option>
-              <option value="faction">Faction</option>
-              <option value="artifact">Artifact</option>
-              <option value="thread">Thread</option>
-            </select>
-            <input className="input" name="summary" placeholder="Short note" />
-            <button className="button-ghost" type="submit">Create stub</button>
-          </form>
-          <form className="stage-draft-end" action={setSessionStatusAction}>
-            <HiddenContextFields params={params} />
-            <input type="hidden" name="sessionId" value={session.id} />
-            <input type="hidden" name="status" value="ended_pending_undo" />
-            <button type="submit">End Session</button>
-          </form>
+
+          {/* Float action bar */}
+          <div className="stage-float-actions" aria-label="Stage actions">
+            <form action={setSessionStatusAction}>
+              <HiddenContextFields params={params} />
+              <input type="hidden" name="sessionId" value={session.id} />
+              <input type="hidden" name="status" value="in_progress" />
+              <button className="float-btn float-btn-record" type="submit">
+                <span className="dot recording pulse" />
+                Record
+              </button>
+            </form>
+            <form action={markMomentAction}>
+              <HiddenContextFields params={params} />
+              <input type="hidden" name="sessionId" value={session.id} />
+              <button className="float-btn float-btn-moment" type="submit">
+                <RelicIcon name="target" size={14} />
+                Mark Moment
+              </button>
+            </form>
+            <button className="float-btn" type="button">
+              <RelicIcon name="clock" size={14} />
+              Dice
+            </button>
+          </div>
+        </div>
+
+        {/* Stage Loom sidecar */}
+        <aside className="stage-loom" aria-label="The Loom">
+          <div className="stage-loom-head">
+            <span className="stage-loom-title">
+              <RelicIcon name="spark" size={12} /> The Loom
+            </span>
+            <div className="stage-loom-tabs">
+              <button type="button" className="stage-loom-tab active">Notes</button>
+              <button type="button" className="stage-loom-tab">Ask</button>
+            </div>
+          </div>
+
+          <div className="stage-loom-body">
+            <div className="sloom-section">
+              <span className="sloom-label">Context</span>
+              <span className="sloom-text">
+                {threads.length} active threads · {visiblePinned.length} pinned records
+              </span>
+            </div>
+
+            {/* Quick capture */}
+            <form action={quickCaptureAction}>
+              <HiddenContextFields params={params} />
+              <input type="hidden" name="sessionId" value={session.id} />
+              <div className="sloom-section">
+                <span className="sloom-label">Quick capture</span>
+                <div className="stage-loom-composer">
+                  <textarea name="body" placeholder="Capture a table note…" rows={2} />
+                  <button type="submit" className="sloom-send" aria-label="Capture">
+                    <RelicIcon name="send" size={12} />
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            {/* Quick stub */}
+            <form action={quickStubAction}>
+              <HiddenContextFields params={params} />
+              <input type="hidden" name="sessionId" value={session.id} />
+              <div className="sloom-section">
+                <span className="sloom-label">Quick stub</span>
+                <input
+                  name="name"
+                  placeholder="NPC or place name…"
+                  style={{ width: "100%", padding: "6px 9px", border: "1px solid var(--stage-border)", borderRadius: "var(--radius-md)", background: "var(--stage-card-2)", color: "var(--stage-fg-2)", fontSize: 12, fontFamily: "var(--font-ui)", outline: "none", marginBottom: 5 }}
+                />
+                <select
+                  name="entityType"
+                  defaultValue="character"
+                  style={{ width: "100%", padding: "5px 9px", border: "1px solid var(--stage-border)", borderRadius: "var(--radius-md)", background: "var(--stage-card-2)", color: "var(--stage-fg-2)", fontSize: 12, fontFamily: "var(--font-ui)", outline: "none", marginBottom: 5 }}
+                >
+                  <option value="character">Character</option>
+                  <option value="place">Place</option>
+                  <option value="faction">Faction</option>
+                  <option value="artifact">Artifact</option>
+                  <option value="thread">Thread</option>
+                </select>
+                <input
+                  name="summary"
+                  placeholder="Short note…"
+                  style={{ width: "100%", padding: "6px 9px", border: "1px solid var(--stage-border)", borderRadius: "var(--radius-md)", background: "var(--stage-card-2)", color: "var(--stage-fg-2)", fontSize: 12, fontFamily: "var(--font-ui)", outline: "none", marginBottom: 5 }}
+                />
+                <div className="sloom-quick-btns">
+                  <button type="submit" className="sloom-quick-btn">Create stub</button>
+                </div>
+              </div>
+            </form>
+
+            {/* Active threads */}
+            {threads.length > 0 && (
+              <div className="sloom-section">
+                <span className="sloom-label">Threads</span>
+                {threads.map((thread) => (
+                  <div key={thread.id} className="sloom-flag ok">
+                    <RelicIcon name="threads" size={11} />
+                    {thread.name}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="stage-loom-foot">
+            <form action={setSessionStatusAction}>
+              <HiddenContextFields params={params} />
+              <input type="hidden" name="sessionId" value={session.id} />
+              <input type="hidden" name="status" value="ended_pending_undo" />
+              <button type="submit" className="stage-end-btn">End Session</button>
+            </form>
+          </div>
         </aside>
       </div>
-
-      <nav className="stage-draft-actions" aria-label="Stage actions">
-        <form action={setSessionStatusAction}>
-          <HiddenContextFields params={params} />
-          <input type="hidden" name="sessionId" value={session.id} />
-          <input type="hidden" name="status" value="in_progress" />
-          <button className="stage-draft-action record" type="submit">Record</button>
-        </form>
-        <form action={markMomentAction}>
-          <HiddenContextFields params={params} />
-          <input type="hidden" name="sessionId" value={session.id} />
-          <button className="stage-draft-action moment" type="submit">Mark Moment</button>
-        </form>
-        <button className="stage-draft-action" type="button">Dice</button>
-      </nav>
-    </main>
+    </div>
   );
 }

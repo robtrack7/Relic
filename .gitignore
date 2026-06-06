@@ -33,6 +33,7 @@ npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+output/
 
 # OS / editors
 .DS_Store
@@ -45,3 +46,5 @@ Relic Vault/.obsidian/workspace.json
 
 # Codex local state
 .codex/
+.codex-remote-attachments/
+.claude/
