@@ -50,3 +50,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-06-02 - Relic Web Draft Prep Stage Integration]]
 - [[Session Logs/2026-06-02 - Wireframe Design Implementation and Icons]]
 - [[Session Logs/2026-06-06 - Agent Rules and Build Push]]
+- [[Session Logs/2026-06-13 - Relic Agent Definitions]]
