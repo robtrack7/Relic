@@ -53,3 +53,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-06-13 - Relic Agent Definitions]]
 - [[Session Logs/2026-06-13 - Web Wireframe Backend Route Pass]]
 - [[Session Logs/2026-06-13 - MVP UI Backend Stabilization]]
+- [[Session Logs/2026-06-13 - MVP Full Loop E2E Coverage]]
