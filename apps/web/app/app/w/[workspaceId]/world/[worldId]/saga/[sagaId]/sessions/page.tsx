@@ -36,10 +36,13 @@ export default async function SessionsPage({ params }: { params: Promise<IdParam
       <div className="sess-list">
         {sessions.length ? sessions.map((session, index) => (
           <div className="sess-row" key={session.id}>
-            <div className="sess-num">S{String(index + 1).padStart(2, "0")}</div>
+            <div className="sess-num">S{String(session.session_number ?? index + 1).padStart(2, "0")}</div>
             <div>
               <div className="sess-name">{session.name}</div>
-              <div className="sess-meta">{session.objective || session.opening_scene || "No prep details yet."}</div>
+              <div className="sess-meta">
+                {session.planned_date ? `Planned ${session.planned_date} · ` : ""}
+                {session.objective || session.opening_scene || "No prep details yet."}
+              </div>
             </div>
             <div className={`sess-status ${statusClass(session.status)}`}>
               <span className={`dot${session.status === "started" || session.status === "in_progress" ? " live" : session.status === "ended" ? " active" : " amber"}`} />
@@ -67,7 +70,7 @@ export default async function SessionsPage({ params }: { params: Promise<IdParam
         </div>
         <form action={createSessionAction} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <HiddenContextFields params={ids} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 160px", gap: 10 }}>
             <label className="field">
               <span>Name</span>
               <input className="settings-field" name="name" defaultValue={`Session ${sessions.length + 1}`} />
@@ -75,6 +78,10 @@ export default async function SessionsPage({ params }: { params: Promise<IdParam
             <label className="field">
               <span>Objective</span>
               <input className="settings-field" name="objective" placeholder="What should this session accomplish?" />
+            </label>
+            <label className="field">
+              <span>Planned date</span>
+              <input className="settings-field" name="plannedDate" type="date" />
             </label>
           </div>
           <div>

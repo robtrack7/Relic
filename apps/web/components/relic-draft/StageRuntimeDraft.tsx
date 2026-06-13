@@ -1,9 +1,17 @@
 import Link from "next/link";
-import { markMomentAction, quickCaptureAction, quickStubAction, setSessionStatusAction } from "@/app/actions";
+import {
+  markMomentAction,
+  quickCaptureAction,
+  quickStubAction,
+  recordDiceRollAction,
+  recordSessionConsentAction,
+  setSessionStatusAction
+} from "@/app/actions";
 import { RelicIcon } from "@/components/RelicIcon";
 import { HiddenContextFields } from "@/components/HiddenContextFields";
 import { parseGmNotesTags } from "@/lib/stage";
 import { sagaPath } from "@/lib/routes";
+import type { StagePacket } from "@/lib/data";
 import type { EntitySummary, IdParams, SearchResult } from "@/lib/types";
 
 type StageSession = {
@@ -13,12 +21,14 @@ type StageSession = {
   objective?: string | null;
   opening_scene?: string | null;
   scene_notes?: string | null;
+  consent_state?: string;
 };
 
 type StageRuntimeDraftProps = {
   params: IdParams;
   saga: { name: string };
   session: StageSession;
+  packet?: StagePacket;
   pinned: Array<{ pin: { entity_type: string; entity_id: string }; entity?: EntitySummary | null }>;
   activeThreads: Array<EntitySummary | undefined>;
   results: SearchResult[];
@@ -37,6 +47,13 @@ function nextLiveStatus(status: string) {
   return status === "ready" ? "started" : "in_progress";
 }
 
+function liveActionLabel(status: string) {
+  if (status === "ready") return "Start Session";
+  if (status === "started") return "Go live";
+  if (status === "in_progress") return "Live";
+  return "Go live";
+}
+
 function entityPortraitColor(type: string): string {
   const map: Record<string, string> = {
     character: "var(--hue-npc)",
@@ -52,6 +69,7 @@ export function StageRuntimeDraft({
   params,
   saga,
   session,
+  packet,
   pinned,
   activeThreads,
   results,
@@ -66,6 +84,9 @@ export function StageRuntimeDraft({
   const selectedEntity = visiblePinned[0]?.entity;
   const selectedTags = selectedEntity ? parseGmNotesTags(selectedEntity.gm_notes) : null;
   const threads = activeThreads.filter((t): t is EntitySummary => Boolean(t));
+  const diceRolls = packet?.dice_rolls ?? [];
+  const consentState = packet?.consent_state ?? session.consent_state ?? "unknown";
+  const canWriteStage = ["started", "in_progress"].includes(session.status);
 
   return (
     <div className="stage-shell" style={{ height: "100dvh" }}>
@@ -85,7 +106,7 @@ export function StageRuntimeDraft({
           ) : (
             <span className="stage-chip-live">{statusLabel(session.status)}</span>
           )}
-          {live && <span className="stage-chip-rec"><span className="dot" />Recording ready</span>}
+          {live && <span className="stage-chip-rec"><span className="dot" />Consent {consentState}</span>}
         </div>
 
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
@@ -93,8 +114,8 @@ export function StageRuntimeDraft({
             <HiddenContextFields params={params} />
             <input type="hidden" name="sessionId" value={session.id} />
             <input type="hidden" name="status" value={nextLiveStatus(session.status)} />
-            <button className="btn btn-amber btn-sm" type="submit">
-              {session.status === "ready" ? "Start Session" : live ? "Live" : "Go live"}
+            <button className="btn btn-amber btn-sm" type="submit" disabled={session.status === "in_progress"}>
+              {liveActionLabel(session.status)}
             </button>
           </form>
           <Link className="stage-sanctum-btn" href={root}>
@@ -116,6 +137,7 @@ export function StageRuntimeDraft({
                   <RelicIcon name="search" size={14} />
                   <input
                     id="stage-search"
+                    type="search"
                     name="q"
                     defaultValue={query}
                     placeholder="Search saga…"
@@ -275,13 +297,13 @@ export function StageRuntimeDraft({
 
           {/* Float action bar */}
           <div className="stage-float-actions" aria-label="Stage actions">
-            <form action={setSessionStatusAction}>
+            <form action={recordSessionConsentAction}>
               <HiddenContextFields params={params} />
               <input type="hidden" name="sessionId" value={session.id} />
-              <input type="hidden" name="status" value="in_progress" />
+              <input type="hidden" name="granted" value="true" />
               <button className="float-btn float-btn-record" type="submit">
                 <span className="dot recording pulse" />
-                Record
+                Consent
               </button>
             </form>
             <form action={markMomentAction}>
@@ -292,18 +314,30 @@ export function StageRuntimeDraft({
                 Mark Moment
               </button>
             </form>
-            <button className="float-btn" type="button">
-              <RelicIcon name="clock" size={14} />
-              Dice
-            </button>
+            <form action={recordDiceRollAction} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <HiddenContextFields params={params} />
+              <input type="hidden" name="sessionId" value={session.id} />
+              <label className="sr-only" htmlFor="stage-dice-expression">Dice expression</label>
+              <input
+                id="stage-dice-expression"
+                name="expression"
+                defaultValue="1d20"
+                disabled={!canWriteStage}
+                style={{ width: 64, border: "1px solid var(--stage-border)", borderRadius: 999, background: "var(--stage-card-2)", color: "var(--stage-fg-2)", padding: "7px 10px", fontSize: 12, fontFamily: "var(--font-mono)" }}
+              />
+              <button className="float-btn" type="submit" disabled={!canWriteStage}>
+                <RelicIcon name="clock" size={14} />
+                Dice
+              </button>
+            </form>
           </div>
         </div>
 
-        {/* Stage Loom sidecar */}
-        <aside className="stage-loom" aria-label="The Loom">
+        {/* Stage Relic Guide sidecar */}
+        <aside className="stage-loom" aria-label="Relic Guide">
           <div className="stage-loom-head">
             <span className="stage-loom-title">
-              <RelicIcon name="spark" size={12} /> The Loom
+              <RelicIcon name="spark" size={12} /> Relic Guide
             </span>
             <div className="stage-loom-tabs">
               <button type="button" className="stage-loom-tab active">Notes</button>
@@ -315,9 +349,21 @@ export function StageRuntimeDraft({
             <div className="sloom-section">
               <span className="sloom-label">Context</span>
               <span className="sloom-text">
-                {threads.length} active threads · {visiblePinned.length} pinned records
+                {threads.length} active threads · {visiblePinned.length} pinned records · Consent {consentState}
               </span>
             </div>
+
+            {diceRolls.length > 0 && (
+              <div className="sloom-section">
+                <span className="sloom-label">Recent dice</span>
+                {diceRolls.slice(0, 4).map((roll) => (
+                  <div key={roll.id} className="sloom-flag ok">
+                    <RelicIcon name="clock" size={11} />
+                    {roll.label ? `${roll.label}: ` : ""}{roll.expression} = {roll.result_total}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Quick capture */}
             <form action={quickCaptureAction}>
@@ -326,8 +372,8 @@ export function StageRuntimeDraft({
               <div className="sloom-section">
                 <span className="sloom-label">Quick capture</span>
                 <div className="stage-loom-composer">
-                  <textarea name="body" placeholder="Capture a table note…" rows={2} />
-                  <button type="submit" className="sloom-send" aria-label="Capture">
+                  <textarea name="body" placeholder="Capture a table note…" rows={2} disabled={!canWriteStage} />
+                  <button type="submit" className="sloom-send" aria-label="Capture" disabled={!canWriteStage}>
                     <RelicIcon name="send" size={12} />
                   </button>
                 </div>
@@ -343,11 +389,13 @@ export function StageRuntimeDraft({
                 <input
                   name="name"
                   placeholder="NPC or place name…"
+                  disabled={!canWriteStage}
                   style={{ width: "100%", padding: "6px 9px", border: "1px solid var(--stage-border)", borderRadius: "var(--radius-md)", background: "var(--stage-card-2)", color: "var(--stage-fg-2)", fontSize: 12, fontFamily: "var(--font-ui)", outline: "none", marginBottom: 5 }}
                 />
                 <select
                   name="entityType"
                   defaultValue="character"
+                  disabled={!canWriteStage}
                   style={{ width: "100%", padding: "5px 9px", border: "1px solid var(--stage-border)", borderRadius: "var(--radius-md)", background: "var(--stage-card-2)", color: "var(--stage-fg-2)", fontSize: 12, fontFamily: "var(--font-ui)", outline: "none", marginBottom: 5 }}
                 >
                   <option value="character">Character</option>
@@ -359,10 +407,11 @@ export function StageRuntimeDraft({
                 <input
                   name="summary"
                   placeholder="Short note…"
+                  disabled={!canWriteStage}
                   style={{ width: "100%", padding: "6px 9px", border: "1px solid var(--stage-border)", borderRadius: "var(--radius-md)", background: "var(--stage-card-2)", color: "var(--stage-fg-2)", fontSize: 12, fontFamily: "var(--font-ui)", outline: "none", marginBottom: 5 }}
                 />
                 <div className="sloom-quick-btns">
-                  <button type="submit" className="sloom-quick-btn">Create stub</button>
+                  <button type="submit" className="sloom-quick-btn" disabled={!canWriteStage}>Create stub</button>
                 </div>
               </div>
             </form>

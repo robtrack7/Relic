@@ -38,6 +38,12 @@ export default async function NewSessionPage({ params }: { params: Promise<IdPar
                 <input className="settings-field" name="objective" placeholder="What should this session accomplish?" />
               </label>
               <label className="field">
+                <span>Planned date</span>
+                <input className="settings-field" name="plannedDate" type="date" />
+              </label>
+            </div>
+            <div className="detail-tiles">
+              <label className="field">
                 <span>Opening scene</span>
                 <input className="settings-field" name="openingScene" placeholder="How does the session start?" />
               </label>

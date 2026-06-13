@@ -45,6 +45,9 @@ delete from internal.export_jobs where workspace_id = '80200000-0000-0000-0000-0
 delete from internal.cleanup_jobs where workspace_id = '80200000-0000-0000-0000-000000000001';
 delete from internal.transcription_jobs where workspace_id = '80200000-0000-0000-0000-000000000001';
 delete from internal.embedding_jobs where workspace_id = '80200000-0000-0000-0000-000000000001';
+-- Embedding claims are global; keep this fixture deterministic when prior local UI
+-- runs have queued due embedding work outside the module workspace.
+delete from internal.embedding_jobs where state in ('pending', 'running');
 delete from public.transcripts where workspace_id = '80200000-0000-0000-0000-000000000001';
 
 insert into internal.embedding_jobs (id, workspace_id, world_id, saga_id, gm_id, source_kind, source_entity_type, source_entity_id, debounce_until, idempotency_key)

@@ -48,30 +48,49 @@ export default async function EntitiesPage({
 }) {
   const ids = await params;
   const query = await searchParams;
-  const selected = editableEntityTypes.includes(query.type as never)
+  const selected = query.type === "all" || !query.type
+    ? "all"
+    : editableEntityTypes.includes(query.type as never)
     ? (query.type as (typeof editableEntityTypes)[number])
-    : "character";
-  const [{ workspace, world, saga }, entities] = await Promise.all([
+    : "all";
+  const includeArchived = query.archived === "1";
+  const [{ workspace, world, saga }, entityLists] = await Promise.all([
     requireSagaContext(ids),
-    getEntityList(ids, selected, query.archived === "1"),
+    Promise.all(editableEntityTypes.map(async (type) => ({
+      type,
+      entities: await getEntityList(ids, type, includeArchived)
+    })))
   ]);
   const root = sagaPath(ids);
+  const counts = new Map(entityLists.map((list) => [list.type, list.entities.length]));
+  const entities = selected === "all"
+    ? entityLists.flatMap((list) => list.entities).sort((a, b) => String(b.updated_at ?? "").localeCompare(String(a.updated_at ?? "")))
+    : entityLists.find((list) => list.type === selected)?.entities ?? [];
+  const title = selected === "all" ? "Library" : entityConfigs[selected].plural;
+  const createType = selected === "all" ? "character" : selected;
 
   return (
     <SanctumShell params={ids} workspace={workspace} world={world} saga={saga} active="entities">
       <div className="page-head">
         <div>
-          <div className="page-eyebrow"><RelicIcon name="library" size={12} /> Entity library</div>
-          <div className="page-title">{entityConfigs[selected].plural}</div>
+          <div className="page-eyebrow"><RelicIcon name="library" size={12} /> Canon library</div>
+          <div className="page-title">{title}</div>
         </div>
         <div className="page-actions">
-          <Link className="btn btn-ink" href={`${root}/entities/new?type=${selected}`}>
-            <RelicIcon name="plus" size={13} /> New {entityConfigs[selected].label}
+          <Link className="btn btn-ink" href={`${root}/entities/new?type=${createType}`}>
+            <RelicIcon name="plus" size={13} /> New {entityConfigs[createType].label}
           </Link>
         </div>
       </div>
 
       <div className="lib-filters">
+        <Link
+          href={`${root}/entities`}
+          className={`lf-btn${selected === "all" ? " active" : ""}`}
+        >
+          All
+          <span className="lf-count">{entityLists.reduce((sum, list) => sum + list.entities.length, 0)}</span>
+        </Link>
         {editableEntityTypes.map((type) => (
           <Link
             key={type}
@@ -79,7 +98,7 @@ export default async function EntitiesPage({
             className={`lf-btn${type === selected ? " active" : ""}`}
           >
             {entityConfigs[type].plural}
-            <span className="lf-count"> </span>
+            <span className="lf-count">{counts.get(type) ?? 0}</span>
           </Link>
         ))}
       </div>
@@ -90,10 +109,10 @@ export default async function EntitiesPage({
         ) : (
           <div className="empty-state" style={{ gridColumn: "1/-1" }}>
             <div className="empty-ornament" style={{ fontSize: 36, fontFamily: "var(--font-display)" }}>✦</div>
-            <div className="empty-title">No {entityConfigs[selected].plural.toLowerCase()} yet</div>
+            <div className="empty-title">No {selected === "all" ? "library records" : entityConfigs[selected].plural.toLowerCase()} yet</div>
             <div className="empty-desc">Add the first one manually or capture it from Stage.</div>
-            <Link className="btn btn-ink" href={`${root}/entities/new?type=${selected}`} style={{ marginTop: 8 }}>
-              <RelicIcon name="plus" size={13} /> New {entityConfigs[selected].label}
+            <Link className="btn btn-ink" href={`${root}/entities/new?type=${createType}`} style={{ marginTop: 8 }}>
+              <RelicIcon name="plus" size={13} /> New {entityConfigs[createType].label}
             </Link>
           </div>
         )}

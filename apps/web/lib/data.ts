@@ -18,6 +18,8 @@ type SagaContext = {
 type SessionRow = {
   id: string;
   name: string;
+  session_number?: number | null;
+  planned_date?: string | null;
   summary?: string | null;
   status: string;
   objective?: string | null;
@@ -42,6 +44,16 @@ type DraftRow = {
   created_by?: string;
   created_at?: string;
   rejection_note?: string | null;
+};
+export type StagePacket = {
+  session?: SessionRow;
+  pinned_entities?: unknown[];
+  active_threads?: unknown[];
+  quick_captures?: unknown[];
+  marked_moments?: unknown[];
+  dice_rolls?: Array<{ id: string; expression: string; result_total: number; result_breakdown: number[]; label?: string | null; created_at?: string }>;
+  consent_state?: string;
+  start_warning?: Record<string, unknown>;
 };
 
 export async function requireUser() {
@@ -139,6 +151,20 @@ export async function getSession(params: IdParams, sessionId: string) {
   return sessions.find((session) => session.id === sessionId) ?? null;
 }
 
+export async function getStagePacket(params: IdParams, sessionId: string): Promise<StagePacket> {
+  const { supabase } = await requireSagaContext(params);
+  const { data, error } = await supabase.rpc("get_stage_packet", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+  return (data ?? {}) as StagePacket;
+}
+
 export async function getPrepOptions(params: IdParams) {
   const [characters, places, factions, artifacts, threads] = await Promise.all([
     getEntityList(params, "character"),
@@ -188,20 +214,23 @@ export async function getActiveThreads(params: IdParams, sessionId: string) {
   return ((data ?? []) as ActiveThreadRow[]).map((row) => threads.find((thread) => thread.id === row.thread_id)).filter(Boolean);
 }
 
-export async function getPendingDrafts(params: IdParams) {
+export async function getPendingDrafts(params: IdParams, sessionId?: string) {
   const { supabase } = await requireSagaContext(params);
-  const { data, error } = await supabase.rpc("get_pending_drafts", {
+  const rpc = sessionId ? "get_pending_drafts_for_session" : "get_pending_drafts";
+  const args = {
     workspace_id: params.workspaceId,
     world_id: params.worldId,
-    saga_id: params.sagaId
-  });
+    saga_id: params.sagaId,
+    ...(sessionId ? { session_id: sessionId } : {})
+  };
+  const { data, error } = await supabase.rpc(rpc, args);
   if (error) {
     throw new Error(error.message);
   }
   return (data ?? []) as DraftRow[];
 }
 
-export async function searchForUi(params: IdParams, query: string, literalOnly = true): Promise<SearchResult[]> {
+export async function searchForUi(params: IdParams, query: string, literalOnly = true, surface = "sanctum"): Promise<SearchResult[]> {
   if (!query.trim()) {
     return [];
   }
@@ -211,7 +240,7 @@ export async function searchForUi(params: IdParams, query: string, literalOnly =
     world_id: params.worldId,
     saga_id: params.sagaId,
     query_text: query,
-    surface: "sanctum",
+    surface,
     top_k: 12,
     include_archived: false,
     literal_only: literalOnly,
@@ -229,6 +258,40 @@ export async function getUsageSummary(workspaceId: string) {
   return data;
 }
 
+export async function getExportStatus(params: IdParams, exportId?: string | null) {
+  if (!exportId) {
+    return null;
+  }
+  const { supabase } = await requireSagaContext(params);
+  const { data, error } = await supabase.rpc("get_saga_export_status", {
+    p_workspace_id: params.workspaceId,
+    p_world_id: params.worldId,
+    p_saga_id: params.sagaId,
+    p_export_id: exportId
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data as Record<string, unknown> | null;
+}
+
+export async function getExportDownload(params: IdParams, exportId?: string | null) {
+  if (!exportId) {
+    return null;
+  }
+  const { supabase } = await requireSagaContext(params);
+  const { data, error } = await supabase.rpc("get_saga_export_download", {
+    p_workspace_id: params.workspaceId,
+    p_world_id: params.worldId,
+    p_saga_id: params.sagaId,
+    p_export_id: exportId
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data as Record<string, unknown> | null;
+}
+
 function normalizeEntityRow(row: Record<string, unknown>, type: EntityType): EntitySummary {
   const name = type === "note" ? String(row.title ?? "Untitled note") : String(row.name ?? entityConfigs[type].label);
   return {
@@ -244,7 +307,16 @@ function normalizeEntityRow(row: Record<string, unknown>, type: EntityType): Ent
     gm_notes: row.gm_notes as string | null,
     canon_state: row.canon_state === "archived" ? "archived" : "canon",
     is_stub: Boolean(row.is_stub),
-    status: row.status as string | undefined,
+    status: type === "thread" ? threadStatus(row) : row.status as string | undefined,
+    objectives_log: Array.isArray(row.objectives_log) ? row.objectives_log : undefined,
     updated_at: row.updated_at as string | undefined
   };
+}
+
+function threadStatus(row: Record<string, unknown>) {
+  if (row.resolution_state === "resolved") return "resolved";
+  if (row.is_loose_thread === true) return "loose";
+  if (row.resolution_state === "active") return "active";
+  if (typeof row.status === "string") return row.status;
+  return "dormant";
 }

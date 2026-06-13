@@ -16,6 +16,8 @@ vi.mock("@/app/actions", () => ({
   markMomentAction: vi.fn(),
   quickCaptureAction: vi.fn(),
   quickStubAction: vi.fn(),
+  recordDiceRollAction: vi.fn(),
+  recordSessionConsentAction: vi.fn(),
   readyForStageAction: vi.fn(),
   setSessionStatusAction: vi.fn(),
   updateSessionPrepAction: vi.fn()

@@ -18,6 +18,14 @@ function confClass(band?: string | null) {
   return "rq-conf med";
 }
 
+function draftTitle(draft: { id: string; entity_type: string; proposed_payload: Record<string, unknown> }) {
+  return String(draft.proposed_payload.name ?? draft.proposed_payload.title ?? `${draft.entity_type} draft ${draft.id.slice(0, 8)}`);
+}
+
+function draftGroupKey(draft: { entity_type: string; target_entity_id?: string | null; proposed_payload: Record<string, unknown> }) {
+  return draft.target_entity_id ?? `${draft.entity_type}:${String(draft.proposed_payload.name ?? draft.proposed_payload.title ?? "new")}`;
+}
+
 export default async function ReviewPage({ params }: { params: Promise<IdParams> }) {
   const ids = await params;
   const [{ workspace, world, saga }, drafts] = await Promise.all([
@@ -25,6 +33,15 @@ export default async function ReviewPage({ params }: { params: Promise<IdParams>
     getPendingDrafts(ids),
   ]);
   const pending = drafts.filter((d) => d.state === "pending");
+  const groups = Array.from(
+    pending.reduce((map, draft) => {
+      const key = draftGroupKey(draft);
+      const existing = map.get(key) ?? [];
+      existing.push(draft);
+      map.set(key, existing);
+      return map;
+    }, new Map<string, typeof pending>())
+  ).map(([key, items]) => ({ key, items, primary: items[0] }));
 
   return (
     <SanctumShell params={ids} workspace={workspace} world={world} saga={saga} active="review" reviewCount={pending.length}>
@@ -58,74 +75,89 @@ export default async function ReviewPage({ params }: { params: Promise<IdParams>
               <span className="rq-title-txt">Pending</span>
               <span className="rq-count">{pending.length}</span>
             </div>
-            {pending.map((draft) => (
-              <div key={draft.id} className="rq-item">
-                <span className={dotClass(draft.state, draft.change_kind)} />
+            {groups.map((group) => (
+              <div key={group.key} className="rq-item">
+                <span className={dotClass(group.primary.state, group.primary.change_kind)} />
                 <div className="rq-item-body">
                   <div className="rq-item-title">
-                    {String((draft.proposed_payload as Record<string, unknown>).name ?? draft.entity_type)}
+                    {draftTitle(group.primary)}
                   </div>
-                  <div className="rq-item-type">{draft.entity_type} · {draft.change_kind}</div>
+                  <div className="rq-item-type">{group.primary.entity_type} · {group.items.length} proposal{group.items.length === 1 ? "" : "s"}</div>
                 </div>
-                <span className={confClass(draft.confidence_band)}>
-                  {draft.confidence_band ?? "med"}
+                <span className={confClass(group.primary.confidence_band)}>
+                  {group.primary.confidence_band ?? "med"}
                 </span>
               </div>
             ))}
           </div>
 
-          {/* Right — detail for each draft */}
+          {/* Right — grouped draft details */}
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {pending.map((draft) => (
-              <div key={draft.id} className="card dd-card">
+            {groups.map((group) => (
+              <section key={group.key} className="card dd-card">
                 <div className="dd-eyebrow">
-                  {draft.entity_type} · {draft.change_kind}
+                  <RelicIcon name="review" size={11} /> {group.primary.entity_type} · grouped by affected record
                 </div>
-                <div className="dd-title">
-                  {String((draft.proposed_payload as Record<string, unknown>).name ?? `Draft ${draft.id.slice(0, 8)}`)}
-                </div>
+                <div className="dd-title">{draftTitle(group.primary)}</div>
 
-                <div className="diff-block">
-                  <div className="diff-label">Proposed changes</div>
-                  {Object.entries(draft.proposed_payload).slice(0, 6).map(([key, value]) => (
-                    <div key={key} className="diff-row">
-                      <span className="diff-key">{key}</span>
-                      <span className="diff-new">{String(value)}</span>
+                {group.items.some((draft) => draft.confidence_band === "low") && (
+                  <div className="conflict-panel">
+                    <div className="conflict-title">
+                      <RelicIcon name="alert" size={11} /> Low confidence
                     </div>
-                  ))}
-                </div>
-
-                {draft.confidence_band && (
-                  <div className="source-dock">
-                    <div className="source-dock-label">Confidence</div>
-                    <span className={`conf-badge ${draft.confidence_band}`}>
-                      {draft.confidence_band} confidence
-                    </span>
+                    <div className="conflict-desc">
+                      Check source/provenance before approving. Manual editing or rejection remains safe.
+                    </div>
                   </div>
                 )}
 
-                <div className="dd-actions">
-                  <form action={updateDraftStateAction} style={{ display: "inline" }}>
-                    <HiddenContextFields params={ids} />
-                    <input type="hidden" name="draftId" value={draft.id} />
-                    <button className="btn btn-verdigris btn-sm" name="state" value="approved" type="submit">
-                      <RelicIcon name="check" size={12} /> Approve
-                    </button>
-                  </form>
-                  <form action={updateDraftStateAction} style={{ display: "inline" }}>
-                    <HiddenContextFields params={ids} />
-                    <input type="hidden" name="draftId" value={draft.id} />
-                    <button className="btn btn-secondary btn-sm" name="state" value="merged" type="submit">Mark merged</button>
-                  </form>
-                  <form action={updateDraftStateAction} style={{ display: "inline" }}>
-                    <HiddenContextFields params={ids} />
-                    <input type="hidden" name="draftId" value={draft.id} />
-                    <button className="btn btn-rust btn-sm" name="state" value="rejected" type="submit">
-                      <RelicIcon name="x" size={12} /> Reject
-                    </button>
-                  </form>
-                </div>
-              </div>
+                {group.items.map((draft) => (
+                  <div key={draft.id} style={{ marginTop: 14 }}>
+                    <div className="diff-block">
+                      <div className="diff-label">{draft.change_kind} proposal · {draft.id.slice(0, 8)}</div>
+                      {Object.entries(draft.proposed_payload).slice(0, 8).map(([key, value]) => (
+                        <div key={key} className="diff-row">
+                          <span className="diff-key">{key}</span>
+                          <span className="diff-new">{typeof value === "object" ? JSON.stringify(value) : String(value)}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="source-dock">
+                      <div className="source-dock-label">Trust context</div>
+                      <div className="source-ref">
+                        <em>State:</em> {draft.state} · <em>Kind:</em> {draft.change_kind} · <em>Created by:</em> {draft.created_by ?? "pipeline"}
+                      </div>
+                      <span className={`conf-badge ${draft.confidence_band ?? "med"}`}>
+                        {draft.confidence_band ?? "medium"} confidence
+                      </span>
+                    </div>
+
+                    <div className="dd-actions">
+                      <form action={updateDraftStateAction} style={{ display: "inline" }}>
+                        <HiddenContextFields params={ids} />
+                        <input type="hidden" name="draftId" value={draft.id} />
+                        <button className="btn btn-verdigris btn-sm" name="state" value="approved" type="submit">
+                          <RelicIcon name="check" size={12} /> Approve
+                        </button>
+                      </form>
+                      <form action={updateDraftStateAction} style={{ display: "inline" }}>
+                        <HiddenContextFields params={ids} />
+                        <input type="hidden" name="draftId" value={draft.id} />
+                        <button className="btn btn-secondary btn-sm" name="state" value="merged" type="submit">Mark merged</button>
+                      </form>
+                      <form action={updateDraftStateAction} style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+                        <HiddenContextFields params={ids} />
+                        <input type="hidden" name="draftId" value={draft.id} />
+                        <input className="settings-field" name="rejectionNote" placeholder="Reason" style={{ width: 160, height: 30, padding: "5px 8px", fontSize: 11 }} />
+                        <button className="btn btn-rust btn-sm" name="state" value="rejected" type="submit">
+                          <RelicIcon name="x" size={12} /> Reject
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                ))}
+              </section>
             ))}
           </div>
         </div>

@@ -17,7 +17,7 @@ vi.mock("@/app/actions", () => ({
 const params = { workspaceId: "workspace-1", worldId: "world-1", sagaId: "saga-1" };
 
 describe("SanctumShell", () => {
-  it("renders v0.4 navigation, context controls, and Loom sidecar", () => {
+  it("renders v0.4 navigation, context controls, and Relic Guide sidecar", () => {
     render(
       <SanctumShell
         params={params}
@@ -38,9 +38,14 @@ describe("SanctumShell", () => {
     );
     expect(within(nav).queryByRole("link", { name: "Ask" })).toBeNull();
     expect(screen.getByRole("searchbox", { name: "Search saga canon" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Create" })).toBeTruthy();
-    expect(screen.getByRole("complementary", { name: "The Loom" })).toBeTruthy();
-    expect(screen.getByText("Search, brainstorm, and weave new canon.")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Relic Guide" }).getAttribute("href")).toBe(
+      "/app/w/workspace-1/world/world-1/saga/saga-1/guide"
+    );
+    expect(screen.getByRole("link", { name: "Create" }).getAttribute("href")).toBe(
+      "/app/w/workspace-1/world/world-1/saga/saga-1/entities/new"
+    );
+    expect(screen.getByRole("complementary", { name: "Relic Guide" })).toBeTruthy();
+    expect(screen.getByText("Ask current canon and inspect cited sources before acting.")).toBeTruthy();
     expect(screen.getByText("Lantern House")).toBeTruthy();
     expect(screen.getByText("Thornwood")).toBeTruthy();
     expect(screen.getByText("The Thornwood Accord")).toBeTruthy();

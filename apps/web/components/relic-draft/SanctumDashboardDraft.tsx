@@ -23,6 +23,7 @@ type SanctumDashboardDraftProps = {
   params: IdParams;
   saga: SagaLike;
   activeSession: DashboardSession | null;
+  threads: EntitySummary[];
   recentEntities: EntitySummary[];
   reviewCount: number;
 };
@@ -43,6 +44,7 @@ export function SanctumDashboardDraft({
   params,
   saga,
   activeSession,
+  threads,
   recentEntities,
   reviewCount,
 }: SanctumDashboardDraftProps) {
@@ -53,6 +55,8 @@ export function SanctumDashboardDraft({
   const isPlanned = status === "planned";
   const isReview = status === "ended_pending_undo" || status === "ended";
   const systemLabel = saga.game_system || "System-agnostic";
+  const carryForwardThreads = threads.filter((thread) => ["active", "loose"].includes(thread.status ?? "")).slice(0, 5);
+  const emptySaga = !activeSession && recentEntities.length === 0 && threads.length === 0 && reviewCount === 0;
 
   return (
     <div>
@@ -63,7 +67,7 @@ export function SanctumDashboardDraft({
             <span className={`dot${isLive ? " live pulse" : isReady ? " amber" : isPlanned ? " amber" : ""}`} />
             {systemLabel} · {saga.name}
           </div>
-          <div className="page-title">{saga.name}</div>
+          <h1 className="page-title">{saga.name}</h1>
           {saga.premise && <div className="page-sub">{saga.premise}</div>}
         </div>
         <div className="page-actions">
@@ -106,15 +110,53 @@ export function SanctumDashboardDraft({
       <div className="home-grid">
         {/* Left column */}
         <div className="home-col-left">
-          {/* Recent canon */}
-          {recentEntities.length > 0 && (
-            <div className="card list-card">
-              <div className="sec-label">
-                <RelicIcon name="library" size={12} />
-                Recent canon
-                <span className="count">{recentEntities.length}</span>
+          {/* Thread carry-forward */}
+          <div className="card list-card">
+            <div className="sec-label">
+              <RelicIcon name="threads" size={12} />
+              Threads carry-forward
+              <span className="count">{carryForwardThreads.length}</span>
+            </div>
+            {carryForwardThreads.length ? (
+              carryForwardThreads.map((thread) => (
+                <Link
+                  key={thread.id}
+                  href={`${root}/threads/${thread.id}`}
+                  className="th-row"
+                  style={{ textDecoration: "none" }}
+                >
+                  <span className={`t-chip ${thread.status === "loose" ? "loose" : "active"}`}>
+                    {thread.status}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="th-name">{thread.name}</div>
+                    <div className="th-state" style={{ color: "var(--stone-500)" }}>
+                      {thread.summary || "No summary yet."}
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="rev-item">
+                <div className="rev-title">No active threads yet</div>
+                <div className="rev-desc">Threads track unresolved continuity, quests, and dramatic pressure.</div>
               </div>
-              {recentEntities.slice(0, 5).map((entity) => (
+            )}
+            <div className="list-foot">
+              <Link className="btn btn-ghost btn-sm" href={`${root}/entities/new?type=thread`}>New Thread</Link>
+              <Link className="btn btn-ghost btn-sm" href={`${root}/threads`}>Open Threads</Link>
+            </div>
+          </div>
+
+          {/* Recent canon */}
+          <div className="card list-card">
+            <div className="sec-label">
+              <RelicIcon name="library" size={12} />
+              Recent canon
+              <span className="count">{recentEntities.length}</span>
+            </div>
+            {recentEntities.length ? (
+              recentEntities.slice(0, 5).map((entity) => (
                 <Link
                   key={`${entity.entityType}:${entity.id}`}
                   href={`${root}/entities/${entity.entityType}/${entity.id}`}
@@ -132,12 +174,17 @@ export function SanctumDashboardDraft({
                     </div>
                   </div>
                 </Link>
-              ))}
-              <div className="list-foot">
-                <Link className="btn btn-ghost btn-sm" href={`${root}/entities`}>Open Library</Link>
+              ))
+            ) : (
+              <div className="rev-item">
+                <div className="rev-title">No canon records yet</div>
+                <div className="rev-desc">Start with a character, place, thread, or note.</div>
               </div>
+            )}
+            <div className="list-foot">
+              <Link className="btn btn-ghost btn-sm" href={`${root}/entities`}>Open Library</Link>
             </div>
-          )}
+          </div>
 
           {/* Review queue */}
           {reviewCount > 0 && (
@@ -164,7 +211,7 @@ export function SanctumDashboardDraft({
               Quick create
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, paddingTop: 10 }}>
-              <Link className="btn btn-secondary btn-sm" href={`${root}/threads`}>Thread</Link>
+              <Link className="btn btn-secondary btn-sm" href={`${root}/entities/new?type=thread`}>Thread</Link>
               <Link className="btn btn-secondary btn-sm" href={`${root}/entities/new?type=character`}>Character</Link>
               <Link className="btn btn-secondary btn-sm" href={`${root}/entities/new?type=place`}>Place</Link>
               <Link className="btn btn-secondary btn-sm" href={`${root}/sessions/new`}>Session</Link>
@@ -268,8 +315,15 @@ export function SanctumDashboardDraft({
               </div>
               <div style={{ padding: "20px 0 8px", textAlign: "center" }}>
                 <div style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 18, color: "var(--stone-500)", marginBottom: 16 }}>
-                  Your saga is ready. Plan your first session to begin.
+                  {emptySaga ? "Start with canon or plan your first session." : "Your saga is ready. Plan the next session from what matters now."}
                 </div>
+                {emptySaga && (
+                  <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+                    <Link className="btn btn-ghost btn-sm" href={`${root}/entities/new?type=character`}>New Character</Link>
+                    <Link className="btn btn-ghost btn-sm" href={`${root}/entities/new?type=place`}>New Place</Link>
+                    <Link className="btn btn-ghost btn-sm" href={`${root}/entities/new?type=thread`}>New Thread</Link>
+                  </div>
+                )}
                 <form action={createSessionAction}>
                   <HiddenContextFields params={params} />
                   <input type="hidden" name="name" value="Session 1" />

@@ -9,7 +9,7 @@ type ShellProps = {
   workspace: { name: string };
   world: { name: string };
   saga: { name: string };
-  active?: "home" | "threads" | "library" | "entities" | "prepare" | "sessions" | "review" | "search" | "settings" | "export";
+  active?: "home" | "threads" | "library" | "entities" | "prepare" | "sessions" | "review" | "search" | "guide" | "settings" | "export";
   currentSession?: { id: string; name: string; status: string } | null;
   reviewCount?: number;
   loomMode?: "ask" | "prep";
@@ -119,9 +119,9 @@ export function SanctumShell({
             <span className="kbd-hint">⌘K</span>
           </form>
 
-          <button className="icon-btn" type="button" aria-label="Relic Guide">
+          <Link className="icon-btn" href={`${root}/guide`} aria-label="Relic Guide">
             <RelicIcon name="spark" size={16} />
-          </button>
+          </Link>
 
           <Link href={sessionHref} className={sessionPillClass(currentSession?.status)}>
             <span className="dot amber" />
@@ -135,10 +135,10 @@ export function SanctumShell({
             </Link>
           )}
 
-          <button className="create-btn" type="button">
+          <Link className="create-btn" href={`${root}/entities/new`}>
             <RelicIcon name="plus" size={13} />
             Create
-          </button>
+          </Link>
 
           <form action={signOutAction}>
             <button className="icon-btn" type="submit" aria-label="Sign out" title="Sign out">
@@ -187,11 +187,11 @@ export function SanctumShell({
           <div className="main-inner">{children}</div>
         </main>
 
-        {/* Loom sidecar */}
-        <aside className="loom-carriage exp" aria-label="The Loom">
+        {/* Relic Guide sidecar */}
+        <aside className="loom-carriage exp" aria-label="Relic Guide">
           <div className="loom-head">
             <span className="loom-title">
-              <RelicIcon name="spark" size={12} /> The Loom
+              <RelicIcon name="spark" size={12} /> Relic Guide
             </span>
             <div className="loom-mode-tabs">
               <button type="button" className={`loom-tab${loomMode === "ask" ? " active" : ""}`}>Ask</button>
@@ -200,29 +200,30 @@ export function SanctumShell({
           </div>
           <div className="loom-body">
             <div className="loom-draft-card">
-              <div className="loom-draft-label">The Loom</div>
+              <div className="loom-draft-label">Relic Guide</div>
               <div className="loom-draft-text">
                 {loomMode === "prep"
                   ? "Review continuity, draft scenes, and prepare changes. Canon still waits for GM approval."
-                  : "Search, brainstorm, and weave new canon."}
+                  : "Ask current canon and inspect cited sources before acting."}
               </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-              <button className="btn btn-ghost btn-sm" type="button" style={{ justifyContent: "flex-start", fontSize: 11 }}>Show unresolved threads</button>
-              <button className="btn btn-ghost btn-sm" type="button" style={{ justifyContent: "flex-start", fontSize: 11 }}>Draft the next scene</button>
-              <button className="btn btn-ghost btn-sm" type="button" style={{ justifyContent: "flex-start", fontSize: 11 }}>Find canon risks</button>
+              <Link className="btn btn-ghost btn-sm" href={`${root}/threads`} style={{ justifyContent: "flex-start", fontSize: 11 }}>Show unresolved threads</Link>
+              <Link className="btn btn-ghost btn-sm" href={`${root}/guide?q=${encodeURIComponent("What should I remember before prep?")}`} style={{ justifyContent: "flex-start", fontSize: 11 }}>Prep memory check</Link>
+              <Link className="btn btn-ghost btn-sm" href={`${root}/search`} style={{ justifyContent: "flex-start", fontSize: 11 }}>Search canon</Link>
             </div>
           </div>
           <div className="loom-foot">
-            <form className="loom-composer">
-              <label className="sr-only" htmlFor="loom-prompt">Ask The Loom</label>
+            <form className="loom-composer" action={`${root}/guide`}>
+              <label className="sr-only" htmlFor="loom-prompt">Ask Relic Guide</label>
               <textarea
                 id="loom-prompt"
+                name="q"
                 rows={1}
                 placeholder={loomMode === "prep" ? "Ask about this prep…" : "Ask anything about this saga…"}
                 style={{ fontFamily: "var(--font-ui)" }}
               />
-              <button type="button" className="loom-send" aria-label="Send">
+              <button type="submit" className="loom-send" aria-label="Send">
                 <RelicIcon name="send" size={13} />
               </button>
             </form>

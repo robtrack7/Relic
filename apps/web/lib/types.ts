@@ -23,6 +23,7 @@ export type EntitySummary = {
   canon_state: "canon" | "archived";
   is_stub?: boolean;
   status?: string;
+  objectives_log?: unknown[];
   updated_at?: string;
 };
 

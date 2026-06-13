@@ -1,5 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { addThreadObjectiveAction, archiveEntityAction, createEntityAction, updateEntityAction } from "@/app/actions";
+import {
+  addThreadObjectiveAction,
+  archiveEntityAction,
+  createEntityAction,
+  createSessionAction,
+  recordDiceRollAction,
+  recordSessionConsentAction,
+  requestSagaExportAction,
+  updateEntityAction
+} from "@/app/actions";
 import { createClient } from "@/lib/supabase/server";
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -158,6 +167,109 @@ describe("security-hardened server actions", () => {
       entity_type: "character",
       entity_id: "entity-a",
       expected_version: "2026-06-01T17:00:00.000Z"
+    });
+  });
+
+  it("records session recording consent through the Stage RPC", async () => {
+    const supabase = authenticatedSupabase();
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    await recordSessionConsentAction(form({
+      workspaceId: "workspace-a",
+      worldId: "world-a",
+      sagaId: "saga-a",
+      sessionId: "session-a",
+      granted: "true"
+    }));
+
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith("record_session_consent", {
+      workspace_id: "workspace-a",
+      world_id: "world-a",
+      saga_id: "saga-a",
+      session_id: "session-a",
+      granted: true
+    });
+  });
+
+  it("rolls and records dice through the Stage RPC", async () => {
+    const supabase = authenticatedSupabase();
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+
+    await recordDiceRollAction(form({
+      workspaceId: "workspace-a",
+      worldId: "world-a",
+      sagaId: "saga-a",
+      sessionId: "session-a",
+      expression: "1d4",
+      label: "lockpick"
+    }));
+
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith("record_dice_roll", {
+      workspace_id: "workspace-a",
+      world_id: "world-a",
+      saga_id: "saga-a",
+      session_id: "session-a",
+      expression: "1d4",
+      result_total: 3,
+      result_breakdown: [3],
+      label: "lockpick"
+    });
+  });
+
+  it("requests saga exports through the export RPC", async () => {
+    const supabase = authenticatedSupabase();
+    supabase.rpc.mockResolvedValueOnce({
+      data: { allowed: true, export_id: "export-a", state: "pending" },
+      error: null
+    });
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    await expect(requestSagaExportAction(form({
+      workspaceId: "workspace-a",
+      worldId: "world-a",
+      sagaId: "saga-a",
+      format: "json",
+      includeAudit: "true"
+    }))).rejects.toThrow("NEXT_REDIRECT:/app/w/workspace-a/world/world-a/saga/saga-a/export?exportId=export-a");
+
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith("request_saga_export", {
+      p_workspace_id: "workspace-a",
+      p_world_id: "world-a",
+      p_saga_id: "saga-a",
+      p_requested_formats: ["json"],
+      p_include_audit: true
+    });
+  });
+
+  it("creates sessions with optional planned dates through the session RPC", async () => {
+    const supabase = authenticatedSupabase();
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    await expect(createSessionAction(form({
+      workspaceId: "workspace-a",
+      worldId: "world-a",
+      sagaId: "saga-a",
+      name: "Session 2",
+      objective: "Find the gate",
+      openingScene: "Rain on the bridge",
+      sceneNotes: "Keep the pace tight.",
+      plannedDate: "2026-07-02"
+    }))).rejects.toThrow("NEXT_REDIRECT:/app/w/workspace-a/world/world-a/saga/saga-a/sessions/entity-a/prep");
+
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith("create_session", {
+      workspace_id: "workspace-a",
+      world_id: "world-a",
+      saga_id: "saga-a",
+      session_name: "Session 2",
+      objective: "Find the gate",
+      opening_scene: "Rain on the bridge",
+      scene_notes: "Keep the pace tight.",
+      planned_date: "2026-07-02"
     });
   });
 });

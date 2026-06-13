@@ -2,7 +2,7 @@ create extension if not exists pgtap with schema extensions;
 
 begin;
 
-select plan(22);
+select plan(28);
 
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, confirmation_token, email_change, email_change_token_new, recovery_token)
 values
@@ -47,8 +47,27 @@ insert into public.sessions (id, workspace_id, world_id, saga_id, scope, name, o
 values
   ('c7000000-0000-0000-0000-000000000001', 'c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'saga', 'Empty Planned Session', null, null, null, '[]'::jsonb, 'planned', null, null),
   ('c7000000-0000-0000-0000-000000000002', 'c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'saga', 'Prepared Session', 'Reach the old gate', 'Open at dusk', 'Bring the ally', '[{"text":"Check consent","done":false}]'::jsonb, 'planned', null, null),
-  ('c7000000-0000-0000-0000-000000000003', 'c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'saga', 'Prior Ended Session', 'Prior objective', 'Prior opening', 'Prior notes', '[]'::jsonb, 'ended', now() - interval '2 days', now() - interval '1 day')
+  ('c7000000-0000-0000-0000-000000000003', 'c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'saga', 'Prior Ended Session', 'Prior objective', 'Prior opening', 'Prior notes', '[]'::jsonb, 'ended', now() - interval '2 days', now() - interval '1 day'),
+  ('c7000000-0000-0000-0000-000000000004', 'c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'saga', 'Second Prepared Session', 'Follow the second lead', 'Open at dawn', 'Bring the map', '[{"text":"Check safety","done":false}]'::jsonb, 'planned', null, null)
 on conflict (id) do nothing;
+
+insert into public.sources (id, workspace_id, world_id, saga_id, scope, kind, session_id, raw_excerpt)
+values
+  ('c8000000-0000-0000-0000-000000000001', 'c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'saga', 'gm_instruction', 'c7000000-0000-0000-0000-000000000002', 'Current session draft evidence.'),
+  ('c8000000-0000-0000-0000-000000000002', 'c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'saga', 'gm_instruction', 'c7000000-0000-0000-0000-000000000004', 'Sibling session draft evidence.')
+on conflict (id) do nothing;
+
+insert into public.drafts (id, workspace_id, world_id, saga_id, scope, entity_type, target_entity_id, state, change_kind, proposed_payload)
+values
+  ('c9000000-0000-0000-0000-000000000001', 'c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'saga', 'character', 'c6000000-0000-0000-0000-000000000001', 'pending', 'update', '{"name":"Current session proposal"}'::jsonb),
+  ('c9000000-0000-0000-0000-000000000002', 'c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'saga', 'character', 'c6000000-0000-0000-0000-000000000001', 'pending', 'update', '{"name":"Other session proposal"}'::jsonb)
+on conflict (id) do nothing;
+
+insert into public.draft_sources (workspace_id, world_id, saga_id, scope, draft_id, source_id)
+values
+  ('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'saga', 'c9000000-0000-0000-0000-000000000001', 'c8000000-0000-0000-0000-000000000001'),
+  ('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'saga', 'c9000000-0000-0000-0000-000000000002', 'c8000000-0000-0000-0000-000000000002')
+on conflict (draft_id, source_id) do nothing;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'c0000000-0000-0000-0000-000000000001', true);
@@ -57,6 +76,10 @@ select set_config('request.jwt.claim.saga_id', 'c5000000-0000-0000-0000-00000000
 select has_function('public', 'record_session_consent', array['uuid','uuid','uuid','uuid','boolean'], 'record_session_consent RPC exists');
 select has_function('public', 'record_dice_roll', array['uuid','uuid','uuid','uuid','text','integer','integer[]','text'], 'record_dice_roll RPC exists');
 select has_function('public', 'get_stage_packet', array['uuid','uuid','uuid','uuid'], 'get_stage_packet RPC exists');
+
+select is(public.append_thread_objective('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'c6100000-0000-0000-0000-000000000001', 'Open the gate'), 'c6100000-0000-0000-0000-000000000001'::uuid, 'thread objective appends through scoped RPC');
+select is(jsonb_array_length(public.get_pending_drafts_for_session('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'c7000000-0000-0000-0000-000000000002')), 1, 'session review returns only drafts sourced to that session');
+select is((public.get_pending_drafts_for_session('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'c7000000-0000-0000-0000-000000000002')->0->>'id'), 'c9000000-0000-0000-0000-000000000001', 'session review excludes sibling-session drafts');
 
 select throws_like(
   $$ select public.set_session_status('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'c7000000-0000-0000-0000-000000000001', 'in_progress') $$,
@@ -124,6 +147,12 @@ select ok(
 );
 
 select is(public.set_session_status('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'c7000000-0000-0000-0000-000000000002', 'started'), 'c7000000-0000-0000-0000-000000000002'::uuid, 'ready session can start');
+select is(public.set_session_status('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'c7000000-0000-0000-0000-000000000004', 'ready'), 'c7000000-0000-0000-0000-000000000004'::uuid, 'another prepared session can remain ready');
+select throws_like(
+  $$ select public.set_session_status('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'c7000000-0000-0000-0000-000000000004', 'started') $$,
+  '%live session already exists%',
+  'only one session per Saga can be started or in progress'
+);
 select is(public.set_session_status('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'c7000000-0000-0000-0000-000000000002', 'in_progress'), 'c7000000-0000-0000-0000-000000000002'::uuid, 'started session can go in progress');
 
 select throws_like(
@@ -169,10 +198,25 @@ select public.quick_stub(
   'c2000000-0000-0000-0000-000000000001',
   'c3000000-0000-0000-0000-000000000001',
   'c5000000-0000-0000-0000-000000000001',
+  'c7000000-0000-0000-0000-000000000002',
   'character',
   'Gate Quartermaster',
   'New stub from Stage'
 ) as id;
+
+select throws_like(
+  $$ select public.quick_stub(
+       'c2000000-0000-0000-0000-000000000001',
+       'c3000000-0000-0000-0000-000000000001',
+       'c5000000-0000-0000-0000-000000000001',
+       'c7000000-0000-0000-0000-000000000001',
+       'character',
+       'Planned Session Stub',
+       'Should not write'
+     ) $$,
+  '%started or in-progress session%',
+  'quick_stub requires a writable Stage session'
+);
 
 select ok(
   exists (select 1 from public.canon_audit a where a.entity_id = (select id from module5_stub) and a.actor_kind = 'gm'),

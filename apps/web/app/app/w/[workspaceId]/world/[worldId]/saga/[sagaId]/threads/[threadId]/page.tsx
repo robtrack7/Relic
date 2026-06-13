@@ -19,11 +19,7 @@ export default async function ThreadDetailPage({ params }: { params: Promise<Thr
   if (!thread) notFound();
   const root = sagaPath(ids);
 
-  const objectives = Array.isArray(
-    (thread as unknown as { objectives_log?: unknown }).objectives_log
-  )
-    ? (thread as unknown as { objectives_log: unknown[] }).objectives_log
-    : [];
+  const objectives = Array.isArray(thread.objectives_log) ? thread.objectives_log : [];
 
   return (
     <SanctumShell params={ids} workspace={workspace} world={world} saga={saga} active="threads">
@@ -32,7 +28,7 @@ export default async function ThreadDetailPage({ params }: { params: Promise<Thr
           <div className="page-eyebrow">
             <RelicIcon name="threads" size={12} /> Thread
           </div>
-          <div className="page-title">{thread.name}</div>
+          <h1 className="page-title">{thread.name}</h1>
           {thread.summary && <div className="page-sub">{thread.summary}</div>}
         </div>
         <div className="page-actions">
@@ -51,7 +47,7 @@ export default async function ThreadDetailPage({ params }: { params: Promise<Thr
           {objectives.length ? objectives.map((objective, index) => (
             <div key={index} className="obj-row">
               <span className="obj-num">{index + 1}</span>
-              <span className="obj-text">{JSON.stringify(objective)}</span>
+              <span className="obj-text">{objectiveText(objective)}</span>
             </div>
           )) : (
             <div className="empty-state" style={{ padding: "20px 0" }}>
@@ -110,4 +106,12 @@ export default async function ThreadDetailPage({ params }: { params: Promise<Thr
       </div>
     </SanctumShell>
   );
+}
+
+function objectiveText(objective: unknown) {
+  if (typeof objective === "string") return objective;
+  if (objective && typeof objective === "object" && "text" in objective) {
+    return String((objective as { text?: unknown }).text ?? "");
+  }
+  return JSON.stringify(objective);
 }

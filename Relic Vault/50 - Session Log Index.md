@@ -51,3 +51,5 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-06-02 - Wireframe Design Implementation and Icons]]
 - [[Session Logs/2026-06-06 - Agent Rules and Build Push]]
 - [[Session Logs/2026-06-13 - Relic Agent Definitions]]
+- [[Session Logs/2026-06-13 - Web Wireframe Backend Route Pass]]
+- [[Session Logs/2026-06-13 - MVP UI Backend Stabilization]]

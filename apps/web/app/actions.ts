@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { editableEntityTypes, isEditableEntityType, normalizeScope } from "@/lib/entities";
+import { rollDice } from "@/lib/dice";
 import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
 import { sagaPath } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
@@ -231,7 +232,8 @@ export async function createSessionAction(formData: FormData) {
     session_name: name,
     objective: value(formData, "objective"),
     opening_scene: value(formData, "openingScene"),
-    scene_notes: value(formData, "sceneNotes")
+    scene_notes: value(formData, "sceneNotes"),
+    planned_date: value(formData, "plannedDate") || null
   });
   const result = data as RpcObject | null;
   if (error || !result?.id) {
@@ -344,6 +346,7 @@ export async function quickStubAction(formData: FormData) {
     workspace_id: params.workspaceId,
     world_id: params.worldId,
     saga_id: params.sagaId,
+    session_id: value(formData, "sessionId"),
     entity_type: type,
     entity_name: name,
     summary: value(formData, "summary")
@@ -369,6 +372,68 @@ export async function markMomentAction(formData: FormData) {
     throw new Error(error.message);
   }
   revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/stage`);
+}
+
+export async function recordSessionConsentAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const sessionId = value(formData, "sessionId");
+  const { error } = await supabase.rpc("record_session_consent", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId,
+    granted: value(formData, "granted") === "true"
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+  revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/stage`);
+}
+
+export async function recordDiceRollAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const sessionId = value(formData, "sessionId");
+  const roll = rollDice(value(formData, "expression") || "1d20");
+  const { error } = await supabase.rpc("record_dice_roll", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId,
+    expression: roll.expression,
+    result_total: roll.total,
+    result_breakdown: roll.rolls,
+    label: value(formData, "label") || null
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+  revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/stage`);
+}
+
+export async function requestSagaExportAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const formats = formData.getAll("format").map(String).filter(Boolean);
+  const requestedFormats = formats.length ? formats : ["json", "markdown"];
+  const { data, error } = await supabase.rpc("request_saga_export", {
+    p_workspace_id: params.workspaceId,
+    p_world_id: params.worldId,
+    p_saga_id: params.sagaId,
+    p_requested_formats: requestedFormats,
+    p_include_audit: value(formData, "includeAudit") === "true"
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const result = data as { allowed?: boolean; export_id?: string; message?: string } | null;
+  if (!result?.allowed) {
+    const message = encodeURIComponent(result?.message ?? "Export is not available right now.");
+    redirect(`${sagaPath(params)}/export?error=${message}`);
+  }
+  redirect(`${sagaPath(params)}/export?exportId=${result.export_id}`);
 }
 
 export async function updateDraftStateAction(formData: FormData) {

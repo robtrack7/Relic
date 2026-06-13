@@ -94,7 +94,7 @@ export default async function EntityDetailPage({ params }: { params: Promise<Pag
           <div className="em-eyebrow">
             <RelicIcon name="library" size={11} /> {entityConfigs[all.entityType].label}
           </div>
-          <div className="em-name">{entity.name}</div>
+          <h1 className="em-name">{entity.name}</h1>
           {entity.summary && <div className="em-desc-line">{entity.summary}</div>}
 
           <form action={updateEntityAction}>
