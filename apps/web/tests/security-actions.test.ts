@@ -4,6 +4,9 @@ import {
   archiveEntityAction,
   createEntityAction,
   createSessionAction,
+  quickCaptureAction,
+  quickStubAction,
+  recordDicePoolAction,
   recordDiceRollAction,
   recordSessionConsentAction,
   requestSagaExportAction,
@@ -191,6 +194,88 @@ describe("security-hardened server actions", () => {
       saga_id: "saga-a",
       session_id: "session-a",
       granted: true
+    });
+  });
+
+  it("creates a named Stage note through the scoped quick-capture RPC", async () => {
+    const supabase = authenticatedSupabase();
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    await quickCaptureAction(form({
+      workspaceId: "workspace-a",
+      worldId: "world-a",
+      sagaId: "saga-a",
+      sessionId: "session-a",
+      title: "Harbor witness",
+      body: "A messenger saw the exchange."
+    }));
+
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith("quick_capture", {
+      workspace_id: "workspace-a",
+      world_id: "world-a",
+      saga_id: "saga-a",
+      session_id: "session-a",
+      title: "Harbor witness",
+      body: "A messenger saw the exchange."
+    });
+  });
+
+  it("routes every Stage stub type through the scoped quick-stub RPC", async () => {
+    const supabase = authenticatedSupabase();
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    for (const entityType of ["character", "place", "artifact", "thread", "faction"]) {
+      await quickStubAction(form({
+        workspaceId: "workspace-a",
+        worldId: "world-a",
+        sagaId: "saga-a",
+        sessionId: "session-a",
+        entityType,
+        name: `${entityType} name`,
+        summary: `${entityType} summary`
+      }));
+    }
+
+    for (const entityType of ["character", "place", "artifact", "thread", "faction"]) {
+      expect(supabase.rpc).toHaveBeenCalledWith("quick_stub", {
+        workspace_id: "workspace-a",
+        world_id: "world-a",
+        saga_id: "saga-a",
+        session_id: "session-a",
+        entity_type: entityType,
+        entity_name: `${entityType} name`,
+        summary: `${entityType} summary`
+      });
+    }
+  });
+
+  it("records the selected d20 pool mode through the Stage RPC", async () => {
+    const supabase = authenticatedSupabase();
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+
+    const result = await recordDicePoolAction(form({
+      workspaceId: "workspace-a",
+      worldId: "world-a",
+      sagaId: "saga-a",
+      sessionId: "session-a",
+      pool: "[20]",
+      modifier: "2",
+      mode: "advantage",
+      label: "Pinned save"
+    }));
+
+    expect(result).toMatchObject({ mode: "advantage", expression: "1d20 + 2 (advantage)", label: "Pinned save" });
+    expect(supabase.rpc).toHaveBeenCalledWith("record_dice_roll", {
+      workspace_id: "workspace-a",
+      world_id: "world-a",
+      saga_id: "saga-a",
+      session_id: "session-a",
+      expression: "1d20 + 2 (advantage)",
+      result_total: 13,
+      result_breakdown: [11],
+      label: "Pinned save"
     });
   });
 

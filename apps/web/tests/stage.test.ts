@@ -21,6 +21,9 @@ describe("Stage GM notes tags", () => {
     expect(quickCreateEntityType("npc")).toBe("character");
     expect(quickCreateEntityType("location")).toBe("place");
     expect(quickCreateEntityType("item")).toBe("artifact");
+    expect(quickCreateEntityType("thread")).toBe("thread");
+    expect(quickCreateEntityType("faction")).toBe("faction");
     expect(quickCreateEntityType("note")).toBe("note");
+    expect(quickCreateEntityType("unsupported")).toBeNull();
   });
 });

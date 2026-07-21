@@ -326,12 +326,14 @@ export async function quickCaptureAction(formData: FormData) {
     world_id: params.worldId,
     saga_id: params.sagaId,
     session_id: value(formData, "sessionId"),
-    body
+    body,
+    title: value(formData, "title") || null
   });
   if (error) {
     throw new Error(error.message);
   }
   revalidatePath(`${sagaPath(params)}/sessions/${value(formData, "sessionId")}/stage`);
+  revalidatePath(`${sagaPath(params)}/entities`);
 }
 
 export async function quickStubAction(formData: FormData) {
@@ -355,6 +357,7 @@ export async function quickStubAction(formData: FormData) {
     throw new Error(error.message);
   }
   revalidatePath(`${sagaPath(params)}/sessions/${value(formData, "sessionId")}/stage`);
+  revalidatePath(`${sagaPath(params)}/entities`);
 }
 
 export async function markMomentAction(formData: FormData) {

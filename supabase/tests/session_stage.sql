@@ -2,7 +2,7 @@ create extension if not exists pgtap with schema extensions;
 
 begin;
 
-select plan(28);
+select plan(34);
 
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, confirmation_token, email_change, email_change_token_new, recovery_token)
 values
@@ -193,6 +193,38 @@ select ok(
   'quick_capture writes a session-scoped note source'
 );
 
+create temp table module5_named_capture as
+select public.quick_capture(
+  'c2000000-0000-0000-0000-000000000001',
+  'c3000000-0000-0000-0000-000000000001',
+  'c5000000-0000-0000-0000-000000000001',
+  'c7000000-0000-0000-0000-000000000002',
+  'A messenger saw the exchange.',
+  'Harbor witness'
+) as id;
+
+select is(
+  (select title from public.notes where id = (select id from module5_named_capture)),
+  'Harbor witness',
+  'quick_capture preserves an explicit Stage Create note title'
+);
+
+select is(
+  (select note_type::text from public.notes where id = (select id from module5_named_capture)),
+  'quick_capture',
+  'named Stage Create notes retain quick-capture semantics'
+);
+
+select ok(
+  exists (
+    select 1
+    from public.sources s
+    where s.note_id = (select id from module5_named_capture)
+      and s.session_id = 'c7000000-0000-0000-0000-000000000002'
+  ),
+  'named Stage Create notes retain session evidence'
+);
+
 create temp table module5_stub as
 select public.quick_stub(
   'c2000000-0000-0000-0000-000000000001',
@@ -221,6 +253,56 @@ select throws_like(
 select ok(
   exists (select 1 from public.canon_audit a where a.entity_id = (select id from module5_stub) and a.actor_kind = 'gm'),
   'quick_stub writes canon audit provenance'
+);
+
+create temp table module5_more_stubs as
+select
+  public.quick_stub('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'c7000000-0000-0000-0000-000000000002', 'place', 'Tideglass Pier', 'Location summary') as place_id,
+  public.quick_stub('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'c7000000-0000-0000-0000-000000000002', 'artifact', 'Brass Compass', 'Item summary') as artifact_id,
+  public.quick_stub('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'c7000000-0000-0000-0000-000000000002', 'thread', 'The Missing Courier', 'Thread summary') as thread_id,
+  public.quick_stub('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'c7000000-0000-0000-0000-000000000002', 'faction', 'Brass Assembly', 'Faction summary') as faction_id;
+
+select ok(
+  exists (select 1 from public.characters where id = (select id from module5_stub) and is_stub and created_by = 'gm')
+    and exists (select 1 from public.places where id = (select place_id from module5_more_stubs) and is_stub and created_by = 'gm')
+    and exists (select 1 from public.artifacts where id = (select artifact_id from module5_more_stubs) and is_stub and created_by = 'gm')
+    and exists (select 1 from public.threads where id = (select thread_id from module5_more_stubs) and is_stub and created_by = 'gm')
+    and exists (select 1 from public.factions where id = (select faction_id from module5_more_stubs) and is_stub and created_by = 'gm'),
+  'quick_stub writes every Stage Create entity type as a GM-authored stub'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.sources s
+    where s.session_id = 'c7000000-0000-0000-0000-000000000002'
+      and s.source_entity_id in (
+        (select id from module5_stub),
+        (select place_id from module5_more_stubs),
+        (select artifact_id from module5_more_stubs),
+        (select thread_id from module5_more_stubs),
+        (select faction_id from module5_more_stubs)
+      )
+  ),
+  5,
+  'every Stage Create stub retains its live-session source link'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.canon_audit a
+    where a.entity_id in (
+      (select id from module5_stub),
+      (select place_id from module5_more_stubs),
+      (select artifact_id from module5_more_stubs),
+      (select thread_id from module5_more_stubs),
+      (select faction_id from module5_more_stubs)
+    )
+      and a.actor_kind = 'gm'
+  ),
+  5,
+  'every Stage Create stub records GM canon provenance'
 );
 
 select is(public.mark_moment('c2000000-0000-0000-0000-000000000001', 'c3000000-0000-0000-0000-000000000001', 'c5000000-0000-0000-0000-000000000001', 'c7000000-0000-0000-0000-000000000002', 'secret'), 'c7000000-0000-0000-0000-000000000002'::uuid, 'mark_moment returns session id for active session');

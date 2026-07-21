@@ -192,7 +192,7 @@ function DiceTool({ packetRolls, busy, onRoll, onPin, onClose }: {
       <div className="stage-v2-dice-picker">
         {counts.map(({ sides, count }) => <div className="stage-v2-die-slot" key={sides}><button className={count ? "selected" : ""} onClick={() => add(sides)}><RelicIcon name="dice" size={23} /><span>d{sides === 100 ? "%" : sides}</span></button>{count > 0 && <div><button onClick={() => remove(sides)} aria-label={`Remove d${sides}`}>−</button><span>{count}</span><button onClick={() => add(sides)} aria-label={`Add d${sides}`}>+</button></div>}</div>)}
       </div>
-      {pool.includes(20) && <div className="stage-v2-segmented" aria-label="d20 roll mode">{[["normal", "Normal"], ["advantage", "↑ Advantage"], ["disadvantage", "↓ Disadvantage"]].map(([value, text]) => <button key={value} className={mode === value ? "active" : ""} onClick={() => setMode(value)}>{text}</button>)}</div>}
+      {pool.includes(20) && <div className="stage-v2-segmented" role="group" aria-label="d20 roll mode">{[["normal", "Normal"], ["advantage", "↑ Advantage"], ["disadvantage", "↓ Disadvantage"]].map(([value, text]) => <button key={value} className={mode === value ? "active" : ""} onClick={() => setMode(value)}>{text}</button>)}</div>}
       <div className="stage-v2-pool-row"><div><small>Rolling</small><strong>{pool.length ? counts.filter((d) => d.count).map((d) => `${d.count}d${d.sides}`).join(" + ") : "Pick a die above"}</strong></div><label>Mod<input type="number" min={-99} max={99} value={modifier} onChange={(e) => setModifier(Number(e.target.value))} /></label>{pool.length > 0 && <button onClick={() => { setPool([]); setLatest(null); setMode("normal"); }}>Clear</button>}</div>
       <button className="stage-v2-roll-button" disabled={!pool.length || busy} onClick={roll}>{busy ? "Rolling…" : pool.length ? "Roll" : "Pick a die above"}</button>
       {latest && <div className="stage-v2-roll-result"><strong>{String(latest.total)}</strong><span>{String(latest.label || latest.expression)}</span><small>{Array.isArray(latest.rolls) ? latest.rolls.join(" · ") : ""}</small></div>}
@@ -333,9 +333,12 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
     const entityType = quickCreateEntityType(type);
     if (!entityType) return;
     const result = entityType === "note"
-      ? await perform(quickCaptureAction, { body: `[Note] ${name}\n${summary}` })
+      ? await perform(quickCaptureAction, { title: name, body: summary || name })
       : await perform(quickStubAction, { entityType, name, summary });
-    if (result !== false) { setNotice(`${createTypes.find((item) => item.key === type)?.label} created as a GM-authored stub.`); setOverlay(null); }
+    if (result !== false) {
+      setNotice(entityType === "note" ? "Note saved to Library." : `${createTypes.find((item) => item.key === type)?.label} created as a GM-authored stub.`);
+      setOverlay(null);
+    }
   }
 
   async function rollPool(pool: number[], modifier: number, mode: string, label: string) {

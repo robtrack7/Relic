@@ -39,6 +39,16 @@ test("new GM can exercise the full manual MVP loop from sign-up through Stage", 
     return page.url();
   }
 
+  async function quickCreate(label: string, name: string, summary: string) {
+    await page.getByRole("button", { name: "Create" }).click();
+    const dialog = page.getByRole("dialog", { name: "Create" });
+    await dialog.getByRole("button", { name: new RegExp(`^${label}`) }).click();
+    await dialog.getByLabel("Name").fill(name);
+    await dialog.getByLabel(/Short note/).fill(summary);
+    await dialog.getByRole("button", { name: `Create ${label}` }).click();
+    await expect(dialog).toBeHidden();
+  }
+
   await page.goto("/auth/sign-up");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
@@ -212,29 +222,59 @@ test("new GM can exercise the full manual MVP loop from sign-up through Stage", 
   await page.reload();
   await expect(page.getByText("Live", { exact: true }).first()).toBeVisible();
 
-  await page.getByRole("button", { name: "Create" }).click();
-  await page.getByRole("dialog", { name: "Create" }).getByRole("button", { name: /NPC/ }).click();
-  await page.getByPlaceholder("Name this npc…").fill("Mira Fen");
-  const quickCreateSummary = page.getByPlaceholder("What matters at the table?");
-  await quickCreateSummary.fill("A messenger seen");
-  await page.waitForTimeout(1_100);
-  await expect(quickCreateSummary).toBeFocused();
-  await quickCreateSummary.pressSequentially(" at the archive.");
-  await page.getByRole("button", { name: "Create NPC" }).click();
+  const stageUrl = page.url();
+  const stageCreates = [
+    { label: "NPC", type: "character", name: "Mira Fen", summary: "A messenger seen at the archive.", stub: true },
+    { label: "Location", type: "place", name: "Tideglass Pier", summary: "A moonlit landing below the archive.", stub: true },
+    { label: "Item", type: "artifact", name: "Brass Compass", summary: "Its needle points toward broken promises.", stub: true },
+    { label: "Thread", type: "thread", name: "The Missing Courier", summary: "The courier never reached the archive.", stub: true },
+    { label: "Note", type: "note", name: "Harbor Witness", summary: "A messenger saw the exchange.", stub: false },
+    { label: "Faction", type: "faction", name: "Brass Assembly", summary: "Dockworkers guarding an old compact.", stub: true }
+  ];
+
+  for (const item of stageCreates) {
+    await quickCreate(item.label, item.name, item.summary);
+  }
+
+  await page.goto(`${sagaRoot}/entities`);
+  await page.reload();
+  for (const item of stageCreates) {
+    const card = page.locator(".entity-card", { hasText: item.name });
+    await expect(card).toBeVisible();
+    await expect(card.locator(".entity-eyebrow")).toHaveText(`${item.type}${item.stub ? " · stub" : ""}`);
+    await expect(card.locator(".entity-desc")).toHaveText(item.summary);
+  }
+
+  await page.goto(stageUrl);
+  await expect(page.getByText("Live", { exact: true }).first()).toBeVisible();
 
   await page.getByRole("button", { name: "Dice" }).click();
-  await page.getByRole("dialog", { name: "Dice" }).getByRole("button", { name: /d6/ }).first().click();
-  await page.getByRole("dialog", { name: "Dice" }).getByRole("button", { name: /d6/ }).first().click();
-  const diceModifier = page.getByRole("dialog", { name: "Dice" }).getByRole("spinbutton");
+  const diceDialog = page.getByRole("dialog", { name: "Dice" });
+  await diceDialog.getByRole("button", { name: /d20/ }).first().click();
+  await expect(diceDialog.getByRole("group", { name: "d20 roll mode" })).toBeVisible();
+  const diceModifier = diceDialog.getByRole("spinbutton");
   await diceModifier.fill("2");
   await page.waitForTimeout(1_100);
   await expect(diceModifier).toBeFocused();
   await diceModifier.fill("0");
-  await page.getByRole("button", { name: "Roll", exact: true }).click();
-  await expect(page.locator(".stage-v2-roll-result")).toBeVisible();
-  await page.getByRole("button", { name: "Done" }).click();
+  const rollButton = diceDialog.getByRole("button", { name: "Roll", exact: true });
+  await rollButton.click();
+  await expect(diceDialog.locator(".stage-v2-roll-result")).toBeVisible();
+  await expect(rollButton).toBeEnabled();
+  await diceDialog.getByRole("button", { name: /Disadvantage/ }).click();
+  await rollButton.click();
+  await expect(rollButton).toBeEnabled();
+  await diceDialog.getByRole("button", { name: /Advantage/ }).click();
+  await diceDialog.getByRole("button", { name: "Pin to board" }).click();
+  const pinnedDice = page.getByRole("complementary", { name: "Pinned dice widget" });
+  await expect(pinnedDice).toBeVisible();
+  await pinnedDice.getByRole("button", { name: "Roll" }).click();
+  await expect(pinnedDice.locator("strong")).toHaveText(/\d+/);
   await page.reload();
-  await expect(page.getByRole("complementary", { name: "The Loom" }).getByText(/2d6 = \d+/)).toBeVisible();
+  const loom = page.getByRole("complementary", { name: "The Loom" });
+  await expect(loom.getByText(/1d20 = \d+/)).toBeVisible();
+  await expect(loom.getByText(/1d20 \(disadvantage\) = \d+/)).toBeVisible();
+  await expect(loom.getByText(/Pinned roll · 1d20 \(advantage\) = \d+/)).toBeVisible();
 
   await page.getByRole("searchbox", { name: "Search saga during play" }).fill("Mira Fen");
   await page.getByRole("searchbox", { name: "Search saga during play" }).press("Enter");

@@ -60,3 +60,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-07-20 - MVP Gap Reaudit and Next Workstream]]
 - [[Session Logs/2026-07-20 - MVP Delivery Plan and Quality Gates]]
 - [[Session Logs/2026-07-20 - Stage Dialog Focus Reliability]]
+- [[Session Logs/2026-07-20 - Stage Dice and Quick Create Proof]]

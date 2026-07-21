@@ -21,4 +21,21 @@ describe("dice parser", () => {
     expect(roll.rolls).toEqual([11, 4]);
     expect(roll.total).toBe(17);
   });
+
+  it("keeps normal, advantage, and disadvantage explicit in d20 pool results", () => {
+    expect(rollDicePool([20], 0, "normal", () => 0.75)).toMatchObject({
+      expression: "1d20",
+      rolls: [16],
+      total: 16,
+      mode: "normal"
+    });
+    expect(rollDicePool([20], 0, "advantage", (() => {
+      const values = [0.1, 0.8];
+      return () => values.shift() ?? 0;
+    })())).toMatchObject({ expression: "1d20 (advantage)", rolls: [17], total: 17, mode: "advantage" });
+    expect(rollDicePool([20], 0, "disadvantage", (() => {
+      const values = [0.1, 0.8];
+      return () => values.shift() ?? 0;
+    })())).toMatchObject({ expression: "1d20 (disadvantage)", rolls: [3], total: 3, mode: "disadvantage" });
+  });
 });

@@ -41,7 +41,7 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 | P1 | 0 | 5 | 2 | 0 | 1 |
 | P2 | 0 | 2 | 1 | 0 | 1 |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, and a stable Stage dialog focus lifecycle. The immediate packet is Dice and Quick Create persistence proof. The largest remaining product path is evidence → synthesis → source-aware draft → explicit approval.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, and refresh-proven Dice/Quick Create behavior. The immediate packet is active-Thread visibility and restrained Stage shell polish. The largest remaining product path is evidence → synthesis → source-aware draft → explicit approval.
 
 ## 3. Quality-gate system
 
@@ -119,6 +119,7 @@ Stop rules:
 - Extract Dice/Quick Create modules behind protected behavior if the focused tests make that refactor safe.
 - Test validation, duplicate/error behavior, and permission denial.
 - **Done when:** component + authenticated browser tests prove all modes/types and no record disappears after refresh.
+- **Evidence:** Normal, Advantage, and Disadvantage are covered through the d20 action path; pinned rolls retain the selected mode; all six Create choices are exercised through scoped actions; five entity types refresh into Library as GM-authored stubs; Create → Note preserves its chosen title as a session-linked quick capture; validation, in-flight duplicate prevention, permission failures, RPC mappings, pgTAP provenance, and the authenticated create → refresh loop pass.
 
 #### Packet A3 — Active Threads and shell polish
 
@@ -390,4 +391,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate next packet: **A2 — Dice and Quick Create proof**.
+Immediate next packet: **A3 — Active Threads and shell polish**.
