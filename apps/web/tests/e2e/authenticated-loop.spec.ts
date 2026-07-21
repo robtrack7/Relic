@@ -202,6 +202,40 @@ test("new GM can exercise the full manual MVP loop from sign-up through Stage", 
   await expect(page.getByLabel("Pinned entities").getByText("Moonwell Archive")).toBeVisible();
   await expect(page.getByRole("complementary", { name: "The Loom" })).toBeVisible();
 
+  const activeThreads = page.getByRole("region", { name: "Active Threads" });
+  await expect(activeThreads.getByText("The sealed letter")).toBeVisible();
+  await expect(activeThreads.getByText("A letter keeps pulling danger toward the archive.")).toBeVisible();
+  await expect(activeThreads.getByText("1 objective")).toBeVisible();
+  await expect(activeThreads.getByRole("button")).toHaveCount(0);
+  await expect(activeThreads.getByRole("link")).toHaveCount(0);
+
+  const stageBrowserErrors: string[] = [];
+  const recordConsoleError = (message: { type(): string; text(): string }) => {
+    if (message.type() === "error") stageBrowserErrors.push(message.text());
+  };
+  const recordPageError = (error: Error) => stageBrowserErrors.push(error.message);
+  page.on("console", recordConsoleError);
+  page.on("pageerror", recordPageError);
+
+  for (const viewport of [
+    { name: "desktop", width: 1440, height: 900 },
+    { name: "laptop", width: 1024, height: 768 },
+    { name: "tablet", width: 768, height: 1024 },
+    { name: "mobile", width: 390, height: 844 }
+  ]) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await expect(page.getByLabel("Stage identity")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Active Threads" }).getByText("The sealed letter")).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Stage actions" }).getByRole("button")).toHaveCount(5);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+    await page.screenshot({ path: `../../output/playwright/stage-a3-${viewport.name}.png` });
+  }
+
+  page.off("console", recordConsoleError);
+  page.off("pageerror", recordPageError);
+  expect(stageBrowserErrors).toEqual([]);
+  await page.setViewportSize({ width: 1280, height: 720 });
+
   await page.getByRole("button", { name: "Start Session" }).click();
   await expect(page.getByRole("button", { name: "Go live" })).toBeVisible();
   await page.getByRole("button", { name: "Go live" }).click();

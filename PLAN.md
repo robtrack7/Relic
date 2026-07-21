@@ -128,6 +128,7 @@ Stop rules:
 - Keep `GM Screen` for MVP; `Rulebook` remains a post-MVP naming pass.
 - Re-run four-viewport screenshots and keyboard/backdrop checks.
 - **Done when:** Stage is glanceable, stable, and wireframe-compatible at all target viewports.
+- **Evidence:** The scoped session-active Thread read now renders as a compact, read-only primary-column region with state, summary, and objective count; the rail remains five actions; the Stage/session identity is quiet context rather than adjacent pills; focused component coverage and the authenticated signup-to-Stage loop prove empty/populated states, no Thread mutations or detours, keyboard/backdrop regressions, zero browser errors, and no horizontal overflow at 1440×900, 1024×768, 768×1024, or 390×844.
 
 **Milestone A gate:** full web suite/build, responsive Stage E2E, no console errors, and the same Dice/Create/Note flow repeated after a dev-server restart.
 
@@ -391,4 +392,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate next packet: **A3 — Active Threads and shell polish**.
+Immediate next packet: **B1 — Durable non-audio write queue**.
