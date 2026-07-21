@@ -69,3 +69,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-07-21 - Source Context and Citation Drift UI]]
 - [[Session Logs/2026-07-21 - Approval Queue Trust Completion]]
 - [[Session Logs/2026-07-21 - GitHub Commit Verification and Push Repair]]
+- [[Session Logs/2026-07-21 - Hierarchy Switching and Saga Lifecycle]]

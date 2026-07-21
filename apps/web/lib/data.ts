@@ -2,9 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { entityConfigs } from "@/lib/entities";
 import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
-import type { AppContext, EntitySummary, EntityType, IdParams, SearchResult, StageLiteralSearchDocument } from "@/lib/types";
+import type { AppContext, EntitySummary, EntityType, HierarchyContext, IdParams, SearchResult, StageLiteralSearchDocument } from "@/lib/types";
 
-type WorkspaceContext = { id: string; name: string; usage_limits?: Record<string, unknown> };
+type WorkspaceContext = { id: string; name: string; usage_limits?: Record<string, unknown>; hierarchy?: HierarchyContext };
 type WorldContext = { id: string; name: string; summary?: string | null; default_game_system?: string | null };
 type SagaContext = {
   id: string;
@@ -164,7 +164,7 @@ export async function requireSagaContext(params: IdParams) {
     throw new Error(error.message);
   }
 
-  const context = data as { workspace?: WorkspaceContext; world?: WorldContext; saga?: SagaContext } | null;
+  const context = data as { workspace?: WorkspaceContext; world?: WorldContext; saga?: SagaContext; hierarchy?: HierarchyContext } | null;
   const workspace = context?.workspace;
   const world = context?.world;
   const saga = context?.saga;
@@ -172,6 +172,8 @@ export async function requireSagaContext(params: IdParams) {
   if (!workspace || !world || !saga) {
     notFound();
   }
+
+  workspace.hierarchy = context?.hierarchy;
 
   return { supabase, user, workspace, world, saga };
 }

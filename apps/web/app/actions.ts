@@ -99,7 +99,8 @@ export async function createBlankSagaAction(formData: FormData) {
     prep_style: prepStyle,
     world_choice: value(formData, "worldChoice"),
     existing_world_id: value(formData, "existingWorldId") || null,
-    world_name: value(formData, "worldName") || null
+    world_name: value(formData, "worldName") || null,
+    target_workspace_id: value(formData, "targetWorkspaceId") || null
   });
 
   const result = data as RpcObject | null;
@@ -108,6 +109,46 @@ export async function createBlankSagaAction(formData: FormData) {
   }
 
   redirect(sagaPath({ workspaceId: result.workspace_id, worldId: result.world_id, sagaId: result.saga_id }));
+}
+
+export async function renameSagaAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const newName = value(formData, "sagaName");
+  const { error } = await supabase.rpc("rename_saga", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    new_name: newName
+  });
+  if (error) {
+    redirect(`${sagaPath(params)}/settings?lifecycleError=${encodeURIComponent(error.message)}`);
+  }
+  redirect(`${sagaPath(params)}/settings?lifecycleNotice=renamed`);
+}
+
+export async function deleteSagaAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const { data, error } = await supabase.rpc("delete_saga", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    confirmation_name: value(formData, "confirmationName")
+  });
+  if (error) {
+    redirect(`${sagaPath(params)}/settings?lifecycleError=${encodeURIComponent(error.message)}`);
+  }
+
+  const result = data as {
+    next_workspace_id?: string | null;
+    next_world_id?: string | null;
+    next_saga_id?: string | null;
+  } | null;
+  if (result?.next_workspace_id && result.next_world_id && result.next_saga_id) {
+    redirect(`${sagaPath({ workspaceId: result.next_workspace_id, worldId: result.next_world_id, sagaId: result.next_saga_id })}?lifecycleNotice=delete_pending`);
+  }
+  redirect(`/app/new-saga?workspaceId=${encodeURIComponent(params.workspaceId)}&lifecycleNotice=delete_pending`);
 }
 
 export async function createEntityAction(formData: FormData) {

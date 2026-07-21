@@ -4,15 +4,15 @@ import { cleanupStoragePaths } from "../_shared/storage-cleanup.ts";
 
 Deno.serve(createWorkerHandler({
   queueName: "cleanup_jobs",
-  claimRpc: "claim_cleanup_job",
+  claimRpc: "claim_cleanup_job_for_worker",
   jobTable: "cleanup_jobs",
   workerPurpose: "cleanup_saga",
   async handleJob(job) {
     if (job.job_kind !== "saga" && job.job_kind !== "exports") {
       return { state: "retry", reason: "claimed cleanup job is not saga cleanup" };
     }
-    const result = await cleanupStoragePaths({ id: String(job.id), job_kind: String(job.job_kind), payload: job.payload as Record<string, unknown> });
     const service = createServiceClient();
+    const result = await cleanupStoragePaths(service, { id: String(job.id), job_kind: String(job.job_kind), payload: job.payload as Record<string, unknown> });
     const { error } = await service.rpc("complete_cleanup_job_for_worker", {
       p_job_id: job.id,
       p_deleted_paths: result.deletedPaths,

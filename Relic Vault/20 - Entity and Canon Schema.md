@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 
 ## Changelog
 
+**Hierarchy and Saga lifecycle patch (July 2026).** Adds owner-scoped Workspace/World/Saga navigation targets, scoped Saga rename, exact-name delete confirmation, live/ending Session deletion and context-switch blocks, and a staged deletion contract. Saga delete first hides the Saga and enqueues one idempotent cleanup job; the service worker removes scoped Storage objects before cleanup completion hard-deletes the Saga and cascaded database rows. Sibling hierarchies remain untouched.
+
 **Approval Queue trust completion patch (July 2026).** Adds a route-scoped field-diff/read boundary, persisted GM edit payloads, exact-retry approval receipts, target-row locking, source-health and optimistic-version rechecks, and transactional create/update/archive/next-prep commits. Successful approval alone writes canon plus one provenance-rich `canon_audit`; reject, merge identity decisions, preview/edit, conflicts, and failed attempts write no canon/audit. Merge copies source and run/batch provenance into a separately approvable update draft.
 
 **Citation context and drift UI patch (July 2026).** Makes the draft the browser authorization root for source inspection. `get_draft_source_context` validates the exact Workspace/World/Saga/draft/source/transcript chain and returns only display-safe evidence and authorized Session navigation. The lower-level transcript helper is internal-only; missing, broken, denied, deleted, and unsupported records never expose source or transcript identifiers.
@@ -1182,6 +1184,10 @@ Two-step is deliberate (per `AQ-FR-12`): merge decides identity; the resulting c
 
 ## 11. Saga delete cascade
 
+Deletion is staged so database finalization cannot orphan Storage. The scoped delete RPC verifies the exact Workspace/World/Saga, requires the GM to type the current Saga name, rejects `in_progress` and `ended_pending_undo` Sessions, sets `deleted_at`, and enqueues one `cleanup:saga:<saga_id>` job. The hidden Saga is no longer switchable or readable through browser scope.
+
+The service-role-only `cleanup-saga` worker discovers and removes every object under the exact `<workspace_id>/<world_id>/<saga_id>/` prefix in `audio`, `attachments`, and `exports`. Only after all Storage API removals succeed may cleanup completion hard-delete `sagas`, which drives the database cascade:
+
 ```
 sagas (deleted) ──CASCADE──▶
   characters, places, factions, artifacts, threads, sessions
@@ -1195,9 +1201,7 @@ sagas (deleted) ──CASCADE──▶
   workshop_sessions (where saga_id matches)
 ```
 
-Supabase Storage cleanup (audio files, attachments, exports) via the `cleanup-saga` Edge Function on saga delete (Tech Arch Spec §12.4).
-
-**Notification queue cleanup.** `internal.notification_queue` rows (Tech Arch §18.3) referencing the deleted saga are swept by `cleanup-saga` since `internal.*` doesn't FK-cascade to `public.sagas`. Pending notifications for the deleted saga are marked `state='skipped'` to avoid sending notifications about a saga the GM no longer has.
+**Non-FK operational cleanup.** Saga-attributed embedding, transcription, export, notification, stale-warning, and superseded cleanup jobs are removed during finalization because these `internal.*` tables do not all FK-cascade to `public.sagas`. The completed Saga cleanup receipt remains as operational evidence.
 
 **`push_devices` is NOT cascaded.** Push device registrations are user-scoped, not saga-scoped — they survive saga deletion. They cascade only on `auth.users` deletion (not an MVP path).
 

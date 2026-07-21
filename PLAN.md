@@ -37,11 +37,11 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 
 | Priority | Complete | Partial | Missing | Blocked | Needs verification |
 | -------- | --------:| -------:| -------:| -------:| ------------------:|
-| P0       | 6        | 9       | 5       | 2       | 0                  |
+| P0       | 7        | 8       | 5       | 2       | 0                  |
 | P1       | 1        | 4       | 2       | 0       | 1                  |
 | P2       | 0        | 2       | 1       | 0       | 1                  |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, and C5's explicit field-diff Approval Queue commit boundary. The immediate lane is Packet D1 hierarchy switching and Saga lifecycle.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, and D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup. The immediate lane is Packet D2 Library lifecycle and relationships.
 
 ## 3. Quality-gate system
 
@@ -197,12 +197,13 @@ Stop rules:
 
 ### Phase D — Finish the manual web spine
 
-#### Packet D1 — Hierarchy switching and Saga lifecycle
+#### Packet D1 — Hierarchy switching and Saga lifecycle — complete 2026-07-21
 
 - Implement functional Workspace/World/Saga switching.
 - Add scoped rename and name-confirmed delete; block delete while live.
 - Complete database and Storage cleanup rather than returning deterministic counts.
 - **Done when:** create/reuse/switch/rename/delete works without leaking or orphaning sibling data.
+- **Evidence:** The Sanctum now uses three separate Workspace, World, and Saga dropdowns backed by owner-filtered landing targets; live/ending Sessions disable switching. New saga preserves the selected Workspace/World, Saga Settings exposes scoped rename plus exact-name delete, and the delete RPC blocks live/ending Sessions, immediately hides the Saga, and enqueues one idempotent cleanup job. The service-only worker now has a callable claim boundary, enumerates the exact Saga prefix across `audio`, `attachments`, and `exports`, removes real objects through the Storage API in 1,000-object batches, and only then hard-deletes Saga database rows. Focused pgTAP, component/action, worker unit/source tests, authenticated create/reuse/switch/rename/delete browser proof, and a real local Storage→worker→database smoke all passed with sibling data preserved.
 
 #### Packet D2 — Library lifecycle and relationships
 
@@ -305,7 +306,7 @@ Stop rules:
 #### Packet G3 — Mobile release decision
 
 - Decide whether responsive web is accepted for private MVP alpha or native Expo remains an MVP gate.
-- Decide the combined-vs-separate Workspace/World/Saga switcher treatment before mobile shell implementation.
+- Preserve the accepted three-separate-dropdown Workspace/World/Saga treatment when adapting the mobile shell.
 - Record the decision in the owning active specs and gap analysis.
 
 If responsive web is explicitly accepted:
@@ -398,4 +399,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate next packet: **D1 — Hierarchy switching and Saga lifecycle**.
+Immediate next packet: **D2 — Library lifecycle and relationships**.

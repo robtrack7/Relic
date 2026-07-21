@@ -47,7 +47,7 @@ Do not code directly from this router. Use it to select the correct detailed pla
 
 ## Current immediate packet
 
-The current packet pointer lives in root `PLAN.md`. After the completed Stage and Phase C milestones, the immediate packet is D1 hierarchy switching and Saga lifecycle; this sequencing note must not retain an older packet as current truth.
+The current packet pointer lives in root `PLAN.md`. After completed D1 hierarchy switching and Saga lifecycle, the immediate packet is D2 Library lifecycle and relationships; this sequencing note must not retain an older packet as current truth.
 
 ## Phase 1 Complete
 

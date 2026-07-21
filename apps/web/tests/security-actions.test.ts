@@ -10,6 +10,8 @@ import {
   recordDiceRollAction,
   recordSessionConsentAction,
   requestSagaExportAction,
+  renameSagaAction,
+  deleteSagaAction,
   resolveDraftAction,
   resolveDraftSelectionAction,
   refreshDraftBaselineAction,
@@ -96,6 +98,33 @@ describe("security-hardened server actions", () => {
         created_by: "gm"
       }
     });
+  });
+
+  it("renames and typed-name deletes a Saga through scoped lifecycle RPCs", async () => {
+    const supabase = authenticatedSupabase();
+    supabase.rpc
+      .mockResolvedValueOnce({ data: { id: "saga-a", name: "Renamed Saga" }, error: null })
+      .mockResolvedValueOnce({
+        data: { state: "cleanup_pending", next_workspace_id: "workspace-a", next_world_id: "world-a", next_saga_id: "saga-b" },
+        error: null
+      });
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    await expect(renameSagaAction(form({
+      workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", sagaName: "Renamed Saga"
+    }))).rejects.toThrow("NEXT_REDIRECT:/app/w/workspace-a/world/world-a/saga/saga-a/settings?lifecycleNotice=renamed");
+
+    await expect(deleteSagaAction(form({
+      workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", confirmationName: "Renamed Saga"
+    }))).rejects.toThrow("NEXT_REDIRECT:/app/w/workspace-a/world/world-a/saga/saga-b?lifecycleNotice=delete_pending");
+
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc.mock.calls[0]).toEqual(["rename_saga", {
+      workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", new_name: "Renamed Saga"
+    }]);
+    expect(supabase.rpc.mock.calls[1]).toEqual(["delete_saga", {
+      workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", confirmation_name: "Renamed Saga"
+    }]);
   });
 
   it("appends a thread objective through an RPC without trusting client JSON", async () => {

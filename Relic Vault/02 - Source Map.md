@@ -20,8 +20,8 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[11 - Product Basepoint]] | Product north star, scope, naming, exclusions | Primary |
 | [[12 - MVP PRD]] | P0 requirements and acceptance framing | Primary |
 | [[13 - Design System]] | v0.4 web UI tokens, typography, palette, app shell, Loom carriage, component feel; wrapper for [[14 - Design System Source.html]] | Primary design |
-| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, Stage evidence markers, exactly-once write receipts, conflict outcomes, manual Session evidence provenance, source-aware synthesis batch identity, draft-scoped citation context, and C5 approval receipts/commit invariants | Implementation |
-| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, Stage packet/audio/write recovery, scoped Storage paths, provider-backed transcription/retry, manual evidence intake, atomic synthesis output persistence, citation context/drift reads, approval read/edit/rebase/commit boundaries, deployment, monitoring | Implementation |
+| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, hierarchy/Saga lifecycle and staged delete cascade, Stage evidence markers, exactly-once write receipts, conflict outcomes, manual Session evidence provenance, source-aware synthesis batch identity, draft-scoped citation context, and C5 approval receipts/commit invariants | Implementation |
+| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, hierarchy navigation/lifecycle RPCs, real Storage-before-database Saga cleanup, Stage packet/audio/write recovery, provider-backed transcription/retry, manual evidence intake, atomic synthesis output persistence, citation context/drift reads, approval read/edit/rebase/commit boundaries, deployment, monitoring | Implementation |
 | [[22 - Memory and Retrieval]] | Embeddings, retrieval, task profiles, context assembly | Implementation |
 | [[23 - AI Task Registry]] | Standalone MVP AI task contracts, task routing, prompt versions, validation, source-aware synthesis artifacts, and draft/canon behavior | Implementation |
 | [[24 - Approval Queue]] | Approval UX, field diffs, source citation/context, safe drift/conflict states, explicit one/selected/all-compatible actions, and canon/audit commit behavior | Implementation |
@@ -30,7 +30,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[31 - Session Prep Flow]] | Session prep workspace and Ready for Stage handoff | UX |
 | [[32 - Stage UX Flow]] | Live-session Stage behavior | UX |
 | [[33 - First Run UX Flow]] | First-run, new saga, GM profile, Session 1 handoff | UX |
-| [[34 - UI Implementation Spec]] | Routes, shells, components, build order | UI implementation |
+| [[34 - UI Implementation Spec]] | Routes, shells, three-dropdown hierarchy switching, Saga lifecycle settings, components, build order | UI implementation |
 | [[35 - Web Design Wireframe]] | Authenticated web app wireframe and first-pass design-system application | UI planning |
 | [[40 - MVP Implementation Planning Sequence]] | Current MVP delivery router, small-packet order, double checkpoints, and release gates | Planning |
 | [[44 - Repo Bootstrap and GitHub Setup Plan]] | Repository structure, GitHub setup, and bootstrap guardrails before foundation work | Planning |
@@ -70,7 +70,7 @@ These notes translate the active product, UX, and UI sources into compact screen
 | [[69 - Settings Usage Design Spec]] | Saga/World/Workspace settings, usage, retention, export | Secondary design |
 | [[70 - Mobile App Design Spec]] | Mobile adaptation of both Sanctum and Stage | Secondary design |
 | [[71 - Component Inventory Design Spec]] | Shared component vocabulary and state coverage | Secondary design |
-| [[72 - Navigation Design Spec]] | Top context bar, left rail, global create, switcher, and nav tree | Secondary design |
+| [[72 - Navigation Design Spec]] | Top context bar, left rail, global create, separate Workspace/World/Saga dropdowns, and nav tree | Secondary design |
 | [[73 - Figma UI Import Readiness]] | Figma-to-React handoff contract, route mapping, backend wiring checklist | Secondary design |
 
 ## Archive / Non-Coding Notes

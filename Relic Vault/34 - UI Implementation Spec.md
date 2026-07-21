@@ -42,6 +42,8 @@ This spec translates the active Relic product, UX, schema, architecture, and des
 
 **Implementation rule:** build the loop first: Create → Organize → Prep → Run → Review → Approve → Continue.
 
+**Hierarchy and Saga lifecycle patch (July 2026).** The desktop context path uses three separate native dropdowns for Workspace, World, and Saga. Each branch exposes only authorized choices and resolves to an exact ID route; World changes select an active Saga in that World, and Workspace changes select an active World/Saga landing target. `+ New saga` carries the selected Workspace/World into the create/reuse flow. All three controls are disabled while the current Session is live or ending. Saga Settings supports scoped rename and exact-name permanent deletion with recoverable server errors.
+
 **Session Review manual-evidence patch (July 2026).** Render separate pasted-notes and GM-summary textareas above transcript editing. Persist unsaved text plus its stable source UUID locally under the authenticated GM and full Session scope, keep it on save/network failure, and clear it only after the scoped source RPC succeeds. Saved evidence renders read-only; Save evidence does not trigger synthesis or canon mutation.
 
 **Approval Queue trust completion patch (July 2026).** Render field-level current/proposed editors, persistent C4 source disclosures, confidence/provenance/target consequences, and filters for status, type, batch, confidence, and conflict. Offer one-by-one, explicit selected, and prominent all-compatible approval; bulk actions state the exact visible count and exclude conflicts, broken sources, dirty edits, merge decisions, and archive confirmations. Preserve edits across failed commit, make archive-versus-delete explicit with Rust confirmation, and rebase stale targets without writing canon.
@@ -125,7 +127,7 @@ Mobile is built after the web app and preserves both Sanctum and Stage. It may o
 
 - Parchment background.
 - Left navigation rail, 220–260px.
-- Top context bar: Workspace / World / Saga switcher, Search, Relic Guide toggle, `+ Create`, current session pill, Review badge, usage chip when near quota, account menu.
+- Top context bar: three separate Workspace / World / Saga dropdowns, Search, Relic Guide toggle, `+ Create`, current session pill, Review badge, usage chip when near quota, account menu. The dropdowns render as one context path but retain independent labels and controls.
 - Main content column, max readable width 960–1120px unless list/detail layout requires more.
 - Optional right inspector for source/provenance, relationships, draft warnings, quota warnings.
 - Cream cards on Parchment. Literary, modern, relaxing. Amber marks consequential action. Verdigris marks confirmed/ready. Rust marks destructive/blocked.

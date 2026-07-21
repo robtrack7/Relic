@@ -111,7 +111,9 @@ AI task execution must start with `preflight_ai_task(...)`, then run through the
 
 Export and notification operations use scoped browser RPCs for request/status/preference/device state. Worker-only internals own export completion, stale-pipeline scanning, notification dispatch, and cleanup finalization.
 
-Worker-only wrappers for operations are `complete_export_job_for_worker(...)`, `dispatch_notification_for_worker(...)`, and `complete_cleanup_job_for_worker(...)`; they are not granted to browser roles.
+Hierarchy reads return only owner-accessible Workspace/World/Saga choices and an authorized landing target for each switchable branch. `rename_saga(...)` and `delete_saga(...)` revalidate the exact hierarchy server-side. Deletion requires an exact typed Saga name, rejects `in_progress` and `ended_pending_undo` Sessions, soft-hides the Saga, and enqueues one idempotent Storage cleanup job. Only a successful worker Storage pass may call cleanup completion; that completion hard-deletes the Saga and its cascaded database rows while preserving sibling Sagas.
+
+Worker-only wrappers for operations are `complete_export_job_for_worker(...)`, `dispatch_notification_for_worker(...)`, `claim_cleanup_job_for_worker(...)`, and `complete_cleanup_job_for_worker(...)`; they are not granted to browser roles.
 
 ## Verification
 

@@ -21,7 +21,23 @@ describe("SanctumShell", () => {
     render(
       <SanctumShell
         params={params}
-        workspace={{ name: "Lantern House" }}
+        workspace={{
+          name: "Lantern House",
+          hierarchy: {
+            workspaces: [
+              { id: "workspace-1", name: "Lantern House", target: params },
+              { id: "workspace-2", name: "North House", target: { workspaceId: "workspace-2", worldId: "world-2", sagaId: "saga-3" } }
+            ],
+            worlds: [
+              { id: "world-1", name: "Thornwood", target: params },
+              { id: "world-2", name: "Salt March", target: { workspaceId: "workspace-1", worldId: "world-2", sagaId: "saga-2" } }
+            ],
+            sagas: [
+              { id: "saga-1", name: "The Thornwood Accord", target: params },
+              { id: "saga-2", name: "Ashes at Dawn", target: { workspaceId: "workspace-1", worldId: "world-1", sagaId: "saga-2" } }
+            ]
+          }
+        }}
         world={{ name: "Thornwood" }}
         saga={{ name: "The Thornwood Accord" }}
       >
@@ -49,5 +65,46 @@ describe("SanctumShell", () => {
     expect(screen.getByText("Lantern House")).toBeTruthy();
     expect(screen.getByText("Thornwood")).toBeTruthy();
     expect(screen.getByText("The Thornwood Accord")).toBeTruthy();
+    const workspaceSwitcher = screen.getByRole("combobox", { name: "Workspace" });
+    const worldSwitcher = screen.getByRole("combobox", { name: "World" });
+    const sagaSwitcher = screen.getByRole("combobox", { name: "Saga" });
+    expect(within(workspaceSwitcher).getByRole("option", { name: "North House" }).getAttribute("value")).toBe(
+      "/app/w/workspace-2/world/world-2/saga/saga-3"
+    );
+    expect(within(worldSwitcher).getByRole("option", { name: "Salt March" }).getAttribute("value")).toBe(
+      "/app/w/workspace-1/world/world-2/saga/saga-2"
+    );
+    expect(within(sagaSwitcher).getByRole("option", { name: "Ashes at Dawn" }).getAttribute("value")).toBe(
+      "/app/w/workspace-1/world/world-1/saga/saga-2"
+    );
+    expect(within(sagaSwitcher).getByRole("option", { name: "+ New saga" }).getAttribute("value")).toContain(
+      "/app/new-saga?workspaceId=workspace-1&worldId=world-1"
+    );
+  });
+
+  it("disables all three context dropdowns while a Session is live", () => {
+    render(
+      <SanctumShell
+        params={params}
+        workspace={{
+          name: "Lantern House",
+          hierarchy: {
+            switching_blocked: true,
+            workspaces: [{ id: "workspace-1", name: "Lantern House", target: params }],
+            worlds: [{ id: "world-1", name: "Thornwood", target: params }],
+            sagas: [{ id: "saga-1", name: "The Thornwood Accord", target: params }]
+          }
+        }}
+        world={{ name: "Thornwood" }}
+        saga={{ name: "The Thornwood Accord" }}
+      >
+        <p>Live shell</p>
+      </SanctumShell>
+    );
+
+    for (const label of ["Workspace", "World", "Saga"]) {
+      expect(screen.getByRole("combobox", { name: label }).hasAttribute("disabled")).toBe(true);
+    }
+    expect(screen.getByText("End or resume the live Session before switching context.")).toBeTruthy();
   });
 });

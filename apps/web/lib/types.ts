@@ -4,6 +4,19 @@ export type IdParams = {
   sagaId: string;
 };
 
+export type HierarchyOption = {
+  id: string;
+  name: string;
+  target: IdParams | null;
+};
+
+export type HierarchyContext = {
+  switching_blocked?: boolean;
+  workspaces: HierarchyOption[];
+  worlds: HierarchyOption[];
+  sagas: HierarchyOption[];
+};
+
 export type EntityType = "character" | "place" | "faction" | "artifact" | "thread" | "session" | "note";
 export type CanonEntityType = Exclude<EntityType, "note">;
 export type EntityScope = "saga" | "world";

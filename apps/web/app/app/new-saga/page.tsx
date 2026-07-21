@@ -1,12 +1,14 @@
 import { createBlankSagaAction } from "@/app/actions";
 import { requireUser } from "@/lib/data";
 
-export default async function NewSagaPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+export default async function NewSagaPage({ searchParams }: { searchParams: Promise<{ error?: string; workspaceId?: string; worldId?: string; lifecycleNotice?: string }> }) {
   const params = await searchParams;
   const { supabase } = await requireUser();
   await supabase.rpc("ensure_default_workspace");
-  const { data } = await supabase.rpc("list_worlds_for_workspace");
+  const { data, error } = await supabase.rpc("list_worlds_for_workspace", { workspace_id: params.workspaceId || null });
+  if (error) throw new Error(error.message);
   const worlds = (data ?? []) as Array<{ id: string; name: string }>;
+  const selectedWorldId = worlds.some((world) => world.id === params.worldId) ? params.worldId : worlds[0]?.id ?? "";
 
   return (
     <main className="auth-page">
@@ -15,7 +17,9 @@ export default async function NewSagaPage({ searchParams }: { searchParams: Prom
         <h1 className="display-title">Create a playable start</h1>
         <p className="muted">Start Blank is live in this phase. AI-assisted setup remains review-gated until the runtime phase.</p>
         {params.error ? <p className="danger-note">{params.error}</p> : null}
+        {params.lifecycleNotice === "delete_pending" ? <p className="notice">Saga deletion is underway. Create another Saga when you are ready.</p> : null}
         <form className="form-stack" action={createBlankSagaAction}>
+          <input type="hidden" name="targetWorkspaceId" value={params.workspaceId ?? ""} />
           <div className="content-grid">
             <label className="field">
               <span>Saga name</span>
@@ -36,7 +40,7 @@ export default async function NewSagaPage({ searchParams }: { searchParams: Prom
             </label>
             <label className="field">
               <span>Existing World</span>
-              <select className="select" name="existingWorldId" defaultValue={worlds?.[0]?.id ?? ""}>
+              <select className="select" name="existingWorldId" defaultValue={selectedWorldId}>
                 <option value="">Create a new World</option>
                 {worlds?.map((world) => <option key={world.id} value={world.id}>{world.name}</option>)}
               </select>

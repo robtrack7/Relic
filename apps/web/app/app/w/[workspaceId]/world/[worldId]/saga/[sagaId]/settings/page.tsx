@@ -49,8 +49,15 @@ function meterPercent(meter: UsageMeter) {
   return Math.min(100, Math.max(0, Math.round((used / limit) * 100)));
 }
 
-export default async function SettingsPage({ params }: { params: Promise<IdParams> }) {
+export default async function SettingsPage({
+  params,
+  searchParams
+}: {
+  params: Promise<IdParams>;
+  searchParams: Promise<{ lifecycleNotice?: string; lifecycleError?: string }>;
+}) {
   const ids = await params;
+  const query = await searchParams;
   const { workspace, world, saga } = await requireSagaContext(ids);
   const usage = await getUsageSummary(ids.workspaceId);
   const root = sagaPath(ids);
@@ -63,9 +70,12 @@ export default async function SettingsPage({ params }: { params: Promise<IdParam
         <div>
           <div className="page-eyebrow"><RelicIcon name="settings" size={12} /> Settings</div>
           <div className="page-title">{saga.name}</div>
-          <div className="page-sub">Saga, World, and Workspace settings are read-only in this phase.</div>
+          <div className="page-sub">Manage this Saga. Workspace and World settings remain lightweight in MVP.</div>
         </div>
       </div>
+
+      {query.lifecycleNotice === "renamed" ? <p className="notice">Saga renamed.</p> : null}
+      {query.lifecycleError ? <p className="danger-note">{query.lifecycleError}</p> : null}
 
       <div className="settings-layout">
         {/* Left nav */}
@@ -84,12 +94,18 @@ export default async function SettingsPage({ params }: { params: Promise<IdParam
             <div className="sec-label" style={{ marginBottom: 14 }}>
               <RelicIcon name="sessions" size={11} /> Saga
             </div>
-            <div className="setting-row">
+            <form className="setting-row" action={renameSagaAction}>
+              <HiddenContextFields params={ids} />
               <div className="setting-label-col">
                 <div className="setting-label">Name</div>
+                <div className="setting-desc">Used throughout the Sanctum, Stage, and exports.</div>
               </div>
-              <div className="kv-v">{saga.name}</div>
-            </div>
+              <div className="settings-inline-action">
+                <label className="sr-only" htmlFor="saga-name">Saga name</label>
+                <input id="saga-name" className="settings-field" name="sagaName" defaultValue={saga.name} required maxLength={120} />
+                <button className="btn btn-secondary btn-sm" type="submit">Rename saga</button>
+              </div>
+            </form>
             <div className="setting-row">
               <div className="setting-label-col">
                 <div className="setting-label">Game system</div>
@@ -160,12 +176,21 @@ export default async function SettingsPage({ params }: { params: Promise<IdParam
           <div className="danger-zone">
             <div className="dz-title">Danger zone</div>
             <p style={{ fontSize: 12, color: "var(--stone-700)", marginBottom: 10 }}>
-              Destructive saga operations are reserved for a later phase.
+              Deletion hides this Saga immediately, then permanently removes its database and Storage data. It is blocked while a Session is live or ending.
             </p>
-            <button className="btn btn-rust btn-sm" disabled>Delete saga · Not yet available</button>
+            <form className="settings-delete-form" action={deleteSagaAction}>
+              <HiddenContextFields params={ids} />
+              <label className="field" htmlFor="confirmation-name">
+                <span>Type <strong>{saga.name}</strong> to confirm</span>
+                <input id="confirmation-name" className="settings-field" name="confirmationName" required autoComplete="off" />
+              </label>
+              <button className="btn btn-rust btn-sm" type="submit">Delete saga permanently</button>
+            </form>
           </div>
         </div>
       </div>
     </SanctumShell>
   );
 }
+import { deleteSagaAction, renameSagaAction } from "@/app/actions";
+import { HiddenContextFields } from "@/components/HiddenContextFields";

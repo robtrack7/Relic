@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { signOutAction } from "@/app/actions";
 import { RelicIcon } from "@/components/RelicIcon";
+import { HierarchySwitchers } from "@/components/HierarchySwitchers";
 import { sagaPath } from "@/lib/routes";
-import type { IdParams } from "@/lib/types";
+import type { HierarchyContext, IdParams } from "@/lib/types";
 
 type ShellProps = {
   params: IdParams;
-  workspace: { name: string };
+  workspace: { name: string; hierarchy?: HierarchyContext };
   world: { name: string };
   saga: { name: string };
   active?: "home" | "threads" | "library" | "entities" | "prepare" | "sessions" | "review" | "search" | "guide" | "settings" | "export";
@@ -77,34 +78,7 @@ export function SanctumShell({
           </Link>
         </div>
 
-        <div className="switchers" aria-label="Workspace, World, and Saga context">
-          <div className="switcher">
-            <span className="switcher-label">Workspace</span>
-            <button className="switcher-btn" type="button">
-              <span className="sw-ico"><RelicIcon name="crown" size={12} /></span>
-              <span className="switcher-name">{workspace.name}</span>
-              <span className="sw-chev"><RelicIcon name="chevronDown" size={11} /></span>
-            </button>
-          </div>
-          <span className="sw-sep">/</span>
-          <div className="switcher">
-            <span className="switcher-label">World</span>
-            <button className="switcher-btn" type="button">
-              <span className="sw-ico wld"><RelicIcon name="flame" size={12} /></span>
-              <span className="switcher-name">{world.name}</span>
-              <span className="sw-chev"><RelicIcon name="chevronDown" size={11} /></span>
-            </button>
-          </div>
-          <span className="sw-sep">/</span>
-          <div className="switcher">
-            <span className="switcher-label">Saga</span>
-            <button className="switcher-btn" type="button">
-              <span className="sw-ico"><RelicIcon name="sessions" size={12} /></span>
-              <span className="switcher-name">{saga.name}</span>
-              <span className="sw-chev"><RelicIcon name="chevronDown" size={11} /></span>
-            </button>
-          </div>
-        </div>
+        <HierarchySwitchers params={params} hierarchy={workspace.hierarchy} />
 
         <div className="topbar-right">
           <form action={`${root}/search`} role="search" className="search-btn" style={{ cursor: "text" }}>

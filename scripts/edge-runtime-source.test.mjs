@@ -131,3 +131,16 @@ test("worker dispatchers use the shared runtime wrapper", () => {
     assert.doesNotMatch(source, /SUPABASE_JWT_SECRET/, `${dispatcher} should not read JWT secret directly`);
   }
 });
+
+test("Saga cleanup removes real Storage objects before database finalization", () => {
+  const cleanup = read("supabase/functions/_shared/storage-cleanup.ts");
+  const worker = read("supabase/functions/cleanup-saga/index.ts");
+
+  assert.match(cleanup, /\.schema\(["']storage["']\)/, "cleanup should discover stored objects under the scoped prefix");
+  assert.match(cleanup, /\.remove\(/, "cleanup should permanently remove discovered objects through the Storage API");
+  assert.match(cleanup, /1000/, "cleanup should honor the Storage API removal batch limit");
+  assert.doesNotMatch(cleanup, /reports deterministic counts/i, "cleanup must not return invented deletion counts");
+  assert.match(worker, /createServiceClient\(\)/, "Saga cleanup should use the server-only service client");
+  assert.match(worker, /claim_cleanup_job_for_worker/, "Saga cleanup should claim through the service-role-only public wrapper");
+  assert.match(worker, /complete_cleanup_job_for_worker/, "database finalization should happen only after Storage cleanup succeeds");
+});

@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 
 ## Changelog
 
+**Hierarchy and Saga lifecycle patch (July 2026).** Adds owner-scoped hierarchy navigation reads plus Saga rename/delete RPCs, exact-name and live-Session guards, and a service-role-only cleanup claim boundary. `cleanup-saga` now enumerates the canonical Workspace/World/Saga prefix in all private buckets, removes real objects through the Storage API in batches of at most 1,000, and only then invokes transactional database finalization.
+
 **Approval Queue trust completion patch (July 2026).** Adds the authenticated `get_approval_queue`, `save_draft_edit`, `refresh_draft_baseline`, and `resolve_draft` boundaries. Public reads return field-level diffs and safe conflict/source state after exact route access checks. Commit rechecks and locks live targets transactionally, uses a browser-inaccessible exact-retry receipt ledger, preserves edits on failure, and writes canon plus one audit only for an explicit successful approval. Merge creates a provenance/source-linked pending update; C3 next-prep implications append only to a still-planned same-Saga Session.
 
 **Citation context and drift UI patch (July 2026).** Adds a draft-scoped browser read for source inspection, makes the raw source-ID transcript helper internal-only, exposes authorized transcript anchors plus frozen/current/deleted drift state, and requires non-leaking fallbacks for missing, broken, denied, and unsupported evidence. Signed audio is deferred until private Storage retention and authorization can be preserved by a dedicated signing contract.
@@ -1140,7 +1142,7 @@ Three buckets in Supabase Storage:
 Path conventions:
 
 - `audio/<workspace_id>/<world_id>/<saga_id>/<session_id>/<sequence>.<ext>`
-- `attachments/<workspace_id>/<world_id>/<scope>/<saga_id-or-world>/<entity_or_note_id>/<filename>`
+- `attachments/<workspace_id>/<world_id>/<saga_id>/<entity_or_note_id>/<filename>` for Saga-owned attachments; World-only attachment layout remains reserved until its dedicated MVP/V1 write contract exists
 - `exports/<workspace_id>/<world_id>/<saga_id>/<export_id>.zip`
 
 The first path segment is always `workspace_id`; World and Saga path segments follow where applicable so Storage RLS can validate the full hierarchy.
@@ -1157,22 +1159,22 @@ Each export request creates one zip file in `exports/<workspace_id>/<world_id>/<
 
 ### 12.4 Saga delete cleanup
 
-`cleanup-saga` Edge Function (§4.1) is triggered when `sagas.deleted_at` is set. Cascades in DB tear down the rows; Storage cleanup needs an explicit pass:
+`cleanup-saga` Edge Function (§4.1) is queued when `sagas.deleted_at` is set. The soft-deleted row remains server-visible until Storage cleanup succeeds, while browser hierarchy reads fail closed. Every Saga-owned object shares the exact `<workspace_id>/<world_id>/<saga_id>/` prefix:
 
 ```typescript
-async function cleanupSagaStorage(saga_id: string) {
+async function cleanupSagaStorage(prefix: string) {
   for (const bucket of ["audio", "attachments", "exports"]) {
-    const { data: files } = await supabase.storage.from(bucket).list(saga_id, { limit: 1000 });
-    if (files?.length) {
-      await supabase.storage.from(bucket).remove(files.map(f => `${saga_id}/${f.name}`));
+    for (const paths of await listObjectPaths(bucket, prefix).then(chunkBy1000)) {
+      const { error } = await supabase.storage.from(bucket).remove(paths);
+      if (error) throw error;
     }
   }
 }
 ```
 
-This runs as `service_role` because the saga's rows (and the GM's access) are already gone by the time cleanup fires. RLS would deny otherwise.
+Discovery may read Storage metadata, but deletion always uses the Storage API so object bytes are not orphaned. The worker runs as `service_role` through explicit claim/completion wrappers that are unavailable to browser roles. Cleanup completion hard-deletes the Saga and cascaded public rows in the same transaction that records completion; a Storage failure retries without finalizing the database delete.
 
-The function is idempotent — re-running it on an already-deleted saga is a no-op.
+The job is idempotent by `cleanup:saga:<saga_id>`; missing objects are safe, and exact retries cannot create a second domain effect.
 
 ### 12.5 Storage limits
 
