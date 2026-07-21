@@ -371,7 +371,7 @@ Build as the loop dashboard, not a generic project homepage.
 
 ### 5.8 Review and Approval Queue
 
-- Pipeline status page: transcript, summary, draft counts, failures.
+- Pipeline status page: distinct audio, transcription, transcript-edit, retry/recovery, synthesis, summary, draft-count, and failure states.
 - Approval Queue grouped by entity.
 - Diff viewer, source panel, approve/edit/reject/merge/archive actions.
 - Commit selected. Avoid prominent Approve All.
@@ -429,7 +429,7 @@ Errors must tell the GM what happened and what is safe.
 |---|---|
 | AI call failed | Retry, edit prompt/input, continue manually. |
 | Quota reached | Explain human unit, show next reset or upgrade placeholder. |
-| Transcription failed | Retry upload/transcription, allow manual summary. |
+| Transcription failed | State that preserved audio is safe, retry transcription without re-upload, and offer pasted-notes/manual-summary recovery when those inputs are available. |
 | Commit conflict | Show live version vs draft version, allow refresh or manual merge. |
 | Offline | Keep reading/capturing if cached; queue writes. |
 | RLS denial | Generic safe copy to user, full event to Sentry/PostHog. |

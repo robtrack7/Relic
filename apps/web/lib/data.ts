@@ -15,7 +15,7 @@ type SagaContext = {
   audio_retention?: string;
   transcript_retention?: string;
 };
-type SessionRow = {
+export type SessionRow = {
   id: string;
   name: string;
   session_number?: number | null;
@@ -31,6 +31,15 @@ type SessionRow = {
   ended_pending_undo_at?: string | null;
   ended_at?: string | null;
   updated_at?: string;
+};
+export type TranscriptSegment = { start: number; end: number; text: string; deleted?: boolean };
+export type SessionReviewData = {
+  session_id: string;
+  session_status: string;
+  audio: { expected_chunks?: number | null; registered_chunks: number; finalized_at?: string | null };
+  pipeline?: { id: string; state: string; failure_reason?: string | null; inputs_summary?: Record<string, unknown>; updated_at?: string } | null;
+  transcript?: { id: string; state: string; model: string; language?: string | null; duration_seconds?: number | null; segments: TranscriptSegment[]; edited_at?: string | null; failure_reason?: string | null } | null;
+  transcription_job?: { id: string; state: string; attempts: number; max_attempts: number; scheduled_at?: string; failure_reason?: string | null; updated_at?: string } | null;
 };
 type PinRow = { entity_type: EntityType; entity_id: string; order_index?: number };
 type ActiveThreadRow = { thread_id: string };
@@ -164,6 +173,18 @@ export async function getStagePacket(params: IdParams, sessionId: string): Promi
     throw new Error(error.message);
   }
   return (data ?? {}) as StagePacket;
+}
+
+export async function getSessionReview(params: IdParams, sessionId: string): Promise<SessionReviewData> {
+  const { supabase } = await requireSagaContext(params);
+  const { data, error } = await supabase.rpc("get_session_review", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId,
+  });
+  if (error) throw new Error(error.message);
+  return data as SessionReviewData;
 }
 
 export async function getPrepOptions(params: IdParams) {

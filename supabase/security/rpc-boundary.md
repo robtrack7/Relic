@@ -46,6 +46,8 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `enqueue_transcription_job(...)` | Queue scoped transcription work for a Session. |
 | `update_transcript_segments(...)` | Edit transcript segment text/deleted flags while preserving timestamp boundaries. |
 | `get_transcript_source_context(...)` | Read frozen citation text beside current transcript text for drift display. |
+| `get_session_review(...)` | Read scoped post-session audio, transcript, job, and pipeline state without exposing internal queue rows. |
+| `retry_session_transcription(...)` | Explicitly requeue a failed complete recording with a fresh retry budget. |
 | `update_draft_state(...)` | Resolve drafts and commit approved create/update/archive-request drafts to canon. |
 | `list_entities(...)` | Read scoped entity lists. |
 | `get_sessions_for_saga(...)` | Read scoped Session lists. |

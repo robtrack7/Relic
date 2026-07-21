@@ -49,13 +49,13 @@ export function createWorkerHandler(options: WorkerOptions) {
     try {
       const result = await options.handleJob(job);
       if (result.state === "complete") {
-        await service.rpc("complete_job", {
+        await service.rpc("complete_job_for_worker", {
           p_job_table: options.jobTable,
           p_job_id: job.id,
           p_result: result.result ?? {}
         });
       } else {
-        await service.rpc("fail_job", {
+        await service.rpc("fail_job_for_worker", {
           p_job_table: options.jobTable,
           p_job_id: job.id,
           p_failure_reason: result.reason,
@@ -68,7 +68,7 @@ export function createWorkerHandler(options: WorkerOptions) {
       return jsonResponse({ claimed: true, job_id: job.id, state: result.state });
     } catch (error) {
       const reason = error instanceof Error ? error.message : "worker handler failed";
-      await service.rpc("fail_job", {
+      await service.rpc("fail_job_for_worker", {
         p_job_table: options.jobTable,
         p_job_id: job.id,
         p_failure_reason: reason,

@@ -7,6 +7,8 @@ import {
   recordDiceRollAction,
   recordSessionConsentAction,
   requestSagaExportAction,
+  retrySessionTranscriptionAction,
+  updateTranscriptAction,
   updateEntityAction
 } from "@/app/actions";
 import { createClient } from "@/lib/supabase/server";
@@ -270,6 +272,37 @@ describe("security-hardened server actions", () => {
       opening_scene: "Rain on the bridge",
       scene_notes: "Keep the pace tight.",
       planned_date: "2026-07-02"
+    });
+  });
+
+  it("updates transcript text through the scoped immutable-boundary RPC", async () => {
+    const supabase = authenticatedSupabase();
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    const segments = [{ start: 0, end: 12, text: "Edited evidence", deleted: false }];
+
+    await updateTranscriptAction(form({
+      workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a",
+      sessionId: "session-a", transcriptId: "transcript-a", segments: JSON.stringify(segments),
+    }));
+
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith("update_transcript_segments", {
+      workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a",
+      transcript_id: "transcript-a", segments,
+    });
+  });
+
+  it("retries transcription through the scoped recovery RPC", async () => {
+    const supabase = authenticatedSupabase();
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    await retrySessionTranscriptionAction(form({
+      workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", sessionId: "session-a",
+    }));
+
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith("retry_session_transcription", {
+      workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", session_id: "session-a",
     });
   });
 });

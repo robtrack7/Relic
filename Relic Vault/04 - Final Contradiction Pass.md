@@ -45,6 +45,7 @@ AI task surfaces still require implementation-plan review before coding, but the
 - The first implementation pass is scoped to tokens, local fonts/assets, shared primitives, The Sanctum shell, Prepare workflow, and the web Stage surface. It does not wire provider calls, autonomous AI behavior, live Stage captions, or deferred V1 surfaces.
 - [[66 - Stage Design Spec]] now records the 2026-07-20 web implementation decision: the standalone Claude Design wireframe controls concrete Stage layout, while [[32 - Stage UX Flow]] continues to own lifecycle, offline, recording, and Mark Moment requirements. The five-action wireframe rail does not silently retire those upstream obligations.
 - The July 2026 Stage evidence patch keeps that rail unchanged by placing Mark Moment inside Note, persists 30-second web chunks in IndexedDB before direct Storage upload, and makes undo expiry plus complete-audio transcription eligibility server-owned and idempotent.
+- The July 2026 post-session patch delivers the provider-backed transcription worker plus scoped transcript read/edit/retry recovery. Deterministic local provider mode is not a substitute for a deployed LiteLLM smoke test, and transcript/synthesis evidence never becomes canon without the existing explicit approval path.
 
 ## Current Backend Planning Addendum
 

@@ -629,6 +629,16 @@ Session 14  ▢ ended · played 2026-05-09
   [ Open Review ]   [ View summary ]
 ```
 
+### 12.1 Post-session transcription review contract
+
+`Open Review` separates the recovery path into explicit Audio, Transcription, and Synthesis stages. Audio may be queued/uploading/complete/failed; transcription may be queued/transcribing/complete/failed; synthesis may be queued/running/ready/failed. A failure explains what remains safe and gives the next action instead of collapsing everything into a generic pipeline error.
+
+When transcription fails, uploaded audio is preserved. The GM can retry transcription without recording or uploading again. The surface also points to pasted notes or a manual summary as the recovery path once those inputs ship; it must not imply that those inputs already exist.
+
+Completed transcript segments are editable as timestamp-labeled text blocks. A GM may change text or soft-hide a segment. Timestamps, segment boundaries, and audio references are immutable, and new transcript segments cannot be inserted in MVP. Original provider segments and already-captured citation excerpts stay frozen for audit/drift handling.
+
+Transcript text is evidence. Synthesis output remains proposed draft material. Neither becomes canon without explicit GM approval through the owning review/Approval Queue path. The dense editor is web-first for this slice; the mobile-native transcript editor remains part of the broader mobile gap.
+
 ---
 
 ## 13. Saga settings

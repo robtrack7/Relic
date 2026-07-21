@@ -438,6 +438,46 @@ export async function recordDicePoolAction(formData: FormData) {
   return { ...roll, label, createdAt: new Date().toISOString() };
 }
 
+export async function updateTranscriptAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const sessionId = value(formData, "sessionId");
+  const transcriptId = value(formData, "transcriptId");
+  let segments: unknown;
+  try {
+    segments = JSON.parse(value(formData, "segments"));
+  } catch {
+    throw new Error("Transcript changes could not be read.");
+  }
+  if (!Array.isArray(segments)) throw new Error("Transcript changes must be a segment list.");
+
+  const { error } = await supabase.rpc("update_transcript_segments", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    transcript_id: transcriptId,
+    segments,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/review`);
+  return { ok: true };
+}
+
+export async function retrySessionTranscriptionAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const sessionId = value(formData, "sessionId");
+  const { error } = await supabase.rpc("retry_session_transcription", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/review`);
+  return { ok: true };
+}
+
 export async function requestSagaExportAction(formData: FormData) {
   const { supabase } = await requireActionUser();
   const params = paramsFromForm(formData);

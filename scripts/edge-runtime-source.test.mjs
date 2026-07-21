@@ -40,6 +40,7 @@ test("module 8 edge runtime function tree exists", () => {
     "supabase/functions/_shared/export-builder.ts",
     "supabase/functions/_shared/storage-cleanup.ts",
     "supabase/functions/_shared/notification-provider.ts",
+    "supabase/functions/_shared/transcription-provider.ts",
     "supabase/functions/issue-scoped-jwt/index.ts",
     "supabase/functions/ai-task-runner/index.ts",
     "supabase/functions/embed-row-dispatch/index.ts",
@@ -54,6 +55,22 @@ test("module 8 edge runtime function tree exists", () => {
   for (const file of expectedFiles) {
     assert.equal(existsSync(join(root, file)), true, `${file} should exist`);
   }
+});
+
+test("transcription worker uses scoped audio, provider, result, and usage boundaries", () => {
+  const worker = read("supabase/functions/transcribe-session/index.ts");
+  const provider = read("supabase/functions/_shared/transcription-provider.ts");
+
+  assert.match(worker, /createScopedClient/, "transcription should read user audio through scoped identity");
+  assert.match(worker, /\.order\("sequence"/, "transcription should assemble audio chunks in sequence");
+  assert.match(worker, /complete_transcription_job_for_worker/, "transcription should use the worker result RPC");
+  assert.match(worker, /record_usage_event/, "successful transcription should meter duration once");
+  assert.doesNotMatch(worker, /provider handler is not configured/i, "transcription worker should not remain a provider stub");
+  assert.match(provider, /audio\/transcriptions/, "provider should use the OpenAI-compatible audio endpoint");
+  assert.match(provider, /verbose_json/, "provider should request timestamped segments");
+  assert.match(provider, /relic-transcribe/, "provider should use the canonical LiteLLM alias");
+  assert.match(provider, /TRANSCRIPTION_PROVIDER_MODE"\) \?\? "live"/, "provider should fail closed into live configuration unless test mode is explicit");
+  assert.doesNotMatch(provider, /fetch\s*\(\s*["'`]https?:\/\//i, "provider should not hardcode a provider URL");
 });
 
 test("ai task runner uses internal auth and provider adapter boundaries", () => {

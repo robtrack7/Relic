@@ -41,6 +41,18 @@ The reset command applies local migrations, runs seed data, then runs the pgTAP 
 
 Do not paste local Supabase keys, JWT secrets, storage keys, or generated service credentials into notes, logs, commits, or screenshots.
 
+## Transcription Worker Configuration
+
+`transcribe-session` has a deterministic `TRANSCRIPTION_PROVIDER_MODE=test` path for local contract verification. Hosted transcription uses the canonical OpenAI-compatible LiteLLM audio endpoint and requires server-side Edge Function secrets only:
+
+- `LITELLM_PROXY_URL`
+- `LITELLM_PROXY_KEY`
+- `TRANSCRIPTION_MODEL=relic-transcribe`
+- `INTERNAL_TOKEN`
+- `SUPABASE_JWT_SECRET`
+
+`TRANSCRIPTION_PROVIDER_BASE_URL` and `TRANSCRIPTION_PROVIDER_API_KEY` are optional per-worker overrides. Never prefix these values with `NEXT_PUBLIC_` or expose them to browser code. A live-provider smoke test is a deployment check, not part of the deterministic local suite.
+
 ## Public RPCs Added By Foundation
 
 The current callable boundary is documented in `supabase/security/rpc-boundary.md` and enforced by `supabase/tests/access_control.sql`.

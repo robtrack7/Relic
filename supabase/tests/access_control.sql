@@ -45,6 +45,8 @@ values
   ('enqueue_transcription_job', true, 'Scoped transcription queue RPC.'),
   ('update_transcript_segments', true, 'Scoped transcript edit RPC.'),
   ('get_transcript_source_context', true, 'Scoped transcript citation drift read RPC.'),
+  ('get_session_review', true, 'Scoped post-session transcript and pipeline read RPC.'),
+  ('retry_session_transcription', true, 'Scoped explicit transcription retry RPC.'),
   ('update_draft_state', true, 'Scoped draft resolution RPC.'),
   ('list_entities', true, 'Scoped entity list read RPC.'),
   ('get_sessions_for_saga', true, 'Scoped session list read RPC.'),
@@ -112,6 +114,8 @@ values
   ('enqueue_transcription_job', 'Transcription queue RPC.'),
   ('update_transcript_segments', 'Transcript edit RPC.'),
   ('get_transcript_source_context', 'Transcript citation drift read RPC.'),
+  ('get_session_review', 'Post-session transcript and pipeline read RPC.'),
+  ('retry_session_transcription', 'Explicit transcription retry RPC.'),
   ('update_draft_state', 'Draft resolution RPC.'),
   ('list_entities', 'Scoped entity list read RPC.'),
   ('get_sessions_for_saga', 'Scoped session list read RPC.'),
@@ -135,6 +139,10 @@ values
   ('complete_export_job_for_worker', 'Worker-only export completion wrapper.'),
   ('dispatch_notification_for_worker', 'Worker-only notification dispatch wrapper.'),
   ('complete_cleanup_job_for_worker', 'Worker-only cleanup completion wrapper.'),
+  ('claim_transcription_job_for_worker', 'Worker-only transcription claim wrapper.'),
+  ('complete_transcription_job_for_worker', 'Worker-only transcription result wrapper.'),
+  ('complete_job_for_worker', 'Worker-only generic job completion wrapper.'),
+  ('fail_job_for_worker', 'Worker-only generic job failure wrapper.'),
   ('search_for_ui', 'Scoped UI search RPC.'),
   ('retrieve_for_task', 'Scoped retrieval RPC.');
 

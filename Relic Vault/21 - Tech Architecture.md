@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 
 ## Changelog
 
+**Post-session transcription delivery patch (July 2026).** Implements the `relic-transcribe` LiteLLM audio call behind the Edge worker, ordered scoped Storage reads, timestamped response validation, idempotent duration metering, service-role-only worker completion/failure boundaries, retry/dead-letter recovery, and scoped session-review/read/retry RPCs. Deterministic local provider mode is test evidence only; the hosted LiteLLM path still requires deployed secrets and a live smoke test.
+
 **Stage evidence recovery patch (July 2026).** Locks the web-first IndexedDB queue, retry-safe direct Storage upload/registration, explicit expected-chunk finalization marker, and scheduled server-owned `ended_pending_undo` expiry. Transcription enqueue waits for the ended Session plus every declared chunk.
 
 **v1.2 (May 2026).** Priority 6 and document-control alignment. Adds quota preflight expectations, Workspace-level usage metering, hard-stop error contracts, and `get_workspace_usage_summary` as the read model for usage/upgrade surfaces. Refreshes active source references to the current versioned files.
@@ -709,6 +711,8 @@ The `transcribe-session` Edge Function:
 5. Writes the segments (timestamps + text) to `transcripts.segments`. Sets `state='complete'`, populates `whisper_model`, `language`, `duration_seconds`.
 6. Fires the post-completion trigger: enqueue embedding jobs for transcript chunks (Memory Spec §4.3), advance `pipeline_runs.state` to `'synthesizing'`, optionally trigger audio cleanup (§7.5).
 
+The shipped worker keeps the GM-scoped client on session/audio metadata and private Storage reads. Job claim, completion, and failure cross explicit `*_for_worker` RPCs that are executable only by `service_role`; browser/authenticated clients cannot invoke them. The provider adapter sends multipart audio to `/audio/transcriptions` with the stable `relic-transcribe` alias and requests `verbose_json`, then rejects malformed or non-monotonic segment timestamps before writing. LiteLLM/provider keys stay in Edge Function secrets and are never exposed through browser configuration. `TRANSCRIPTION_PROVIDER_MODE=test` exists only for deterministic local verification and is not evidence that the hosted provider route works.
+
 **Assembly memory cost.** A 4-hour session at 64kbps mono ≈ 115 MB. Edge Functions have a 256MB memory limit on the default plan. For sessions >3 hours we fall back to streaming the chunks through a temporary Storage path and pointing Whisper at that URL via signed URL.
 
 ### 7.4 Chunked audio assembly trade-off
@@ -754,6 +758,8 @@ Whisper failures bubble to the pipeline (`synthesize_session`, Registry v1.0 §6
 
 If the pipeline has **no surviving input** (recording-only session, transcription failed), `pipeline_runs.state='failed'` with `failure_reason='no_inputs_after_transcription_failure'`. The GM sees a clear retry CTA in the pipeline UI: re-upload audio, paste notes, or add a manual summary. Per Registry Q11: pipeline tasks use visible retry, not silent.
 
+Retries reuse the same transcription job and complete idempotently. Retryable provider/network failures follow the existing `10s / 60s / 300s` schedule. After exhaustion, the stored audio remains available; an explicit GM retry resets the job to `pending`, clears safe failure/lock fields, restores the transcript to `pending`, and returns the pipeline to `queued`. Sessions with surviving non-audio evidence may continue to synthesis, while recording-only sessions remain visibly failed until retry or manual evidence is added.
+
 ### 7.7 Language handling
 
 Whisper auto-detects language by default. We store the detected language in `transcripts.language` for future filtering and reporting.
@@ -779,6 +785,8 @@ Transcripts are editable during the pipeline review window. The Sanctum exposes 
 - Adding new segments is forbidden in MVP. (V1 may allow inserting clarification notes inline.)
 
 **Storage shape.** The `transcripts.segments` jsonb already holds the segment array. We add `transcripts.original_segments` (jsonb, nullable) — written once on first edit to preserve the Whisper output for diffing. Any future read of "pre-edit transcript" uses this column.
+
+The shipped web review reads this lifecycle through `get_session_review`, renders audio/transcription/synthesis as separate states, and exposes `retry_session_transcription` only after a failed transcription. The editor submits text and soft-delete changes through the existing scoped transcript update RPC; it never permits timestamp mutation or segment insertion. This review surface is evidence management only. It does not approve a draft or mutate canon.
 
 **The citation-drift problem.** Sources captured during pipeline synthesis store `raw_excerpt` (the relevant transcript text at draft creation, Schema §8.1). That field is **frozen** — it does not update when the transcript is edited. This is correct: the draft was reasoned about based on the text at capture time; rewriting the citation retroactively would falsify the audit trail.
 

@@ -21,12 +21,12 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[12 - MVP PRD]] | P0 requirements and acceptance framing | Primary |
 | [[13 - Design System]] | v0.4 web UI tokens, typography, palette, app shell, Loom carriage, component feel; wrapper for [[14 - Design System Source.html]] | Primary design |
 | [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, Stage audio-completion markers | Implementation |
-| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, Stage evidence recovery, deployment, monitoring | Implementation |
+| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, Stage evidence recovery, provider-backed transcription/retry, deployment, monitoring | Implementation |
 | [[22 - Memory and Retrieval]] | Embeddings, retrieval, task profiles, context assembly | Implementation |
 | [[23 - AI Task Registry]] | Standalone MVP AI task contracts, task routing, prompt versions, validation, and draft/canon behavior | Implementation |
 | [[24 - Approval Queue]] | Approval UX, diff, source citation, canon commit behavior | Implementation |
 | [[25 - Pricing and Rate Limits]] | Caps, metering, quota preflight, hard stops | Implementation |
-| [[30 - Sanctum UX Flow]] | Sanctum IA, dashboard, Threads, Relic Guide, Review, settings | UX |
+| [[30 - Sanctum UX Flow]] | Sanctum IA, dashboard, Threads, Relic Guide, post-session transcript review/retry, settings | UX |
 | [[31 - Session Prep Flow]] | Session prep workspace and Ready for Stage handoff | UX |
 | [[32 - Stage UX Flow]] | Live-session Stage behavior | UX |
 | [[33 - First Run UX Flow]] | First-run, new saga, GM profile, Session 1 handoff | UX |

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RelicIcon } from "@/components/RelicIcon";
+import { SessionReviewWorkspace } from "@/components/relic-draft/SessionReviewWorkspace";
 import { SanctumShell } from "@/components/SanctumShell";
-import { getPendingDrafts, getSession, requireSagaContext } from "@/lib/data";
+import { getPendingDrafts, getSession, getSessionReview, requireSagaContext } from "@/lib/data";
 import { sagaPath } from "@/lib/routes";
 import type { IdParams } from "@/lib/types";
 
@@ -11,10 +12,11 @@ type ReviewParams = IdParams & { sessionId: string };
 export default async function SessionReviewPage({ params }: { params: Promise<ReviewParams> }) {
   const all = await params;
   const ids: IdParams = all;
-  const [{ workspace, world, saga }, session, drafts] = await Promise.all([
+  const [{ workspace, world, saga }, session, drafts, review] = await Promise.all([
     requireSagaContext(ids),
     getSession(ids, all.sessionId),
-    getPendingDrafts(ids, all.sessionId)
+    getPendingDrafts(ids, all.sessionId),
+    getSessionReview(ids, all.sessionId),
   ]);
   if (!session) notFound();
   const root = sagaPath(ids);
@@ -65,14 +67,7 @@ export default async function SessionReviewPage({ params }: { params: Promise<Re
             </div>
           </div>
 
-          <div className="card settings-content-card" style={{ marginBottom: 12 }}>
-            <div className="sec-label" style={{ marginBottom: 14 }}>
-              <RelicIcon name="clock" size={11} /> Pipeline
-            </div>
-            <p style={{ fontSize: 12, color: "var(--stone-500)", lineHeight: 1.5, margin: 0 }}>
-              Finalizing a session queues backend review processing when session evidence exists. Transcript and synthesis workers are handled by the backend job substrate; manual review stays available through the Approval Queue.
-            </p>
-          </div>
+          <SessionReviewWorkspace params={ids} sessionId={session.id} review={review} />
 
           <div className="card settings-content-card">
             <div className="sec-label" style={{ marginBottom: 14 }}>
