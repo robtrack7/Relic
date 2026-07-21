@@ -57,3 +57,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-07-20 - Stage Wireframe Implementation and MVP Audit]]
 - [[Session Logs/2026-07-20 - Stage Evidence Path Closeout]]
 - [[Session Logs/2026-07-20 - Post-Session Transcription Review]]
+- [[Session Logs/2026-07-20 - MVP Gap Reaudit and Next Workstream]]
