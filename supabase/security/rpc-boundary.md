@@ -50,7 +50,11 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `get_session_review(...)` | Read scoped post-session audio, transcript, job, and pipeline state without exposing internal queue rows. |
 | `retry_session_transcription(...)` | Explicitly requeue a failed complete recording with a fresh retry budget. |
 | `save_session_evidence(...)` | Save idempotent pasted-note or GM-summary Session evidence without creating canon or starting synthesis. |
-| `update_draft_state(...)` | Resolve drafts and commit approved create/update/archive-request drafts to canon. |
+| `get_approval_queue(...)` | Read scoped field diffs, source health, provenance, and current conflict state without exposing sibling-Saga rows. |
+| `save_draft_edit(...)` | Persist recoverable GM proposal edits without changing canon or writing audit. |
+| `refresh_draft_baseline(...)` | Explicitly rebase a pending draft to the live target version without changing canon. |
+| `resolve_draft(...)` | Idempotently approve, edit-and-approve, reject, or merge one scoped draft; only successful approvals write canon and audit. |
+| `update_draft_state(...)` | Compatibility wrapper over the scoped C5 resolution boundary. |
 | `list_entities(...)` | Read scoped entity lists. |
 | `get_sessions_for_saga(...)` | Read scoped Session lists. |
 | `get_session_pinned_entities(...)` | Read scoped pinned entities. |
@@ -99,7 +103,7 @@ These public-schema helpers are `security definer` because they are called by sc
 
 Manual canon writes must create a synthetic `gm_instruction` source and a `canon_audit` row in the same transaction as the row mutation. Update and archive calls must include the live `expected_version` value from the loaded row.
 
-Approval Queue commits must apply create/update/archive-request drafts and write `canon_audit` rows with `actor_kind='gm_via_ai_approval'`, `draft_id`, and cited `draft_sources`. Rejections and merge identity decisions must not mutate canon directly.
+Approval Queue commits apply create/update/archive-request drafts only after live target, Session state, source, and optimistic-version checks. Successful commits write one `canon_audit` row with field-level old/new values, `actor_kind='gm_via_ai_approval'`, `draft_id`, cited `draft_sources`, and batch/run/pipeline/model provenance. Rejections and merge identity decisions do not mutate canon; merge creates a separately reviewable update while preserving sources and provenance. Approval receipts make exact retries safe, and GM edits are saved before commit attempts so conflicts and failures do not discard them.
 
 Embedding helpers must only enqueue or materialize chunk text from embeddable fields. `gm_notes` columns and `note_type='gm_note'` notes are excluded from embedding chunks. Provider workers may fill `embeddings.embedding`, but retrieval must continue to function lexically without provider keys.
 

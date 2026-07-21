@@ -36,12 +36,12 @@ Non-negotiable invariants:
 From `docs/MVP_GAP_ANALYSIS.md`:
 
 | Priority | Complete | Partial | Missing | Blocked | Needs verification |
-|---|---:|---:|---:|---:|---:|
-| P0 | 6 | 9 | 5 | 2 | 0 |
-| P1 | 1 | 4 | 2 | 0 | 1 |
-| P2 | 0 | 2 | 1 | 0 | 1 |
+| -------- | --------:| -------:| -------:| -------:| ------------------:|
+| P0       | 6        | 9       | 5       | 2       | 0                  |
+| P1       | 1        | 4       | 2       | 0       | 1                  |
+| P2       | 0        | 2       | 1       | 0       | 1                  |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, and C4's scoped citation inspection and transcript drift navigation. The immediate lane is Packet C5 Approval Queue trust completion.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, and C5's explicit field-diff Approval Queue commit boundary. The immediate lane is Packet D1 hierarchy switching and Saga lifecycle.
 
 ## 3. Quality-gate system
 
@@ -152,7 +152,7 @@ Stop rules:
 
 **Milestone B gate — passed 2026-07-20:** clean database reset, offline flow twice (fresh and reload recovery), pgTAP idempotency checks, web build, responsive Stage smoke, and the A1–A3 authenticated regression all passed.
 
-### Phase C — Close the post-session loop
+### Phase C — Close the post-session loop — complete 2026-07-21
 
 #### Packet C1 — Manual evidence intake
 
@@ -185,16 +185,15 @@ Stop rules:
 - **Done when:** every synthesis citation opens inspectable evidence and permission tests exclude sibling sessions.
 - **Evidence:** Every C3 synthesis citation now opens an accessible inline source disclosure from Session Review and the Approval Queue. A draft-scoped authenticated RPC rechecks Workspace/World/Saga/draft/source/transcript relationships server-side, returns frozen and current transcript text with timestamp and exact/edited/deleted state, supports authorized segment anchors, renders untimestamped pasted-note/GM-summary evidence, and collapses missing, broken, denied, or unsupported records into non-leaking safe states. Focused component and 23-assertion pgTAP suites, the clean 434-test database suite, full 68-test web suite, production build, and authenticated four-viewport keyboard/deep-link browser proof passed. Signed audio was deferred because the current private Storage contract has no browser-safe signed playback boundary.
 
-#### Packet C5 — Approval Queue trust completion
-
-**Next packet.**
+#### Packet C5 — Approval Queue trust completion — complete 2026-07-21
 
 - Add field-level old/new diff, edit-and-approve, source dock, conflicts, archive explanation, filters/search, and stale handling.
-- Preserve explicit selection and avoid prominent Approve All.
+- Preserve explicit selection and add prominent Approve All.
 - Test create/update/archive/merge/reject/edit-and-approve against fixture drafts.
 - **Done when:** every proposal can be fully reviewed and only explicit approval reaches canon/audit.
+- **Evidence:** The queue now renders allowlisted field-level current/proposed editors with the C4 citation dock, target/source/confidence/provenance context, action consequences, and status/type/batch/confidence/conflict search and filters. One-by-one, selected, and prominent all-compatible approval enter the same target-locking scoped RPC; blocked, dirty, merge, and archive-confirmation items stay one-by-one. Create/update/archive/merge/reject/edit-and-approve, Thread and next-Session implication commits, stale/missing/archived/source-drift/broken-source conflicts, exact retry receipts, preserved edits, sibling-Saga denial, exact audit/provenance effects, and zero-write nonapproval states are covered by 52 focused C5 pgTAP assertions plus component/action tests. The authenticated C3-shaped browser fixture inspected C4 evidence, edited and approved a summary, verified canon/audit/source provenance, rebased and approved a stale target, archived another proposal, covered four responsive viewports, and preserved the remaining queue across a fresh app-server start.
 
-**Milestone C gate:** clean reset → seed evidence → synthesize deterministic fixture → inspect citations → edit/approve one draft → verify canon/audit/source → restart → confirm remaining queue state. Run the same sequence twice.
+**Milestone C gate — passed twice 2026-07-21:** two independent clean resets each passed all 19 database files / 486 assertions, all 20 web files / 75 tests, 14 script tests, web lint, repository verification, and production build. Each run then seeded the deterministic C3-shaped evidence batch, completed the authenticated C4→C5 review/commit/conflict/archive sequence at 1440×900, 1024×768, 768×1024, and 390×844, restarted the app server, and confirmed the unresolved queue state remained pending.
 
 ### Phase D — Finish the manual web spine
 
@@ -335,16 +334,16 @@ If native Expo remains required:
 
 ## 5. Gap-to-phase coverage
 
-| Lane | Gap coverage |
-|---|---|
-| Baseline/invariants | Auth/bootstrap and Workspace/World/Saga isolation stay continuously protected. |
-| Phase A | Stage cockpit reliability plus bounded Stage component decomposition. |
-| Phase B | Stage offline/crash recovery and browser evidence-path recovery. |
-| Phase C | Post-session evidence/synthesis, source deep links, Approval Queue, and shared job-state treatment. |
-| Phase D | Saga lifecycle/switching, manual entity/note relationships, Threads/timeline, Prep parity, and Import Inbox. |
-| Phase E | Search/embeddings, AI delivery, Relic Guide, Prep AI, AI-assisted Saga creation, and GM-profile inputs. |
-| Phase F | Usage/settings/retention, real Storage cleanup/export, and notification delivery/preferences. |
-| Phase G | Loading/error states, accessibility, full E2E, visual/performance telemetry, and mobile release parity. |
+| Lane                | Gap coverage                                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Baseline/invariants | Auth/bootstrap and Workspace/World/Saga isolation stay continuously protected.                               |
+| Phase A             | Stage cockpit reliability plus bounded Stage component decomposition.                                        |
+| Phase B             | Stage offline/crash recovery and browser evidence-path recovery.                                             |
+| Phase C             | Post-session evidence/synthesis, source deep links, Approval Queue, and shared job-state treatment.          |
+| Phase D             | Saga lifecycle/switching, manual entity/note relationships, Threads/timeline, Prep parity, and Import Inbox. |
+| Phase E             | Search/embeddings, AI delivery, Relic Guide, Prep AI, AI-assisted Saga creation, and GM-profile inputs.      |
+| Phase F             | Usage/settings/retention, real Storage cleanup/export, and notification delivery/preferences.                |
+| Phase G             | Loading/error states, accessibility, full E2E, visual/performance telemetry, and mobile release parity.      |
 
 P2 relationship/timeline polish is folded into D2/D3 only to the extent required for readable, accessible MVP behavior. Further density polish remains post-MVP. P2 telemetry and visual regression are release gates in G2 because they expose late-stage regressions; they are not treated as optional decoration.
 
@@ -399,4 +398,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate next packet: **C5 — Approval Queue trust completion**.
+Immediate next packet: **D1 — Hierarchy switching and Saga lifecycle**.

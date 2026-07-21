@@ -47,7 +47,7 @@ Do not code directly from this router. Use it to select the correct detailed pla
 
 ## Current immediate packet
 
-The next packet is Stage dialog focus and typing reliability. It stabilizes the one-second Stage clock/focus interaction and locks Note, Dice, Create, and End behavior with timer-driven component tests before broader Stage or synthesis work proceeds.
+The current packet pointer lives in root `PLAN.md`. After the completed Stage and Phase C milestones, the immediate packet is D1 hierarchy switching and Saga lifecycle; this sequencing note must not retain an older packet as current truth.
 
 ## Phase 1 Complete
 

@@ -20,11 +20,11 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[11 - Product Basepoint]] | Product north star, scope, naming, exclusions | Primary |
 | [[12 - MVP PRD]] | P0 requirements and acceptance framing | Primary |
 | [[13 - Design System]] | v0.4 web UI tokens, typography, palette, app shell, Loom carriage, component feel; wrapper for [[14 - Design System Source.html]] | Primary design |
-| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, Stage evidence markers, exactly-once write receipts, conflict outcomes, manual Session evidence provenance, source-aware synthesis batch identity, and draft-scoped citation context | Implementation |
-| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, Stage packet/audio/write recovery, scoped Storage paths, provider-backed transcription/retry, manual evidence intake, atomic synthesis output persistence, citation context/drift reads, deployment, monitoring | Implementation |
+| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, Stage evidence markers, exactly-once write receipts, conflict outcomes, manual Session evidence provenance, source-aware synthesis batch identity, draft-scoped citation context, and C5 approval receipts/commit invariants | Implementation |
+| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, Stage packet/audio/write recovery, scoped Storage paths, provider-backed transcription/retry, manual evidence intake, atomic synthesis output persistence, citation context/drift reads, approval read/edit/rebase/commit boundaries, deployment, monitoring | Implementation |
 | [[22 - Memory and Retrieval]] | Embeddings, retrieval, task profiles, context assembly | Implementation |
 | [[23 - AI Task Registry]] | Standalone MVP AI task contracts, task routing, prompt versions, validation, source-aware synthesis artifacts, and draft/canon behavior | Implementation |
-| [[24 - Approval Queue]] | Approval UX, diff, source citation/context, safe drift states, canon commit behavior | Implementation |
+| [[24 - Approval Queue]] | Approval UX, field diffs, source citation/context, safe drift/conflict states, explicit one/selected/all-compatible actions, and canon/audit commit behavior | Implementation |
 | [[25 - Pricing and Rate Limits]] | Caps, metering, quota preflight, hard stops | Implementation |
 | [[30 - Sanctum UX Flow]] | Sanctum IA, dashboard, Threads, Relic Guide, post-session transcript review/retry/manual evidence and citation navigation, settings | UX |
 | [[31 - Session Prep Flow]] | Session prep workspace and Ready for Stage handoff | UX |
@@ -65,7 +65,7 @@ These notes translate the active product, UX, and UI sources into compact screen
 | [[64 - Unified Library Detail Design Spec]] | Entity, Thread, Session, note library/detail patterns | Secondary design |
 | [[65 - Session Prep Design Spec]] | Prep workspace inside The Sanctum and Ready for Stage handoff | Secondary design |
 | [[66 - Stage Design Spec]] | Clean, focused live-session Stage across web and mobile; current web wireframe implementation decision and adapter boundaries | Secondary design |
-| [[67 - Approval Queue Design Spec]] | Draft review, diff, source/provenance, canon approval | Secondary design |
+| [[67 - Approval Queue Design Spec]] | Draft review, field diff/editor, source/provenance, conflict recovery, one/selected/all-compatible actions, and canon approval | Secondary design |
 | [[68 - Ask Search Design Spec]] | Top-context search, command palette, Relic Guide Q&A/actions | Secondary design |
 | [[69 - Settings Usage Design Spec]] | Saga/World/Workspace settings, usage, retention, export | Secondary design |
 | [[70 - Mobile App Design Spec]] | Mobile adaptation of both Sanctum and Stage | Secondary design |

@@ -159,6 +159,8 @@ All AI assists are explicit GM actions. No assist auto-runs during live play.
 
 AI output must show source context and uncertainty. Prep assists may be discarded without audit because they are not canon until inserted/saved by the GM.
 
+**Post-session implication handoff (C5).** Approval of a C3 next-prep implication appends a source-linked pending `scene_notes` suggestion only to the exact next Session while it remains `planned`. Approval does not directly alter the briefing, objective, scene notes, pins, active Threads, or checklist. The GM still accepts or dismisses the pending suggestion through the normal Session Prep path, and all related entity/Thread IDs must resolve inside the same Saga.
+
 ---
 
 ## 7. Quota and failure behavior

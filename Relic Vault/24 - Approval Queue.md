@@ -18,7 +18,7 @@ source_file: "Sourced - Downloaded - 260518/relic-approval-queue-spec-v0_5.md"
 > Implementation-critical note: Treat this as coding input only after reading the authority order in [[00 - Start Here]].
 # Relic Approval Queue Spec v0.5
 
-*Created: May 18, 2026. Updated: May 18, 2026.*
+*Created: May 18, 2026. Updated: July 21, 2026.*
 *Purpose: active implementation contract for review, diff, source citation, approval, rejection, merge, archive, and canon commit behavior.*
 
 **Build against:** `[[11 - Product Basepoint]]`, `[[12 - MVP PRD]]`, `[[20 - Entity and Canon Schema]]`, `[[21 - Tech Architecture]]`, `[[22 - Memory and Retrieval]]`, `[[23 - AI Task Registry]]`, `[[34 - UI Implementation Spec]]`, `[[25 - Pricing and Rate Limits]]`.
@@ -39,7 +39,7 @@ Required predicates:
 - `scope`
 - `state`
 
-Approval Queue list/search uses the direct `drafts` query in Tech Architecture v1.2 §21.2, not `search_for_ui`.
+Approval Queue list/search uses the route-scoped `get_approval_queue` read model, not `search_for_ui` or arbitrary client-side table access. The read model returns field-level current/proposed values, target and source health, conflict state, confidence, and immutable run/batch provenance only after exact Workspace/World/Saga access validation.
 
 ## 2. Web layout
 
@@ -72,7 +72,7 @@ Within a group, sort low-confidence and conflict/broken-source items above routi
 | Archive request | Requires Rust confirmation and writes archived canon state only after approval. |
 | Bulk archive stale | Rejects stale proposals with `stale_bulk_archive` reason tag. |
 
-Avoid prominent Approve All. `Commit selected` is allowed only after explicit selection and visible review context.
+The GM has three first-class workflows: approve one proposal, approve an explicitly selected set, or use the prominent `Approve all compatible proposals` action. Approve All applies only to the currently visible, compatible set and must state its exact count. Conflicts, broken sources, dirty edits, merge decisions, and archive confirmations are excluded from bulk commit and stay available for one-by-one review.
 
 ## 5. Rejection reasons
 
@@ -92,6 +92,8 @@ The shipped C4 slice renders every draft citation as a keyboard-operable inline 
 
 Citation inspection reads through the exact route-scoped draft RPC; clients do not fetch arbitrary source IDs. Signed audio is deferred because the current private Storage download boundary is worker-only. It must not be added by widening bucket policy or returning durable object paths.
 
+The shipped C5 slice keeps the C4 disclosures mounted inside each review card while the GM edits, filters, resolves a conflict, or takes an action. Source links and batch/run/task/prompt/model/provider provenance are copied into the successful `canon_audit` path; preview, edit, reject, merge identity decisions, conflicts, and failed commits do not create audit or canon effects.
+
 Broken source behavior:
 
 - Approve/Edit & Approve disabled when required source evidence is missing and the proposal depends on it.
@@ -106,6 +108,8 @@ Before approval, compare target `updated_at` with `draft.expected_version`.
 - Blind approval is disabled.
 - GM may refresh, edit manually, or create a new draft from the live version.
 
+The commit RPC locks the scoped target and repeats the version, archive, source-health, and Session-state checks inside the same transaction. Refresh updates only the draft baseline and returns the proposal to review; it never overwrites live canon. Missing/archived targets, broken evidence, source drift, and incompatible concurrent updates return recoverable conflict results. Saved GM edits remain on the pending draft when commit fails.
+
 ## 8. Search and filters
 
 Filters:
@@ -114,8 +118,8 @@ Filters:
 - state
 - target entity type
 - confidence band
-- pipeline/session
-- broken source
+- batch or pipeline/session
+- conflict/source-health state
 - change kind
 
 Search matches proposed payload text, target display name, and source excerpts. It must preserve `workspace_id`, `world_id`, `saga_id`, and `scope` filters.
@@ -132,6 +136,8 @@ Search matches proposed payload text, target display name, and source excerpts. 
 | `permission_denied` | Generic safe copy, log as bug. |
 | `partial_output` | Show completed drafts; failed artifacts in pipeline status. |
 
+Duplicate submissions use a private scoped receipt ledger. An exact retry returns the recorded result, while request-key reuse with different inputs fails closed. Receipt rows are operational metadata and are never browser-readable.
+
 ## 10. Acceptance criteria
 
 - GM can approve, edit-and-approve, reject, merge, and archive without ambiguity.
@@ -139,6 +145,10 @@ Search matches proposed payload text, target display name, and source excerpts. 
 - Direct queue search is implemented without reusing `search_for_ui`.
 - Source/provenance is visible before approval.
 - Citation drift is visible when transcript evidence changed after proposal creation.
+- Prominent Approve All, explicit selected approval, and one-by-one approval preserve the same scoped commit checks; incompatible items are never silently included.
+- Summary notes, entities, Threads, and next-Session prep implications commit only through the approval boundary. Prep implications append a pending suggestion only while the target Session remains `planned`.
+- Archive is a reversible state change, never deletion; merge is an identity decision whose separate source-linked update must be approved later.
+- Exact source IDs and synthesis provenance survive into `canon_audit`; reject, preview, edit-only, conflict, and failed approval states have zero canon/audit writes.
 - `stale_bulk_archive` is represented as enum-backed rejection metadata.
 
 ---

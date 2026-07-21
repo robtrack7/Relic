@@ -616,7 +616,7 @@ Review must make clear:
 - AI output is not canon.
 - Import/session/pipeline outputs are not canon.
 - Canon changes happen only through explicit GM approval or documented direct GM action.
-- Prominent Approve All is not allowed.
+- Prominent Approve All is allowed only as the explicit, exact-count `Approve all compatible proposals` action defined by [[24 - Approval Queue]]; blocked, dirty, merge, and archive-confirmation items are excluded.
 
 ## 5.7 Export
 

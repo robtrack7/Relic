@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 
 ## Changelog
 
+**Approval Queue trust completion patch (July 2026).** Adds a route-scoped field-diff/read boundary, persisted GM edit payloads, exact-retry approval receipts, target-row locking, source-health and optimistic-version rechecks, and transactional create/update/archive/next-prep commits. Successful approval alone writes canon plus one provenance-rich `canon_audit`; reject, merge identity decisions, preview/edit, conflicts, and failed attempts write no canon/audit. Merge copies source and run/batch provenance into a separately approvable update draft.
+
 **Citation context and drift UI patch (July 2026).** Makes the draft the browser authorization root for source inspection. `get_draft_source_context` validates the exact Workspace/World/Saga/draft/source/transcript chain and returns only display-safe evidence and authorized Session navigation. The lower-level transcript helper is internal-only; missing, broken, denied, deleted, and unsupported records never expose source or transcript identifiers.
 
 **Source-aware synthesis writer patch (July 2026).** Adds draft batch/run/provider/Session provenance and locks `synthesize_session` persistence to one atomic, idempotent pending batch whose citations all belong to the exact evidence Session. The writer creates no canon, audit, embedding, or canonical summary row.
@@ -597,7 +599,7 @@ Append-only log of every state transition on canonical entities. Survives entity
 | `entity_id` | uuid | Loose reference — not FK; may dangle after saga delete |
 | `from_state` | text | `entity_canon_state` value or `'none'` for creation |
 | `to_state` | text | |
-| `change_summary` | jsonb | Field-level diff: `{field: {old, new}, ...}` |
+| `change_summary` | jsonb | `{fields: {field: {old, new}, ...}, provenance: {draft_batch_id, ai_task_run_id, pipeline_run_id, session_id, ai_task_name, ai_prompt_version, ai_model, ai_provider, source_drift_acknowledged}}` |
 | `draft_id` | uuid → `drafts.id` on delete set null | If from approval |
 | `source_ids` | uuid[] default `'{}'` | FK array → `sources.id` |
 | `actor_gm_id` | uuid → `auth.users.id` | |
@@ -649,6 +651,10 @@ COMMIT;
 ```
 
 **Reject path:** `UPDATE drafts SET state='rejected', action='reject', ...`. No `canon_audit` row (audit records changes; rejection is a non-change).
+
+**C5 transaction and retry rules.** The scoped commit RPC locks both the pending draft and any existing target before checking `updated_at`, `canon_state`, source drift/breakage, target existence, and applicable Session state. It accepts only allowlisted fields for the draft's entity/change kind. A private `approval_action_receipts` ledger records the exact scoped request hash and result; browser roles have no table access. An exact replay returns the original result and cannot duplicate canon or audit effects. A mismatched replay, cross-Saga target/reference, missing/archived target, stale version, broken source, or incompatible Session state fails closed. `save_draft_edit` persists the GM's allowlisted edit before commit so a later conflict/failure does not discard work.
+
+**Bulk approval rule.** Approve one, explicitly selected, and visible all-compatible actions invoke the same per-draft scoped transaction. Bulk UI excludes conflicts, broken sources, dirty edits, merge decisions, and archive confirmations. Partial progress is visible; a later conflict cannot roll back or overwrite an earlier successful explicit approval.
 
 **Manual GM edit path:** Same as above, but synthesize a `sources` row with `kind='gm_instruction'` and a draft with `change_kind='update'`, `confidence_band='high'`, `ai_task_name='gm_direct_edit'`, then immediately resolve it as `approved`. Keeps the audit uniform.
 
@@ -1154,6 +1160,8 @@ COMMIT;
 No `drafts` row is created. No `draft_sources`. The suggestion's source citations are captured directly on the `canon_audit` row.
 
 Dismissal is a `UPDATE pending_prep_suggestions[i].status = 'dismissed'` only. No audit row (no canon transition).
+
+**Post-session next-prep implication approval (C5).** A C3 `entity_type='session'`, `change_kind='update'` draft may append one source-linked `scene_notes` suggestion to `pending_prep_suggestions` only when its exact target Session is still `planned`. The commit validates same-Saga related Thread/entity references, preserves the draft/source/run provenance in `canon_audit`, and deduplicates by `draft_id`. It does not directly rewrite objective, scene notes, pins, Threads, or checklist state; the normal acceptance path above remains a separate GM action.
 
 ### 10.5 Rename
 

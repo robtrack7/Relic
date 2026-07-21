@@ -69,6 +69,56 @@ type DraftRow = {
   rejection_note?: string | null;
   citations: DraftCitationContext[];
 };
+
+export type ApprovalFieldDiff = {
+  field: string;
+  label: string;
+  old: unknown;
+  new: unknown;
+  value_type: string;
+};
+
+export type ApprovalDraft = {
+  id: string;
+  entity_type: EntityType;
+  target_entity_id?: string | null;
+  state: string;
+  change_kind: string;
+  title: string;
+  confidence_band?: string | null;
+  confidence_reason?: string | null;
+  created_by?: string | null;
+  created_at?: string | null;
+  batch_id?: string | null;
+  editable_payload: Record<string, unknown>;
+  field_diffs: readonly ApprovalFieldDiff[];
+  target?: Record<string, unknown> | null;
+  source_health: "healthy" | "drifted" | "broken";
+  conflict: {
+    kind: string;
+    blocking: boolean;
+    concurrent_count: number;
+    expected_version?: string | null;
+    live_version?: string | null;
+  };
+  provenance: {
+    ai_task_name?: string | null;
+    prompt_version?: string | null;
+    model?: string | null;
+    provider?: string | null;
+    ai_task_run_id?: string | null;
+    pipeline_run_id?: string | null;
+    session_id?: string | null;
+  };
+  audit?: {
+    id: string;
+    action: string;
+    source_ids: string[];
+    change_summary: Record<string, unknown>;
+    created_at: string;
+  } | null;
+  citations: readonly DraftCitationContext[];
+};
 export type StagePacket = {
   session?: SessionRow;
   pinned_entities?: unknown[];
@@ -284,6 +334,27 @@ export async function getPendingDrafts(params: IdParams, sessionId?: string) {
         ? fallback
         : citationResult.data as DraftCitationContext[],
     };
+  }));
+}
+
+export async function getApprovalQueue(params: IdParams): Promise<ApprovalDraft[]> {
+  const { supabase } = await requireSagaContext(params);
+  const { data, error } = await supabase.rpc("get_approval_queue", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+  });
+  if (error) throw new Error(error.message);
+  const drafts = (Array.isArray(data) ? data : []) as Omit<ApprovalDraft, "citations">[];
+  return Promise.all(drafts.map(async (draft) => {
+    const citationResult = await supabase.rpc("get_draft_source_context", {
+      workspace_id: params.workspaceId,
+      world_id: params.worldId,
+      saga_id: params.sagaId,
+      draft_id: draft.id,
+    });
+    const fallback: DraftCitationContext[] = [{ status: "unavailable", source_kind: "unknown", label: "Source unavailable", drift_state: "unavailable" }];
+    return { ...draft, citations: citationResult.error || !Array.isArray(citationResult.data) ? fallback : citationResult.data as DraftCitationContext[] };
   }));
 }
 

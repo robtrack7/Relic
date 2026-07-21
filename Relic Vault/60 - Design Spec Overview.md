@@ -65,7 +65,7 @@ The Stage is the clean, focused live-session surface on web and mobile. It is op
 
 Threads are the continuity spine. They appear before generic entity browsing in the Sanctum navigation, drive dashboard carry-forward, frame prep, and give the GM a compact way to understand what still matters.
 
-The Approval Queue is the trust surface. It is where AI and pipeline outputs become canon only after explicit GM action. It must show source/provenance before approval and must avoid prominent "approve all" behavior.
+The Approval Queue is the trust surface. It is where AI and pipeline outputs become canon only after explicit GM action. It must show source/provenance before approval and support one-by-one, explicit selected, and prominent all-compatible approval. Approve All states the exact visible count and never includes blocked, dirty, merge, or archive-confirmation items.
 
 AI is GM-invoked, not proactive. The only exception is the visible, canon-only prep briefing described in [[31 - Session Prep Flow]] and [[23 - AI Task Registry]]. AI never writes directly to canon. AI suggestions are ephemeral, draft-backed, or routed through documented synthetic approval paths depending on the task.
 

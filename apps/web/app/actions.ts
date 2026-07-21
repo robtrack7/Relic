@@ -549,3 +549,94 @@ export async function updateDraftStateAction(formData: FormData) {
   }
   revalidatePath(`${sagaPath(params)}/review`);
 }
+
+function jsonObjectValue(formData: FormData, key: string) {
+  const raw = value(formData, key);
+  if (!raw) return {};
+  const parsed = JSON.parse(raw) as unknown;
+  if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
+    throw new Error("Draft edits must be a JSON object.");
+  }
+  return parsed as Record<string, unknown>;
+}
+
+export async function resolveDraftAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const draftId = value(formData, "draftId");
+  const resolutionAction = value(formData, "resolutionAction");
+  if (!["approve", "edit_and_approve", "reject", "merge"].includes(resolutionAction)) {
+    throw new Error("Unsupported approval action.");
+  }
+
+  if (resolutionAction === "edit_and_approve") {
+    const { data: saved, error: saveError } = await supabase.rpc("save_draft_edit", {
+      workspace_id: params.workspaceId,
+      world_id: params.worldId,
+      saga_id: params.sagaId,
+      draft_id: draftId,
+      committed_payload: jsonObjectValue(formData, "committedPayload"),
+    });
+    if (saveError) throw new Error(saveError.message);
+    if (!(saved as { ok?: boolean } | null)?.ok) throw new Error("The edited proposal could not be saved.");
+  }
+
+  const { data, error } = await supabase.rpc("resolve_draft", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    draft_id: draftId,
+    action: resolutionAction,
+    request_id: value(formData, "requestId") || crypto.randomUUID(),
+    rejection_tags: formData.getAll("rejectionTag").map(String).filter(Boolean),
+    rejection_note: value(formData, "rejectionNote") || null,
+    merge_target_id: value(formData, "mergeTargetId") || null,
+    acknowledge_source_drift: value(formData, "acknowledgeSourceDrift") === "true",
+  });
+  if (error) throw new Error(error.message);
+  const result = data as { ok?: boolean; conflict?: string } | null;
+  revalidatePath(`${sagaPath(params)}/review`);
+  if (!result?.ok) {
+    redirect(`${sagaPath(params)}/review?reviewNotice=${encodeURIComponent(result?.conflict ?? "approval_failed")}#draft-${draftId}`);
+  }
+}
+
+export async function resolveDraftSelectionAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const draftIds = [...new Set(formData.getAll("draftId").map(String).filter(Boolean))];
+  let firstConflict = "";
+  for (const draftId of draftIds) {
+    const { data, error } = await supabase.rpc("resolve_draft", {
+      workspace_id: params.workspaceId,
+      world_id: params.worldId,
+      saga_id: params.sagaId,
+      draft_id: draftId,
+      action: "approve",
+      request_id: crypto.randomUUID(),
+      rejection_tags: [],
+      rejection_note: null,
+      merge_target_id: null,
+      acknowledge_source_drift: false,
+    });
+    if (error) throw new Error(error.message);
+    const result = data as { ok?: boolean; conflict?: string } | null;
+    if (!result?.ok && !firstConflict) firstConflict = result?.conflict ?? "approval_failed";
+  }
+  revalidatePath(`${sagaPath(params)}/review`);
+  if (firstConflict) redirect(`${sagaPath(params)}/review?reviewNotice=${encodeURIComponent(firstConflict)}`);
+}
+
+export async function refreshDraftBaselineAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const { data, error } = await supabase.rpc("refresh_draft_baseline", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    draft_id: value(formData, "draftId"),
+  });
+  if (error) throw new Error(error.message);
+  if (!(data as { ok?: boolean } | null)?.ok) throw new Error("The draft baseline could not be refreshed.");
+  revalidatePath(`${sagaPath(params)}/review`);
+}

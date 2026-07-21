@@ -10,6 +10,9 @@ import {
   recordDiceRollAction,
   recordSessionConsentAction,
   requestSagaExportAction,
+  resolveDraftAction,
+  resolveDraftSelectionAction,
+  refreshDraftBaselineAction,
   retrySessionTranscriptionAction,
   saveSessionEvidenceAction,
   updateTranscriptAction,
@@ -405,6 +408,54 @@ describe("security-hardened server actions", () => {
     expect(supabase.rpc).toHaveBeenCalledWith("save_session_evidence", {
       workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", session_id: "session-a",
       source_id: "source-a", evidence_kind: "pasted_text", evidence_text: "The bridge collapsed.",
+    });
+  });
+
+  it("persists a GM edit before attempting edit-and-approve and surfaces recoverable conflicts", async () => {
+    const supabase = authenticatedSupabase();
+    supabase.rpc
+      .mockResolvedValueOnce({ data: { ok: true }, error: null })
+      .mockResolvedValueOnce({ data: { ok: false, conflict: "stale_target" }, error: null });
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    await expect(resolveDraftAction(form({
+      workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", draftId: "draft-a",
+      resolutionAction: "edit_and_approve", requestId: "11111111-1111-1111-1111-111111111111",
+      committedPayload: JSON.stringify({ summary: "GM wording" }),
+    }))).rejects.toThrow("NEXT_REDIRECT:/app/w/workspace-a/world/world-a/saga/saga-a/review?reviewNotice=stale_target#draft-draft-a");
+
+    expect(supabase.rpc.mock.calls[0]).toEqual(["save_draft_edit", {
+      workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", draft_id: "draft-a",
+      committed_payload: { summary: "GM wording" },
+    }]);
+    expect(supabase.rpc.mock.calls[1][0]).toBe("resolve_draft");
+  });
+
+  it("approves only explicitly submitted selected draft IDs", async () => {
+    const supabase = authenticatedSupabase();
+    supabase.rpc.mockResolvedValue({ data: { ok: true }, error: null });
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    const data = form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a" });
+    data.append("draftId", "draft-a");
+    data.append("draftId", "draft-b");
+
+    await resolveDraftSelectionAction(data);
+
+    expect(supabase.rpc).toHaveBeenCalledTimes(2);
+    expect(supabase.rpc.mock.calls.map((call) => call[1].draft_id)).toEqual(["draft-a", "draft-b"]);
+    expect(supabase.rpc.mock.calls.every((call) => call[0] === "resolve_draft" && call[1].action === "approve")).toBe(true);
+  });
+
+  it("refreshes a stale baseline without direct canon access", async () => {
+    const supabase = authenticatedSupabase();
+    supabase.rpc.mockResolvedValue({ data: { ok: true }, error: null });
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    await refreshDraftBaselineAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", draftId: "draft-a" }));
+
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith("refresh_draft_baseline", {
+      workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", draft_id: "draft-a",
     });
   });
 });

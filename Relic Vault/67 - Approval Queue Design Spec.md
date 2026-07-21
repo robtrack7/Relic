@@ -31,7 +31,7 @@ Nothing here becomes canon without explicit GM action.
 
 The screen translates [[24 - Approval Queue]] into a focused editorial review interface. It depends on [[20 - Entity and Canon Schema]] for canon state transitions and [[23 - AI Task Registry]] for draft behavior.
 
-The page should be optimized for careful action, not speed-run acceptance. Avoid prominent Approve All.
+The page should be optimized for careful action while supporting the GM's chosen pace. Approve one, Approve selected, and a prominent Approve All are peers; the bulk action names its exact visible compatible count and never includes conflicts, broken sources, dirty edits, merge decisions, or archive confirmations.
 
 ## 3. User mental model
 
@@ -50,9 +50,7 @@ They need confidence, source context, and the ability to correct drafts without 
 
 ## 5. Primary action
 
-Primary action is `Approve` or `Edit & Approve` for the selected draft after inspection. `Commit selected` may exist only with explicit selection and visible review context.
-
-Do not make bulk approval visually dominant. Stale bulk archive is a cleanup action, not a canon-approval shortcut.
+Primary actions are `Approve` / `Edit & Approve` for one draft, `Approve selected` for explicit checkboxes, and a prominent `Approve all N compatible proposals` for the visible filtered set. Bulk copy must explain exclusions and consequences before submit. Stale bulk archive remains a cleanup action, not a canon-approval shortcut.
 
 ## 6. Secondary actions
 
@@ -74,7 +72,7 @@ The selected draft should always have a clear review frame: target Library recor
 
 - Navigation: `ApprovalQueueShell`, `ApprovalGroupList`, `DraftFilterBar`, `ReviewEntryTabs`.
 - Containment: `ApprovalItemCard`, `DiffViewer`, `InlineDraftEditor`, `SourceDock`, `ConflictPanel`, `StaleQueueBanner`.
-- Actions: `ApproveButton`, `EditApproveButton`, `RejectButton`, `MergeButton`, `ArchiveConfirmButton`, `CommitSelectedBar`.
+- Actions: `ApproveButton`, `EditApproveButton`, `RejectButton`, `MergeButton`, `ArchiveConfirmButton`, `CommitSelectedBar`, `ApproveAllBar`.
 - Trust/status: `ConfidenceBandChip`, `SourceBadge`, `CitationDriftIndicator`, `BrokenSourceWarning`, `ExpectedVersionWarning`.
 - Feedback: `CommitLoadingState`, `ValidationErrorState`, `NetworkRetryBanner`.
 
@@ -100,7 +98,9 @@ Broken source behavior must explain what is safe: reject, merge into manual edit
 
 Source detail should be readable before action. On desktop, the source dock can remain open while the GM scrolls the diff. On mobile, opening the source sheet should not lose draft context; the sheet title should repeat target name and change kind. Low-confidence drafts should sort upward, but the label must describe evidence quality rather than model certainty.
 
-**C4 implemented slice (2026-07-21).** Each draft's source dock now contains native keyboard-operable disclosures. Transcript evidence shows the frozen cited excerpt, current segment, timestamp, and exact/edited/deleted state, plus direct authorized navigation to the transcript segment in Session Review. Pasted-note and GM-summary sources render as untimestamped evidence. Broken, unavailable, deleted, permission-denied, and unsupported sources use safe non-identifying states. This slice is inspection-only; diffing, conflict resolution, edit-and-approve, and canon commit remain C5 work.
+**C4 implemented slice (2026-07-21).** Each draft's source dock contains native keyboard-operable disclosures. Transcript evidence shows the frozen cited excerpt, current segment, timestamp, and exact/edited/deleted state, plus direct authorized navigation to the transcript segment in Session Review. Pasted-note and GM-summary sources render as untimestamped evidence. Broken, unavailable, deleted, permission-denied, and unsupported sources use safe non-identifying states.
+
+**C5 implemented slice (2026-07-21).** Review cards render field-level current/proposed editors instead of raw payloads and keep C4 evidence open without losing review state. Confidence, source health, affected target, batch/run provenance, action consequences, filters/search, and safe conflict recovery are visible. Approve one, selected, and all-compatible workflows share the same transactional boundary. Archive uses a separate Rust confirmation and explicitly says the record is retained; an applicable merge proposal returns a source-linked update draft for later approval. Failed commits preserve saved edits.
 
 Signed audio context remains deferred. The current private Storage contract has no browser-safe retention-aware signing route, so the UI must not expose object paths or broaden access policy.
 
@@ -114,7 +114,7 @@ Users go to target Library detail, source transcript segment, session review pag
 
 ## 14. Components to avoid
 
-Avoid prominent Approve All, automatic canon commit, hidden source panels, chatbot-style review, player publishing controls, relationship graph merge UI, and any flow that treats AI output as already true.
+Avoid automatic canon commit, ambiguous bulk scope, bulk inclusion of blocked/dirty/archive/merge items, hidden source panels, chatbot-style review, player publishing controls, relationship graph merge UI, and any flow that treats AI output as already true.
 
 ## 15. Visual tone
 
@@ -123,5 +123,5 @@ Trustworthy editorial desk inside the literary, modern, relaxing Sanctum. It sho
 ## 16. Claude Design prompt
 
 ```text
-Create Relic's Approval Queue trust surface inside The Sanctum. Make it literary, modern, relaxing, deliberate, and evidence-backed. Desktop layout: grouped draft list, selected diff/editor, source/provenance dock. Mobile: one draft at a time with source bottom sheet and equivalent approve/edit/reject/merge/archive capability. Include filters, confidence chips, source badges, citation drift, broken source warnings, conflict panel, and stale queue banner. Make clear that AI drafts are not canon until explicit GM action. Do not include a prominent Approve All or proactive AI chat. Exclude player publishing, graph merge visuals, and any automatic canon write.
+Create Relic's Approval Queue trust surface inside The Sanctum. Make it literary, modern, relaxing, deliberate, and evidence-backed. Desktop layout: grouped draft list, selected diff/editor, source/provenance dock. Mobile: one draft at a time with source bottom sheet and equivalent approve/edit/reject/merge/archive capability. Include filters, confidence chips, source badges, citation drift, broken source warnings, conflict panel, and stale queue banner. Make clear that AI drafts are not canon until explicit GM action. Include prominent Approve All for the exact visible compatible count alongside Approve selected and one-by-one review; never bulk-include conflicts, broken sources, dirty edits, merge decisions, or archive confirmations. Exclude proactive AI chat, player publishing, graph merge visuals, and any automatic canon write.
 ```

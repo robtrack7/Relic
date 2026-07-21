@@ -34,7 +34,7 @@ Use:
 - Cormorant Garamond for Saga names, entity names, page display titles, and literary excerpts.
 - Instrument Sans for interface copy, body text, forms, and buttons.
 - DM Mono for labels, timestamps, status chips, source labels, and command hints.
-- Parchment page ground, Cream cards, Ink text and Stage background, Amber for canon/prep/consequential actions, Rust for destructive or blocked states, and Sage for approved, ready, active, or resolved progress states.
+- Parchment page ground, Cream cards, Ink text and Stage background, Amber for canon/prep/consequential actions, Rust for destructive or blocked states, and Verdigris for approved, ready, active, or resolved progress states.
 - Tight radii: 2px chips, 4px controls, 8px cards and panels.
 - Quiet borders, warm shadows, and a subtle paper-grain overlay.
 
@@ -82,7 +82,7 @@ Prepare is the rail destination for the active or next planned session. It remai
 
 ### Review
 
-Review uses grouped approval cards with source context, field-level diff language, and careful Rust/Amber/Sage state. Avoid prominent Approve All behavior. Review is about controlled canon change, not speed.
+Review uses grouped approval cards with source context, field-level diff language, and careful Rust/Amber/Verdigris state. The GM may approve one, an explicit selection, or use prominent Approve All for the exact visible compatible set; blocked, dirty, merge, and archive-confirmation items remain one-by-one. Review stays a controlled canon change even when the GM chooses a faster compatible batch workflow.
 
 ### Relic Guide
 

@@ -208,7 +208,7 @@ Information state must be obvious.
 - Each proposed update shows: affected entity, proposed change, old value, new value, source reference, confidence band.
 - **Confidence band** uses a source-quality proxy, not model self-reporting: direct GM input = high, clean transcript segment = medium, inferred from context = low. Low-confidence proposals flagged `Needs review`.
 - Actions: edit, approve, reject, merge, archive.
-- No prominent "approve all."
+- Prominent `Approve all compatible proposals` is allowed alongside approve-selected and one-by-one review. It remains an explicit GM action, states the exact visible count, and excludes conflicts, broken sources, dirty edits, merge decisions, and archive confirmations.
 - **Persistence:** queues persist indefinitely. After 30 days untouched, a stale warning surfaces with "re-run synthesis" or "bulk archive" options. Nothing is destroyed without GM action.
 
 **Approval Queue (V1 target):** paragraph-level track-changes inside the two-pane editorial diff. The two-pane layout itself is MVP; granular paragraph-level editing within it is V1.

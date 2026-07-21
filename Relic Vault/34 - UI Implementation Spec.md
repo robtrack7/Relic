@@ -44,6 +44,8 @@ This spec translates the active Relic product, UX, schema, architecture, and des
 
 **Session Review manual-evidence patch (July 2026).** Render separate pasted-notes and GM-summary textareas above transcript editing. Persist unsaved text plus its stable source UUID locally under the authenticated GM and full Session scope, keep it on save/network failure, and clear it only after the scoped source RPC succeeds. Saved evidence renders read-only; Save evidence does not trigger synthesis or canon mutation.
 
+**Approval Queue trust completion patch (July 2026).** Render field-level current/proposed editors, persistent C4 source disclosures, confidence/provenance/target consequences, and filters for status, type, batch, confidence, and conflict. Offer one-by-one, explicit selected, and prominent all-compatible approval; bulk actions state the exact visible count and exclude conflicts, broken sources, dirty edits, merge decisions, and archive confirmations. Preserve edits across failed commit, make archive-versus-delete explicit with Rust confirmation, and rebase stale targets without writing canon.
+
 **MVP surface and build-order rule:** The Sanctum and The Stage are both product surfaces on web and mobile. Sanctum should feel literary, modern, and relaxing. Stage should feel clean and focused. Build the web app first with both surfaces and the full loop, then build the mobile app with platform-appropriate layouts and offline behavior.
 
 ---
@@ -126,7 +128,7 @@ Mobile is built after the web app and preserves both Sanctum and Stage. It may o
 - Top context bar: Workspace / World / Saga switcher, Search, Relic Guide toggle, `+ Create`, current session pill, Review badge, usage chip when near quota, account menu.
 - Main content column, max readable width 960–1120px unless list/detail layout requires more.
 - Optional right inspector for source/provenance, relationships, draft warnings, quota warnings.
-- Cream cards on Parchment. Literary, modern, relaxing. Amber marks consequential action. Sage marks confirmed/ready. Rust marks destructive/blocked.
+- Cream cards on Parchment. Literary, modern, relaxing. Amber marks consequential action. Verdigris marks confirmed/ready. Rust marks destructive/blocked.
 
 Default left rail order: **Home · Threads · Library · Prepare · Sessions · Review**. Export and Settings sit low in the rail. Stage is reached from Prepare, session state, Home next-action cards, notifications/deep links, app resume, and `Return to Stage`; it is not a default rail item. Relic Guide is invoked through the sidecar/sheet, fallback page, or contextual action; it is not a rail item.
 
@@ -376,7 +378,7 @@ Build as the loop dashboard, not a generic project homepage.
 - Pipeline status page: distinct audio, transcription, transcript-edit, retry/recovery, synthesis, summary, draft-count, and failure states.
 - Approval Queue grouped by entity.
 - Diff viewer, source panel, approve/edit/reject/merge/archive actions.
-- Commit selected. Avoid prominent Approve All.
+- Approve one, Commit selected, and prominent Approve All for the exact visible compatible set.
 - Every pending synthesis citation opens with a native keyboard-operable disclosure on both Review surfaces. Transcript context includes timestamp, frozen/current text, exact/edited/deleted state, and an authorized anchor to the cited segment; manual evidence is labeled untimestamped.
 - Broken, unavailable, deleted, permission-denied, and unsupported evidence must render safe non-identifying fallback copy. Citation inspection is read-only and must remain usable without horizontal overflow at 1440×900, 1024×768, 768×1024, and 390×844.
 - Signed audio context is deferred until a short-lived, retention-aware browser signing boundary exists; never expose private object paths or widen Storage policy for this component.
@@ -484,7 +486,7 @@ Errors must tell the GM what happened and what is safe.
 
 Session prep is visually inside Sanctum, not a third top-level mode.
 
-**Accent density:** use Amber left rules and Sage thread chips to make prep feel active without changing the base surface.
+**Accent density:** use Amber left rules and Verdigris thread chips to make prep feel active without changing the base surface.
 
 Required components:
 

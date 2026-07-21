@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 
 ## Changelog
 
+**Approval Queue trust completion patch (July 2026).** Adds the authenticated `get_approval_queue`, `save_draft_edit`, `refresh_draft_baseline`, and `resolve_draft` boundaries. Public reads return field-level diffs and safe conflict/source state after exact route access checks. Commit rechecks and locks live targets transactionally, uses a browser-inaccessible exact-retry receipt ledger, preserves edits on failure, and writes canon plus one audit only for an explicit successful approval. Merge creates a provenance/source-linked pending update; C3 next-prep implications append only to a still-planned same-Saga Session.
+
 **Citation context and drift UI patch (July 2026).** Adds a draft-scoped browser read for source inspection, makes the raw source-ID transcript helper internal-only, exposes authorized transcript anchors plus frozen/current/deleted drift state, and requires non-leaking fallbacks for missing, broken, denied, and unsupported evidence. Signed audio is deferred until private Storage retention and authorization can be preserved by a dedicated signing contract.
 
 **Source-aware synthesis writer patch (July 2026).** Adds an atomic, idempotent synthesis-result boundary that validates the full artifact batch and immutable source allowlist, writes only pending summary/entity/Thread/next-prep drafts, preserves run/batch/pipeline/task/prompt/model/provider provenance, and advances the pipeline to review without writing canon, audit, or embeddings.
