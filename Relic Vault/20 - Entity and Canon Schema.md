@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 
 ## Changelog
 
+**Stage evidence recovery patch (July 2026).** Adds `sessions.audio_chunk_count_expected` and `recording_finalized_at` so late retry-safe chunk registration cannot enqueue an incomplete transcription, and records scheduled server-owned undo expiry as the lifecycle implementation.
+
 **v0.8 (May 2026).** Priority 6 and document-control alignment. Adds usage-metering tables for Pricing & Rate Limits v0.2 (`usage_events`, `usage_monthly_rollups`, `quota_overrides`) and refreshes active source references. Usage rows are Workspace-owned, may carry World/Saga attribution, and survive Saga deletion for billing, abuse review, and cost analysis.
 
 **Priority 3 continuity architecture patch (May 2026).** Adds the Workspace / World / Era / Saga hierarchy before coding. `workspaces`, `worlds`, and `world_eras` become structural tables. `sagas` now belongs to a World. Major canon, source, draft, embedding, note, relationship, and audit rows carry `workspace_id`, `world_id`, nullable `saga_id`, and `scope='world'|'saga'` where applicable. Post-session outputs default to Saga scope. World-canon promotion, era-specific entity versions, cross-Saga graph/timeline, and temporal contradiction detection remain V1.
@@ -406,6 +408,8 @@ Sessions diverge more from the shared shape.
 | `prep_checklist` | jsonb default `'[]'` | `[{id, text, done}]` |
 | `packet_locked_at` | timestamptz | Informational; GMs can still edit |
 | `consent_state` | text default `'unset'` | `'unset' \| 'granted' \| 'denied'` |
+| `audio_chunk_count_expected` | int nullable | Total immutable chunks declared by the client when recording ends; transcription waits until this count is registered. |
+| `recording_finalized_at` | timestamptz nullable | Set by the idempotent audio-upload finalization RPC after the expected count is durably known. |
 | `transcript_deleted_at` | timestamptz | Per-session retention opt-out |
 | `prep_briefing` | jsonb | v0.7: Cached output of `compose_prep_briefing` (Registry v1.0 §5). Shape: `{body: string, bullets: [string], sources: [uuid]}`. Null until first generation. |
 | `prep_briefing_generated_at` | timestamptz | v0.7: When `prep_briefing` was last written. Used for cache invalidation (regenerate when any cited source's `updated_at` exceeds this). Null when `prep_briefing` is null. |
@@ -494,6 +498,8 @@ ended_pending_undo ──60s elapsed──▶ ended
 Session prep remains editable in `planned`, `ready`, and `started`. It is read-only in `in_progress` and `ended_pending_undo`. After `ended`, session prep workspace is editable only for retrospective notes and future-session prep.
 
 The 60s flip is server-enforced (Edge Function or scheduled job), not client-only.
+
+The scheduled Stage finalizer creates the queued pipeline row exactly once. Recorded sessions become transcription-eligible only when `recording_finalized_at` is set and registered `audio_chunks` meet `audio_chunk_count_expected`; this lets late IndexedDB-recovered chunks complete after the Session is already `ended` without starting an incomplete transcription.
 
 ```sql
 create view session_prep_lock as
@@ -1229,6 +1235,4 @@ Not blocking this schema. Resolve in next docs:
 ---
 
 *End Entity & Canon Schema v0.8 vault copy. Consumed by AI Task Registry, Approval Queue, and Tech Architecture specs.*
-
-
 

@@ -12,13 +12,16 @@ import {
 import {
   quickCaptureAction,
   quickStubAction,
+  markMomentAction,
   recordDicePoolAction,
   recordSessionConsentAction,
   setSessionStatusAction,
 } from "@/app/actions";
 import { RelicIcon, type IconName } from "@/components/RelicIcon";
+import { hasSupabaseEnv } from "@/lib/env";
+import { getStageAudioUploadQueue, stageAudioSessionKey, type StageAudioQueueSummary, type StageAudioScope } from "@/lib/stage-audio-queue";
 import { parseGmNotesTags, formatStageElapsed, quickCreateEntityType, remainingUndoSeconds } from "@/lib/stage";
-import { StageRecordingAdapter, type StageRecordingResult } from "@/lib/stage-recording";
+import { StageRecordingAdapter, type StageRecordingChunk } from "@/lib/stage-recording";
 import { sagaPath } from "@/lib/routes";
 import type { StagePacket } from "@/lib/data";
 import type { EntitySummary, IdParams, SearchResult } from "@/lib/types";
@@ -199,7 +202,6 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   const root = sagaPath(params);
   const searchRef = useRef<HTMLInputElement>(null);
   const recordingAdapter = useRef<StageRecordingAdapter | null>(null);
-  const recordingCapture = useRef<StageRecordingResult | null>(null);
   const finalizing = useRef(false);
   const [status, setStatus] = useState(session.status);
   const [overlay, setOverlay] = useState<OverlayName>(null);
@@ -211,6 +213,7 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   const [notice, setNotice] = useState("");
   const [recording, setRecording] = useState(false);
   const [recordingNote, setRecordingNote] = useState("");
+  const [audioSummary, setAudioSummary] = useState<StageAudioQueueSummary>({ status: "idle", queued: 0, uploading: 0, failed: 0, totalChunks: 0, lastError: null });
   const [consent, setConsent] = useState(packet?.consent_state ?? session.consent_state ?? "unknown");
   const [now, setNow] = useState(Date.now());
   const [hiddenPins, setHiddenPins] = useState<string[]>([]);
@@ -228,11 +231,29 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   const tags = selectedEntity ? parseGmNotesTags(selectedEntity.gm_notes) : null;
   const [pinnedDice, setPinnedDice] = useState<{ pool: number[]; modifier: number; mode: string } | null>(null);
   const [pinnedResult, setPinnedResult] = useState<Record<string, unknown> | null>(null);
+  const audioScope: StageAudioScope = { workspaceId: params.workspaceId, worldId: params.worldId, sagaId: params.sagaId, sessionId: session.id };
+  const audioSessionKey = stageAudioSessionKey(audioScope);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1_000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!hasSupabaseEnv() || typeof indexedDB === "undefined") return;
+    const queue = getStageAudioUploadQueue();
+    const update = (scope: StageAudioScope, summary: StageAudioQueueSummary) => {
+      if (stageAudioSessionKey(scope) === audioSessionKey) setAudioSummary(summary);
+    };
+    const unsubscribe = queue.subscribe(update);
+    void queue.prepareSession(audioScope)
+      .then(() => queue.flushSession(audioScope))
+      .then(setAudioSummary)
+      .catch((caught) => setRecordingNote(caught instanceof Error ? caught.message : "Saved audio is waiting to retry."));
+    return unsubscribe;
+  // Scope identifiers are immutable for one Stage route.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioSessionKey]);
 
   useEffect(() => {
     const shortcut = (event: KeyboardEvent) => {
@@ -293,6 +314,15 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
     if (result !== false) { setNotice("Note saved to this scene."); setOverlay(null); }
   }
 
+  async function markMoment(label: string) {
+    if (!recording) return;
+    const result = await perform(markMomentAction, { label });
+    if (result !== false) {
+      setNotice(`Marked · ${elapsed}.`);
+      setOverlay(null);
+    }
+  }
+
   async function createQuick(type: string, name: string, summary: string) {
     const entityType = quickCreateEntityType(type);
     if (!entityType) return;
@@ -307,24 +337,35 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
     return result === false ? null : result ?? null;
   }
 
-  async function toggleRecording() {
+  async function saveRecordingChunk(chunk: StageRecordingChunk) {
+    const queue = getStageAudioUploadQueue();
+    await queue.enqueueChunk(audioScope, chunk.blob, chunk.mimeType, chunk.durationMs, chunk.recordedAt);
+    void queue.flushSession(audioScope).then(setAudioSummary);
+  }
+
+  async function setRecordingConsent(granted: boolean) {
+    const result = await perform(recordSessionConsentAction, { granted: String(granted) });
+    if (result === false) return false;
+    setConsent(granted ? "granted" : "denied");
+    if (!granted) setRecordingNote("Recording disabled for this session. Existing notes and Mark Moment remain unchanged.");
+    return true;
+  }
+
+  async function toggleRecording(consentConfirmed = false) {
     if (recording) {
       const capture = await recordingAdapter.current?.stop();
-      recordingCapture.current = capture ?? null;
       setRecording(false);
-      setRecordingNote(capture ? "Capture stopped. Audio is retained in this tab until durable upload is connected." : "Recording stopped.");
+      setRecordingNote(capture?.chunkCount ? `Recording stopped · ${capture.chunkCount} chunks saved locally or uploaded.` : "Recording stopped.");
       setOverlay(null);
       return;
     }
-    if (consent !== "granted") {
-      const result = await perform(recordSessionConsentAction, { granted: "true" });
-      if (result === false) return;
-      setConsent("granted");
-    }
+    if (consent !== "granted" && !consentConfirmed) return;
     try {
+      const queue = getStageAudioUploadQueue();
+      await queue.prepareSession(audioScope);
       recordingAdapter.current ??= new StageRecordingAdapter();
-      recordingCapture.current = null;
-      await recordingAdapter.current.start();
+      await recordingAdapter.current.start(saveRecordingChunk);
+      if (status === "started") await changeStatus("in_progress");
       setRecording(true); setRecordingNote(""); setOverlay(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Microphone access failed.");
@@ -332,9 +373,14 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   }
 
   async function endSession() {
+    let stoppedChunkCount = 0;
     if (recording) {
-      recordingCapture.current = await recordingAdapter.current?.stop() ?? null;
+      const capture = await recordingAdapter.current?.stop();
+      stoppedChunkCount = capture?.chunkCount ?? 0;
       setRecording(false);
+    }
+    if (audioSummary.totalChunks > 0 || stoppedChunkCount > 0) {
+      setAudioSummary(await getStageAudioUploadQueue().requestFinalization(audioScope));
     }
     await changeStatus("ended_pending_undo");
     setOverlay(null);
@@ -349,10 +395,20 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
 
   const relatedPlaces = visiblePinned.filter(({ entity }) => entity.entityType === "place").map(({ entity }) => entity);
   const relatedNpcs = visiblePinned.filter(({ entity }) => entity.entityType === "character" && entity.id !== selectedEntity?.id).map(({ entity }) => entity);
+  const pendingAudio = audioSummary.queued + audioSummary.uploading + audioSummary.failed;
+  const audioStateLabel = audioSummary.status === "idle"
+    ? "Synced"
+    : audioSummary.status === "recovered"
+      ? "Recovered"
+      : audioSummary.status === "uploading"
+        ? `Uploading · ${pendingAudio}`
+        : audioSummary.status === "failed"
+          ? `Failed · ${audioSummary.failed}`
+          : `Queued · ${pendingAudio}`;
 
   return <div className="stage-runtime stage-v2-shell">
     <header className="stage-v2-session-bar">
-      <div className="stage-v2-session-left"><div className="stage-v2-labels"><span>The Stage</span><span>Session {session.session_number ?? (session.name.replace(/\D+/g, "") || "—")}</span></div><div className="stage-v2-chips"><span className={live ? "live" : "ready"}><i />{status === "in_progress" ? "Live" : status === "started" ? "Started" : status === "ended_pending_undo" ? "Ending" : "Ready"}</span>{live && <span className={recording ? "recording active" : "recording"}><i />{recording ? "Recording" : "Not recording"}</span>}<span className="synced"><RelicIcon name="check" size={11} />Synced</span></div></div>
+      <div className="stage-v2-session-left"><div className="stage-v2-labels"><span>The Stage</span><span>Session {session.session_number ?? (session.name.replace(/\D+/g, "") || "—")}</span></div><div className="stage-v2-chips"><span className={live ? "live" : "ready"}><i />{status === "in_progress" ? "Live" : status === "started" ? "Started" : status === "ended_pending_undo" ? "Ending" : "Ready"}</span>{live && <span className={recording ? "recording active" : "recording"}><i />{recording ? "Recording" : "Not recording"}</span>}<span className={audioSummary.status}><RelicIcon name={audioSummary.status === "failed" ? "alert" : audioSummary.status === "idle" || audioSummary.status === "recovered" ? "check" : "clock"} size={11} />{audioStateLabel}</span></div></div>
       <div className="stage-v2-session-right">{live && <div className="stage-v2-elapsed"><RelicIcon name="clock" size={14} /><strong>{elapsed}</strong><span>elapsed</span></div>}{(status === "ready" || status === "started") && <button className="stage-v2-start" disabled={busy} onClick={beginSession}>{status === "ready" ? "Start Session" : "Go live"}</button>}<button className="stage-v2-mobile-loom" onClick={() => setOverlay("loom")}><RelicIcon name="spark" size={14} />Loom</button><Link className="stage-v2-sanctum" href={root}><RelicIcon name="chevronRight" size={13} />To Sanctum</Link><Link className="stage-v2-profile" href={`${root}/settings`} aria-label="GM profile"><RelicIcon name="profile" size={22} /></Link></div>
     </header>
 
@@ -388,8 +444,8 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
     {notice && <div className="stage-v2-toast" role="status">{notice}<button onClick={() => setNotice("")} aria-label="Dismiss"><RelicIcon name="x" size={13} /></button></div>}
     {(error || recordingNote) && <div className={`stage-v2-banner ${error ? "error" : "info"}`} role="alert">{error || recordingNote}<button onClick={() => { setError(""); setRecordingNote(""); }} aria-label="Dismiss"><RelicIcon name="x" size={13} /></button></div>}
 
-    {overlay === "record" && <StageDialog title="Recording" icon="mic" tone="rust" onClose={() => setOverlay(null)}><div className="stage-v2-dialog-body stage-v2-record"><div className={recording ? "stage-v2-record-ring active" : "stage-v2-record-ring"}><RelicIcon name={recording ? "mic" : "micOff"} size={31} /></div><div><h3>{recording ? "Recording in progress" : "Ready to record"}</h3><p>{session.name} · Consent {consent}</p></div><p className="stage-v2-record-note">Starting capture may request microphone permission. Audio upload/transcription remains behind the Stage recording adapter until the web Storage contract is connected.</p><button className={recording ? "stage-v2-danger" : "stage-v2-primary"} disabled={busy} onClick={toggleRecording}>{recording ? "Stop Recording" : consent === "granted" ? "Start Recording" : "Confirm Consent & Start"}</button></div></StageDialog>}
-    {overlay === "note" && <QuickNote busy={busy} scene={session.name} onClose={() => setOverlay(null)} onSave={saveNote} />}
+    {overlay === "record" && <StageDialog title="Recording" icon="mic" tone="rust" onClose={() => setOverlay(null)}><div className="stage-v2-dialog-body stage-v2-record"><div className={recording ? "stage-v2-record-ring active" : "stage-v2-record-ring"}><RelicIcon name={recording ? "mic" : "micOff"} size={31} /></div><div><h3>{recording ? "Recording in progress" : consent === "unknown" || consent === "unset" ? "Players consented to recording?" : consent === "denied" ? "Recording disabled" : "Ready to record"}</h3><p>{session.name} · Consent {consent}</p></div><p className="stage-v2-record-note">Completed chunks are saved locally before upload. Queued or failed audio stays on this device and retries on reconnect.</p>{(consent === "unknown" || consent === "unset") ? <div className="stage-v2-consent-actions"><button className="stage-v2-secondary" disabled={busy} onClick={() => void setRecordingConsent(false)}>No</button><button className="stage-v2-primary" disabled={busy} onClick={async () => { if (await setRecordingConsent(true)) await toggleRecording(true); }}>Yes, start recording</button></div> : consent === "denied" ? <button className="stage-v2-secondary" disabled={busy} onClick={() => void setRecordingConsent(true)}>Players now consent</button> : <button className={recording ? "stage-v2-danger" : "stage-v2-primary"} disabled={busy} onClick={() => void toggleRecording()}>{recording ? "Stop Recording" : "Start Recording"}</button>}{pendingAudio > 0 && <div className={`stage-v2-upload-state ${audioSummary.status}`}><strong>{audioStateLabel}</strong><span>{audioSummary.lastError || "Audio is preserved until upload and registration complete."}</span>{audioSummary.status === "failed" && <button className="stage-v2-secondary" onClick={() => void getStageAudioUploadQueue().flushSession(audioScope, true).then(setAudioSummary)}>Retry upload</button>}</div>}</div></StageDialog>}
+    {overlay === "note" && <QuickNote busy={busy} scene={session.name} recording={recording} onClose={() => setOverlay(null)} onSave={saveNote} onMark={markMoment} />}
     {overlay === "dice" && <DiceTool packetRolls={packet?.dice_rolls ?? []} busy={busy} onRoll={rollPool} onPin={(config) => { setPinnedDice(config); setOverlay(null); }} onClose={() => setOverlay(null)} />}
     {overlay === "create" && <QuickCreate busy={busy} onClose={() => setOverlay(null)} onCreate={createQuick} />}
     {overlay === "end" && <EndSession busy={busy} elapsed={elapsed} sceneCount={sceneNotes.length} onClose={() => setOverlay(null)} onConfirm={endSession} />}
@@ -398,9 +454,9 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   </div>;
 }
 
-function QuickNote({ scene, busy, onClose, onSave }: { scene: string; busy: boolean; onClose: () => void; onSave: (payload: { title: string; body: string; tag: string }) => Promise<void> }) {
-  const [title, setTitle] = useState(""); const [body, setBody] = useState(""); const [tag, setTag] = useState("Scene"); const [touched, setTouched] = useState(false);
-  return <StageDialog title="Quick Note" icon="file" tone="amber" onClose={onClose}><form onSubmit={(event) => { event.preventDefault(); setTouched(true); if (body.trim()) void onSave({ title: title.trim(), body: body.trim(), tag }); }}><div className="stage-v2-dialog-body"><label className="stage-v2-field"><span>Title <small>optional</small></span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="A short memory hook" autoFocus /></label><label className="stage-v2-field"><span>Note</span><textarea value={body} onChange={(e) => setBody(e.target.value)} onBlur={() => setTouched(true)} rows={5} placeholder="What happened? What do you want to remember?" aria-invalid={touched && !body.trim()} />{touched && !body.trim() && <em>Write a note before saving.</em>}</label><div className="stage-v2-note-tags" aria-label="Note tag">{["Scene", "NPC", "Lore", "Reminder", "Thread"].map((value) => <button type="button" key={value} className={tag === value ? "active" : ""} onClick={() => setTag(value)}>{value}</button>)}</div></div><footer className="stage-v2-dialog-foot"><span><RelicIcon name="bookmark" size={12} />{scene}</span><button className="stage-v2-primary" disabled={!body.trim() || busy}>Save Note</button></footer></form></StageDialog>;
+export function QuickNote({ scene, busy, recording, onClose, onSave, onMark }: { scene: string; busy: boolean; recording: boolean; onClose: () => void; onSave: (payload: { title: string; body: string; tag: string }) => Promise<void>; onMark: (label: string) => Promise<void> }) {
+  const [title, setTitle] = useState(""); const [body, setBody] = useState(""); const [tag, setTag] = useState("Scene"); const [markLabel, setMarkLabel] = useState(""); const [touched, setTouched] = useState(false);
+  return <StageDialog title="Quick Note" icon="file" tone="amber" onClose={onClose}><form onSubmit={(event) => { event.preventDefault(); setTouched(true); if (body.trim()) void onSave({ title: title.trim(), body: body.trim(), tag }); }}><div className="stage-v2-dialog-body"><section className="stage-v2-mark-moment" aria-label="Mark Moment"><div><strong>Mark Moment</strong><span>{recording ? "Save a timestamp for post-session review." : "Available while recording."}</span></div><label className="stage-v2-field"><span className="sr-only">Moment label</span><input value={markLabel} onChange={(event) => setMarkLabel(event.target.value)} placeholder="decision, lie, secret…" disabled={!recording || busy} /></label><button type="button" className="stage-v2-secondary" disabled={!recording || busy} onClick={() => void onMark(markLabel.trim())}><RelicIcon name="bookmark" size={13} />Mark moment</button></section><label className="stage-v2-field"><span>Title <small>optional</small></span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="A short memory hook" autoFocus /></label><label className="stage-v2-field"><span>Note</span><textarea value={body} onChange={(e) => setBody(e.target.value)} onBlur={() => setTouched(true)} rows={5} placeholder="What happened? What do you want to remember?" aria-invalid={touched && !body.trim()} />{touched && !body.trim() && <em>Write a note before saving.</em>}</label><div className="stage-v2-note-tags" aria-label="Note tag">{["Scene", "NPC", "Lore", "Reminder", "Thread"].map((value) => <button type="button" key={value} className={tag === value ? "active" : ""} onClick={() => setTag(value)}>{value}</button>)}</div></div><footer className="stage-v2-dialog-foot"><span><RelicIcon name="bookmark" size={12} />{scene}</span><button className="stage-v2-primary" disabled={!body.trim() || busy}>Save Note</button></footer></form></StageDialog>;
 }
 
 function QuickCreate({ busy, onClose, onCreate }: { busy: boolean; onClose: () => void; onCreate: (type: string, name: string, summary: string) => Promise<void> }) {

@@ -44,6 +44,7 @@ AI task surfaces still require implementation-plan review before coding, but the
 - The web shell resolves Search/Relic Guide tension by keeping Search in the top context bar and Relic Guide as an always-available sidecar/sheet, not a primary rail item.
 - The first implementation pass is scoped to tokens, local fonts/assets, shared primitives, The Sanctum shell, Prepare workflow, and the web Stage surface. It does not wire provider calls, autonomous AI behavior, live Stage captions, or deferred V1 surfaces.
 - [[66 - Stage Design Spec]] now records the 2026-07-20 web implementation decision: the standalone Claude Design wireframe controls concrete Stage layout, while [[32 - Stage UX Flow]] continues to own lifecycle, offline, recording, and Mark Moment requirements. The five-action wireframe rail does not silently retire those upstream obligations.
+- The July 2026 Stage evidence patch keeps that rail unchanged by placing Mark Moment inside Note, persists 30-second web chunks in IndexedDB before direct Storage upload, and makes undo expiry plus complete-audio transcription eligibility server-owned and idempotent.
 
 ## Current Backend Planning Addendum
 

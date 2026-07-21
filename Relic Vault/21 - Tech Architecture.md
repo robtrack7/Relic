@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 
 ## Changelog
 
+**Stage evidence recovery patch (July 2026).** Locks the web-first IndexedDB queue, retry-safe direct Storage upload/registration, explicit expected-chunk finalization marker, and scheduled server-owned `ended_pending_undo` expiry. Transcription enqueue waits for the ended Session plus every declared chunk.
+
 **v1.2 (May 2026).** Priority 6 and document-control alignment. Adds quota preflight expectations, Workspace-level usage metering, hard-stop error contracts, and `get_workspace_usage_summary` as the read model for usage/upgrade surfaces. Refreshes active source references to the current versioned files.
 
 **Priority 3 continuity architecture patch (May 2026).** Updates technical assumptions from Saga-only tenancy to Workspace / World / Era / Saga tenancy. RLS helpers, storage paths, job payloads, exports, retrieval calls, and observability events must preserve `workspace_id`, `world_id`, and `saga_id` where applicable. Workspace owns billing/usage/future collaboration. World owns shared canon. Saga owns active play/session data. Era fields are V1-ready only.
@@ -685,12 +687,14 @@ Stage records audio in 30-second chunks (native on mobile; MediaRecorder on web 
 
 Chunks upload as connectivity allows. Out-of-order uploads are fine — `sequence` orders them at assembly time. The Stage shows pending-upload counts in the recording status pill.
 
+On web, each `dataavailable` Blob is committed to IndexedDB before upload begins. Upload retry reuses the same deterministic path, sequence, and registration idempotency key. Local data is deleted only after both Storage upload and `register_audio_chunk` succeed.
+
 ### 7.2 Trigger to transcribe
 
-When the session flips to `state='ended'` (after the 60s undo elapses, §14.6 below), a trigger checks:
+When recording ends, the client declares `audio_chunk_count_expected` through the scoped finalization RPC. When the session flips to `state='ended'` (after the 60s undo elapses, §14.6 below), a trigger checks:
 
-- All `audio_chunks` for the session have `uploaded_at IS NOT NULL`.
-- A `transcripts` row exists for this session (it should — `pipeline_runs` creation creates it in `'pending'` state).
+- `recording_finalized_at` is set and registered `audio_chunks` meet `audio_chunk_count_expected`.
+- A pending `transcripts` row and transcription job are created idempotently once the complete declared chunk set exists.
 
 If both are true, the trigger enqueues a transcription job. If chunks are still uploading, a poll on chunk-upload-complete trigger re-checks.
 
@@ -1376,6 +1380,8 @@ The pathological case — GM also has a laptop open in another tab editing the s
 ### 15.7 Audio chunk upload
 
 Audio is a special case — chunks are immutable, append-only. The upload queue is straightforward: each chunk has a deterministic Storage path; uploads retry with exponential backoff. No conflict resolution needed.
+
+Web uses IndexedDB for the same short-window queue contract. The queue survives refresh/app restart, records queued/uploading/failed/recovered state, and continues registering late chunks for `ended_pending_undo` or `ended` Sessions. It then replays the idempotent audio-finalization marker so the backend can enqueue transcription only after the complete declared set exists.
 
 ### 15.8 What about web?
 

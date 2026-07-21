@@ -1122,7 +1122,17 @@ Stage failure states must be quiet, recoverable, and non-blocking:
 - Quota blocked after recording → allow saving audio; block transcription with manual-summary fallback.
 - Sync conflict → never overwrite silently; show conflict after the live session or in Sanctum.
 
-### 21.4 Out of scope remains unchanged
+### 21.4 Web evidence durability contract
+
+The web-first Stage records immutable ~30-second chunks. Each completed browser chunk is written to IndexedDB before upload begins, then uploaded directly with the authenticated Supabase client to the deterministic `audio/<workspace_id>/<world_id>/<saga_id>/<session_id>/<sequence>.<ext>` path and registered through `register_audio_chunk`. Storage upload and chunk registration may both be retried with the same sequence and idempotency key. A failed attempt never deletes the local Blob.
+
+The fixed five-action wireframe rail remains `Record · Note · Dice · Create · End Session`. **Mark Moment lives as a recording-only secondary action inside Note** with an optional short label. This preserves the rail while keeping the evidence action discoverable in two taps.
+
+The web Stage and its recording sheet expose the evidence queue as `queued`, `uploading`, `failed`, or `recovered`. Reconnect and later app loads resume queued uploads from IndexedDB. Recovery is session-scoped and must complete chunk registration before transcription is enqueued.
+
+Ending a recorded session records the expected chunk count. Transcription becomes eligible only after the session is `ended` and every expected chunk is registered. `ended_pending_undo` expiry is server-owned through a scheduled database finalizer, so closing the browser cannot strand the lifecycle. Late recovered chunks remain registrable for ending/ended sessions and can complete the same idempotent transcription enqueue path.
+
+### 21.5 Out of scope remains unchanged
 
 No real-time transcription, speaker diarization, initiative tracker, encounter tracker, tactical map, proactive AI, or deep approval workflow during live play.
 

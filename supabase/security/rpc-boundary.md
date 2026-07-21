@@ -42,6 +42,7 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `get_stage_packet(...)` | Read a scoped Stage packet for rough UI smoke testing. |
 | `get_audio_upload_target(...)` | Build a scoped deterministic audio Storage upload target. |
 | `register_audio_chunk(...)` | Register uploaded audio chunk metadata and meter storage once. |
+| `finalize_audio_upload(...)` | Record the expected chunk count and make completed recovered audio eligible for transcription. |
 | `enqueue_transcription_job(...)` | Queue scoped transcription work for a Session. |
 | `update_transcript_segments(...)` | Edit transcript segment text/deleted flags while preserving timestamp boundaries. |
 | `get_transcript_source_context(...)` | Read frozen citation text beside current transcript text for drift display. |
