@@ -37,11 +37,11 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 
 | Priority | Complete | Partial | Missing | Blocked | Needs verification |
 | -------- | --------:| -------:| -------:| -------:| ------------------:|
-| P0       | 7        | 8       | 5       | 2       | 0                  |
+| P0       | 8        | 7       | 5       | 2       | 0                  |
 | P1       | 1        | 4       | 2       | 0       | 1                  |
 | P2       | 0        | 2       | 1       | 0       | 1                  |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, and D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup. The immediate lane is Packet D2 Library lifecycle and relationships.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup, and D2's complete six-type Library lifecycle with explicit relationship/mention acceptance. The immediate lane is Packet D3 Thread completion.
 
 ## 3. Quality-gate system
 
@@ -210,6 +210,7 @@ Stop rules:
 - Add visible autosave, restore, two-confirmation hard delete where allowed, source dock, relationships, mentions, and backlinks.
 - Keep mention/link acceptance explicitly GM-driven.
 - **Done when:** all six record types pass create/edit/archive/restore/link/source acceptance.
+- **Evidence:** Character, Place, Faction, Artifact, Thread, and Note now share an 800ms/blur autosave editor with visible saving/conflict states, source/provenance dock, archive/restore, relationship or Note-attachment editing, exact-name mention suggestions, explicit accept/dismiss, and accepted backlinks. Hard delete requires an archived record, a confirmation checkbox, its exact typed name, and zero live relationship, accepted/suggested mention, note-attachment, Session-pin/active-Thread, or pending-draft references. Sources and canon audit remain as tombstones while derived embeddings are removed. Focused pgTAP, component/action tests, and an authenticated create/edit/reload/link/archive/block/restore/delete browser flow pass without sibling-scope access.
 
 #### Packet D3 — Threads and timeline
 
@@ -399,4 +400,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate next packet: **D2 — Library lifecycle and relationships**.
+Immediate next packet: **D3 — Thread completion and derived timeline**.

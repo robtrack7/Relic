@@ -30,6 +30,12 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `create_entity(...)` | Create manual canon rows through a scoped path. |
 | `update_entity(...)` | Update manual canon rows through a scoped path. |
 | `archive_entity(..., expected_version)` | Archive canon rows through a scoped conflict-checked path. |
+| `restore_entity(..., expected_version)` | Restore an archived Library record through a scoped conflict-checked path. |
+| `hard_delete_entity(..., expected_version, confirmation_name)` | Permanently delete an archived record only after typed confirmation and a transaction-time zero-reference check. |
+| `get_library_record_detail(...)` | Read one scoped record with provenance, links, mention decisions, backlinks, candidates, and delete blockers. |
+| `create_relationship(...)` / `delete_relationship(...)` | Create or remove a scoped fixed-vocabulary Library relationship. |
+| `resolve_mention(...)` | Explicitly accept or dismiss an exact-match mention suggestion. |
+| `create_note_attachment(...)` / `delete_note_attachment(...)` | Attach or detach a Note and scoped Library entity. |
 | `append_thread_objective(...)` | Update a Thread objective through a scoped path. |
 | `create_session(...)` | Create a Session through a scoped path. |
 | `update_session_prep(...)` | Update prep fields, pins, and active threads through scoped validation. |
@@ -100,8 +106,11 @@ These public-schema helpers are `security definer` because they are called by sc
 - `materialize_embedding_job_for_test(...)`
 - AI worker wrappers: `get_ai_task_run_for_worker(...)`, `record_ai_task_output_for_worker(...)`, `mark_ai_task_run_failed_for_worker(...)`, and `set_ai_task_usage_for_worker(...)`
 - validation trigger helpers for session pins, active threads, notes, relationships, mentions, sources, and draft sources
+- private `internal.library_*` lookup/dependency helpers plus the exact-mention trigger; none are browser-callable
 
 Manual canon writes must create a synthetic `gm_instruction` source and a `canon_audit` row in the same transaction as the row mutation. Update and archive calls must include the live `expected_version` value from the loaded row.
+
+Library detail reads expose only current-Saga plus relevant World records. Exact, case-insensitive word-boundary mention detection runs after record saves and only creates suggestions; acceptance/dismissal remains an explicit GM RPC. Individual hard-delete is limited to archived records with no relationships, mention/backlink rows, Note attachments, Session pins/Thread activations, or pending draft targets. The delete RPC rechecks all dependencies under the row lock, preserves intrinsic source/audit tombstones, removes derived embeddings, and never cascades external references.
 
 Approval Queue commits apply create/update/archive-request drafts only after live target, Session state, source, and optimistic-version checks. Successful commits write one `canon_audit` row with field-level old/new values, `actor_kind='gm_via_ai_approval'`, `draft_id`, cited `draft_sources`, and batch/run/pipeline/model provenance. Rejections and merge identity decisions do not mutate canon; merge creates a separately reviewable update while preserving sources and provenance. Approval receipts make exact retries safe, and GM edits are saved before commit attempts so conflicts and failures do not discard them.
 

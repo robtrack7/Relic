@@ -692,7 +692,7 @@ The v0.1 §15.2 Thread Timeline is **no longer a V1 placeholder** — it has bee
 | Session prep — beats | `propose_scene_beats` | GM clicks "Brainstorm beats" in agenda editor | light |
 | Session prep — synthesis | `generate_session_prep` | GM clicks "Draft this session" | heavy |
 | Prep briefing | `compose_prep_briefing` | Auto-runs on prep workspace load (streaming) | light |
-| Mention chip on save | mention detection | Async post-save, debounced 5s | infrastructure |
+| Mention chip on save | exact-name mention detection | Transactional after the debounced/blur entity save; accepted or dismissed explicitly | infrastructure |
 | Search bar (Hybrid) | `search_for_ui` | On query, hybrid mode | infrastructure |
 | Relic Guide answer | `answer_saga_question` | GM submits question | light |
 | Approval Queue | None — review only | — | — |

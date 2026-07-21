@@ -7,7 +7,7 @@ import { parseDicePool, rollDice, rollDicePool } from "@/lib/dice";
 import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
 import { sagaPath } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
-import type { IdParams } from "@/lib/types";
+import type { IdParams, LibraryRecordDetail } from "@/lib/types";
 
 type RpcObject = {
   id?: string;
@@ -218,6 +218,44 @@ export async function updateEntityAction(formData: FormData) {
   revalidatePath(`${sagaPath(params)}/entities/${type}/${id}`);
 }
 
+async function readLibraryDetail(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  params: IdParams,
+  type: string,
+  id: string,
+) {
+  const { data, error } = await supabase.rpc("get_library_record_detail", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    entity_type: type,
+    entity_id: id,
+  });
+  if (error) throw new Error(error.message);
+  return data as unknown as LibraryRecordDetail;
+}
+
+export async function autosaveEntityAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const type = value(formData, "entityType");
+  const id = value(formData, "entityId");
+  const expectedVersion = value(formData, "expectedVersion");
+  if (!isEditableEntityType(type)) return { ok: false as const, error: "Unsupported record type." };
+  if (!expectedVersion) return { ok: false as const, error: "This record needs to be refreshed before saving." };
+  const payload = type === "note"
+    ? { title: value(formData, "name"), body: value(formData, "narrative"), expected_version: expectedVersion }
+    : { name: value(formData, "name"), summary: value(formData, "summary"), narrative: value(formData, "narrative"), gm_notes: value(formData, "gmNotes"), expected_version: expectedVersion };
+  const { error } = await supabase.rpc("update_entity", {
+    workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId,
+    entity_type: type, entity_id: id, payload,
+  });
+  if (error) return { ok: false as const, conflict: error.code === "40001", error: error.code === "40001" ? "This record changed elsewhere. Refresh before continuing." : error.message };
+  const detail = await readLibraryDetail(supabase, params, type, id);
+  revalidatePath(`${sagaPath(params)}/entities/${type}/${id}`);
+  return { ok: true as const, updatedAt: detail.record.updated_at ?? expectedVersion, detail };
+}
+
 export async function archiveEntityAction(formData: FormData) {
   const { supabase } = await requireActionUser();
   const params = paramsFromForm(formData);
@@ -242,6 +280,89 @@ export async function archiveEntityAction(formData: FormData) {
     throw new Error(error.message);
   }
   redirect(`${sagaPath(params)}/entities`);
+}
+
+export async function restoreEntityAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const type = value(formData, "entityType");
+  const id = value(formData, "entityId");
+  if (!isEditableEntityType(type)) throw new Error("Unsupported record type.");
+  const { error } = await supabase.rpc("restore_entity", {
+    workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId,
+    entity_type: type, entity_id: id, expected_version: value(formData, "expectedVersion"),
+  });
+  if (error) throw new Error(error.message);
+  redirect(`${sagaPath(params)}/entities/${type}/${id}?lifecycleNotice=restored`);
+}
+
+export async function hardDeleteEntityAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const type = value(formData, "entityType");
+  const id = value(formData, "entityId");
+  if (!isEditableEntityType(type)) throw new Error("Unsupported record type.");
+  if (value(formData, "destructiveConfirmed") !== "true") throw new Error("Permanent deletion requires both confirmations.");
+  const { error } = await supabase.rpc("hard_delete_entity", {
+    workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId,
+    entity_type: type, entity_id: id, expected_version: value(formData, "expectedVersion"),
+    confirmation_name: value(formData, "confirmationName"),
+  });
+  if (error) throw new Error(error.message);
+  redirect(`${sagaPath(params)}/entities?lifecycleNotice=deleted`);
+}
+
+export async function createLibraryLinkAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const sourceType = value(formData, "entityType");
+  const sourceId = value(formData, "entityId");
+  const targetType = value(formData, "targetType");
+  const targetId = value(formData, "targetId");
+  if (!isEditableEntityType(sourceType) || !isEditableEntityType(targetType) || sourceId === targetId) return { ok: false as const, error: "Choose a different Library record." };
+  const rpc = sourceType === "note" || targetType === "note" ? "create_note_attachment" : "create_relationship";
+  const args = rpc === "create_note_attachment"
+    ? { workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, note_id: sourceType === "note" ? sourceId : targetId, target_entity_type: sourceType === "note" ? targetType : sourceType, target_entity_id: sourceType === "note" ? targetId : sourceId }
+    : { workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, from_entity_type: sourceType, from_entity_id: sourceId, to_entity_type: targetType, to_entity_id: targetId, relationship_kind: value(formData, "relationshipKind") || "related-to", relationship_notes: value(formData, "relationshipNotes") || null };
+  const { error } = await supabase.rpc(rpc, args);
+  if (error) return { ok: false as const, error: error.message };
+  const detail = await readLibraryDetail(supabase, params, sourceType, sourceId);
+  revalidatePath(`${sagaPath(params)}/entities/${sourceType}/${sourceId}`);
+  return { ok: true as const, detail };
+}
+
+export async function removeLibraryLinkAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const type = value(formData, "entityType");
+  const id = value(formData, "entityId");
+  if (!isEditableEntityType(type)) return { ok: false as const, error: "Unsupported record type." };
+  const rpc = value(formData, "linkType") === "note_attachment" ? "delete_note_attachment" : "delete_relationship";
+  const args = rpc === "delete_note_attachment"
+    ? { workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, attachment_id: value(formData, "linkId") }
+    : { workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, relationship_id: value(formData, "linkId") };
+  const { error } = await supabase.rpc(rpc, args);
+  if (error) return { ok: false as const, error: error.message };
+  const detail = await readLibraryDetail(supabase, params, type, id);
+  revalidatePath(`${sagaPath(params)}/entities/${type}/${id}`);
+  return { ok: true as const, detail };
+}
+
+export async function resolveMentionAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const type = value(formData, "entityType");
+  const id = value(formData, "entityId");
+  const resolution = value(formData, "resolution");
+  if (!isEditableEntityType(type) || !["accepted", "dismissed"].includes(resolution)) return { ok: false as const, error: "Unsupported mention decision." };
+  const { error } = await supabase.rpc("resolve_mention", {
+    workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId,
+    mention_id: value(formData, "mentionId"), resolution,
+  });
+  if (error) return { ok: false as const, error: error.message };
+  const detail = await readLibraryDetail(supabase, params, type, id);
+  revalidatePath(`${sagaPath(params)}/entities/${type}/${id}`);
+  return { ok: true as const, detail };
 }
 
 export async function addThreadObjectiveAction(formData: FormData) {

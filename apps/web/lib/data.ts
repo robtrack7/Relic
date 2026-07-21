@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { entityConfigs } from "@/lib/entities";
 import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
-import type { AppContext, EntitySummary, EntityType, HierarchyContext, IdParams, SearchResult, StageLiteralSearchDocument } from "@/lib/types";
+import type { AppContext, EntitySummary, EntityType, HierarchyContext, IdParams, LibraryRecordDetail, SearchResult, StageLiteralSearchDocument } from "@/lib/types";
 
 type WorkspaceContext = { id: string; name: string; usage_limits?: Record<string, unknown>; hierarchy?: HierarchyContext };
 type WorldContext = { id: string; name: string; summary?: string | null; default_game_system?: string | null };
@@ -197,6 +197,24 @@ export async function getEntityList(params: IdParams, type: EntityType, includeA
 export async function getEntity(params: IdParams, type: EntityType, id: string) {
   const rows = await getEntityList(params, type, true);
   return rows.find((row) => row.id === id) ?? null;
+}
+
+export async function getLibraryRecordDetail(params: IdParams, type: EntityType, id: string): Promise<LibraryRecordDetail | null> {
+  const { supabase } = await requireSagaContext(params);
+  const { data, error } = await supabase.rpc("get_library_record_detail", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    entity_type: type,
+    entity_id: id,
+  });
+  if (error) {
+    if (error.code === "42501") return null;
+    throw new Error(error.message);
+  }
+  if (!data || typeof data !== "object" || !("record" in data)) return null;
+  const detail = data as unknown as LibraryRecordDetail & { record: Record<string, unknown> };
+  return { ...detail, record: normalizeEntityRow(detail.record, type) } as LibraryRecordDetail;
 }
 
 export async function getRecentEntities(params: IdParams) {
@@ -422,8 +440,9 @@ export async function getExportDownload(params: IdParams, exportId?: string | nu
   return data as Record<string, unknown> | null;
 }
 
-function normalizeEntityRow(row: Record<string, unknown>, type: EntityType): EntitySummary {
-  const name = type === "note" ? String(row.title ?? "Untitled note") : String(row.name ?? entityConfigs[type].label);
+export function normalizeEntityRow(row: Record<string, unknown>, type: EntityType): EntitySummary {
+  const name = type === "note" ? String(row.title ?? row.name ?? "Untitled note") : String(row.name ?? entityConfigs[type].label);
+  const noteBody = String(row.body ?? row.narrative ?? "");
   return {
     id: String(row.id),
     entityType: type,
@@ -432,8 +451,8 @@ function normalizeEntityRow(row: Record<string, unknown>, type: EntityType): Ent
     saga_id: row.saga_id ? String(row.saga_id) : null,
     scope: row.scope === "world" ? "world" : "saga",
     name,
-    summary: type === "note" ? String(row.body ?? "").slice(0, 180) : (row.summary as string | null),
-    narrative: row.narrative as string | null,
+    summary: type === "note" ? String(row.summary ?? noteBody.slice(0, 180)) : (row.summary as string | null),
+    narrative: type === "note" ? noteBody : row.narrative as string | null,
     gm_notes: row.gm_notes as string | null,
     canon_state: row.canon_state === "archived" ? "archived" : "canon",
     is_stub: Boolean(row.is_stub),

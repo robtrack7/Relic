@@ -27,6 +27,8 @@ source_file: "Sourced - Downloaded - 260518/relic-mvp-prd-v0_10.md"
 
 ## Changelog
 
+**Library lifecycle clarification (July 2026).** `ENT-FR-7` hard-delete applies only to already-archived, unreferenced Characters, Places, Factions, Artifacts, Threads, and Notes. The UI requires an initial destructive-action confirmation plus exact name/title entry, and the database rechecks that no relationships, mentions/backlinks, note attachments, Session links, or pending draft targets depend on the record. Intrinsic source/audit history remains as a tombstone and derived embeddings are removed. Referenced archived records remain restorable.
+
 **v0.10 (May 2026).** Document-control and Priority 5/6 alignment pass. Uses the active vault source set: Basepoint v3.5, Schema v0.8, Registry v1.0, Memory v0.9, Tech Architecture v1.2, Stage UX v0.6, First-Run UX v0.2, UI Implementation v0.2, and Pricing & Rate Limits v0.2. Marks First-Run UX, UI Implementation, and Pricing & Rate Limits as resolved implementation sources. No PRD requirement IDs changed.
 
 **v0.9 (May 2026).** Alignment pass with Basepoint v3.4, AI Task Registry v0.8, and Sanctum UX Flow v0.2. Five targeted revisions:
@@ -163,7 +165,7 @@ Requirement ID migration table:
 - `ENT-FR-4` Workspace/World/Saga-scoped hybrid search over name + summary + narrative content + GM notes + attached lore notes. Default search includes current Saga canon plus relevant World canon, excludes sibling Sagas, and fuses lexical (full-text) + semantic (vector). Implementation per Memory & Retrieval Spec.
 - `ENT-FR-5` Mention detection: case-insensitive, word-boundary match. Surfaces suggestion within 500ms. GM accepts or dismisses; no auto-link.
 - `ENT-FR-6` Relationships: fixed vocabulary in MVP — `member-of`, `located-at`, `owns`, `allied-with`, `opposed-to`, `related-to`.
-- `ENT-FR-7` **Soft-archive** standard. **Hard-delete** allowed only on already-archived entities, behind two confirmations.
+- `ENT-FR-7` **Soft-archive** standard. **Hard-delete** is allowed only for already-archived, unreferenced Library records, behind an initial destructive-action confirmation plus exact name/title entry. The database rechecks dependencies transactionally and never silently cascades individual-record references.
 - `ENT-FR-8` Embeddings regenerate on substantive content edits (not every keystroke).
 - `ENT-FR-9` **Autosave with visible save state.** No Save button.
 

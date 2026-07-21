@@ -408,7 +408,7 @@ Every async surface in the system. For each: trigger, idempotency, retries, queu
 | `end-session-flip` | `pg_cron` every 30s | `(session_id, generation)` | Idempotent — re-running is a no-op | None (cron-driven) |
 | `cleanup-audio` | DB trigger when `transcripts.state` flips to `'complete'`, if saga's `audio_retention='delete_after_transcription'` | `transcript_id` | 3 retries | `internal.cleanup_jobs` |
 | `cleanup-saga` | DB trigger on `sagas.deleted_at` set | `saga_id` | 5 retries | `internal.cleanup_jobs` |
-| `detect-mentions` | DB trigger on entity save, debounced 5s | `(source_entity_type, source_entity_id, content_hash)` | 3 retries | `internal.mention_jobs` |
+| `detect-mentions` | Transactional DB trigger after the debounced/blur Library save | `(source_entity_type, source_entity_id, content_hash)` | Save transaction retries as a unit | None for exact-name MVP stage |
 | `stale-pipeline-warning` | `pg_cron` daily at 03:00 UTC | `pipeline_run_id + warning_stage` | None (re-runs are no-ops; idempotent) | None (cron-driven) |
 | `export-saga` | HTTP from app (GM hits Export) | `(saga_id, requested_at)` | 1 retry on transient; surface failure to GM | `internal.export_jobs` |
 | `issue-scoped-jwt` | Internal call from other Edge Functions | None — synchronous | None — caller retries | None |
@@ -1060,14 +1060,14 @@ After every LLM call, the actual token counts (from the response, not pre-comput
 
 ## 11. Mention detection placement (CF-10)
 
-### 11.1 Decision: split between Postgres and the Edge Function
+### 11.1 Decision: exact-name MVP in Postgres; semantic fallback deferred
 
-Mention detection is infrastructure in MVP, not a standalone LLM task. The pipeline has two stages:
+Mention detection is infrastructure in MVP, not a standalone LLM task. The design has two stages:
 
 - **Stage 1 — exact name match.** Pure Postgres. Fast, deterministic, no embedding cost.
-- **Stage 2 — embedding-cosine fallback for noun-phrase candidates.** Edge Function, because it needs an embedding call.
+- **Stage 2 — embedding-cosine fallback for noun-phrase candidates.** Deferred until the embedding provider and evaluation corpus are proven; when enabled, it belongs in an Edge Function.
 
-Stage 1 in Postgres because the operation is a simple `ILIKE` / `to_tsvector @@` query that's already RLS-aware. Stage 2 in an Edge Function because it needs LiteLLM access (for the embedding call) and longer compute budgets than a trigger can have.
+Stage 1 is shipped in Postgres because exact case-insensitive word-boundary matching is deterministic and can remain inside the scoped save transaction. It only creates `suggested` rows; the GM must accept or dismiss them. Stage 2 stays outside the MVP D2 completion claim because it requires LiteLLM access, tuned thresholds, and longer compute budgets than a trigger can have.
 
 ### 11.2 Stage 1 in detail
 
@@ -1096,9 +1096,9 @@ $$;
 
 The trigger then UPSERTs into `mentions` (Schema §5.2) with `state='suggested'`.
 
-### 11.3 Stage 2 in detail
+### 11.3 Deferred Stage 2 design
 
-Stage 2 runs only when Stage 1 produced zero matches **and** the source text is >100 chars. This is the MVP-conservative posture: Stage 1 catches the common case; Stage 2 catches the "the silver-haired merchant" case when there's no name to anchor on.
+If activated after provider/evaluation work, Stage 2 runs only when Stage 1 produced zero matches **and** the source text is >100 chars. Stage 1 catches the common case; Stage 2 would catch the "the silver-haired merchant" case when there's no name to anchor on.
 
 The job:
 

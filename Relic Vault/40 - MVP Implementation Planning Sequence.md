@@ -9,7 +9,7 @@ depends_on:
   - "[[23 - AI Task Registry]]"
   - "[[22 - Memory and Retrieval]]"
 supersedes: []
-last_audited: 2026-07-20
+last_audited: 2026-07-21
 source_file: "Relic Vault/40 - MVP Implementation Planning Sequence.md"
 ---
 
@@ -47,7 +47,7 @@ Do not code directly from this router. Use it to select the correct detailed pla
 
 ## Current immediate packet
 
-The current packet pointer lives in root `PLAN.md`. After completed D1 hierarchy switching and Saga lifecycle, the immediate packet is D2 Library lifecycle and relationships; this sequencing note must not retain an older packet as current truth.
+The current packet pointer lives in root `PLAN.md`. After completed D2 Library lifecycle and relationships, the immediate packet is D3 Thread completion and derived timeline; this sequencing note must not retain an older packet as current truth.
 
 ## Phase 1 Complete
 

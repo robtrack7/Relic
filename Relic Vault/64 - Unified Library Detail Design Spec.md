@@ -12,7 +12,7 @@ depends_on:
   - "[[13 - Design System]]"
   - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-07-21
 source_file: "Relic Vault/64 - Unified Library Detail Design Spec.md"
 ---
 
@@ -87,11 +87,15 @@ Required states: empty library, no search results, loading list, loading detail,
 
 Archived records must be recoverable and visually subdued. Hard-delete requires confirmation and should never be a primary action.
 
+For MVP, hard-delete is available only for an archived, unreferenced record. The GM must first open the permanent-delete disclosure, check the irreversible-action confirmation, and type the record name exactly. Relationships, active suggested/accepted mentions, Note attachments, Session pins/active Thread usage, and pending drafts are blocking references. Intrinsic source and canon-audit history remain as tombstones after deletion; derived embeddings do not.
+
 ## 10. AI behavior
 
 AI is invoked by the GM through explicit buttons. Entity assists can draft from prompt where the owning task exists. Thread complication generates ephemeral cards that the GM may copy into narrative. Stub fleshing creates an update draft routed through the approval write path.
 
 AI must not auto-link mentions or auto-create relationships. Mention suggestions are accepted or dismissed by the GM.
+
+Exact-name mention detection may create a suggestion after an ordinary save, but it never creates a relationship or canon mutation. Dismissal snoozes the suggestion for seven days; acceptance creates the visible backlink state. Both choices remain reversible from the detail surface.
 
 ## 11. Source/provenance behavior
 

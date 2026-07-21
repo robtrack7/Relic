@@ -40,6 +40,60 @@ export type EntitySummary = {
   updated_at?: string;
 };
 
+export type LibraryProvenanceEntry = {
+  id: string;
+  operation: string;
+  actor_kind: string;
+  from_state: string | null;
+  to_state: string | null;
+  created_at: string;
+  sources: Array<{ id: string; kind: string; excerpt: string | null; created_at: string }>;
+};
+
+export type LibraryRelationship = {
+  link_type: "relationship" | "note_attachment";
+  id: string;
+  kind: string;
+  notes: string | null;
+  direction: "inbound" | "outbound";
+  related_type: EntityType;
+  related_id: string;
+  related_name: string;
+  created_at: string;
+};
+
+export type LibraryMention = {
+  id: string;
+  state: "suggested" | "accepted" | "dismissed" | "snoozed";
+  mention_text: string;
+  related_type?: EntityType;
+  related_id?: string;
+  related_name?: string;
+  source_type?: EntityType;
+  source_id?: string;
+  source_name?: string;
+  snoozed_until?: string | null;
+  updated_at: string;
+};
+
+export type LibraryCandidate = {
+  entityType: EntityType;
+  id: string;
+  name: string;
+  scope: EntityScope;
+};
+
+export type LibraryRecordDetail = {
+  record: EntitySummary;
+  provenance: LibraryProvenanceEntry[];
+  relationships: LibraryRelationship[];
+  mentions: LibraryMention[];
+  backlinks: LibraryMention[];
+  candidates: LibraryCandidate[];
+  delete_blockers: Record<string, number> & { total: number };
+  can_hard_delete: boolean;
+};
+
 export type AppContext = {
   workspace: { id: string; name: string; usage_limits?: Record<string, unknown> } | null;
   world: { id: string; name: string; summary?: string | null } | null;

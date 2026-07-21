@@ -328,6 +328,8 @@ test("new GM can exercise the full manual MVP loop from sign-up through Stage", 
   await page.goto(characterUrl);
   await expect(page.getByRole("heading", { name: "Seraphine Vale" })).toBeVisible();
   await page.getByLabel("Summary").fill("A careful archivist who chose to trust the party.");
-  await page.getByRole("button", { name: "Save manual edit" }).click();
-  await expect(page.getByText("A careful archivist who chose to trust the party.")).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("Unsaved");
+  await expect(page.getByRole("status")).toContainText("Saved", { timeout: 5_000 });
+  await page.reload();
+  await expect(page.getByLabel("Summary")).toHaveValue("A careful archivist who chose to trust the party.");
 });

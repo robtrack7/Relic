@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   addThreadObjectiveAction,
   archiveEntityAction,
+  autosaveEntityAction,
+  createLibraryLinkAction,
   createEntityAction,
   createSessionAction,
   quickCaptureAction,
@@ -12,10 +14,12 @@ import {
   requestSagaExportAction,
   renameSagaAction,
   deleteSagaAction,
+  hardDeleteEntityAction,
   resolveDraftAction,
   resolveDraftSelectionAction,
   refreshDraftBaselineAction,
   retrySessionTranscriptionAction,
+  restoreEntityAction,
   saveSessionEvidenceAction,
   updateTranscriptAction,
   updateEntityAction
@@ -206,6 +210,32 @@ describe("security-hardened server actions", () => {
       entity_id: "entity-a",
       expected_version: "2026-06-01T17:00:00.000Z"
     });
+  });
+
+  it("uses scoped D2 RPCs for autosave, links, restore, and guarded hard delete", async () => {
+    const supabase = authenticatedSupabase();
+    supabase.rpc
+      .mockResolvedValueOnce({ data: "entity-a", error: null })
+      .mockResolvedValueOnce({ data: { record: { id: "entity-a", updated_at: "2026-07-21T18:01:00Z" }, relationships: [] }, error: null })
+      .mockResolvedValueOnce({ data: { id: "relationship-a" }, error: null })
+      .mockResolvedValueOnce({ data: { record: { id: "entity-a" }, relationships: [{ id: "relationship-a" }] }, error: null })
+      .mockResolvedValueOnce({ data: "entity-a", error: null })
+      .mockResolvedValueOnce({ data: { deleted: true }, error: null });
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    const autosave = await autosaveEntityAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", entityType: "character", entityId: "entity-a", expectedVersion: "2026-07-21T18:00:00Z", name: "Mara", summary: "Scout", narrative: "Glass Bridge", gmNotes: "Private" }));
+    expect(autosave.ok).toBe(true);
+    expect(supabase.rpc.mock.calls[0][0]).toBe("update_entity");
+    expect(supabase.rpc.mock.calls[1][0]).toBe("get_library_record_detail");
+
+    const linked = await createLibraryLinkAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", entityType: "character", entityId: "entity-a", targetType: "place", targetId: "place-a", relationshipKind: "located-at", relationshipNotes: "Watches the bridge" }));
+    expect(linked.ok).toBe(true);
+    expect(supabase.rpc.mock.calls[2]).toEqual(["create_relationship", { workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", from_entity_type: "character", from_entity_id: "entity-a", to_entity_type: "place", to_entity_id: "place-a", relationship_kind: "located-at", relationship_notes: "Watches the bridge" }]);
+
+    await expect(restoreEntityAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", entityType: "character", entityId: "entity-a", expectedVersion: "2026-07-21T18:01:00Z" }))).rejects.toThrow("NEXT_REDIRECT:/app/w/workspace-a/world/world-a/saga/saga-a/entities/character/entity-a?lifecycleNotice=restored");
+    await expect(hardDeleteEntityAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", entityType: "character", entityId: "entity-a", expectedVersion: "2026-07-21T18:02:00Z", destructiveConfirmed: "true", confirmationName: "Mara" }))).rejects.toThrow("NEXT_REDIRECT:/app/w/workspace-a/world/world-a/saga/saga-a/entities?lifecycleNotice=deleted");
+    expect(supabase.rpc.mock.calls[5][0]).toBe("hard_delete_entity");
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 
   it("records session recording consent through the Stage RPC", async () => {

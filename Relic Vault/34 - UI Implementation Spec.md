@@ -456,6 +456,8 @@ Errors must tell the GM what happened and what is safe.
 - Mention detection runs after save, not per keystroke.
 - Embeddings regenerate after substantive save, debounced server-side.
 
+The D2 Library implementation applies this behavior to Character, Place, Faction, Artifact, Thread, and Note: text saves after 800ms idle and immediately on blur, keeps unsaved input visible after failures, and stops blind retries after a version conflict. Ordinary edits have no Save button. Archive and restore remain explicit actions; permanent deletion is disclosed separately and requires both an irreversible-action checkbox and exact-name entry, and is unavailable until the archived record has no blocking references.
+
 ---
 
 ## 8. Approval diff components

@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 
 ## Changelog
 
+**Library lifecycle patch (July 2026).** Resolves the per-record hard-delete boundary: an individual Character, Place, Faction, Artifact, Thread, or Note may be permanently deleted only after it is archived, the GM completes two confirmations, and a transaction-time dependency check proves it has no relationships, accepted/suggested mentions or backlinks, note attachments, Session pins, Thread activations, or pending draft targets. Intrinsic source/audit provenance remains as a tombstone and derived embeddings are removed. Referenced archived records remain restorable and may only disappear through the owning Saga deletion cascade.
+
 **Hierarchy and Saga lifecycle patch (July 2026).** Adds owner-scoped Workspace/World/Saga navigation targets, scoped Saga rename, exact-name delete confirmation, live/ending Session deletion and context-switch blocks, and a staged deletion contract. Saga delete first hides the Saga and enqueues one idempotent cleanup job; the service worker removes scoped Storage objects before cleanup completion hard-deletes the Saga and cascaded database rows. Sibling hierarchies remain untouched.
 
 **Approval Queue trust completion patch (July 2026).** Adds a route-scoped field-diff/read boundary, persisted GM edit payloads, exact-retry approval receipts, target-row locking, source-health and optimistic-version rechecks, and transactional create/update/archive/next-prep commits. Successful approval alone writes canon plus one provenance-rich `canon_audit`; reject, merge identity decisions, preview/edit, conflicts, and failed attempts write no canon/audit. Merge copies source and run/batch provenance into a separately approvable update draft.
@@ -1117,9 +1119,15 @@ Archived entities:
 - Backlinks still resolve; render with `[archived]` marker
 - Source citations still work (entity still exists)
 
-### 10.4 Hard-delete (Q9: saga-only, not per-entity)
+### 10.4 Hard-delete (archived, unreferenced records only)
 
-Only happens via saga deletion. ON DELETE CASCADE handles everything child. See §11.
+Characters, Places, Factions, Artifacts, Threads, and Notes may be hard-deleted individually only when all of the following remain true inside the deletion transaction:
+
+- `canon_state='archived'`;
+- the GM completed the UI's initial destructive-action confirmation and exact-name/title confirmation;
+- no relationship, mention/backlink, note attachment, Session pin, active-Thread link, or pending draft target still references the record.
+
+If any dependency exists, deletion fails closed and the archived record remains recoverable. The UI identifies that references must be removed first; it does not silently cascade or orphan them. On successful deletion, current embeddings are removed and the record's own synthetic sources/audit rows remain as historical tombstones without a live entity link. Saga deletion remains the only bulk hard-delete path and uses the staged cleanup contract in §11.
 
 ### 10.4b Session prep suggestion acceptance (v0.7)
 

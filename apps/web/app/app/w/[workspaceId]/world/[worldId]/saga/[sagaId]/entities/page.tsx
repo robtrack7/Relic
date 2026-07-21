@@ -44,7 +44,7 @@ export default async function EntitiesPage({
   searchParams,
 }: {
   params: Promise<IdParams>;
-  searchParams: Promise<{ type?: string; archived?: string }>;
+  searchParams: Promise<{ type?: string; archived?: string; lifecycleNotice?: string }>;
 }) {
   const ids = await params;
   const query = await searchParams;
@@ -68,6 +68,13 @@ export default async function EntitiesPage({
     : entityLists.find((list) => list.type === selected)?.entities ?? [];
   const title = selected === "all" ? "Library" : entityConfigs[selected].plural;
   const createType = selected === "all" ? "character" : selected;
+  const filterHref = (type: string, archived = includeArchived) => {
+    const search = new URLSearchParams();
+    if (type !== "all") search.set("type", type);
+    if (archived) search.set("archived", "1");
+    const suffix = search.toString();
+    return `${root}/entities${suffix ? `?${suffix}` : ""}`;
+  };
 
   return (
     <SanctumShell params={ids} workspace={workspace} world={world} saga={saga} active="entities">
@@ -83,9 +90,11 @@ export default async function EntitiesPage({
         </div>
       </div>
 
+      {query.lifecycleNotice === "deleted" && <div className="archived-banner">The unreferenced archived record was permanently deleted. Its audit history remains.</div>}
+
       <div className="lib-filters">
         <Link
-          href={`${root}/entities`}
+          href={filterHref("all")}
           className={`lf-btn${selected === "all" ? " active" : ""}`}
         >
           All
@@ -94,13 +103,16 @@ export default async function EntitiesPage({
         {editableEntityTypes.map((type) => (
           <Link
             key={type}
-            href={`${root}/entities?type=${type}`}
+            href={filterHref(type)}
             className={`lf-btn${type === selected ? " active" : ""}`}
           >
             {entityConfigs[type].plural}
             <span className="lf-count">{counts.get(type) ?? 0}</span>
           </Link>
         ))}
+        <Link href={filterHref(selected, !includeArchived)} className={`lf-btn${includeArchived ? " active" : ""}`}>
+          {includeArchived ? "Hide archived" : "Show archived"}
+        </Link>
       </div>
 
       <div className="entity-grid">

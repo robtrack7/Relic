@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { requireUser } from "@/lib/data";
+import { normalizeEntityRow, requireUser } from "@/lib/data";
 import { SUPABASE_CONFIG_ERROR } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -39,5 +39,25 @@ describe("requireUser", () => {
     await expect(requireUser()).rejects.toThrow(`NEXT_REDIRECT:${expectedPath}`);
     expect(redirect).toHaveBeenCalledWith(expectedPath);
     expect(createClient).not.toHaveBeenCalled();
+  });
+});
+
+describe("Library row normalization", () => {
+  it("preserves the unified detail name and narrative for Notes", () => {
+    expect(normalizeEntityRow({
+      id: "note-1",
+      workspace_id: "workspace-1",
+      world_id: "world-1",
+      saga_id: "saga-1",
+      scope: "saga",
+      name: "Archive safety lines",
+      summary: "Consent notes",
+      narrative: "Pause on claustrophobia.",
+      canon_state: "canon"
+    }, "note")).toMatchObject({
+      name: "Archive safety lines",
+      summary: "Consent notes",
+      narrative: "Pause on claustrophobia."
+    });
   });
 });
