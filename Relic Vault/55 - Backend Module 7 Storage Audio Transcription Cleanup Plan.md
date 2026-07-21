@@ -167,6 +167,8 @@ Create `public.update_transcript_segments(...)` as a scoped GM-facing RPC. It mu
 
 The edit RPC must never update `sources.raw_excerpt`. Add or update a read helper such as `public.get_transcript_source_context(...)` so the UI can compare frozen citation text with the current segment text.
 
+**C4 implementation note (2026-07-21):** `get_transcript_source_context(source_id)` is now internal-only. Browser surfaces call `get_draft_source_context(workspace_id, world_id, saga_id, draft_id)`, which verifies the exact draft junction and Session/transcript scope before returning display-safe frozen/current evidence and drift state. This prevents arbitrary source-ID probing and identifier leakage.
+
 - [x] **Step 3: Queue re-embedding marker**
 
 If transcript text changes, expose a small internal job marker or pipeline flag that Module 8 can use to re-embed edited transcript chunks later. Do not perform provider work in Module 7.

@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-18
+last_audited: 2026-07-21
 source_file: "Sourced - Downloaded - 260518/relic-approval-queue-spec-v0_5.md"
 ---
 
@@ -86,7 +86,11 @@ Every draft should show source badges when available. Transcript sources show:
 - frozen `sources.raw_excerpt`
 - current transcript segment, when available
 - citation-drift indicator if current text differs from frozen excerpt
-- optional signed audio mini-player on web
+- optional signed audio mini-player on web, only after a dedicated scoped signing contract exists
+
+The shipped C4 slice renders every draft citation as a keyboard-operable inline disclosure in both Session Review and Approval Queue. Transcript evidence exposes the frozen excerpt, current segment, timestamp, exact/edited/deleted state, and an authorized deep link to the cited segment. Pasted notes and GM summaries are labeled as untimestamped evidence. Unavailable, broken, deleted, permission-denied, and unsupported evidence renders safe recovery copy without exposing identifiers or sibling records.
+
+Citation inspection reads through the exact route-scoped draft RPC; clients do not fetch arbitrary source IDs. Signed audio is deferred because the current private Storage download boundary is worker-only. It must not be added by widening bucket policy or returning durable object paths.
 
 Broken source behavior:
 

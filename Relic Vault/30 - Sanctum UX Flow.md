@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 
 ## Changelog
 
+**Citation context and drift patch (July 2026).** Session Review and Approval Queue now expose every synthesis citation as a keyboard-operable evidence disclosure, with timestamped transcript anchors, frozen/current/deleted drift context, untimestamped manual evidence, and safe non-identifying fallback states.
+
 **Manual Session evidence patch (July 2026).** Session Review now accepts pasted notes and a GM manual summary as explicit evidence inputs, preserves unsaved text locally through refresh/save failure, and shows saved immutable sources separately from the editable local forms. Saving evidence does not start synthesis or create canon.
 
 **Priority 3 continuity architecture patch (May 2026).** Sanctum now presents the active Workspace / World / Saga hierarchy. The GM works mostly at Saga level, but the shell must preserve World context, expose World/Saga switching, distinguish World canon from Saga canon where relevant, and reserve Era/timeframe fields without shipping an Era editor. New Saga can reuse an existing World or create one behind the scenes.
@@ -642,6 +644,8 @@ Each textarea preserves its unsaved value locally as the GM types and restores i
 Completed transcript segments are editable as timestamp-labeled text blocks. A GM may change text or soft-hide a segment. Timestamps, segment boundaries, and audio references are immutable, and new transcript segments cannot be inserted in MVP. Original provider segments and already-captured citation excerpts stay frozen for audit/drift handling.
 
 Transcript text is evidence. Synthesis output remains proposed draft material. Neither becomes canon without explicit GM approval through the owning review/Approval Queue path. The dense editor is web-first for this slice; the mobile-native transcript editor remains part of the broader mobile gap.
+
+Pending synthesis drafts on this page show each citation in an inline disclosure. Transcript citations show timestamp, the frozen cited excerpt, current segment text, and edited/deleted state, with a direct link to the exact transcript segment anchor. Pasted-note and GM-summary citations are explicitly labeled as having no timestamp. Unavailable, broken, deleted, permission-denied, and unsupported evidence uses non-identifying fallback copy. Opening or following a citation is read-only: it cannot edit the draft, approve a proposal, or write canon.
 
 ---
 

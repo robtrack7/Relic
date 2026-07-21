@@ -38,10 +38,10 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 | Priority | Complete | Partial | Missing | Blocked | Needs verification |
 |---|---:|---:|---:|---:|---:|
 | P0 | 6 | 9 | 5 | 2 | 0 |
-| P1 | 0 | 5 | 2 | 0 | 1 |
+| P1 | 1 | 4 | 2 | 0 | 1 |
 | P2 | 0 | 2 | 1 | 0 | 1 |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, and C3's atomic source-aware synthesis draft batch. The immediate lane is Packet C4 citation context/drift UI, followed by Approval Queue trust completion.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, and C4's scoped citation inspection and transcript drift navigation. The immediate lane is Packet C5 Approval Queue trust completion.
 
 ## 3. Quality-gate system
 
@@ -177,16 +177,17 @@ Stop rules:
 - **Done when:** fixture synthesis creates the expected draft batch and rejects hallucinated/cross-Saga source IDs.
 - **Evidence:** The final validated provider response now carries resolved model/provider provenance into a service-role-only result RPC. The database locks the AI run, revalidates the complete synthesis shape and immutable allowlist, verifies every citation against the exact Workspace/World/Saga/Session, and atomically writes one pending summary/entity/Thread/next-prep batch with derived confidence bands plus run/pipeline/task/prompt/model/provider provenance. Exact replay returns the same batch; changed delivery, malformed output, missing/hallucinated/cross-session/cross-Saga/cross-tenant sources, and allowlist expansion fail closed. A deterministic public worker-RPC fixture creates four drafts and five citations; injected mid-batch failure rolls back all rows. Focused schema/runtime tests and 44 C3 pgTAP assertions pass, the clean migration replay passes, and the full 411-test database suite proves zero note/entity/Thread/session canon writes, canon audit rows, or embeddings.
 
-#### Packet C4 — Source context and citation drift UI
-
-**Next packet.** Do not begin C5 until the C4 citation-navigation gates are green.
+#### Packet C4 — Source context and citation drift UI — complete 2026-07-21
 
 - Consume `get_transcript_source_context` in a timestamped source panel/route.
 - Show frozen excerpt, current segment, edited/deleted drift warning, and safe broken-source state.
 - Add signed audio context only if the existing retention/access boundary can support it safely.
 - **Done when:** every synthesis citation opens inspectable evidence and permission tests exclude sibling sessions.
+- **Evidence:** Every C3 synthesis citation now opens an accessible inline source disclosure from Session Review and the Approval Queue. A draft-scoped authenticated RPC rechecks Workspace/World/Saga/draft/source/transcript relationships server-side, returns frozen and current transcript text with timestamp and exact/edited/deleted state, supports authorized segment anchors, renders untimestamped pasted-note/GM-summary evidence, and collapses missing, broken, denied, or unsupported records into non-leaking safe states. Focused component and 23-assertion pgTAP suites, the clean 434-test database suite, full 68-test web suite, production build, and authenticated four-viewport keyboard/deep-link browser proof passed. Signed audio was deferred because the current private Storage contract has no browser-safe signed playback boundary.
 
 #### Packet C5 — Approval Queue trust completion
+
+**Next packet.**
 
 - Add field-level old/new diff, edit-and-approve, source dock, conflicts, archive explanation, filters/search, and stale handling.
 - Preserve explicit selection and avoid prominent Approve All.
@@ -398,4 +399,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate next packet: **B1 — Durable non-audio write queue**.
+Immediate next packet: **C5 — Approval Queue trust completion**.

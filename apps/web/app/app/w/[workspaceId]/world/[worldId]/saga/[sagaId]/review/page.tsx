@@ -1,8 +1,10 @@
 import { updateDraftStateAction } from "@/app/actions";
 import { HiddenContextFields } from "@/components/HiddenContextFields";
 import { RelicIcon } from "@/components/RelicIcon";
+import { DraftCitationList } from "@/components/relic-draft/DraftCitationList";
 import { SanctumShell } from "@/components/SanctumShell";
 import { getPendingDrafts, requireSagaContext } from "@/lib/data";
+import { sagaPath } from "@/lib/routes";
 import type { IdParams } from "@/lib/types";
 
 function dotClass(state: string, changeKind: string) {
@@ -33,6 +35,7 @@ export default async function ReviewPage({ params }: { params: Promise<IdParams>
     getPendingDrafts(ids),
   ]);
   const pending = drafts.filter((d) => d.state === "pending");
+  const root = sagaPath(ids);
   const groups = Array.from(
     pending.reduce((map, draft) => {
       const key = draftGroupKey(draft);
@@ -131,6 +134,7 @@ export default async function ReviewPage({ params }: { params: Promise<IdParams>
                       <span className={`conf-badge ${draft.confidence_band ?? "med"}`}>
                         {draft.confidence_band ?? "medium"} confidence
                       </span>
+                      <DraftCitationList sagaRoot={root} citations={draft.citations} />
                     </div>
 
                     <div className="dd-actions">

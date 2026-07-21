@@ -377,6 +377,9 @@ Build as the loop dashboard, not a generic project homepage.
 - Approval Queue grouped by entity.
 - Diff viewer, source panel, approve/edit/reject/merge/archive actions.
 - Commit selected. Avoid prominent Approve All.
+- Every pending synthesis citation opens with a native keyboard-operable disclosure on both Review surfaces. Transcript context includes timestamp, frozen/current text, exact/edited/deleted state, and an authorized anchor to the cited segment; manual evidence is labeled untimestamped.
+- Broken, unavailable, deleted, permission-denied, and unsupported evidence must render safe non-identifying fallback copy. Citation inspection is read-only and must remain usable without horizontal overflow at 1440×900, 1024×768, 768×1024, and 390×844.
+- Signed audio context is deferred until a short-lived, retention-aware browser signing boundary exists; never expose private object paths or widen Storage policy for this component.
 
 ### 5.9 Relic Guide
 

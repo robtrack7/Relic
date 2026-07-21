@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 
 ## Changelog
 
+**Citation context and drift UI patch (July 2026).** Adds a draft-scoped browser read for source inspection, makes the raw source-ID transcript helper internal-only, exposes authorized transcript anchors plus frozen/current/deleted drift state, and requires non-leaking fallbacks for missing, broken, denied, and unsupported evidence. Signed audio is deferred until private Storage retention and authorization can be preserved by a dedicated signing contract.
+
 **Source-aware synthesis writer patch (July 2026).** Adds an atomic, idempotent synthesis-result boundary that validates the full artifact batch and immutable source allowlist, writes only pending summary/entity/Thread/next-prep drafts, preserves run/batch/pipeline/task/prompt/model/provider provenance, and advances the pipeline to review without writing canon, audit, or embeddings.
 
 **Manual session evidence patch (July 2026).** Adds the scoped, idempotent Session Review write boundary for pasted notes and GM manual summaries, owner-keyed local form recovery, and pipeline input metadata that can recover a no-input transcription failure without invoking synthesis or writing canon.
@@ -840,6 +842,10 @@ interface TranscriptSourceWithDrift {
 ```
 
 Normalization for the diff check trims whitespace and collapses multiple spaces — minor formatting changes don't trigger the indicator. Substantive text changes do.
+
+**Shipped C4 browser boundary.** Session Review and Approval Queue load citation evidence through `get_draft_source_context(workspace_id, world_id, saga_id, draft_id)`. The security-definer function first checks Saga access and the exact draft route scope, then walks only that draft's junction rows. Transcript context is delegated to the internal-only `get_transcript_source_context(source_id)` helper, which also verifies the source's exact Session/transcript relationship. The browser payload omits source and transcript identifiers and returns only display-safe evidence, drift state, and an authorized Session ID for navigation. Missing, deleted, mismatched, unsupported, and denied inputs become non-identifying status records.
+
+The current audio bucket remains private and its download path is worker-only. C4 therefore does not issue signed playback URLs. Adding audio context requires a separate short-lived, retention-aware signing boundary with equivalent Workspace/World/Saga/Session checks and expiry/revocation tests; UI convenience must not broaden Storage access.
 
 **Re-embedding cadence.** Edits accumulate locally on the segment rows. Re-embedding runs at pipeline close (§6.6) — `transcript-edit-reembed` Edge Function diffs `original_segments` against current `segments`, re-embeds only the changed segments. Chunk overlap (Memory Spec §4.3) means a segment edit may also re-embed the adjacent chunk window; the function handles this.
 

@@ -63,7 +63,7 @@ select has_function('public', 'get_audio_upload_target', array['uuid','uuid','uu
 select has_function('public', 'register_audio_chunk', array['uuid','uuid','uuid','uuid','integer','text','bigint','numeric','timestamp with time zone','text'], 'register_audio_chunk has the Module 7 signature');
 select has_function('public', 'enqueue_transcription_job', array['uuid','uuid','uuid','uuid','text'], 'enqueue_transcription_job has the Module 7 signature');
 select has_function('public', 'update_transcript_segments', array['uuid','uuid','uuid','uuid','jsonb'], 'update_transcript_segments has the Module 7 signature');
-select has_function('public', 'get_transcript_source_context', array['uuid'], 'get_transcript_source_context has the Module 7 signature');
+select has_function('public', 'get_transcript_source_context', array['uuid'], 'internal get_transcript_source_context helper has the Module 7 signature');
 
 select is(
   public.get_audio_upload_target('70200000-0000-0000-0000-000000000001', '70300000-0000-0000-0000-000000000001', '70500000-0000-0000-0000-000000000001', '70600000-0000-0000-0000-000000000001', 0, 'webm', 2048)->>'storage_path',
@@ -199,7 +199,11 @@ select ok((select original_segments is not null from public.transcripts where se
 select ok((select edited_at is not null from public.transcripts where session_id = '70600000-0000-0000-0000-000000000001'), 'transcript edit records edited_at');
 select is((select segments #>> '{0,start}' from public.transcripts where session_id = '70600000-0000-0000-0000-000000000001'), '0', 'transcript edit preserves segment start boundary');
 select is((select raw_excerpt from public.sources where id = '70700000-0000-0000-0000-000000000001'), 'hello old', 'transcript edit does not mutate frozen source raw_excerpt');
-select is((public.get_transcript_source_context('70700000-0000-0000-0000-000000000001')->>'drift_detected')::boolean, true, 'transcript source context reports citation drift');
+reset role;
+select is(public.get_transcript_source_context('70700000-0000-0000-0000-000000000001')->>'drift_state', 'edited', 'internal transcript source context reports citation drift');
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '70000000-0000-0000-0000-000000000001', true);
+select set_config('request.jwt.claim.saga_id', '70500000-0000-0000-0000-000000000001', true);
 select is((select inputs_summary->>'transcript_edit_reembed_pending' from public.pipeline_runs where session_id = '70600000-0000-0000-0000-000000000001'), 'true', 'transcript edit marks re-embedding pending for Module 8');
 
 select throws_like(

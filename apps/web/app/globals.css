@@ -2852,6 +2852,51 @@ button {
 .loom-msg-role{font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--stone-500);margin-bottom:4px;}
 .loom-msg-text{font-size:12px;line-height:1.6;color:var(--fg-2);}
 .loom-citation{font-family:var(--font-mono);font-size:8px;letter-spacing:0.04em;color:var(--stone-500);background:var(--stone-100);padding:3px 7px;border-radius:var(--radius-sm);display:inline-flex;align-items:center;gap:4px;margin-top:5px;}
+.draft-citations{display:flex;flex-direction:column;gap:7px;width:100%;margin-top:9px;}
+.session-draft-citation-card{border:1px solid var(--border-2);border-radius:var(--radius-md);padding:0 10px 10px;min-width:0;}
+.session-draft-citation-card .rq-item{border-top:0;padding-left:2px;padding-right:2px;cursor:default;}
+.draft-citation{border:1px solid var(--border-2);border-radius:var(--radius-sm);background:var(--cream-50,#fffdf8);overflow:hidden;}
+.draft-citation summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;cursor:pointer;font-family:var(--font-mono);font-size:9px;letter-spacing:.04em;color:var(--stone-700);list-style-position:inside;}
+.draft-citation summary:focus-visible{outline:2px solid var(--amber);outline-offset:-2px;}
+.draft-citation-body{display:flex;flex-direction:column;gap:9px;padding:0 10px 10px;}
+.citation-state{margin-left:auto;padding:2px 6px;border-radius:999px;background:var(--stone-100);font-size:8px;white-space:nowrap;}
+.citation-state.edited,.citation-state.deleted{color:var(--rust);background:rgba(151,63,46,.1);}
+.citation-state.exact{color:var(--verdigris);background:rgba(45,105,89,.1);}
+.citation-excerpt{border-left:2px solid var(--amber);padding-left:9px;min-width:0;}
+.citation-excerpt.current{border-left-color:var(--stone-300);}
+.citation-excerpt span{font-family:var(--font-mono);font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--stone-500);}
+.citation-excerpt p,.citation-safe-state,.citation-no-time{margin:4px 0 0;font-size:11px;line-height:1.55;color:var(--stone-700);overflow-wrap:anywhere;}
+.citation-safe-state{color:var(--rust);}
+.citation-no-time{color:var(--stone-500);}
+.citation-deep-link{align-self:flex-start;font-size:10px;color:var(--verdigris);text-decoration:underline;text-underline-offset:2px;}
+.transcript-segment{scroll-margin-top:18px;}
+.transcript-segment:target{outline:2px solid var(--amber);outline-offset:3px;background:rgba(184,112,42,.06);}
+@media(max-width:840px){
+  .topbar{display:grid;grid-template-columns:auto minmax(0,1fr);height:auto;padding:10px 12px;align-items:center}
+  .topbar-brand{width:auto;padding-left:0}
+  .topbar-right{min-width:0;padding-right:0;flex-wrap:wrap;justify-content:flex-end}
+  .switchers{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;padding:7px 0 0;gap:7px}
+  .sw-sep{display:none}
+  .switcher,.switcher-btn,.switcher-name{min-width:0}
+  .switcher-btn{width:100%}
+  .switcher-name{overflow:hidden;text-overflow:ellipsis}
+  .body-row{display:grid;grid-template-rows:auto minmax(0,1fr)}
+  .sidenav{width:100%;flex-direction:row;padding:8px 10px;overflow-x:auto;border-right:0;border-bottom:1px solid var(--border-2)}
+  .sidenav-label,.nav-spacer,.nav-sep{display:none}
+  .nav-item{flex:none;padding:7px 9px}
+  .nav-item.is-active::after{display:none}
+  .main{width:100%;padding:18px;overflow-y:auto}
+  .main-inner{min-width:0}
+  .loom-carriage{display:none}
+  .settings-layout,.review-layout{grid-template-columns:minmax(0,1fr)}
+  .settings-layout>*,.review-layout>*{min-width:0}
+  .settings-nav-card{display:flex;flex-wrap:wrap;gap:3px}
+  .settings-nav-sep{display:none}
+  .dd-actions{flex-wrap:wrap}
+  .diff-row{min-width:0}
+  .diff-new{min-width:0;overflow-wrap:anywhere}
+}
+@media(max-width:760px){.search-btn{display:none}.settings-content-card,.dd-card{padding:16px}.draft-citation summary{align-items:flex-start;flex-wrap:wrap}.citation-state{margin-left:0}.draft-citation-body{padding-left:9px;padding-right:9px}}
 .loom-draft-card{background:rgba(184,112,42,0.05);border:1px solid rgba(184,112,42,0.25);border-radius:var(--radius-md);padding:10px 12px;}
 .loom-draft-label{font-family:var(--font-mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--amber);margin-bottom:6px;}
 .loom-draft-text{font-size:12px;line-height:1.6;color:var(--fg-2);margin-bottom:9px;}

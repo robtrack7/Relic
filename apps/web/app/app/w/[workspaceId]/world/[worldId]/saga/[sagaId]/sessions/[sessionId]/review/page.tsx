@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RelicIcon } from "@/components/RelicIcon";
+import { DraftCitationList } from "@/components/relic-draft/DraftCitationList";
 import { SessionReviewWorkspace } from "@/components/relic-draft/SessionReviewWorkspace";
 import { SanctumShell } from "@/components/SanctumShell";
 import { getPendingDrafts, getSession, getSessionReview, requireSagaContext } from "@/lib/data";
@@ -76,13 +77,16 @@ export default async function SessionReviewPage({ params }: { params: Promise<Re
             {pending.length ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {pending.slice(0, 8).map((draft) => (
-                  <div className="rq-item" key={draft.id}>
-                    <span className="dot amber" />
-                    <div style={{ flex: 1 }}>
-                      <div className="rq-item-title">{String(draft.proposed_payload.name ?? draft.entity_type)}</div>
-                      <div className="rq-item-type">{draft.entity_type} · {draft.change_kind}</div>
+                  <div className="session-draft-citation-card" key={draft.id}>
+                    <div className="rq-item">
+                      <span className="dot amber" />
+                      <div style={{ flex: 1 }}>
+                        <div className="rq-item-title">{String(draft.proposed_payload.name ?? draft.proposed_payload.title ?? draft.entity_type)}</div>
+                        <div className="rq-item-type">{draft.entity_type} · {draft.change_kind}</div>
+                      </div>
+                      <span className="chip stone">{draft.confidence_band ?? "med"}</span>
                     </div>
-                    <span className="chip stone">{draft.confidence_band ?? "med"}</span>
+                    <DraftCitationList sagaRoot={root} citations={draft.citations} />
                   </div>
                 ))}
                 <Link className="btn btn-secondary btn-sm" href={`${root}/review`} style={{ alignSelf: "flex-start" }}>

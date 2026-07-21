@@ -12,7 +12,7 @@ depends_on:
   - "[[13 - Design System]]"
   - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-31
+last_audited: 2026-07-21
 source_file: "Relic Vault/67 - Approval Queue Design Spec.md"
 ---
 
@@ -99,6 +99,10 @@ Source/provenance is central. Every selected draft should show source badges and
 Broken source behavior must explain what is safe: reject, merge into manual edit, or copy content manually. Approve/Edit & Approve is disabled when required evidence is missing.
 
 Source detail should be readable before action. On desktop, the source dock can remain open while the GM scrolls the diff. On mobile, opening the source sheet should not lose draft context; the sheet title should repeat target name and change kind. Low-confidence drafts should sort upward, but the label must describe evidence quality rather than model certainty.
+
+**C4 implemented slice (2026-07-21).** Each draft's source dock now contains native keyboard-operable disclosures. Transcript evidence shows the frozen cited excerpt, current segment, timestamp, and exact/edited/deleted state, plus direct authorized navigation to the transcript segment in Session Review. Pasted-note and GM-summary sources render as untimestamped evidence. Broken, unavailable, deleted, permission-denied, and unsupported sources use safe non-identifying states. This slice is inspection-only; diffing, conflict resolution, edit-and-approve, and canon commit remain C5 work.
+
+Signed audio context remains deferred. The current private Storage contract has no browser-safe retention-aware signing route, so the UI must not expose object paths or broaden access policy.
 
 ## 12. Navigation in
 

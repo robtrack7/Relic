@@ -20,13 +20,13 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[11 - Product Basepoint]] | Product north star, scope, naming, exclusions | Primary |
 | [[12 - MVP PRD]] | P0 requirements and acceptance framing | Primary |
 | [[13 - Design System]] | v0.4 web UI tokens, typography, palette, app shell, Loom carriage, component feel; wrapper for [[14 - Design System Source.html]] | Primary design |
-| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, Stage evidence markers, exactly-once write receipts, conflict outcomes, manual Session evidence provenance, and source-aware synthesis batch identity | Implementation |
-| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, Stage packet/audio/write recovery, scoped Storage paths, provider-backed transcription/retry, manual evidence intake, atomic synthesis output persistence, deployment, monitoring | Implementation |
+| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, Stage evidence markers, exactly-once write receipts, conflict outcomes, manual Session evidence provenance, source-aware synthesis batch identity, and draft-scoped citation context | Implementation |
+| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, Stage packet/audio/write recovery, scoped Storage paths, provider-backed transcription/retry, manual evidence intake, atomic synthesis output persistence, citation context/drift reads, deployment, monitoring | Implementation |
 | [[22 - Memory and Retrieval]] | Embeddings, retrieval, task profiles, context assembly | Implementation |
 | [[23 - AI Task Registry]] | Standalone MVP AI task contracts, task routing, prompt versions, validation, source-aware synthesis artifacts, and draft/canon behavior | Implementation |
-| [[24 - Approval Queue]] | Approval UX, diff, source citation, canon commit behavior | Implementation |
+| [[24 - Approval Queue]] | Approval UX, diff, source citation/context, safe drift states, canon commit behavior | Implementation |
 | [[25 - Pricing and Rate Limits]] | Caps, metering, quota preflight, hard stops | Implementation |
-| [[30 - Sanctum UX Flow]] | Sanctum IA, dashboard, Threads, Relic Guide, post-session transcript review/retry/manual evidence, settings | UX |
+| [[30 - Sanctum UX Flow]] | Sanctum IA, dashboard, Threads, Relic Guide, post-session transcript review/retry/manual evidence and citation navigation, settings | UX |
 | [[31 - Session Prep Flow]] | Session prep workspace and Ready for Stage handoff | UX |
 | [[32 - Stage UX Flow]] | Live-session Stage behavior | UX |
 | [[33 - First Run UX Flow]] | First-run, new saga, GM profile, Session 1 handoff | UX |

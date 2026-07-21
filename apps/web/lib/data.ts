@@ -44,6 +44,18 @@ export type SessionReviewData = {
 };
 type PinRow = { entity_type: EntityType; entity_id: string; order_index?: number };
 type ActiveThreadRow = { thread_id: string };
+export type DraftCitationContext = {
+  status: "available" | "unavailable" | "broken" | "permission_denied" | "unsupported";
+  source_kind: string;
+  label: string;
+  frozen_excerpt?: string | null;
+  current_text?: string | null;
+  start_seconds?: number | null;
+  end_seconds?: number | null;
+  session_id?: string | null;
+  drift_state: "exact" | "edited" | "deleted" | "not_applicable" | "unavailable";
+};
+
 type DraftRow = {
   id: string;
   entity_type: EntityType;
@@ -55,6 +67,7 @@ type DraftRow = {
   created_by?: string;
   created_at?: string;
   rejection_note?: string | null;
+  citations: DraftCitationContext[];
 };
 export type StagePacket = {
   session?: SessionRow;
@@ -251,7 +264,27 @@ export async function getPendingDrafts(params: IdParams, sessionId?: string) {
   if (error) {
     throw new Error(error.message);
   }
-  return (data ?? []) as DraftRow[];
+  const drafts = (data ?? []) as Omit<DraftRow, "citations">[];
+  return Promise.all(drafts.map(async (draft): Promise<DraftRow> => {
+    const citationResult = await supabase.rpc("get_draft_source_context", {
+      workspace_id: params.workspaceId,
+      world_id: params.worldId,
+      saga_id: params.sagaId,
+      draft_id: draft.id,
+    });
+    const fallback: DraftCitationContext[] = [{
+      status: "unavailable",
+      source_kind: "unknown",
+      label: "Source unavailable",
+      drift_state: "unavailable",
+    }];
+    return {
+      ...draft,
+      citations: citationResult.error || !Array.isArray(citationResult.data)
+        ? fallback
+        : citationResult.data as DraftCitationContext[],
+    };
+  }));
 }
 
 export async function searchForUi(params: IdParams, query: string, literalOnly = true, surface = "sanctum"): Promise<SearchResult[]> {

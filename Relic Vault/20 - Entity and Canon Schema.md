@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 
 ## Changelog
 
+**Citation context and drift UI patch (July 2026).** Makes the draft the browser authorization root for source inspection. `get_draft_source_context` validates the exact Workspace/World/Saga/draft/source/transcript chain and returns only display-safe evidence and authorized Session navigation. The lower-level transcript helper is internal-only; missing, broken, denied, deleted, and unsupported records never expose source or transcript identifiers.
+
 **Source-aware synthesis writer patch (July 2026).** Adds draft batch/run/provider/Session provenance and locks `synthesize_session` persistence to one atomic, idempotent pending batch whose citations all belong to the exact evidence Session. The writer creates no canon, audit, embedding, or canonical summary row.
 
 **Manual session evidence patch (July 2026).** Defines pasted notes and GM manual summaries as immutable Saga-scoped `sources` rows tied to one ended Session. A client-stable source UUID provides exact retry identity; an identical replay returns the same source, while key reuse with different scope, kind, or text fails closed. Saving evidence updates only pipeline input metadata and never creates notes, drafts, audit rows, or canon.
@@ -906,6 +908,8 @@ Per-session deletion (`PSP-FR-12`) sets `deleted_at` on the transcript row AND `
 - `edited_at` is updated on every edit pass; consumers use it to detect drift cheaply.
 
 **Citation drift.** Sources captured during pipeline synthesis store `raw_excerpt` (Schema §8.1). That field is **frozen** — it does not update when the underlying transcript is edited. The source-view UI in the Approval Queue compares `sources.raw_excerpt` against the live segment text at the same `(start_seconds, end_seconds)` range. When they differ after whitespace normalization, the surface shows a drift indicator with a "Show both" toggle. Tech Arch Spec §7.9 owns the comparison logic and the indicator's data contract.
+
+**C4 read boundary.** Browser surfaces resolve citations by draft, never by an arbitrary source identifier. The authenticated `get_draft_source_context(workspace_id, world_id, saga_id, draft_id)` read rechecks the complete draft/source/transcript scope and returns display-safe records only. Transcript records include the frozen excerpt, current segment text, immutable timestamp range, authorized evidence Session ID, and `exact | edited | deleted | unavailable` state. Pasted notes and GM manual summaries return frozen untimestamped evidence. Missing links, soft-deleted sources, mismatched transcript relationships, permission denial, and unsupported kinds collapse to safe UI states without source/transcript IDs or sibling data. `get_transcript_source_context(source_id)` is an internal helper and is not callable by browser roles.
 
 **Re-embedding.** Edited segments re-embed at pipeline close via the `transcript-edit-reembed` Edge Function (Tech Arch §6.6). Only segments whose text changed are re-embedded; chunk-overlap windows touched by edits are also refreshed. Edits made after pipeline close (rare) trigger a 30s-debounced re-embed pass.
 

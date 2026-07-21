@@ -46,7 +46,7 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `finalize_audio_upload(...)` | Record the expected chunk count and make completed recovered audio eligible for transcription. |
 | `enqueue_transcription_job(...)` | Queue scoped transcription work for a Session. |
 | `update_transcript_segments(...)` | Edit transcript segment text/deleted flags while preserving timestamp boundaries. |
-| `get_transcript_source_context(...)` | Read frozen citation text beside current transcript text for drift display. |
+| `get_draft_source_context(...)` | Read every source linked to one scoped draft, including frozen/current transcript context and safe drift/fallback states. |
 | `get_session_review(...)` | Read scoped post-session audio, transcript, job, and pipeline state without exposing internal queue rows. |
 | `retry_session_transcription(...)` | Explicitly requeue a failed complete recording with a fresh retry budget. |
 | `save_session_evidence(...)` | Save idempotent pasted-note or GM-summary Session evidence without creating canon or starting synthesis. |
@@ -89,6 +89,7 @@ These helpers are callable by `authenticated` because RLS policies or storage po
 These public-schema helpers are `security definer` because they are called by scoped RPCs or triggers, but they are not directly executable by browser roles:
 
 - `assert_saga_access(...)`
+- `get_transcript_source_context(...)` (draft-context helper only; not browser-callable)
 - `scoped_entity_exists(...)`
 - `write_manual_canon_source(...)`
 - `write_manual_canon_audit(...)`
