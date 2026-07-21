@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-07-20
 source_file: "Sourced - Downloaded - 260518/relic-stage-ux-flow-v0_6.md"
 ---
 
@@ -751,6 +751,16 @@ Silent. Haptic on roll (mobile). Sound is a V1 per-saga setting.
 | `Esc` | Close any overlay |
 
 A `?` icon in the Stage header reveals the keymap.
+
+### 13.3 Overlay focus lifecycle invariant
+
+Stage overlays initialize focus once when opened. The one-second elapsed-time render and other parent refreshes must not rerun focus initialization or move focus away from the GM's active field. Each overlay keeps the latest close action available without treating callback identity as a mount boundary.
+
+- Initial focus lands on the overlay's designated field or first enabled control.
+- Tab and Shift+Tab remain trapped within the open overlay.
+- Escape and backdrop activation close the overlay.
+- Close returns focus to the control that opened the overlay.
+- Typed values, selections, and the second End Session confirmation step survive elapsed-time renders.
 
 ---
 

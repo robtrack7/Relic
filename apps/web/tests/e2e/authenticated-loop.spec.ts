@@ -199,11 +199,15 @@ test("new GM can exercise the full manual MVP loop from sign-up through Stage", 
 
   await page.getByRole("button", { name: "Record" }).click();
   await expect(page.getByRole("dialog", { name: "Recording" })).toBeVisible();
-  await expect(page.getByText(/Audio upload\/transcription remains behind/)).toBeVisible();
+  await expect(page.getByText(/Completed chunks are saved locally before upload/)).toBeVisible();
   await page.getByRole("button", { name: "Close Recording" }).click();
 
   await page.getByRole("button", { name: "Note" }).click();
-  await page.getByPlaceholder("What happened? What do you want to remember?").fill("The archive door opened by itself.");
+  const noteBody = page.getByPlaceholder("What happened? What do you want to remember?");
+  await noteBody.fill("The archive door");
+  await page.waitForTimeout(1_100);
+  await expect(noteBody).toBeFocused();
+  await noteBody.pressSequentially(" opened by itself.");
   await page.getByRole("button", { name: "Save Note" }).click();
   await page.reload();
   await expect(page.getByText("Live", { exact: true }).first()).toBeVisible();
@@ -211,12 +215,21 @@ test("new GM can exercise the full manual MVP loop from sign-up through Stage", 
   await page.getByRole("button", { name: "Create" }).click();
   await page.getByRole("dialog", { name: "Create" }).getByRole("button", { name: /NPC/ }).click();
   await page.getByPlaceholder("Name this npc…").fill("Mira Fen");
-  await page.getByPlaceholder("What matters at the table?").fill("A messenger seen at the archive.");
+  const quickCreateSummary = page.getByPlaceholder("What matters at the table?");
+  await quickCreateSummary.fill("A messenger seen");
+  await page.waitForTimeout(1_100);
+  await expect(quickCreateSummary).toBeFocused();
+  await quickCreateSummary.pressSequentially(" at the archive.");
   await page.getByRole("button", { name: "Create NPC" }).click();
 
   await page.getByRole("button", { name: "Dice" }).click();
   await page.getByRole("dialog", { name: "Dice" }).getByRole("button", { name: /d6/ }).first().click();
   await page.getByRole("dialog", { name: "Dice" }).getByRole("button", { name: /d6/ }).first().click();
+  const diceModifier = page.getByRole("dialog", { name: "Dice" }).getByRole("spinbutton");
+  await diceModifier.fill("2");
+  await page.waitForTimeout(1_100);
+  await expect(diceModifier).toBeFocused();
+  await diceModifier.fill("0");
   await page.getByRole("button", { name: "Roll", exact: true }).click();
   await expect(page.locator(".stage-v2-roll-result")).toBeVisible();
   await page.getByRole("button", { name: "Done" }).click();
@@ -229,7 +242,11 @@ test("new GM can exercise the full manual MVP loop from sign-up through Stage", 
 
   await page.getByRole("button", { name: "End Session" }).click();
   await page.getByRole("dialog", { name: "End Session" }).getByRole("button", { name: "End Session", exact: true }).click();
-  await page.getByRole("button", { name: "Yes, end session" }).click();
+  const confirmEnd = page.getByRole("button", { name: "Yes, end session" });
+  await confirmEnd.focus();
+  await page.waitForTimeout(1_100);
+  await expect(confirmEnd).toBeFocused();
+  await confirmEnd.click();
   await expect(page.getByText("Session ended")).toBeVisible();
   await page.getByRole("button", { name: "Undo" }).click();
   await expect(page.getByText("Live", { exact: true }).first()).toBeVisible();

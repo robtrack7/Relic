@@ -84,14 +84,20 @@ function StageDialog({ title, icon, tone, onClose, children, wide = false }: {
   wide?: boolean;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const panel = panelRef.current;
-    const first = panel?.querySelector<HTMLElement>("[autofocus], input, textarea, select, button");
+    const first = panel?.querySelector<HTMLElement>("[data-stage-autofocus]")
+      ?? panel?.querySelector<HTMLElement>("button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href]");
     first?.focus();
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCloseRef.current();
       if (event.key === "Tab" && panel) {
         const focusable = [...panel.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href]")];
         if (!focusable.length) return;
@@ -106,7 +112,7 @@ function StageDialog({ title, icon, tone, onClose, children, wide = false }: {
     };
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("keydown", onKey); previous?.focus(); };
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="stage-v2-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
@@ -182,7 +188,7 @@ function DiceTool({ packetRolls, busy, onRoll, onPin, onClose }: {
 
   return <StageDialog title="Dice" icon="dice" tone="amber" onClose={onClose} wide>
     <div className="stage-v2-dialog-body dice-tool">
-      <label className="stage-v2-field"><span>Roll label <small>optional</small></span><input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Attack roll, perception, stealth…" autoFocus /></label>
+      <label className="stage-v2-field"><span>Roll label <small>optional</small></span><input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Attack roll, perception, stealth…" data-stage-autofocus /></label>
       <div className="stage-v2-dice-picker">
         {counts.map(({ sides, count }) => <div className="stage-v2-die-slot" key={sides}><button className={count ? "selected" : ""} onClick={() => add(sides)}><RelicIcon name="dice" size={23} /><span>d{sides === 100 ? "%" : sides}</span></button>{count > 0 && <div><button onClick={() => remove(sides)} aria-label={`Remove d${sides}`}>−</button><span>{count}</span><button onClick={() => add(sides)} aria-label={`Add d${sides}`}>+</button></div>}</div>)}
       </div>
@@ -456,7 +462,7 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
 
 export function QuickNote({ scene, busy, recording, onClose, onSave, onMark }: { scene: string; busy: boolean; recording: boolean; onClose: () => void; onSave: (payload: { title: string; body: string; tag: string }) => Promise<void>; onMark: (label: string) => Promise<void> }) {
   const [title, setTitle] = useState(""); const [body, setBody] = useState(""); const [tag, setTag] = useState("Scene"); const [markLabel, setMarkLabel] = useState(""); const [touched, setTouched] = useState(false);
-  return <StageDialog title="Quick Note" icon="file" tone="amber" onClose={onClose}><form onSubmit={(event) => { event.preventDefault(); setTouched(true); if (body.trim()) void onSave({ title: title.trim(), body: body.trim(), tag }); }}><div className="stage-v2-dialog-body"><section className="stage-v2-mark-moment" aria-label="Mark Moment"><div><strong>Mark Moment</strong><span>{recording ? "Save a timestamp for post-session review." : "Available while recording."}</span></div><label className="stage-v2-field"><span className="sr-only">Moment label</span><input value={markLabel} onChange={(event) => setMarkLabel(event.target.value)} placeholder="decision, lie, secret…" disabled={!recording || busy} /></label><button type="button" className="stage-v2-secondary" disabled={!recording || busy} onClick={() => void onMark(markLabel.trim())}><RelicIcon name="bookmark" size={13} />Mark moment</button></section><label className="stage-v2-field"><span>Title <small>optional</small></span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="A short memory hook" autoFocus /></label><label className="stage-v2-field"><span>Note</span><textarea value={body} onChange={(e) => setBody(e.target.value)} onBlur={() => setTouched(true)} rows={5} placeholder="What happened? What do you want to remember?" aria-invalid={touched && !body.trim()} />{touched && !body.trim() && <em>Write a note before saving.</em>}</label><div className="stage-v2-note-tags" aria-label="Note tag">{["Scene", "NPC", "Lore", "Reminder", "Thread"].map((value) => <button type="button" key={value} className={tag === value ? "active" : ""} onClick={() => setTag(value)}>{value}</button>)}</div></div><footer className="stage-v2-dialog-foot"><span><RelicIcon name="bookmark" size={12} />{scene}</span><button className="stage-v2-primary" disabled={!body.trim() || busy}>Save Note</button></footer></form></StageDialog>;
+  return <StageDialog title="Quick Note" icon="file" tone="amber" onClose={onClose}><form onSubmit={(event) => { event.preventDefault(); setTouched(true); if (body.trim()) void onSave({ title: title.trim(), body: body.trim(), tag }); }}><div className="stage-v2-dialog-body"><section className="stage-v2-mark-moment" aria-label="Mark Moment"><div><strong>Mark Moment</strong><span>{recording ? "Save a timestamp for post-session review." : "Available while recording."}</span></div><label className="stage-v2-field"><span className="sr-only">Moment label</span><input value={markLabel} onChange={(event) => setMarkLabel(event.target.value)} placeholder="decision, lie, secret…" disabled={!recording || busy} /></label><button type="button" className="stage-v2-secondary" disabled={!recording || busy} onClick={() => void onMark(markLabel.trim())}><RelicIcon name="bookmark" size={13} />Mark moment</button></section><label className="stage-v2-field"><span>Title <small>optional</small></span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="A short memory hook" data-stage-autofocus /></label><label className="stage-v2-field"><span>Note</span><textarea value={body} onChange={(e) => setBody(e.target.value)} onBlur={() => setTouched(true)} rows={5} placeholder="What happened? What do you want to remember?" aria-invalid={touched && !body.trim()} />{touched && !body.trim() && <em>Write a note before saving.</em>}</label><div className="stage-v2-note-tags" aria-label="Note tag">{["Scene", "NPC", "Lore", "Reminder", "Thread"].map((value) => <button type="button" key={value} className={tag === value ? "active" : ""} onClick={() => setTag(value)}>{value}</button>)}</div></div><footer className="stage-v2-dialog-foot"><span><RelicIcon name="bookmark" size={12} />{scene}</span><button className="stage-v2-primary" disabled={!body.trim() || busy}>Save Note</button></footer></form></StageDialog>;
 }
 
 function QuickCreate({ busy, onClose, onCreate }: { busy: boolean; onClose: () => void; onCreate: (type: string, name: string, summary: string) => Promise<void> }) {

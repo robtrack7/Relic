@@ -41,7 +41,7 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 | P1 | 0 | 5 | 2 | 0 | 1 |
 | P2 | 0 | 2 | 1 | 0 | 1 |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, and provider-shaped transcription/retry contracts. The immediate defect is Stage dialog focus churn. The largest remaining product path is evidence → synthesis → source-aware draft → explicit approval.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, and a stable Stage dialog focus lifecycle. The immediate packet is Dice and Quick Create persistence proof. The largest remaining product path is evidence → synthesis → source-aware draft → explicit approval.
 
 ## 3. Quality-gate system
 
@@ -102,13 +102,14 @@ Stop rules:
 
 ### Phase A — Stable Stage
 
-#### Packet A1 — Dialog focus and typing reliability
+#### Packet A1 — Dialog focus and typing reliability — complete 2026-07-20
 
 - Stabilize Stage dialog callbacks so the one-second elapsed timer cannot rerun focus initialization.
 - Preserve initial focus, Tab trap, Escape, backdrop close, and focus return.
 - Extract the focus-owning dialog primitive only if that reduces lifecycle risk; do not start a broad Stage rewrite.
 - Add fake-timer component tests that type through multiple clock ticks in Note, Dice, Create, and End.
 - **Done when:** entered text and selection remain stable for at least three simulated clock ticks and all existing Stage tests pass.
+- **Evidence:** the dialog lifecycle now initializes focus once per mount while retaining the latest close callback; focused tests cover active-field persistence, End confirmation, Tab wrapping, Escape, backdrop close, and trigger-focus return; authenticated and four-viewport Stage browser gates pass.
 
 #### Packet A2 — Dice and Quick Create proof
 
@@ -389,4 +390,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate next packet: **A1 — Dialog focus and typing reliability**.
+Immediate next packet: **A2 — Dice and Quick Create proof**.
