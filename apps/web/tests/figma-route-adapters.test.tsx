@@ -12,10 +12,16 @@ vi.mock("next/link", () => ({
   )
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/app/w/workspace-1/world/world-1/saga/saga-1/sessions/session-1/stage",
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() })
+}));
+
 vi.mock("@/app/actions", () => ({
   markMomentAction: vi.fn(),
   quickCaptureAction: vi.fn(),
   quickStubAction: vi.fn(),
+  recordDicePoolAction: vi.fn(),
   recordDiceRollAction: vi.fn(),
   recordSessionConsentAction: vi.fn(),
   readyForStageAction: vi.fn(),
@@ -102,8 +108,8 @@ describe("Figma route adapters", () => {
     const agenda = screen.getByRole("region", { name: "Agenda" });
     expect(within(agenda).getByText("Confront the Dockmaster.")).toBeTruthy();
     expect(screen.getAllByText("Mira Ashborne").length).toBeGreaterThan(0);
-    expect(screen.getByText("Voice")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Mark Moment" })).toBeTruthy();
+    expect(screen.getByText("Wants / Voice")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Note" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "End Session" })).toBeTruthy();
   });
 });

@@ -8,7 +8,7 @@ depends_on:
   - "[[02 - Source Map]]"
 supersedes:
   - "[[90 - Next Steps Before Coding]]"
-last_audited: 2026-06-01
+last_audited: 2026-07-20
 source_file: "Relic Vault/04 - Final Contradiction Pass.md"
 ---
 
@@ -43,6 +43,7 @@ AI task surfaces still require implementation-plan review before coding, but the
 - v0.4 names Verdigris `#2F6B6E` as the active/synced/success token. Older active notes may have used Sage for this role; current design and implementation should use Verdigris terminology.
 - The web shell resolves Search/Relic Guide tension by keeping Search in the top context bar and Relic Guide as an always-available sidecar/sheet, not a primary rail item.
 - The first implementation pass is scoped to tokens, local fonts/assets, shared primitives, The Sanctum shell, Prepare workflow, and the web Stage surface. It does not wire provider calls, autonomous AI behavior, live Stage captions, or deferred V1 surfaces.
+- [[66 - Stage Design Spec]] now records the 2026-07-20 web implementation decision: the standalone Claude Design wireframe controls concrete Stage layout, while [[32 - Stage UX Flow]] continues to own lifecycle, offline, recording, and Mark Moment requirements. The five-action wireframe rail does not silently retire those upstream obligations.
 
 ## Current Backend Planning Addendum
 

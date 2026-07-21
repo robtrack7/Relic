@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-07-20
 source_file: "Relic Vault/02 - Source Map.md"
 ---
 
@@ -64,7 +64,7 @@ These notes translate the active product, UX, and UI sources into compact screen
 | [[63 - Saga Scaffold Review Design Spec]] | Creation-time AI draft review, source inspection, commit-to-canon moment | Secondary design |
 | [[64 - Unified Library Detail Design Spec]] | Entity, Thread, Session, note library/detail patterns | Secondary design |
 | [[65 - Session Prep Design Spec]] | Prep workspace inside The Sanctum and Ready for Stage handoff | Secondary design |
-| [[66 - Stage Design Spec]] | Clean, focused live-session Stage across web and mobile | Secondary design |
+| [[66 - Stage Design Spec]] | Clean, focused live-session Stage across web and mobile; current web wireframe implementation decision and adapter boundaries | Secondary design |
 | [[67 - Approval Queue Design Spec]] | Draft review, diff, source/provenance, canon approval | Secondary design |
 | [[68 - Ask Search Design Spec]] | Top-context search, command palette, Relic Guide Q&A/actions | Secondary design |
 | [[69 - Settings Usage Design Spec]] | Saga/World/Workspace settings, usage, retention, export | Secondary design |

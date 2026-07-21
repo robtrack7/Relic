@@ -11,7 +11,7 @@ depends_on:
   - "[[34 - UI Implementation Spec]]"
   - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-07-20
 source_file: "Relic Vault/66 - Stage Design Spec.md"
 ---
 
@@ -125,3 +125,11 @@ Clean, focused, dark, and fast. Every element should justify its presence at a l
 ```text
 Create Relic's Stage screen for live tabletop play across web and mobile. It should feel clean and focused. Use Ink dark background, Cream text, Amber action/current state, Rust recording/destructive state. Layout: header with session state, persistent search, agenda, pinned cards one per row, session notes, collapsible Relic Guide sidecar/sheet, sticky action bar with Record, Mark Moment, Dice. Include Quick Capture, Quick Stub, offline queue chip where available, consent gate, End Session two-step confirm, 60-second undo, and optional one-line summary after end. Stage opens from Prepare/session context, not default navigation. If the GM returns to Sanctum mid-session, show a bright top-right Return to Stage affordance. Relic Guide can answer with citations and prepare GM-reviewed create/edit actions, but cannot autonomously mutate canon. Exclude initiative, encounter, tactical map, VTT, live transcription, player controls, autonomous AI, and deep review features.
 ```
+
+## 17. Web wireframe implementation decision — 2026-07-20
+
+For the current web MVP, `Claude Design - Relic Design System/Relic Wireframes (standalone).html` is the concrete Stage layout and interaction reference. It does not change the upstream lifecycle, canon, or offline contracts in [[32 - Stage UX Flow]]. The implemented web cockpit keeps the wireframe's five persistent actions in this order: Record, Note, Dice, Create, End Session. Mark Moment and durable recording remain upstream MVP obligations and must be added without displacing or renaming that rail.
+
+The web implementation uses the existing server-rendered session packet and scoped Supabase RPCs, with a client cockpit for transient overlay, Loom, GM Screen, dice, recording, and undo state. End Session persists `ended_pending_undo` and its timestamp before showing the 60-second recovery treatment. Quick notes, quick-created canon stubs, consent, and dice writes use existing scoped backend contracts. Board management is session-local presentation unless it was prepared through the existing pin RPC.
+
+Browser `MediaRecorder` capture is isolated behind a recording adapter. Captured audio is held only for the current tab; Storage upload, chunk registration, offline retention, transcription enqueue, and provider delivery are not represented as complete until the web client is connected to those existing backend contracts. The same rule applies to Relic Guide: live/prep Loom presentation must not imply that the AI task entrypoint is wired when it is not.

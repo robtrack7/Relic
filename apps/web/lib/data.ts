@@ -28,6 +28,7 @@ type SessionRow = {
   prep_checklist?: Array<{ text: string; done?: boolean }>;
   consent_state?: string;
   started_at?: string | null;
+  ended_pending_undo_at?: string | null;
   ended_at?: string | null;
   updated_at?: string;
 };

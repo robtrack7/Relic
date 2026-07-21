@@ -183,44 +183,56 @@ test("new GM can exercise the full manual MVP loop from sign-up through Stage", 
   await expect(page).toHaveURL(/\/stage(?:\?|$)/);
   await expect(page.getByRole("heading", { name: /Session|Next session/ })).toBeVisible();
   await expect(page.getByRole("region", { name: "Agenda" })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Start Session|Go live|Live/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Mark Moment" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Start Session|Go live/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Note" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Dice" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create" })).toBeVisible();
   await expect(page.getByRole("button", { name: "End Session" })).toBeVisible();
   await expect(page.getByLabel("Pinned entities").getByText("Seraphine Vale")).toBeVisible();
   await expect(page.getByLabel("Pinned entities").getByText("Moonwell Archive")).toBeVisible();
-  await expect(page.getByLabel("Relic Guide").getByText("The sealed letter", { exact: true })).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "The Loom" })).toBeVisible();
 
   await page.getByRole("button", { name: "Start Session" }).click();
   await expect(page.getByRole("button", { name: "Go live" })).toBeVisible();
   await page.getByRole("button", { name: "Go live" }).click();
-  await expect(page.getByRole("button", { name: "Live" })).toBeVisible();
+  await expect(page.getByText("Live", { exact: true }).first()).toBeVisible();
 
-  await page.getByRole("button", { name: "Consent" }).click();
-  await expect(page.locator(".stage-chip-rec", { hasText: "Consent granted" })).toBeVisible();
+  await page.getByRole("button", { name: "Record" }).click();
+  await expect(page.getByRole("dialog", { name: "Recording" })).toBeVisible();
+  await expect(page.getByText(/Audio upload\/transcription remains behind/)).toBeVisible();
+  await page.getByRole("button", { name: "Close Recording" }).click();
 
-  await page.getByPlaceholder("Capture a table note…").fill("The archive door opened by itself.");
-  await page.getByRole("button", { name: "Capture" }).click();
+  await page.getByRole("button", { name: "Note" }).click();
+  await page.getByPlaceholder("What happened? What do you want to remember?").fill("The archive door opened by itself.");
+  await page.getByRole("button", { name: "Save Note" }).click();
   await page.reload();
-  await expect(page.getByRole("button", { name: "Live" })).toBeVisible();
+  await expect(page.getByText("Live", { exact: true }).first()).toBeVisible();
 
-  await page.getByPlaceholder("NPC or place name…").fill("Mira Fen");
-  await page.getByPlaceholder("Short note…").fill("A messenger seen at the archive.");
-  await page.getByRole("button", { name: "Create stub" }).click();
+  await page.getByRole("button", { name: "Create" }).click();
+  await page.getByRole("dialog", { name: "Create" }).getByRole("button", { name: /NPC/ }).click();
+  await page.getByPlaceholder("Name this npc…").fill("Mira Fen");
+  await page.getByPlaceholder("What matters at the table?").fill("A messenger seen at the archive.");
+  await page.getByRole("button", { name: "Create NPC" }).click();
 
-  await page.getByRole("button", { name: "Mark Moment" }).click();
-
-  await page.getByLabel("Dice expression").fill("2d6+1");
   await page.getByRole("button", { name: "Dice" }).click();
-  await expect(page.getByText(/2d6\+1 = \d+/)).toBeVisible();
+  await page.getByRole("dialog", { name: "Dice" }).getByRole("button", { name: /d6/ }).first().click();
+  await page.getByRole("dialog", { name: "Dice" }).getByRole("button", { name: /d6/ }).first().click();
+  await page.getByRole("button", { name: "Roll", exact: true }).click();
+  await expect(page.locator(".stage-v2-roll-result")).toBeVisible();
+  await page.getByRole("button", { name: "Done" }).click();
   await page.reload();
-  await expect(page.getByText(/2d6\+1 = \d+/)).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "The Loom" }).getByText(/2d6 = \d+/)).toBeVisible();
 
   await page.getByRole("searchbox", { name: "Search saga during play" }).fill("Mira Fen");
   await page.getByRole("searchbox", { name: "Search saga during play" }).press("Enter");
   await expect(page.getByText("Mira Fen")).toBeVisible();
 
   await page.getByRole("button", { name: "End Session" }).click();
-  await expect(page.getByText("Undo window")).toBeVisible();
+  await page.getByRole("dialog", { name: "End Session" }).getByRole("button", { name: "End Session", exact: true }).click();
+  await page.getByRole("button", { name: "Yes, end session" }).click();
+  await expect(page.getByText("Session ended")).toBeVisible();
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByText("Live", { exact: true }).first()).toBeVisible();
 
   await page.goto(characterUrl);
   await expect(page.getByRole("heading", { name: "Seraphine Vale" })).toBeVisible();

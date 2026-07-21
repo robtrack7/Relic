@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { editableEntityTypes, isEditableEntityType, normalizeScope } from "@/lib/entities";
-import { rollDice } from "@/lib/dice";
+import { parseDicePool, rollDice, rollDicePool } from "@/lib/dice";
 import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
 import { sagaPath } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
@@ -410,6 +410,32 @@ export async function recordDiceRollAction(formData: FormData) {
     throw new Error(error.message);
   }
   revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/stage`);
+}
+
+export async function recordDicePoolAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const sessionId = value(formData, "sessionId");
+  const config = parseDicePool(
+    value(formData, "pool"),
+    value(formData, "modifier"),
+    value(formData, "mode"),
+  );
+  const roll = rollDicePool(config.pool, config.modifier, config.mode);
+  const label = value(formData, "label") || null;
+  const { error } = await supabase.rpc("record_dice_roll", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId,
+    expression: roll.expression,
+    result_total: roll.total,
+    result_breakdown: roll.rolls,
+    label,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/stage`);
+  return { ...roll, label, createdAt: new Date().toISOString() };
 }
 
 export async function requestSagaExportAction(formData: FormData) {
