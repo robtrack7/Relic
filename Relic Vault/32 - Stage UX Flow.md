@@ -30,6 +30,8 @@ This document is optimized for downstream consumption by AI coding agents (vibe-
 
 ## Changelog
 
+**Web non-audio recovery patch (July 2026).** Quick Capture, Quick Stub, Mark Moment, End Session, and Undo now share the web Stage's explicit `queued`, `uploading`, `failed`, and `recovered` recovery language. IndexedDB intent replay is FIFO and End Session cannot pass earlier evidence writes. This is short-window web durability; Packet caching and the complete airplane-mode workflow remain separate work.
+
 **v0.6 (May 2026).** Priority 7 closeout. Clarifies alpha Stage distribution through Expo preview/internal builds, notification tap behavior into Stage/Sanctum destinations, Stage-safe failure UX, and quota-blocked/manual-fallback states. No live-session feature expansion.
 
 
@@ -909,6 +911,10 @@ Per Tech Arch §15.6, last-write-wins on reconnect. Conflicts surface in Sanctum
 ### 15.5 Web offline (Tech Arch §15.8)
 
 Web Stage uses React Query cache + Supabase real-time. Short-window offline works. Full network drop on web: recording keeps writing locally (MediaRecorder), entity cache is best-effort. Mobile is the primary and resilience-first Stage surface.
+
+For the web-first B1 boundary, Quick Capture, Quick Stub, Mark Moment, End Session, and Undo are written to IndexedDB before network delivery begins. The Stage closes the input sheet immediately and uses explicit write-queue copy: `queued`, `uploading`, `failed`, or `recovered`. Reconnect and later app loads retry the same stable intent. End Session remains behind earlier queued captures and marks; a failed predecessor prevents lifecycle replay from passing it. The GM can keep playing through a transient write failure, and no failed intent is silently discarded.
+
+This does not claim the full §15.1 packet cache or offline literal index. Those remain the airplane-mode packet after the durable-write foundation.
 
 ---
 

@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-07-20
 source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 ---
 
@@ -25,6 +25,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 ---
 
 ## Changelog
+
+**Stage non-audio recovery patch (July 2026).** Adds the private `internal.stage_write_receipts` idempotency ledger for web Quick Capture, Quick Stub, Mark Moment, End Session, and Undo replay. Receipts are operational metadata rather than canon or source rows; the scoped RPC remains the only authenticated access path.
 
 **Stage evidence recovery patch (July 2026).** Adds `sessions.audio_chunk_count_expected` and `recording_finalized_at` so late retry-safe chunk registration cannot enqueue an incomplete transcription, and records scheduled server-owned undo expiry as the lifecycle implementation.
 
@@ -936,6 +938,33 @@ create index on session_marked_moments (saga_id, session_id, occurred_at);
 
 Marked moments are Raw Input cues for review, not canon. They may cite an `audio_chunk_id` when known, but remain valid if audio is later deleted under the saga retention policy.
 
+### 8.5b `internal.stage_write_receipts`
+
+Private idempotency ledger for short-window Stage write recovery. This table is not exposed through the Data API and is not a canon, source, or audit surface.
+
+```sql
+create table internal.stage_write_receipts (
+  id                 uuid primary key,
+  gm_id              uuid not null references auth.users(id) on delete cascade,
+  workspace_id       uuid not null references workspaces(id) on delete cascade,
+  world_id           uuid not null references worlds(id) on delete cascade,
+  saga_id            uuid not null references sagas(id) on delete cascade,
+  session_id         uuid not null references sessions(id) on delete cascade,
+  idempotency_key    text not null,
+  intent_kind        text not null,        -- quick_capture | quick_stub | mark_moment | end_session | undo_end_session
+  payload            jsonb not null,
+  result             jsonb not null,
+  created_at         timestamptz not null default now(),
+  unique (gm_id, idempotency_key)
+);
+create index on internal.stage_write_receipts (session_id, created_at);
+create index on internal.stage_write_receipts (workspace_id);
+create index on internal.stage_write_receipts (world_id);
+create index on internal.stage_write_receipts (saga_id);
+```
+
+`apply_stage_write_intent` authenticates the GM, rechecks Workspace/World/Saga/Session scope, serializes delivery by `(gm_id, idempotency_key)`, and writes the product row plus receipt in one transaction. A repeated key returns the recorded result only when scope, kind, and canonicalized JSON payload match; key reuse with different input fails closed. This ledger never substitutes for `sources` or `canon_audit` where those are required by the owning write path.
+
 ### 8.6 `pipeline_runs`
 
 Each execution of post-session synthesis.
@@ -1235,4 +1264,3 @@ Not blocking this schema. Resolve in next docs:
 ---
 
 *End Entity & Canon Schema v0.8 vault copy. Consumed by AI Task Registry, Approval Queue, and Tech Architecture specs.*
-

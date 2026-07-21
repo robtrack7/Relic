@@ -41,7 +41,7 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 | P1 | 0 | 5 | 2 | 0 | 1 |
 | P2 | 0 | 2 | 1 | 0 | 1 |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, and refresh-proven Dice/Quick Create behavior. The immediate packet is active-Thread visibility and restrained Stage shell polish. The largest remaining product path is evidence → synthesis → source-aware draft → explicit approval.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, and durable FIFO recovery for non-audio Stage writes. The immediate packet is B2 packet/search caching plus the full airplane-mode workflow. The largest remaining product path is evidence → synthesis → source-aware draft → explicit approval.
 
 ## 3. Quality-gate system
 
@@ -134,12 +134,13 @@ Stop rules:
 
 ### Phase B — Complete Stage offline recovery
 
-#### Packet B1 — Durable non-audio write queue
+#### Packet B1 — Durable non-audio write queue — complete 2026-07-20
 
 - Extend the proven IndexedDB pattern to Quick Note, Quick Create, Mark Moment, and End Session intent.
 - Give each queued write a stable idempotency key and explicit queued/uploading/failed/recovered state.
 - Preserve ordering where End depends on preceding captures/marks.
 - **Done when:** unit tests cover enqueue, replay, duplicate delivery, partial failure, and app restart.
+- **Evidence:** Quick Note, all Quick Create mappings, Mark Moment, End Session, and Undo now commit a stable UUID-backed intent to IndexedDB before replay. The per-session monotonic sequence stops at the first failed dependency; a scoped transactional RPC records exactly-once GM receipts and rejects mismatched key reuse. Four queue tests cover enqueue/replay, duplicate redelivery, partial failure, and restart recovery; 19 pgTAP assertions prove one domain effect per key, client timestamps, End/Undo replay, and anonymous denial. The clean migration replay, 320-test database suite, 53-test web suite, production build, and authenticated loop all pass.
 
 #### Packet B2 — Airplane-mode workflow
 

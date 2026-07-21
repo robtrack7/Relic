@@ -1,12 +1,13 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  quickCaptureAction,
-  quickStubAction,
-  recordDicePoolAction
-} from "@/app/actions";
+import { recordDicePoolAction } from "@/app/actions";
 import { StageRuntimeDraft } from "@/components/relic-draft/StageRuntimeDraft";
 import type { IdParams } from "@/lib/types";
+
+const writeQueueMocks = vi.hoisted(() => ({
+  enqueue: vi.fn(),
+  flushSession: vi.fn()
+}));
 
 vi.mock("next/link", () => ({
   default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => (
@@ -20,6 +21,16 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/lib/env", () => ({ hasSupabaseEnv: () => false }));
+
+vi.mock("@/lib/stage-write-queue", () => ({
+  stageWriteSessionKey: (scope: Record<string, string>) => Object.values(scope).join(":"),
+  getStageWriteQueue: () => ({
+    enqueue: writeQueueMocks.enqueue,
+    flushSession: writeQueueMocks.flushSession,
+    subscribe: () => () => undefined,
+    prepareSession: vi.fn()
+  })
+}));
 
 vi.mock("@/app/actions", () => ({
   markMomentAction: vi.fn(),
@@ -70,8 +81,8 @@ describe("Stage Dice and Quick Create", () => {
         createdAt: "2026-07-20T12:00:00.000Z"
       };
     });
-    vi.mocked(quickStubAction).mockResolvedValue(undefined);
-    vi.mocked(quickCaptureAction).mockResolvedValue(undefined);
+    writeQueueMocks.enqueue.mockResolvedValue({ id: "stage-write-1" });
+    writeQueueMocks.flushSession.mockResolvedValue({ status: "idle", queued: 0, uploading: 0, failed: 0, lastError: null });
   });
 
   it("submits normal and disadvantage d20 rolls and preserves advantage when pinned", async () => {
@@ -124,10 +135,11 @@ describe("Stage Dice and Quick Create", () => {
       await waitFor(() => expect(screen.queryByRole("dialog", { name: "Create" })).toBeNull());
     }
 
-    expect(quickStubAction).toHaveBeenCalledTimes(5);
+    expect(writeQueueMocks.enqueue).toHaveBeenCalledTimes(5);
     for (const [index, item] of cases.entries()) {
-      expect(formValues(vi.mocked(quickStubAction).mock.calls[index])).toMatchObject({
-        entityType: item.key,
+      expect(writeQueueMocks.enqueue.mock.calls[index][1]).toBe("quick_stub");
+      expect(writeQueueMocks.enqueue.mock.calls[index][2]).toMatchObject({
+        entity_type: item.key,
         name: item.name,
         summary: `${item.label} summary`
       });
@@ -139,16 +151,17 @@ describe("Stage Dice and Quick Create", () => {
     fireEvent.change(within(noteDialog).getByRole("textbox", { name: "Name" }), { target: { value: "Harbor witness" } });
     fireEvent.change(within(noteDialog).getByRole("textbox", { name: /Short note/ }), { target: { value: "A messenger saw the exchange." } });
     fireEvent.click(within(noteDialog).getByRole("button", { name: "Create Note" }));
-    await waitFor(() => expect(quickCaptureAction).toHaveBeenCalledTimes(1));
-    expect(formValues(vi.mocked(quickCaptureAction).mock.calls[0])).toMatchObject({
+    await waitFor(() => expect(writeQueueMocks.enqueue).toHaveBeenCalledTimes(6));
+    expect(writeQueueMocks.enqueue.mock.calls[5][1]).toBe("quick_capture");
+    expect(writeQueueMocks.enqueue.mock.calls[5][2]).toMatchObject({
       title: "Harbor witness",
       body: "A messenger saw the exchange."
     });
-    expect((await screen.findByRole("status")).textContent).toContain("Note saved to Library.");
+    expect((await screen.findByRole("status")).textContent).toContain("Note saved locally");
   });
 
   it("keeps invalid and permission-denied Create input recoverable", async () => {
-    vi.mocked(quickStubAction).mockRejectedValueOnce(new Error("Stage write is not permitted."));
+    writeQueueMocks.enqueue.mockRejectedValueOnce(new Error("Stage write is not permitted."));
     renderLiveStage();
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
     const dialog = screen.getByRole("dialog", { name: "Create" });
@@ -165,8 +178,8 @@ describe("Stage Dice and Quick Create", () => {
 
   it("blocks duplicate Create submission while the first write is pending", async () => {
     let resolveWrite!: () => void;
-    vi.mocked(quickStubAction).mockReturnValueOnce(new Promise<undefined>((resolve) => {
-      resolveWrite = () => resolve(undefined);
+    writeQueueMocks.enqueue.mockReturnValueOnce(new Promise((resolve) => {
+      resolveWrite = () => resolve({ id: "stage-write-pending" });
     }));
     renderLiveStage();
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
@@ -176,10 +189,10 @@ describe("Stage Dice and Quick Create", () => {
     const submit = within(dialog).getByRole("button", { name: "Create NPC" });
 
     fireEvent.click(submit);
-    await waitFor(() => expect(quickStubAction).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(writeQueueMocks.enqueue).toHaveBeenCalledTimes(1));
     expect((submit as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(submit);
-    expect(quickStubAction).toHaveBeenCalledTimes(1);
+    expect(writeQueueMocks.enqueue).toHaveBeenCalledTimes(1);
 
     resolveWrite();
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Create" })).toBeNull());

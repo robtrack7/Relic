@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-07-20
 source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md"
 ---
 
@@ -25,6 +25,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 ---
 
 ## Changelog
+
+**Stage non-audio recovery patch (July 2026).** Extends the web IndexedDB recovery contract to Quick Capture, Quick Stub, Mark Moment, End Session, and Undo. Replay is session-scoped FIFO, stops on the first failed dependency, reuses stable idempotency keys, and enters Supabase through one scoped transactional RPC backed by a private receipt ledger.
 
 **Post-session transcription delivery patch (July 2026).** Implements the `relic-transcribe` LiteLLM audio call behind the Edge worker, ordered scoped Storage reads, timestamped response validation, idempotent duration metering, service-role-only worker completion/failure boundaries, retry/dead-letter recovery, and scoped session-review/read/retry RPCs. Deterministic local provider mode is test evidence only; the hosted LiteLLM path still requires deployed secrets and a live smoke test.
 
@@ -1361,6 +1363,14 @@ create table pending_sync (
 ```
 
 Each Stage action (Quick Capture, Quick Stub, Mark Moment, audio chunk upload) and each session prep workspace functional-minimum edit writes to both the local table and `pending_sync` in a SQLite transaction. The local table change is immediately reflected in the UI; the sync queue handles the upstream push.
+
+**Web B1 short-window queue.** Web keeps a separate IndexedDB intent store for `quick_capture`, `quick_stub`, `mark_moment`, `end_session`, and `undo_end_session`. Each row carries immutable Workspace/World/Saga/Session scope, a per-session monotonic sequence, the canonical JSON payload, a stable UUID-backed idempotency key, and `queued | uploading | failed` delivery state. Session metadata retains `recovered_at` and the last failure so the Stage can expose the same `queued | uploading | failed | recovered` vocabulary as audio.
+
+Replay reads the session queue in sequence order and stops at the first failure. This makes End Session depend on every earlier capture and Mark Moment without a second dependency graph. Success deletes only the local intent; failure preserves it with exponential-backoff metadata. Reconnect, app mount, and the Stage route all retry the same intent rather than constructing a replacement.
+
+The browser calls `apply_stage_write_intent` with the existing authenticated Supabase client. The RPC rechecks hierarchy access and session writability, serializes on `(auth.uid(), idempotency_key)`, and commits the domain write plus `internal.stage_write_receipts` row atomically. Duplicate delivery returns the first result; mismatched reuse of a key fails closed. The internal table is not Data API-visible, and the public RPC is revoked from `PUBLIC` and `anon` and granted only to `authenticated`.
+
+Quick Capture and Quick Stub retain their existing GM-authored canon/source/audit behavior. Mark Moment retains the client occurrence timestamp carried by the queued payload. End Session carries the client confirmation timestamp so a delayed replay does not restart the GM's 60-second window; server-owned expiry still performs the final `ended` transition and exactly-once pipeline enqueue. Undo is queued behind End when necessary and is accepted only through the same lifecycle contract.
 
 ### 15.5 Reconnect flush with conflict surfacing
 

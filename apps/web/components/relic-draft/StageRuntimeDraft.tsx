@@ -10,9 +10,6 @@ import {
   useState,
 } from "react";
 import {
-  quickCaptureAction,
-  quickStubAction,
-  markMomentAction,
   recordDicePoolAction,
   recordSessionConsentAction,
   setSessionStatusAction,
@@ -20,6 +17,7 @@ import {
 import { RelicIcon, type IconName } from "@/components/RelicIcon";
 import { hasSupabaseEnv } from "@/lib/env";
 import { getStageAudioUploadQueue, stageAudioSessionKey, type StageAudioQueueSummary, type StageAudioScope } from "@/lib/stage-audio-queue";
+import { getStageWriteQueue, stageWriteSessionKey, type StageWriteIntentKind, type StageWriteQueueSummary, type StageWriteScope } from "@/lib/stage-write-queue";
 import { parseGmNotesTags, formatStageElapsed, quickCreateEntityType, remainingUndoSeconds } from "@/lib/stage";
 import { StageRecordingAdapter, type StageRecordingChunk } from "@/lib/stage-recording";
 import { sagaPath } from "@/lib/routes";
@@ -220,8 +218,11 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   const [recording, setRecording] = useState(false);
   const [recordingNote, setRecordingNote] = useState("");
   const [audioSummary, setAudioSummary] = useState<StageAudioQueueSummary>({ status: "idle", queued: 0, uploading: 0, failed: 0, totalChunks: 0, lastError: null });
+  const [writeSummary, setWriteSummary] = useState<StageWriteQueueSummary>({ status: "idle", queued: 0, uploading: 0, failed: 0, lastError: null });
   const [consent, setConsent] = useState(packet?.consent_state ?? session.consent_state ?? "unknown");
-  const [now, setNow] = useState(Date.now());
+  const [endedPendingAt, setEndedPendingAt] = useState(session.ended_pending_undo_at ?? null);
+  const initialClock = session.started_at ? Date.parse(session.started_at) : 0;
+  const [now, setNow] = useState(Number.isFinite(initialClock) ? initialClock : 0);
   const [hiddenPins, setHiddenPins] = useState<string[]>([]);
   const initialPins = pinned.filter((item): item is { pin: { entity_type: string; entity_id: string }; entity: EntitySummary } => Boolean(item.entity));
   const visiblePinned = initialPins.filter(({ entity }) => !hiddenPins.includes(entity.id));
@@ -231,7 +232,7 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   const live = status === "started" || status === "in_progress";
   const canWrite = live;
   const endedPending = status === "ended_pending_undo";
-  const undoSeconds = endedPending ? remainingUndoSeconds(session.ended_pending_undo_at, now) : 60;
+  const undoSeconds = endedPending ? remainingUndoSeconds(endedPendingAt, now) : 60;
   const elapsed = formatStageElapsed(session.started_at, now);
   const sceneNotes = (session.scene_notes ?? "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const tags = selectedEntity ? parseGmNotesTags(selectedEntity.gm_notes) : null;
@@ -239,8 +240,11 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   const [pinnedResult, setPinnedResult] = useState<Record<string, unknown> | null>(null);
   const audioScope: StageAudioScope = { workspaceId: params.workspaceId, worldId: params.worldId, sagaId: params.sagaId, sessionId: session.id };
   const audioSessionKey = stageAudioSessionKey(audioScope);
+  const writeScope: StageWriteScope = { workspaceId: params.workspaceId, worldId: params.worldId, sagaId: params.sagaId, sessionId: session.id };
+  const writeSessionKey = stageWriteSessionKey(writeScope);
 
   useEffect(() => {
+    setNow(Date.now());
     const timer = window.setInterval(() => setNow(Date.now()), 1_000);
     return () => window.clearInterval(timer);
   }, []);
@@ -260,6 +264,24 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   // Scope identifiers are immutable for one Stage route.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioSessionKey]);
+
+  useEffect(() => {
+    if (!hasSupabaseEnv() || typeof indexedDB === "undefined") return;
+    const queue = getStageWriteQueue();
+    const update = (scope: StageWriteScope, summary: StageWriteQueueSummary) => {
+      if (stageWriteSessionKey(scope) !== writeSessionKey) return;
+      setWriteSummary(summary);
+      if (summary.status === "idle" || summary.status === "recovered") router.refresh();
+    };
+    const unsubscribe = queue.subscribe(update);
+    void queue.prepareSession(writeScope)
+      .then(() => queue.flushSession(writeScope))
+      .then(setWriteSummary)
+      .catch((caught) => setError(caught instanceof Error ? caught.message : "Saved Stage writes are waiting to retry."));
+    return unsubscribe;
+  // Scope identifiers are immutable for one Stage route.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [writeSessionKey]);
 
   useEffect(() => {
     const shortcut = (event: KeyboardEvent) => {
@@ -282,11 +304,23 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
 
   useEffect(() => {
     if (!endedPending || undoSeconds > 0 || finalizing.current) return;
+    if (writeSummary.queued + writeSummary.uploading + writeSummary.failed > 0) {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        setNotice("Session end is saved locally. Review will begin after reconnecting.");
+        return;
+      }
+      finalizing.current = true;
+      void getStageWriteQueue().flushSession(writeScope).then((summary) => {
+        setWriteSummary(summary);
+        finalizing.current = false;
+      });
+      return;
+    }
     finalizing.current = true;
     void changeStatus("ended").then(() => router.push(`${root}/sessions/${session.id}/review`));
   // changeStatus is intentionally event-like; the countdown inputs are the lifecycle boundary.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [endedPending, undoSeconds]);
+  }, [endedPending, undoSeconds, writeSummary.queued, writeSummary.uploading, writeSummary.failed]);
 
   useEffect(() => () => { void recordingAdapter.current?.stop(); }, []);
 
@@ -304,6 +338,21 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
     finally { setBusy(false); }
   }
 
+  async function queueWrite(kind: StageWriteIntentKind, payload: Record<string, unknown>) {
+    setBusy(true); setError("");
+    try {
+      const queue = getStageWriteQueue();
+      await queue.enqueue(writeScope, kind, payload);
+      void queue.flushSession(writeScope).then(setWriteSummary);
+      return true;
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Stage write could not be saved locally.");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function changeStatus(next: string) {
     const result = await perform(setSessionStatusAction, { status: next });
     if (result !== false) setStatus(next);
@@ -316,15 +365,15 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
 
   async function saveNote(payload: { title: string; body: string; tag: string }) {
     const prefix = `[${payload.tag}]${payload.title ? ` ${payload.title}` : ""}`;
-    const result = await perform(quickCaptureAction, { body: `${prefix}\n${payload.body}` });
-    if (result !== false) { setNotice("Note saved to this scene."); setOverlay(null); }
+    const saved = await queueWrite("quick_capture", { body: `${prefix}\n${payload.body}` });
+    if (saved) { setNotice("Note saved locally · sync queued."); setOverlay(null); }
   }
 
   async function markMoment(label: string) {
     if (!recording) return;
-    const result = await perform(markMomentAction, { label });
-    if (result !== false) {
-      setNotice(`Marked · ${elapsed}.`);
+    const saved = await queueWrite("mark_moment", { label, occurred_at: new Date().toISOString() });
+    if (saved) {
+      setNotice(`Marked locally · ${elapsed}.`);
       setOverlay(null);
     }
   }
@@ -332,11 +381,11 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   async function createQuick(type: string, name: string, summary: string) {
     const entityType = quickCreateEntityType(type);
     if (!entityType) return;
-    const result = entityType === "note"
-      ? await perform(quickCaptureAction, { title: name, body: summary || name })
-      : await perform(quickStubAction, { entityType, name, summary });
-    if (result !== false) {
-      setNotice(entityType === "note" ? "Note saved to Library." : `${createTypes.find((item) => item.key === type)?.label} created as a GM-authored stub.`);
+    const saved = entityType === "note"
+      ? await queueWrite("quick_capture", { title: name, body: summary || name })
+      : await queueWrite("quick_stub", { entity_type: entityType, name, summary });
+    if (saved) {
+      setNotice(entityType === "note" ? "Note saved locally · sync queued." : `${createTypes.find((item) => item.key === type)?.label} saved locally as a GM-authored stub.`);
       setOverlay(null);
     }
   }
@@ -391,9 +440,22 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
     if (audioSummary.totalChunks > 0 || stoppedChunkCount > 0) {
       setAudioSummary(await getStageAudioUploadQueue().requestFinalization(audioScope));
     }
-    await changeStatus("ended_pending_undo");
+    const requestedAt = new Date().toISOString();
+    const saved = await queueWrite("end_session", { requested_at: requestedAt });
+    if (!saved) return;
+    setEndedPendingAt(requestedAt);
+    setStatus("ended_pending_undo");
     setOverlay(null);
     setNow(Date.now());
+  }
+
+  async function undoEndSession() {
+    const saved = await queueWrite("undo_end_session", { requested_at: new Date().toISOString() });
+    if (!saved) return;
+    finalizing.current = false;
+    setEndedPendingAt(null);
+    setStatus("in_progress");
+    setNotice("Session resumed locally · sync queued.");
   }
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
@@ -405,6 +467,7 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   const relatedPlaces = visiblePinned.filter(({ entity }) => entity.entityType === "place").map(({ entity }) => entity);
   const relatedNpcs = visiblePinned.filter(({ entity }) => entity.entityType === "character" && entity.id !== selectedEntity?.id).map(({ entity }) => entity);
   const pendingAudio = audioSummary.queued + audioSummary.uploading + audioSummary.failed;
+  const pendingWrites = writeSummary.queued + writeSummary.uploading + writeSummary.failed;
   const audioStateLabel = audioSummary.status === "idle"
     ? "Synced"
     : audioSummary.status === "recovered"
@@ -414,10 +477,19 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
         : audioSummary.status === "failed"
           ? `Failed · ${audioSummary.failed}`
           : `Queued · ${pendingAudio}`;
+  const writeStateLabel = writeSummary.status === "idle"
+    ? "Writes synced"
+    : writeSummary.status === "recovered"
+      ? "Writes recovered"
+      : writeSummary.status === "uploading"
+        ? `Syncing · ${pendingWrites}`
+        : writeSummary.status === "failed"
+          ? `Writes failed · ${writeSummary.failed}`
+          : `Writes queued · ${pendingWrites}`;
 
   return <div className="stage-runtime stage-v2-shell">
     <header className="stage-v2-session-bar">
-      <div className="stage-v2-session-left"><div className="stage-v2-labels" aria-label="Stage identity"><span>The Stage</span><small>Session {session.session_number ?? (session.name.replace(/\D+/g, "") || "—")}</small></div><div className="stage-v2-chips"><span className={live ? "live" : "ready"}><i />{status === "in_progress" ? "Live" : status === "started" ? "Started" : status === "ended_pending_undo" ? "Ending" : "Ready"}</span>{live && <span className={recording ? "recording active" : "recording"}><i />{recording ? "Recording" : "Not recording"}</span>}<span className={audioSummary.status}><RelicIcon name={audioSummary.status === "failed" ? "alert" : audioSummary.status === "idle" || audioSummary.status === "recovered" ? "check" : "clock"} size={11} />{audioStateLabel}</span></div></div>
+      <div className="stage-v2-session-left"><div className="stage-v2-labels" aria-label="Stage identity"><span>The Stage</span><small>Session {session.session_number ?? (session.name.replace(/\D+/g, "") || "—")}</small></div><div className="stage-v2-chips"><span className={live ? "live" : "ready"}><i />{status === "in_progress" ? "Live" : status === "started" ? "Started" : status === "ended_pending_undo" ? "Ending" : "Ready"}</span>{live && <span className={recording ? "recording active" : "recording"}><i />{recording ? "Recording" : "Not recording"}</span>}<span className={audioSummary.status}><RelicIcon name={audioSummary.status === "failed" ? "alert" : audioSummary.status === "idle" || audioSummary.status === "recovered" ? "check" : "clock"} size={11} />{audioStateLabel}</span><span className={writeSummary.status}><RelicIcon name={writeSummary.status === "failed" ? "alert" : writeSummary.status === "idle" || writeSummary.status === "recovered" ? "check" : "clock"} size={11} />{writeStateLabel}</span></div></div>
       <div className="stage-v2-session-right">{live && <div className="stage-v2-elapsed"><RelicIcon name="clock" size={14} /><strong>{elapsed}</strong><span>elapsed</span></div>}{(status === "ready" || status === "started") && <button className="stage-v2-start" disabled={busy} onClick={beginSession}>{status === "ready" ? "Start Session" : "Go live"}</button>}<button className="stage-v2-mobile-loom" onClick={() => setOverlay("loom")}><RelicIcon name="spark" size={14} />Loom</button><Link className="stage-v2-sanctum" href={root}><RelicIcon name="chevronRight" size={13} />To Sanctum</Link><Link className="stage-v2-profile" href={`${root}/settings`} aria-label="GM profile"><RelicIcon name="profile" size={22} /></Link></div>
     </header>
 
@@ -448,7 +520,7 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
 
         {pinnedDice && <aside className="stage-v2-pinned-dice" aria-label="Pinned dice widget"><header><span><RelicIcon name="dice" size={13} />Dice</span><button onClick={() => setPinnedDice(null)} aria-label="Unpin dice"><RelicIcon name="pin" size={12} /></button></header><div>{diceTypes.map((sides) => <button key={sides} className={pinnedDice.pool.includes(sides) ? "active" : ""} onClick={() => setPinnedDice((config) => config ? { ...config, pool: config.pool.includes(sides) ? config.pool.filter((die) => die !== sides) : [...config.pool, sides] } : null)}>d{sides === 100 ? "%" : sides}</button>)}</div><label>Mod<input type="number" value={pinnedDice.modifier} onChange={(e) => setPinnedDice({ ...pinnedDice, modifier: Number(e.target.value) })} /></label><button disabled={busy || !pinnedDice.pool.length} onClick={async () => setPinnedResult(await rollPool(pinnedDice.pool, pinnedDice.modifier, pinnedDice.mode, "Pinned roll"))}>Roll</button>{pinnedResult && <strong>{String(pinnedResult.total)}</strong>}</aside>}
 
-        {endedPending && <div className="stage-v2-undo" role="status"><strong>{undoSeconds}</strong><div><span>Session ended</span><p>Undo is available for {undoSeconds} seconds. Then this session enters the review pipeline.</p></div><button disabled={busy} onClick={() => { finalizing.current = false; void changeStatus("in_progress"); }}>Undo</button></div>}
+        {endedPending && <div className="stage-v2-undo" role="status"><strong>{undoSeconds}</strong><div><span>Session ended</span><p>Undo is available for {undoSeconds} seconds. Then this session enters the review pipeline.</p></div><button disabled={busy} onClick={() => void undoEndSession()}>Undo</button></div>}
 
         <nav className="stage-v2-actions" aria-label="Stage actions">{[
           { key: "record", label: recording ? "Recording" : "Record", icon: recording ? "mic" : "micOff", tone: "rust" },
