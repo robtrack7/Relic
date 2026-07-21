@@ -110,7 +110,7 @@ Users arrive from current session pill, Prepare Ready for Stage/Open Stage actio
 
 ## 13. Navigation out
 
-Users can return to Sanctum while session is ready or started and prep remains editable. Once in progress, prep is locked. When the GM is in Sanctum during `started`, `in_progress`, or `ended_pending_undo`, the shell shows a bright top-right `Return to Stage` affordance. End Session returns to Sanctum dashboard/review flow after undo window and optional summary. Read-only Sanctum detail opens in overlay/side panel without replacing Stage.
+Users can return to Sanctum while a Session is ready and Prep remains editable. Once Stage starts the live-session lifecycle, Prep is read-only. When the GM is in Sanctum during `started`, `in_progress`, or `ended_pending_undo`, the shell shows a bright top-right `Return to Stage` affordance. End Session returns to Sanctum dashboard/review flow after undo window and optional summary. Read-only Sanctum detail opens in overlay/side panel without replacing Stage.
 
 ## 14. Components to avoid
 

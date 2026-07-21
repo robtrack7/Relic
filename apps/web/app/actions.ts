@@ -434,6 +434,8 @@ export async function createSessionAction(formData: FormData) {
   const { supabase } = await requireActionUser();
   const params = paramsFromForm(formData);
   const name = value(formData, "name") || "Next session";
+  const plannedStartAt = value(formData, "plannedStartAt");
+  const plannedDate = value(formData, "plannedDate") || (plannedStartAt ? plannedStartAt.slice(0, 10) : null);
   const { data, error } = await supabase.rpc("create_session", {
     workspace_id: params.workspaceId,
     world_id: params.worldId,
@@ -442,11 +444,19 @@ export async function createSessionAction(formData: FormData) {
     objective: value(formData, "objective"),
     opening_scene: value(formData, "openingScene"),
     scene_notes: value(formData, "sceneNotes"),
-    planned_date: value(formData, "plannedDate") || null
+    planned_date: plannedDate
   });
   const result = data as RpcObject | null;
   if (error || !result?.id) {
     throw new Error(error?.message ?? "Could not create session.");
+  }
+  if (plannedStartAt) {
+    const { data: prep } = await supabase.rpc("get_session_prep", { workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, session_id: result.id });
+    const session = (prep as { session?: { updated_at?: string } } | null)?.session;
+    if (session?.updated_at) {
+      const { error: scheduleError } = await supabase.rpc("autosave_session_prep", { workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, session_id: result.id, expected_version: session.updated_at, session_name: name, planned_start_at: new Date(plannedStartAt).toISOString(), objective: value(formData, "objective"), opening_scene: value(formData, "openingScene"), scene_notes: value(formData, "sceneNotes"), prep_checklist: [], pinned_entities: [], active_threads: [] });
+      if (scheduleError) throw new Error(scheduleError.message);
+    }
   }
   redirect(`${sagaPath(params)}/sessions/${result.id}/prep`);
 }
@@ -484,6 +494,49 @@ export async function updateSessionPrepAction(formData: FormData) {
   revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/prep`);
 }
 
+async function readSessionPrepState(supabase: Awaited<ReturnType<typeof createClient>>, params: IdParams, sessionId: string) {
+  const [{ data, error }, optionLists] = await Promise.all([
+    supabase.rpc("get_session_prep", { workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, session_id: sessionId }),
+    Promise.all(["character", "place", "faction", "artifact", "note", "thread"].map((entityType) => supabase.rpc("list_entities", { workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, entity_type: entityType, include_archived: true })))
+  ]);
+  if (error) throw new Error(error.message);
+  const prep = data as Record<string, unknown> & { session: { updated_at?: string } };
+  const optionPins = optionLists.flatMap((result, typeIndex) => {
+    if (result.error) return [];
+    const entityType = ["character", "place", "faction", "artifact", "note", "thread"][typeIndex];
+    return ((result.data ?? []) as Array<Record<string, unknown>>).map((row, order_index) => ({ key: `${entityType}:${row.id}`, entity_type: entityType, entity_id: String(row.id), name: String(row.name ?? row.title ?? "Untitled"), state: row.canon_state === "archived" ? "archived" : "available", order_index }));
+  });
+  return { ...prep, options: { entities: optionPins.filter((pin) => pin.entity_type !== "thread"), threads: optionPins.filter((pin) => pin.entity_type === "thread") } };
+}
+
+export async function autosaveSessionPrepAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const sessionId = value(formData, "sessionId");
+  const checklist = value(formData, "prepChecklist").split(/\r?\n/).map((text) => text.trim()).filter(Boolean).map((text) => ({ text, done: false }));
+  const { data, error } = await supabase.rpc("autosave_session_prep", {
+    workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, session_id: sessionId,
+    expected_version: value(formData, "expectedVersion"), session_name: value(formData, "name"),
+    planned_start_at: value(formData, "plannedStartAt") || null, objective: value(formData, "objective"),
+    opening_scene: value(formData, "openingScene"), scene_notes: value(formData, "sceneNotes"), prep_checklist: checklist,
+    pinned_entities: formData.getAll("pinnedEntity").map(String), active_threads: formData.getAll("activeThread").map(String),
+  });
+  if (error) return { ok: false as const, conflict: error.code === "40001", error: error.code === "40001" ? "Prep changed elsewhere. Your local draft is safe; refresh to compare before retrying." : error.message };
+  const result = data as { updated_at?: string } | null;
+  const prep = await readSessionPrepState(supabase, params, sessionId);
+  revalidatePath(sagaPath(params)); revalidatePath(`${sagaPath(params)}/sessions`); revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/prep`);
+  return { ok: true as const, updatedAt: result?.updated_at ?? String(prep.session.updated_at ?? ""), prep };
+}
+
+export async function mutateSessionPrepAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData); const sessionId = value(formData, "sessionId");
+  const { data, error } = await supabase.rpc("mutate_session_prep", { workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, session_id: sessionId, expected_version: value(formData, "expectedVersion"), operation: value(formData, "operation"), request_key: value(formData, "requestKey") });
+  if (error) return { ok: false as const, conflict: error.code === "40001", error: error.message };
+  revalidatePath(sagaPath(params)); revalidatePath(`${sagaPath(params)}/sessions`);
+  return { ok: true as const, result: data as Record<string, unknown> };
+}
+
 export async function readyForStageAction(formData: FormData) {
   const { supabase } = await requireActionUser();
   const params = paramsFromForm(formData);
@@ -495,10 +548,10 @@ export async function readyForStageAction(formData: FormData) {
     session_id: sessionId,
     status: "ready"
   });
-  if (error) {
-    throw new Error(error.message);
-  }
-  redirect(`${sagaPath(params)}/sessions/${sessionId}/stage`);
+  if (error) return { ok: false as const, error: error.message };
+  const stagePath = `${sagaPath(params)}/sessions/${sessionId}/stage`;
+  revalidatePath(stagePath); revalidatePath(sagaPath(params));
+  return { ok: true as const, stagePath };
 }
 
 export async function setSessionStatusAction(formData: FormData) {

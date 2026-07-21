@@ -22,6 +22,37 @@ export type CanonEntityType = Exclude<EntityType, "note">;
 export type EntityScope = "saga" | "world";
 export type SessionStatus = "planned" | "ready" | "started" | "in_progress" | "ended_pending_undo" | "ended";
 
+export type PrepPinState = "available" | "archived" | "missing" | "permission_denied";
+export type SessionPrepPin = {
+  key: string;
+  entity_type: EntityType;
+  entity_id: string;
+  name: string;
+  state: PrepPinState;
+  order_index: number;
+  summary?: string | null;
+  objectives_log?: unknown[];
+  resolution_state?: "active" | "dormant" | "resolved" | "failed";
+};
+export type SessionPrepData = {
+  session: {
+    id: string;
+    name: string;
+    session_number?: number | null;
+    status: string;
+    objective?: string | null;
+    opening_scene?: string | null;
+    scene_notes?: string | null;
+    prep_checklist?: Array<{ text: string; done?: boolean }>;
+    planned_start_at?: string | null;
+    updated_at?: string;
+  };
+  pinned_entities: SessionPrepPin[];
+  active_threads: SessionPrepPin[];
+  options: { entities: SessionPrepPin[]; threads: SessionPrepPin[] };
+  prior_summary: { state: "approved" | "fallback" | "none"; session_name: string | null; text: string };
+};
+
 export type EntitySummary = {
   id: string;
   entityType: EntityType;

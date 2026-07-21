@@ -38,8 +38,8 @@ export default async function NewSessionPage({ params }: { params: Promise<IdPar
                 <input className="settings-field" name="objective" placeholder="What should this session accomplish?" />
               </label>
               <label className="field">
-                <span>Planned date</span>
-                <input className="settings-field" name="plannedDate" type="date" />
+                <span>Scheduled date and time</span>
+                <input className="settings-field" name="plannedStartAt" type="datetime-local" />
               </label>
             </div>
             <div className="detail-tiles">

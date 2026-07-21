@@ -40,7 +40,7 @@ export default async function SessionsPage({ params }: { params: Promise<IdParam
             <div>
               <div className="sess-name">{session.name}</div>
               <div className="sess-meta">
-                {session.planned_date ? `Planned ${session.planned_date} · ` : ""}
+                {session.planned_start_at ? `Scheduled ${new Date(session.planned_start_at).toLocaleString()} · ` : session.planned_date ? `Planned ${session.planned_date} · ` : "Unscheduled · "}
                 {session.objective || session.opening_scene || "No prep details yet."}
               </div>
             </div>
@@ -80,8 +80,8 @@ export default async function SessionsPage({ params }: { params: Promise<IdParam
               <input className="settings-field" name="objective" placeholder="What should this session accomplish?" />
             </label>
             <label className="field">
-              <span>Planned date</span>
-              <input className="settings-field" name="plannedDate" type="date" />
+              <span>Scheduled date and time</span>
+              <input className="settings-field" name="plannedStartAt" type="datetime-local" />
             </label>
           </div>
           <div>

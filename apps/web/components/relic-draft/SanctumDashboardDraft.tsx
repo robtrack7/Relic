@@ -2,8 +2,9 @@ import Link from "next/link";
 import { createSessionAction } from "@/app/actions";
 import { RelicIcon } from "@/components/RelicIcon";
 import { HiddenContextFields } from "@/components/HiddenContextFields";
+import { SessionPrepEditor } from "@/components/SessionPrepEditor";
 import { sagaPath } from "@/lib/routes";
-import type { EntitySummary, IdParams } from "@/lib/types";
+import type { EntitySummary, IdParams, SessionPrepData } from "@/lib/types";
 
 type SagaLike = {
   name: string;
@@ -17,12 +18,16 @@ type DashboardSession = {
   status: string;
   objective?: string | null;
   opening_scene?: string | null;
+  session_number?: number | null;
+  planned_start_at?: string | null;
 };
 
 type SanctumDashboardDraftProps = {
   params: IdParams;
   saga: SagaLike;
   activeSession: DashboardSession | null;
+  prep: SessionPrepData | null;
+  futureSessions: DashboardSession[];
   threads: EntitySummary[];
   recentEntities: EntitySummary[];
   reviewCount: number;
@@ -44,6 +49,8 @@ export function SanctumDashboardDraft({
   params,
   saga,
   activeSession,
+  prep,
+  futureSessions,
   threads,
   recentEntities,
   reviewCount,
@@ -221,6 +228,16 @@ export function SanctumDashboardDraft({
 
         {/* Main column — session packet */}
         <div>
+          {futureSessions.length > 1 && (
+            <nav className="future-session-switcher" aria-label="Future Sessions">
+              <span className="sec-label">Upcoming Sessions</span>
+              {futureSessions.map((session) => (
+                <Link key={session.id} className={session.id === activeSession?.id ? "chip amber" : "chip stone"} href={`${root}/sessions/${session.id}/prep`}>
+                  S{session.session_number ?? "—"} · {session.name}{session.planned_start_at ? ` · ${new Date(session.planned_start_at).toLocaleString()}` : " · Unscheduled"}
+                </Link>
+              ))}
+            </nav>
+          )}
           {/* Ready banner */}
           {isReady && (
             <div className="prep-ready-banner" style={{ marginBottom: 12 }}>
@@ -247,7 +264,9 @@ export function SanctumDashboardDraft({
             </div>
           )}
 
-          {activeSession ? (
+          {prep && (isPlanned || isReady) ? (
+            <SessionPrepEditor key={prep.session.updated_at} params={params} initialPrep={prep} surface="inline" />
+          ) : activeSession ? (
             <div className="card packet">
               <div className="packet-top">
                 <div className="packet-eyebrow">

@@ -14,7 +14,7 @@ depends_on:
   - "[[32 - Stage UX Flow]]"
   - "[[46 - Backend Audit and Module Plan]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-07-21
 source_file: "Relic Vault/53 - Backend Module 5 Session Prep and Stage Data Plan.md"
 ---
 
@@ -53,6 +53,7 @@ Implemented on 2026-06-01 in `supabase/migrations/20260601222000_session_stage_b
 - Quick captures write note-backed source rows; quick stubs write canon source/audit provenance; marked moments require an active Stage session.
 - Consent, dice history, and Stage packet read-model RPCs are available to authenticated clients.
 - Ending a session creates one queued `pipeline_runs` row for later post-session processing.
+- The July 2026 D4 extension adds scoped Prep read/autosave/action RPCs, optimistic stale-write rejection, ordered resilient pins, multiple scheduled future Sessions, and a latest-persisted Ready handoff. These manual paths write no canon/audit/source rows and invoke no provider.
 - Verification: `npm run test:supabase` passed with 107 tests, `npx pnpm@10.11.0 --filter @relic/web test` passed with 14 tests, and `npm run backend:baseline:reset` completed with `RELIC_BACKEND_BASELINE_OK` on 2026-06-01.
 
 ## Files

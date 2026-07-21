@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-07-21
 source_file: "Sourced - Downloaded - 260518/relic-session-prep-flow-v0_2.md"
 ---
 
@@ -19,6 +19,8 @@ source_file: "Sourced - Downloaded - 260518/relic-session-prep-flow-v0_2.md"
 # Relic Session Prep Flow v0.2
 
 *Priority 7 technical closeout revision. Last updated May 2026.*
+
+**Prep parity implementation patch (July 2026).** Home and full Prepare use the same manual editor and scoped persistence contract. An 800ms/blur autosave keeps an owner/Workspace/World/Saga/Session local draft until the exact server version succeeds, surfaces saving/saved/offline/failed/conflict/retry states, and never silently overwrites a stale row. Planned and Ready Sessions are editable; started/live/ending/ended and otherwise locked Sessions are read-only.
 
 **Source of truth inputs:** `[[11 - Product Basepoint]]`, `[[12 - MVP PRD]]`, `[[20 - Entity and Canon Schema]]`, `[[23 - AI Task Registry]]`, `[[22 - Memory and Retrieval]]`, `[[21 - Tech Architecture]]`, `[[32 - Stage UX Flow]]`, `[[34 - UI Implementation Spec]]`, `[[25 - Pricing and Rate Limits]]`, `[[13 - Design System]]`.
 
@@ -89,7 +91,7 @@ Required MVP fields:
 - `session_id`.
 - `name`.
 - `session_number`.
-- `planned_date`.
+- `planned_date` plus `planned_start_at` for an optional distinguishable date/time.
 - `objective`.
 - `opening_scene`.
 - `scene_notes`.
@@ -97,8 +99,11 @@ Required MVP fields:
 - `session_pinned_entities`.
 - `session_active_threads`.
 - `packet_locked_at`.
+- `updated_at` as the optimistic Prep version; `archived_at` and `duplicated_from_session_id` support state-valid actions without deleting history.
 
 Prep may reference World-canon records, but session writes remain Saga-scoped.
+
+Entity and Thread pins retain explicit order. A pin whose target is archived or no longer readable remains a safe non-identifying recovery row: the GM may unpin it, intentionally retain a recoverable archived target, or add a valid same-Saga replacement. New cross-Saga substitutions are rejected. Missing, deleted, or permission-denied targets never break packet loading.
 
 ---
 
@@ -142,6 +147,8 @@ Packet includes:
 
 Packet generation does not copy canon into a separate permanent fork. Stage reads current canonical entities by ID plus session-specific order and notes.
 
+Ready first flushes the current local editor state and proceeds only after that exact version is persisted. Stage therefore reads the latest successfully saved relational packet; it does not consume an unsaved browser draft.
+
 ---
 
 ## 6. AI assists
@@ -179,6 +186,8 @@ Failure states:
 
 Failures never delete existing prep.
 
+Manual Prep never invokes an AI provider. The prior-session card reads the latest approved ended-Session summary when present and otherwise shows a concise safe fallback from already-authorized Session context. It does not generate text or write canon.
+
 ---
 
 ## 8. Ready for Stage
@@ -191,7 +200,7 @@ The GM can mark a session Ready for Stage when at minimum:
 
 On Ready for Stage:
 
-1. Save all session fields.
+1. Flush and confirm the latest autosave of all session fields.
 2. Set `packet_locked_at = now()`.
 3. Confirm Stage packet preview.
 4. Show `Open this session in Stage`; route to mobile deep link if available.
@@ -207,6 +216,10 @@ Stage is not a default navigation rail destination. It is opened from this Ready
 - A GM can create Session 1 from first-run in under two minutes after scaffold commit.
 - A GM can create a blank planned session without AI.
 - A GM can pin/unpin entities and active threads.
+- A GM can add, remove, reorder, refresh, and safely recover entity and Thread pins without losing order or leaking sibling-Saga targets.
+- Home and full Prepare expose the same shared fields and actions and converge after successful save/refresh.
+- Multiple future Sessions may coexist and remain distinguishable by title, number, and optional scheduled date/time.
+- Reset, Archive, and Duplicate actions appear only for states where the existing Session state machine permits them.
 - Each saved active-Thread selection remains Session-scoped evidence. Thread detail may project that row as read-only pin/carry-forward history; Prep does not edit timeline entries or mutate Thread state implicitly.
 - AI prep suggestions are never committed automatically.
 - Ready for Stage produces a readable Stage packet.

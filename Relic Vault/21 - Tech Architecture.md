@@ -38,6 +38,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 
 **Stage airplane-mode recovery patch (July 2026).** Defines the web B2 ready-packet/literal-index cache, adds Start Session, recording consent, and Go Live to the existing FIFO receipt boundary, and makes unexpected reconnect state a durable surfaced conflict rather than a silent overwrite.
 
+**Session Prep parity patch (July 2026).** Web Prep keeps an owner- and hierarchy-scoped local draft until an optimistic `updated_at` autosave succeeds. The shared Home/full editor debounces at 800ms, saves again on blur or Ready, preserves in-flight later typing, and surfaces offline, retryable failure, and stale conflict states without replacing local input. The database accepts Prep writes only for planned/ready Sessions and validates ordered pins inside the exact Saga.
+
 **Stage non-audio recovery patch (July 2026).** Extends the web IndexedDB recovery contract to Quick Capture, Quick Stub, Mark Moment, End Session, and Undo. Replay is session-scoped FIFO, stops on the first failed dependency, reuses stable idempotency keys, and enters Supabase through one scoped transactional RPC backed by a private receipt ledger.
 
 **Post-session transcription delivery patch (July 2026).** Implements the `relic-transcribe` LiteLLM audio call behind the Edge worker, ordered scoped Storage reads, timestamped response validation, idempotent duration metering, service-role-only worker completion/failure boundaries, retry/dead-letter recovery, and scoped session-review/read/retry RPCs. Deterministic local provider mode is test evidence only; the hosted LiteLLM path still requires deployed secrets and a live smoke test.
@@ -1440,6 +1442,8 @@ Web uses IndexedDB for the same short-window queue contract. The queue survives 
 ### 15.8 What about web?
 
 The web Stage uses the same Stage UI but does **not** maintain a SQLite cache. Its B2 short-window IndexedDB snapshot holds one current Ready/live packet and literal index, while the existing IndexedDB write/audio queues preserve local work. This supports an already-open Stage through a full network drop and a route/component reload while the application shell remains available; installable cold boot with no cached web shell remains a mobile/native or later PWA concern. For laptop play in a basement with patchy wifi: the live loop survives, but web does not claim the multi-session durable store planned for mobile.
+
+Web Prepare uses a smaller local-draft contract rather than the Stage intent queue. Each draft key includes authenticated GM, Workspace, World, Saga, and Session identity and stores the edited payload plus the last observed server version. Refresh, route navigation, network loss, and a later app process recover that input. A successful response clears only the exact saved snapshot; if typing continued in flight, the newer local payload stays dirty and schedules the next save. Version mismatch becomes an explicit conflict, never last-write-wins.
 
 This is an intentional platform asymmetry, not a product-surface split. The Stage is clean and focused on both web and mobile; mobile gets deeper offline resilience because table use benefits from it. Web Stage remains first-class for the web-first build and laptop play.
 

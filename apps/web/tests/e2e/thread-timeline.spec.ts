@@ -31,7 +31,7 @@ test("GM completes the deterministic five-Session Thread lifecycle", async ({ pa
   for (let number = 1; number <= 5; number += 1) {
     await page.goto(`${root}/sessions/new`);
     await page.getByLabel("Name").fill(`Session ${number}`);
-    await page.getByLabel("Planned date").fill(`2026-07-${String(number * 3).padStart(2, "0")}`);
+    await page.getByLabel("Scheduled date and time").fill(`2026-07-${String(number * 3).padStart(2, "0")}T19:00`);
     await page.getByRole("button", { name: "Create prep workspace" }).click();
     await page.waitForURL(/\/sessions\/[^/]+\/prep$/);
     sessionUrls.push(page.url());
@@ -62,8 +62,8 @@ test("GM completes the deterministic five-Session Thread lifecycle", async ({ pa
   await expect(page.getByRole("link", { name: characterName })).toBeVisible();
 
   await page.goto(sessionUrls[3]);
-  await page.getByRole("checkbox", { name: threadName }).check();
-  await page.getByRole("button", { name: "Save prep" }).click();
+  await page.getByLabel("Add Thread").selectOption({ label: threadName });
+  await expect(page.getByRole("status")).toContainText("Saved", { timeout: 5_000 });
 
   await page.goto(`${root}/threads`); await page.getByRole("link", { name: threadName, exact: true }).click();
   await page.getByLabel("Session context").selectOption({ label: "Session 5 · Session 5" });

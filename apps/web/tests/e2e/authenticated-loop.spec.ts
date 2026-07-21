@@ -130,7 +130,7 @@ test("new GM can exercise the full manual MVP loop from sign-up through Stage", 
   expect(threadId).toBeTruthy();
   await page.goto(`${sagaRoot}/threads/${threadId}`);
   await expect(page.getByRole("heading", { name: "The sealed letter" })).toBeVisible();
-  await page.getByLabel("Add objective").fill("Recover the sealed letter.");
+  await page.getByLabel("New objective").fill("Recover the sealed letter.");
   await page.getByRole("button", { name: "Add objective" }).click();
   await expect(page.getByText("Recover the sealed letter.")).toBeVisible();
   await page.reload();
@@ -167,25 +167,21 @@ test("new GM can exercise the full manual MVP loop from sign-up through Stage", 
     await page.getByRole("link", { name: "Continue prep" }).first().click();
   }
 
-  await expect(page.getByText("The Stage will read this packet exactly as written here.")).toBeVisible();
+  await expect(page.getByRole("region", { name: "full Session Prep editor" })).toBeVisible();
   await expect(page.getByRole("heading", { name: /Session .*|Next session|Session 1/ })).toBeVisible();
-  await page.getByLabel("Seraphine Vale").check();
-  await page.getByLabel("Moonwell Archive").check();
-  await page.getByLabel("Amber Court").check();
-  await page.getByLabel("Glass Key").check();
-  await page.getByLabel("The sealed letter").check();
+  for (const label of ["Seraphine Vale · character", "Moonwell Archive · place", "Amber Court · faction", "Glass Key · artifact"]) await page.getByLabel("Add pinned record").selectOption({ label });
+  await page.getByLabel("Add Thread").selectOption({ label: "The sealed letter" });
   await page.getByLabel("Objective").fill("Recover the sealed letter before the Amber Court arrives.");
   await page.getByLabel("Opening scene").fill("Rain taps on the archive skylight.");
   await page.getByLabel("Scene notes").fill("Offer a quiet clue, then show the door reacting to the Glass Key.");
-  await page.getByLabel("One item per line").fill("Confirm consent\nSet the archive clock\nPut the Glass Key on the table");
-  await page.getByRole("button", { name: "Save prep" }).click();
-  await expect(page.locator(".cl-text", { hasText: "Put the Glass Key on the table" })).toBeVisible();
+  await page.getByLabel("Prep checklist").fill("Confirm consent\nSet the archive clock\nPut the Glass Key on the table");
+  await expect(page.getByRole("status")).toContainText("Saved", { timeout: 5_000 });
 
   await page.goto(`${sagaRoot}/sessions`);
   await expect(page.locator(".page-title")).toHaveText("Sessions");
   await expect(page.getByText("Recover the sealed letter before the Amber Court arrives.")).toBeVisible();
   await page.locator('a[href$="/prep"]', { hasText: "Prepare" }).first().click();
-  await expect(page.locator(".cl-text", { hasText: "Put the Glass Key on the table" })).toBeVisible();
+  await expect(page.getByLabel("Prep checklist")).toHaveValue(/Put the Glass Key on the table/);
 
   const readyOrOpen = page.getByRole("button", { name: /Ready for Stage|Open in Stage/ });
   await readyOrOpen.click();

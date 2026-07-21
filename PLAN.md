@@ -1,6 +1,6 @@
 # Relic MVP Delivery Plan
 
-**Plan date:** 2026-07-20
+**Plan date:** 2026-07-21
 
 **Status source:** `docs/MVP_GAP_ANALYSIS.md`
 
@@ -37,11 +37,11 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 
 | Priority | Complete | Partial | Missing | Blocked | Needs verification |
 | -------- | --------:| -------:| -------:| -------:| ------------------:|
-| P0       | 9        | 6       | 5       | 2       | 0                  |
+| P0       | 10       | 5       | 5       | 2       | 0                  |
 | P1       | 1        | 4       | 2       | 0       | 1                  |
 | P2       | 0        | 2       | 1       | 0       | 1                  |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup, D2's complete six-type Library lifecycle with explicit relationship/mention acceptance, and D3's scoped Thread/objective lifecycle plus derived read-only timeline. The immediate lane is Packet D4 Prep parity.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup, D2's complete six-type Library lifecycle with explicit relationship/mention acceptance, D3's scoped Thread/objective lifecycle plus derived read-only timeline, and D4's recoverable autosaving Prep parity. The immediate lane is Packet D5 Import Inbox.
 
 ## 3. Quality-gate system
 
@@ -218,12 +218,13 @@ Stop rules:
 - **Done when:** a five-session fixture renders transitions and completed objectives persist timestamps.
 - **Evidence:** Optimistic scoped Thread/detail and objective RPCs now cover title, summary, Active/Loose/Dormant/Failed/Resolved transitions, resolution explanations, objective create/edit/complete/reopen/order, and correct `completed_at` set/clear behavior. Thread detail reuses D2 relationships, displays archived/missing endpoints safely, and derives a source-traceable read-only history from canon audit, Session-active/pinned rows, and Session-linked sources without a timeline table. A deterministic five-Session pgTAP fixture passes 43 focused assertions; all 598 database assertions, 87 web tests, lint, build, scripts, repository verification, responsive authenticated flow, and fresh-app-server persistence proof pass while Stage retains its compact read-only strip and five-action rail.
 
-#### Packet D4 — Prep parity — current
+#### Packet D4 — Prep parity — complete 2026-07-21
 
 - Add autosave, inline-home/full-editor parity, prior-session summary, scheduled-session affordances, actions menu, and archived-pin recovery.
 - **Done when:** multiple future sessions coexist, live prep locks correctly, and failed saves preserve input.
+- **Evidence:** Home and full Prep now share one 800ms/blur autosave editor with owner/scoped local recovery, visible saving/saved/offline/failed/conflict/retry states, optimistic stale-write rejection, scheduled date/time, prior approved-summary fallback, state-valid lifecycle actions, and ordered recoverable entity/Thread pins. Planned and Ready remain editable; every later state is read-only. Ready flushes the latest local edit before transition, and Stage reads the persisted relational packet. Sixteen focused component tests, 31 D4 pgTAP assertions, the 103-test web suite, 629-test database suite, clean replay/lint/build/repository gates, and authenticated four-viewport plus fresh-server restart flows passed with explicit zero-provider and zero-canon-write assertions.
 
-#### Packet D5 — Import Inbox
+#### Packet D5 — Import Inbox — current
 
 - Ship paste and Markdown ingestion first with size/type validation, raw source provenance, review state, and quota/manual fallback.
 - Add `.docx` extraction only after malformed, oversized, and unsupported-file tests are deterministic.
@@ -401,4 +402,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate next packet: **D4 — Prep parity**.
+Immediate next packet: **D5 — Import Inbox**.

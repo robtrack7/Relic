@@ -47,7 +47,7 @@ Do not code directly from this router. Use it to select the correct detailed pla
 
 ## Current immediate packet
 
-The current packet pointer lives in root `PLAN.md`. D3 Thread completion and the derived timeline are complete; the immediate packet is D4 Prep parity. This sequencing note must not retain an older packet as current truth.
+The current packet pointer lives in root `PLAN.md`. D4 recoverable Prep parity is complete; the immediate packet is D5 Import Inbox. This sequencing note must not retain an older packet as current truth.
 
 ## Phase 1 Complete
 

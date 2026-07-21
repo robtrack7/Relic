@@ -30,6 +30,8 @@ This document is optimized for downstream consumption by AI coding agents (vibe-
 
 ## Changelog
 
+**Session Prep parity handoff patch (July 2026).** Ready waits for the shared Prepare editor's latest local change to persist, and Stage hydrates that successfully saved relational packet. Ordered archived/missing pin placeholders remain safe and non-breaking. Stage does not read an unsaved local Prep draft and does not invoke Prep AI.
+
 **Web airplane-mode recovery patch (July 2026).** Defines the B2 Ready packet and literal-index cache, routes Start Session, recording consent, and Go Live through the durable FIFO boundary, and adds a non-blocking reconnect-conflict count/detail surface with no silent lifecycle overwrite.
 
 **Web non-audio recovery patch (July 2026).** Quick Capture, Quick Stub, Mark Moment, End Session, and Undo now share the web Stage's explicit `queued`, `uploading`, `failed`, and `recovered` recovery language. IndexedDB intent replay is FIFO and End Session cannot pass earlier evidence writes. This B1 checkpoint supplied the durable-write foundation completed by the B2 cache and airplane-mode patch above.
@@ -74,7 +76,7 @@ Relic has **two user-facing surfaces**:
 | **Sanctum** | Workspace/World/Saga home, entity management, Threads, Review, Relic Guide, and Prepare workspace | Web first, mobile follows |
 | **Stage** | Live session support: agenda, pinned cards, search, Relic Guide, capture, record, dice, end session | Web first, mobile follows |
 
-**Prepare** is a Sanctum workspace, not a separate product surface. The GM opens a session from Sanctum, edits the packet in Prepare, taps **Ready for Stage**, then opens Stage. Stage can preview a `ready` or `started` packet without locking prep. Prep locks only when the session reaches `in_progress`.
+**Prepare** is a Sanctum workspace, not a separate product surface. The GM opens a session from Sanctum, edits the packet in Prepare, taps **Ready for Stage**, then opens Stage. Stage can preview a `ready` packet without locking prep. Prep becomes read-only when the live-session lifecycle reaches `started`.
 
 **Stage access** is contextual. Stage is not a default left-rail destination; it opens from Prepare, current session pill, Home next-action cards, notification/deep link, app/crash resume, or the bright `Return to Stage` affordance shown in Sanctum while a session is live.
 
@@ -147,14 +149,14 @@ The Stage operates against these `sessions.status` values:
 |---|---|---:|---|
 | `planned` | Session created in Prepare | Yes | Not openable from Stage. |
 | `ready` | GM taps `Ready for Stage` in prep | Yes | Openable. Stage previews agenda + pinned cards. No recording. |
-| `started` | GM confirms `Start Session` in Stage | Yes | Active shell; consent gate available. GM may still return to prep. |
+| `started` | GM confirms `Start Session` in Stage | No | Active shell; consent gate available. Prep is read-only once live-session lifecycle begins. |
 | `in_progress` | First recording starts, or GM explicitly starts without recording | No | Live session state. Prep workspace read-only. |
 | `ended_pending_undo` | GM taps End Session and confirms | No | Stage shows 60s undo banner. Prep workspace remains read-only. |
 | `ended` | 60s undo expires | Retrospective only | Pipeline enqueues. Stage exits to dashboard/home. |
 
 **Schema contract:** Schema v0.8 tracks `started_at`, `went_live_at`, `ended_pending_undo_at`, `ended_at`, `sessions.status`, and computed prep-lock state for status in {`in_progress`, `ended_pending_undo`}.
 
-**Key design point:** the Prepare → Stage transition is **not** lockingly one-way. The GM can open Stage for preview, return to prep, edit, and re-open Stage. The lock fires on `in_progress` only. When the GM leaves Stage during `started`, `in_progress`, or `ended_pending_undo`, Sanctum shows a bright `Return to Stage` affordance near the top-right controls.
+**Key design point:** the Prepare → Ready transition is not lockingly one-way. The GM can open a Ready packet in Stage for preview, return to prep, edit, and re-open it. Once the GM starts the live-session lifecycle (`started` or later), Prep is read-only. When the GM leaves Stage during `started`, `in_progress`, or `ended_pending_undo`, Sanctum shows a bright `Return to Stage` affordance near the top-right controls.
 
 ---
 

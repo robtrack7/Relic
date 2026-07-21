@@ -484,10 +484,10 @@ Stub creation surfaces:
 |---|---|---:|---|
 | `planned` | Session created in prep workspace | Yes | Not openable from Stage. |
 | `ready` | GM taps "Ready for Stage" | Yes | Preview agenda + pinned cards; no recording. |
-| `started` | GM taps "Start session" in Stage | Yes | Active shell; consent gate available. |
+| `started` | GM taps "Start session" in Stage | No | Active shell; consent gate available; Prep is read-only. |
 | `in_progress` | Consent + first record tap, or "Start without recording" | No | Live play; recording/capture/search available. |
 | `ended_pending_undo` | GM ends session; 60s undo window | No | Undo banner; notifications suppressed. |
-| `ended` | Undo window expires | Yes, retrospective only | Pipeline enqueues; Stage exits. |
+| `ended` | Undo window expires | No | Pipeline enqueues; Stage exits; retrospective notes use Review rather than Prep. |
 
 **Requirements.** `STG-FR-1` through `STG-FR-23` unchanged from v0.8.
 

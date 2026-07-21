@@ -273,7 +273,7 @@ export function PrepareWorkspaceDraft({
 
           {/* Ready for Stage CTA */}
           <div className="prep-cta">
-            <form action={readyForStageAction} style={{ flex: 1 }}>
+            <form action={async (formData) => { "use server"; await readyForStageAction(formData); }} style={{ flex: 1 }}>
               <HiddenContextFields params={params} />
               <input type="hidden" name="sessionId" value={session.id} />
               <button className="cta-stage" type="submit" disabled={locked} style={{ width: "100%" }}>

@@ -1,6 +1,6 @@
 import { SanctumDashboardDraft } from "@/components/relic-draft/SanctumDashboardDraft";
 import { SanctumShell } from "@/components/SanctumShell";
-import { getEntityList, getPendingDrafts, getRecentEntities, getSessions, requireSagaContext } from "@/lib/data";
+import { getEntityList, getPendingDrafts, getRecentEntities, getSessionPrep, getSessions, requireSagaContext } from "@/lib/data";
 import type { IdParams } from "@/lib/types";
 
 export default async function SagaHomePage({ params }: { params: Promise<IdParams> }) {
@@ -13,6 +13,8 @@ export default async function SagaHomePage({ params }: { params: Promise<IdParam
     getPendingDrafts(ids)
   ]);
   const activeSession = sessions.find((session) => ["planned", "ready", "started", "in_progress", "ended_pending_undo"].includes(session.status));
+  const futureSessions = sessions.filter((session) => ["planned", "ready"].includes(session.status));
+  const prep = activeSession && ["planned", "ready"].includes(activeSession.status) ? await getSessionPrep(ids, activeSession.id) : null;
   const reviewCount = drafts.filter((draft) => draft.state === "pending").length;
 
   return (
@@ -29,6 +31,8 @@ export default async function SagaHomePage({ params }: { params: Promise<IdParam
         params={ids}
         saga={saga}
         activeSession={activeSession ?? null}
+        prep={prep}
+        futureSessions={futureSessions}
         threads={threads}
         recentEntities={recentEntities}
         reviewCount={reviewCount}

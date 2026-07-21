@@ -32,6 +32,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 
 **Approval Queue trust completion patch (July 2026).** Adds a route-scoped field-diff/read boundary, persisted GM edit payloads, exact-retry approval receipts, target-row locking, source-health and optimistic-version rechecks, and transactional create/update/archive/next-prep commits. Successful approval alone writes canon plus one provenance-rich `canon_audit`; reject, merge identity decisions, preview/edit, conflicts, and failed attempts write no canon/audit. Merge copies source and run/batch provenance into a separately approvable update draft.
 
+**Session Prep parity patch (July 2026).** Adds optional `planned_start_at`, Session archival/duplication provenance, ordered active-Thread pins, optimistic `updated_at` Prep writes, and private action receipts. Prep mutations are working-state writes, accept only same-Saga targets, preserve unresolved existing pins for explicit GM recovery, and create no canon/audit/source rows or provider work.
+
 **Citation context and drift UI patch (July 2026).** Makes the draft the browser authorization root for source inspection. `get_draft_source_context` validates the exact Workspace/World/Saga/draft/source/transcript chain and returns only display-safe evidence and authorized Session navigation. The lower-level transcript helper is internal-only; missing, broken, denied, deleted, and unsupported records never expose source or transcript identifiers.
 
 **Source-aware synthesis writer patch (July 2026).** Adds draft batch/run/provider/Session provenance and locks `synthesize_session` persistence to one atomic, idempotent pending batch whose citations all belong to the exact evidence Session. The writer creates no canon, audit, embedding, or canonical summary row.
@@ -416,6 +418,7 @@ Sessions diverge more from the shared shape.
 | `id`, `saga_id`, `name`, `summary`, `narrative`, `gm_notes`, `tags`, `canon_state`, `is_stub`, `created_by`, timestamps, `search_tsv` | (shared) | |
 | `session_number` | int not null | Unique `(saga_id, session_number)` |
 | `planned_date` | date | |
+| `planned_start_at` | timestamptz | Optional scheduled date/time used to distinguish future Sessions; `planned_date` remains the compatibility date. |
 | `started_at` | timestamptz | Set when status flips to `started` |
 | `went_live_at` | timestamptz | Set when status flips to `in_progress` |
 | `ended_pending_undo_at` | timestamptz | Set when status flips to `ended_pending_undo` |
@@ -426,6 +429,8 @@ Sessions diverge more from the shared shape.
 | `scene_notes` | text | |
 | `prep_checklist` | jsonb default `'[]'` | `[{id, text, done}]` |
 | `packet_locked_at` | timestamptz | Informational; GMs can still edit |
+| `archived_at` | timestamptz | Soft-hides a planned/ready Session from active future-session reads. |
+| `duplicated_from_session_id` | uuid → sessions.id on delete set null | Provenance for an explicit Duplicate as new planned action. |
 | `consent_state` | text default `'unset'` | `'unset' \| 'granted' \| 'denied'` |
 | `audio_chunk_count_expected` | int nullable | Total immutable chunks declared by the client when recording ends; transcription waits until this count is registered. |
 | `recording_finalized_at` | timestamptz nullable | Set by the idempotent audio-upload finalization RPC after the expected count is durably known. |
@@ -514,7 +519,7 @@ ended_pending_undo ──60s elapsed──▶ ended
   · transcription begins
 ```
 
-Session prep remains editable in `planned`, `ready`, and `started`. It is read-only in `in_progress` and `ended_pending_undo`. After `ended`, session prep workspace is editable only for retrospective notes and future-session prep.
+Session prep remains editable only in `planned` and `ready`. It is read-only in `started`, `in_progress`, `ended_pending_undo`, and `ended`; retrospective evidence belongs to Review, and future-session prep belongs to a separate planned Session.
 
 The 60s flip is server-enforced (Edge Function or scheduled job), not client-only.
 

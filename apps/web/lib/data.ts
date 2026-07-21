@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { entityConfigs } from "@/lib/entities";
 import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
-import type { AppContext, EntitySummary, EntityType, HierarchyContext, IdParams, LibraryRecordDetail, SearchResult, StageLiteralSearchDocument, ThreadDetail, ThreadObjective, ThreadTimelineEntry } from "@/lib/types";
+import type { AppContext, EntitySummary, EntityType, HierarchyContext, IdParams, LibraryRecordDetail, SearchResult, SessionPrepData, SessionPrepPin, StageLiteralSearchDocument, ThreadDetail, ThreadObjective, ThreadTimelineEntry } from "@/lib/types";
 
 type WorkspaceContext = { id: string; name: string; usage_limits?: Record<string, unknown>; hierarchy?: HierarchyContext };
 type WorldContext = { id: string; name: string; summary?: string | null; default_game_system?: string | null };
@@ -20,6 +20,8 @@ export type SessionRow = {
   name: string;
   session_number?: number | null;
   planned_date?: string | null;
+  planned_start_at?: string | null;
+  archived_at?: string | null;
   summary?: string | null;
   status: string;
   objective?: string | null;
@@ -274,6 +276,31 @@ export async function getSession(params: IdParams, sessionId: string) {
   return sessions.find((session) => session.id === sessionId) ?? null;
 }
 
+function optionPin(entity: EntitySummary, order_index: number): SessionPrepPin {
+  return {
+    key: `${entity.entityType}:${entity.id}`,
+    entity_type: entity.entityType,
+    entity_id: entity.id,
+    name: entity.name,
+    state: entity.canon_state === "archived" ? "archived" : "available",
+    order_index,
+    summary: entity.summary,
+    objectives_log: entity.objectives_log,
+    resolution_state: entity.resolution_state
+  };
+}
+
+export async function getSessionPrep(params: IdParams, sessionId: string): Promise<SessionPrepData> {
+  const { supabase } = await requireSagaContext(params);
+  const [{ data, error }, options] = await Promise.all([
+    supabase.rpc("get_session_prep", { workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, session_id: sessionId }),
+    getPrepOptions(params),
+  ]);
+  if (error) throw new Error(error.message);
+  const raw = data as Omit<SessionPrepData, "options">;
+  return { ...raw, options: { entities: options.entities.map(optionPin), threads: options.threads.map(optionPin) } };
+}
+
 export async function getStagePacket(params: IdParams, sessionId: string): Promise<StagePacket> {
   const { supabase } = await requireSagaContext(params);
   const { data, error } = await supabase.rpc("get_stage_packet", {
@@ -301,52 +328,37 @@ export async function getSessionReview(params: IdParams, sessionId: string): Pro
 }
 
 export async function getPrepOptions(params: IdParams) {
-  const [characters, places, factions, artifacts, threads] = await Promise.all([
-    getEntityList(params, "character"),
-    getEntityList(params, "place"),
-    getEntityList(params, "faction"),
-    getEntityList(params, "artifact"),
-    getEntityList(params, "thread")
+  const [characters, places, factions, artifacts, notes, threads] = await Promise.all([
+    getEntityList(params, "character", true),
+    getEntityList(params, "place", true),
+    getEntityList(params, "faction", true),
+    getEntityList(params, "artifact", true),
+    getEntityList(params, "note", true),
+    getEntityList(params, "thread", true)
   ]);
 
   return {
-    entities: [...characters, ...places, ...factions, ...artifacts],
+    entities: [...characters, ...places, ...factions, ...artifacts, ...notes],
     threads
   };
 }
 
 export async function getPinnedEntities(params: IdParams, sessionId: string) {
-  const { supabase } = await requireSagaContext(params);
-  const { data, error } = await supabase.rpc("get_session_pinned_entities", {
-    workspace_id: params.workspaceId,
-    world_id: params.worldId,
-    saga_id: params.sagaId,
-    session_id: sessionId
-  });
-  if (error) {
-    throw new Error(error.message);
-  }
-  const all = await getPrepOptions(params);
-  const entities = all.entities;
-  return ((data ?? []) as PinRow[]).map((pin) => ({
-    pin,
-    entity: entities.find((entity) => entity.entityType === pin.entity_type && entity.id === pin.entity_id)
-  })).filter((item) => item.entity);
+  const prep = await getSessionPrep(params, sessionId);
+  return prep.pinned_entities.map((pin) => ({
+    pin: { entity_type: pin.entity_type, entity_id: pin.entity_id, order_index: pin.order_index } as PinRow,
+    entity: prep.options.entities.find((entity) => entity.key === pin.key)
+      ? (() => { const found = prep.options.entities.find((entity) => entity.key === pin.key)!; return { id: found.entity_id, entityType: found.entity_type, workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, scope: "saga" as const, name: found.name, summary: found.summary ?? null, canon_state: found.state === "archived" ? "archived" as const : "canon" as const }; })()
+      : { id: pin.entity_id, entityType: pin.entity_type, workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, scope: "saga" as const, name: pin.name, summary: `${pin.state} pinned record`, canon_state: pin.state === "archived" ? "archived" as const : "canon" as const }
+  }));
 }
 
 export async function getActiveThreads(params: IdParams, sessionId: string) {
-  const { supabase } = await requireSagaContext(params);
-  const { data, error } = await supabase.rpc("get_session_active_threads", {
-    workspace_id: params.workspaceId,
-    world_id: params.worldId,
-    saga_id: params.sagaId,
-    session_id: sessionId
+  const prep = await getSessionPrep(params, sessionId);
+  return prep.active_threads.map((pin) => {
+    const found = prep.options.threads.find((thread) => thread.key === pin.key);
+    return { id: pin.entity_id, entityType: "thread" as const, workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, scope: "saga" as const, name: found?.name ?? pin.name, summary: found?.summary ?? (pin.state === "available" ? null : `${pin.state} pinned Thread`), objectives_log: found?.objectives_log ?? [], resolution_state: found?.resolution_state, canon_state: (found?.state ?? pin.state) === "archived" ? "archived" as const : "canon" as const };
   });
-  if (error) {
-    throw new Error(error.message);
-  }
-  const threads = await getEntityList(params, "thread");
-  return ((data ?? []) as ActiveThreadRow[]).map((row) => threads.find((thread) => thread.id === row.thread_id)).filter(Boolean);
 }
 
 export async function getPendingDrafts(params: IdParams, sessionId?: string) {

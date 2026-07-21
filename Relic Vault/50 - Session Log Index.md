@@ -72,3 +72,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-07-21 - Hierarchy Switching and Saga Lifecycle]]
 - [[Session Logs/2026-07-21 - Library Lifecycle and Relationships]]
 - [[Session Logs/2026-07-21 - Thread Objectives and Derived Timeline]]
+- [[Session Logs/2026-07-21 - Session Prep Parity]]

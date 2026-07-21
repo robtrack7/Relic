@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 
 ## Changelog
 
+**Session Prep parity patch (July 2026).** The planned/ready Home workspace and full Prepare route share one functional editor: visible recoverable autosave, scheduling, prior-session context, ordered pin recovery, state-valid actions, and latest-write Ready transition. Multiple future Sessions remain selectable and distinguishable. Started/live/ending/ended Prep is read-only, and manual Prep makes no provider call or automatic canon mutation.
+
 **Citation context and drift patch (July 2026).** Session Review and Approval Queue now expose every synthesis citation as a keyboard-operable evidence disclosure, with timestamped transcript anchors, frozen/current/deleted drift context, untimestamped manual evidence, and safe non-identifying fallback states.
 
 **Manual Session evidence patch (July 2026).** Session Review now accepts pasted notes and a GM manual summary as explicit evidence inputs, preserves unsaved text locally through refresh/save failure, and shows saved immutable sources separately from the editable local forms. Saving evidence does not start synthesis or create canon.
@@ -87,7 +89,7 @@ The Sanctum is the home base for the active World and Saga. Session prep lives h
 1. **Literary, modern, relaxing.** Parchment surface, generous whitespace, Cormorant for names, Instrument Sans for UI.
 2. **The GM is the author.** AI is available on demand across creative and editorial domains. AI never writes to canon without GM approval.
 3. **Reach in two clicks.** Global search from any screen. Every active-Saga entity reachable in ≤2 clicks from the dashboard; relevant World canon is one filter away.
-4. **Autosave with visible state.** No Save button. The GM types, the database settles.
+4. **Autosave with visible state.** No Save button. The GM types, the database settles, and owner/scoped local input survives refresh, navigation, failure, conflict, and app restart until the exact version saves.
 
 **v0.2 addition — AI invocation rule:** AI is GM-controlled. Relic Guide is always available as a collapsible sidecar/sheet, and many explicit AI buttons exist. None push themselves or mutate canon autonomously. This applies equally to scene beat brainstorming, NPC drafting, session summarization, Guide answers, and Guide create/edit actions.
 

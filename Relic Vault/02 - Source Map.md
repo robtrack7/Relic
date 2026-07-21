@@ -20,15 +20,15 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[11 - Product Basepoint]] | Product north star, scope, naming, exclusions | Primary |
 | [[12 - MVP PRD]] | P0 requirements and acceptance framing | Primary |
 | [[13 - Design System]] | v0.4 web UI tokens, typography, palette, app shell, Loom carriage, component feel; wrapper for [[14 - Design System Source.html]] | Primary design |
-| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, hierarchy/Saga lifecycle and staged delete cascade, Stage evidence markers, exactly-once write receipts, conflict outcomes, manual Session evidence provenance, source-aware synthesis batch identity, draft-scoped citation context, C5 approval receipts/commit invariants, and D3 optimistic Thread/objective plus derived-timeline evidence contracts | Implementation |
-| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, hierarchy navigation/lifecycle RPCs, real Storage-before-database Saga cleanup, Stage packet/audio/write recovery, provider-backed transcription/retry, manual evidence intake, atomic synthesis output persistence, citation context/drift reads, approval read/edit/rebase/commit boundaries, deployment, monitoring | Implementation |
+| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, hierarchy/Saga lifecycle and staged delete cascade, Stage evidence markers, exactly-once write receipts, conflict outcomes, manual Session evidence provenance, source-aware synthesis batch identity, draft-scoped citation context, C5 approval receipts/commit invariants, D3 optimistic Thread/objective projections, and D4 scheduled/ordered/recoverable Prep contracts | Implementation |
+| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, hierarchy navigation/lifecycle RPCs, real Storage-before-database Saga cleanup, Stage packet/audio/write recovery, recoverable optimistic web Prep autosave, provider-backed transcription/retry, manual evidence intake, atomic synthesis output persistence, citation context/drift reads, approval read/edit/rebase/commit boundaries, deployment, monitoring | Implementation |
 | [[22 - Memory and Retrieval]] | Embeddings, retrieval, task profiles, context assembly | Implementation |
 | [[23 - AI Task Registry]] | Standalone MVP AI task contracts, task routing, prompt versions, validation, source-aware synthesis artifacts, and draft/canon behavior | Implementation |
 | [[24 - Approval Queue]] | Approval UX, field diffs, source citation/context, safe drift/conflict states, explicit one/selected/all-compatible actions, and canon/audit commit behavior | Implementation |
 | [[25 - Pricing and Rate Limits]] | Caps, metering, quota preflight, hard stops | Implementation |
-| [[30 - Sanctum UX Flow]] | Sanctum IA, dashboard, D3 Thread/objective/Failed grouping and read-only evidence timeline, Relic Guide, post-session transcript review/retry/manual evidence and citation navigation, settings | UX |
-| [[31 - Session Prep Flow]] | Session prep workspace and Ready for Stage handoff | UX |
-| [[32 - Stage UX Flow]] | Live-session Stage behavior | UX |
+| [[30 - Sanctum UX Flow]] | Sanctum IA, dashboard, shared inline/full Prep parity, D3 Thread/objective/Failed grouping and read-only evidence timeline, Relic Guide, post-session transcript review/retry/manual evidence and citation navigation, settings | UX |
+| [[31 - Session Prep Flow]] | Recoverable autosaving Session prep workspace, scheduling, actions, ordered pins, and latest-write Ready for Stage handoff | UX |
+| [[32 - Stage UX Flow]] | Live-session Stage behavior and latest-persisted Prep packet consumption | UX |
 | [[33 - First Run UX Flow]] | First-run, new saga, GM profile, Session 1 handoff | UX |
 | [[34 - UI Implementation Spec]] | Routes, shells, three-dropdown hierarchy switching, Saga lifecycle settings, components, build order | UI implementation |
 | [[35 - Web Design Wireframe]] | Authenticated web app wireframe and first-pass design-system application | UI planning |

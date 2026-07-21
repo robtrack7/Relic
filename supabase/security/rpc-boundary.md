@@ -39,6 +39,9 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `append_thread_objective(...)` | Update a Thread objective through a scoped path. |
 | `create_session(...)` | Create a Session through a scoped path. |
 | `update_session_prep(...)` | Update prep fields, pins, and active threads through scoped validation. |
+| `autosave_session_prep(...)` | Optimistically autosave scheduled Prep fields and ordered resilient pins without stale overwrite. |
+| `get_session_prep(...)` | Read the scoped Prep packet, prior summary state, and available/archived/missing pin treatment. |
+| `mutate_session_prep(...)` | Idempotently reset, duplicate, or archive Prep only in state-valid Sessions. |
 | `set_session_status(...)` | Update Session status through a scoped path. |
 | `quick_capture(...)` | Add a Stage quick-capture note. |
 | `quick_stub(...)` | Add a Stage quick-stub entity. |
