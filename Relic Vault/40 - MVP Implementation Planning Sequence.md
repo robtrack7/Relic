@@ -9,7 +9,7 @@ depends_on:
   - "[[23 - AI Task Registry]]"
   - "[[22 - Memory and Retrieval]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-07-20
 source_file: "Relic Vault/40 - MVP Implementation Planning Sequence.md"
 ---
 
@@ -17,18 +17,37 @@ source_file: "Relic Vault/40 - MVP Implementation Planning Sequence.md"
 
 This note is the Codex planning router after the AI Task Registry v1.0 standalone rewrite. It does not replace the active specs; it orders implementation planning so Codex does not plan AI wiring before the shared foundations are stable.
 
+## July 2026 delivery update
+
+Foundation and the first manual web spine are now implemented far enough that the older Foundation → manual UI → AI-only sequence is no longer an executable status plan. Use `PLAN.md` as the current small-packet delivery checklist and `docs/MVP_GAP_ANALYSIS.md` as the evidence/status ledger. This note remains the canonical routing authority; detailed product behavior still belongs to the owning active specs.
+
+Current delivery lanes are ordered as follows:
+
+1. Stable Stage interactions and complete offline recovery.
+2. Post-session manual evidence, synthesis, source-aware drafts, and Approval Queue trust UI.
+3. Remaining manual web lifecycle gaps.
+4. Embedding/provider delivery and GM-invoked AI experiences.
+5. Settings, export, notifications, accessibility, observability, and complete regression coverage.
+6. Explicit mobile release decision, then native parity if it remains an MVP gate.
+
+Every work packet must pass two checkpoints: focused contract/recovery tests first, then the integrated user workflow. Every phase closes with a clean migration replay, full relevant suites, production build, browser/device verification, gap-analysis evidence, and a scoped commit. A red P0 regression blocks the next packet.
+
 ## Readiness Gate
 
-Relic is conditionally ready for implementation planning. The next plans must be executed in this order:
+Relic is ready for incremental MVP delivery against the current gap audit. Historical detailed plans remain useful inputs:
 
 1. [[44 - Repo Bootstrap and GitHub Setup Plan]]
 2. [[41 - Foundation Implementation Plan]]
 3. [[42 - UI Manual Flow Implementation Plan]]
 4. [[43 - AI Runtime Implementation Plan]]
 
-Before additional UI expansion, use [[46 - Backend Audit and Module Plan]] to confirm which backend modules are complete enough for UI testing.
+For current execution, read `docs/MVP_GAP_ANALYSIS.md`, then `PLAN.md`, then the owning active spec/detailed plan for the selected packet. Before provider or backend expansion, use [[46 - Backend Audit and Module Plan]] to distinguish implemented contracts from delivered workers/providers.
 
 Do not code directly from this router. Use it to select the correct detailed plan and then read the owning active specs.
+
+## Current immediate packet
+
+The next packet is Stage dialog focus and typing reliability. It stabilizes the one-second Stage clock/focus interaction and locks Note, Dice, Create, and End behavior with timer-driven component tests before broader Stage or synthesis work proceeds.
 
 ## Phase 1 Complete
 

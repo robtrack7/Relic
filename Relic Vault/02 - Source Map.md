@@ -32,7 +32,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[33 - First Run UX Flow]] | First-run, new saga, GM profile, Session 1 handoff | UX |
 | [[34 - UI Implementation Spec]] | Routes, shells, components, build order | UI implementation |
 | [[35 - Web Design Wireframe]] | Authenticated web app wireframe and first-pass design-system application | UI planning |
-| [[40 - MVP Implementation Planning Sequence]] | Codex implementation planning order and validation gates | Planning |
+| [[40 - MVP Implementation Planning Sequence]] | Current MVP delivery router, small-packet order, double checkpoints, and release gates | Planning |
 | [[44 - Repo Bootstrap and GitHub Setup Plan]] | Repository structure, GitHub setup, and bootstrap guardrails before foundation work | Planning |
 | [[41 - Foundation Implementation Plan]] | Non-AI technical foundation planning | Planning |
 | [[42 - UI Manual Flow Implementation Plan]] | Manual loop UI planning before AI wiring | Planning |

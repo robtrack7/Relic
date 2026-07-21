@@ -38,6 +38,7 @@ AI task surfaces still require implementation-plan review before coding, but the
 
 ## Current UI Planning Addendum
 
+- [[40 - MVP Implementation Planning Sequence]] now routes current work through the root `PLAN.md` small-packet delivery plan and `docs/MVP_GAP_ANALYSIS.md` evidence ledger. Each packet requires focused/recovery tests plus an integrated workflow checkpoint; each phase requires a clean migration replay and full milestone regression before the next lane opens.
 - [[35 - Web Design Wireframe]] records the authenticated web-app design structure for the first design-system implementation pass.
 - The refined Claude Design package `Relic Design System (web) v0.4` was imported into [[14 - Design System Source.html]] on 2026-06-02. [[13 - Design System]] and active UX specs remain canonical.
 - v0.4 names Verdigris `#2F6B6E` as the active/synced/success token. Older active notes may have used Sage for this role; current design and implementation should use Verdigris terminology.
