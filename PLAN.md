@@ -37,11 +37,11 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 
 | Priority | Complete | Partial | Missing | Blocked | Needs verification |
 | -------- | --------:| -------:| -------:| -------:| ------------------:|
-| P0       | 8        | 7       | 5       | 2       | 0                  |
+| P0       | 9        | 6       | 5       | 2       | 0                  |
 | P1       | 1        | 4       | 2       | 0       | 1                  |
 | P2       | 0        | 2       | 1       | 0       | 1                  |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup, and D2's complete six-type Library lifecycle with explicit relationship/mention acceptance. The immediate lane is Packet D3 Thread completion.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup, D2's complete six-type Library lifecycle with explicit relationship/mention acceptance, and D3's scoped Thread/objective lifecycle plus derived read-only timeline. The immediate lane is Packet D4 Prep parity.
 
 ## 3. Quality-gate system
 
@@ -205,19 +205,20 @@ Stop rules:
 - **Done when:** create/reuse/switch/rename/delete works without leaking or orphaning sibling data.
 - **Evidence:** The Sanctum now uses three separate Workspace, World, and Saga dropdowns backed by owner-filtered landing targets; live/ending Sessions disable switching. New saga preserves the selected Workspace/World, Saga Settings exposes scoped rename plus exact-name delete, and the delete RPC blocks live/ending Sessions, immediately hides the Saga, and enqueues one idempotent cleanup job. The service-only worker now has a callable claim boundary, enumerates the exact Saga prefix across `audio`, `attachments`, and `exports`, removes real objects through the Storage API in 1,000-object batches, and only then hard-deletes Saga database rows. Focused pgTAP, component/action, worker unit/source tests, authenticated create/reuse/switch/rename/delete browser proof, and a real local Storage→worker→database smoke all passed with sibling data preserved.
 
-#### Packet D2 — Library lifecycle and relationships
+#### Packet D2 — Library lifecycle and relationships — complete 2026-07-21
 
 - Add visible autosave, restore, two-confirmation hard delete where allowed, source dock, relationships, mentions, and backlinks.
 - Keep mention/link acceptance explicitly GM-driven.
 - **Done when:** all six record types pass create/edit/archive/restore/link/source acceptance.
 - **Evidence:** Character, Place, Faction, Artifact, Thread, and Note now share an 800ms/blur autosave editor with visible saving/conflict states, source/provenance dock, archive/restore, relationship or Note-attachment editing, exact-name mention suggestions, explicit accept/dismiss, and accepted backlinks. Hard delete requires an archived record, a confirmation checkbox, its exact typed name, and zero live relationship, accepted/suggested mention, note-attachment, Session-pin/active-Thread, or pending-draft references. Sources and canon audit remain as tombstones while derived embeddings are removed. Focused pgTAP, component/action tests, and an authenticated create/edit/reload/link/archive/block/restore/delete browser flow pass without sibling-scope access.
 
-#### Packet D3 — Threads and timeline
+#### Packet D3 — Threads and timeline — complete 2026-07-21
 
 - Add objective edit/toggle, resolution editor, related entities, pin history, failed group, and derived read-only timeline.
 - **Done when:** a five-session fixture renders transitions and completed objectives persist timestamps.
+- **Evidence:** Optimistic scoped Thread/detail and objective RPCs now cover title, summary, Active/Loose/Dormant/Failed/Resolved transitions, resolution explanations, objective create/edit/complete/reopen/order, and correct `completed_at` set/clear behavior. Thread detail reuses D2 relationships, displays archived/missing endpoints safely, and derives a source-traceable read-only history from canon audit, Session-active/pinned rows, and Session-linked sources without a timeline table. A deterministic five-Session pgTAP fixture passes 43 focused assertions; all 598 database assertions, 87 web tests, lint, build, scripts, repository verification, responsive authenticated flow, and fresh-app-server persistence proof pass while Stage retains its compact read-only strip and five-action rail.
 
-#### Packet D4 — Prep parity
+#### Packet D4 — Prep parity — current
 
 - Add autosave, inline-home/full-editor parity, prior-session summary, scheduled-session affordances, actions menu, and archived-pin recovery.
 - **Done when:** multiple future sessions coexist, live prep locks correctly, and failed saves preserve input.
@@ -400,4 +401,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate next packet: **D3 — Thread completion and derived timeline**.
+Immediate next packet: **D4 — Prep parity**.

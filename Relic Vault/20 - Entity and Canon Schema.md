@@ -401,8 +401,11 @@ History reconstructable from `canon_audit`. No `artifact_provenance` table in MV
 + objective            text
 + objectives_log       jsonb default '[]'        -- [{id, text, state, completed_at, source_id}]
 + resolution_state     text default 'active'     -- 'active' | 'dormant' | 'resolved' | 'failed'
++ resolution_details   text                      -- Required explanation when resolved or failed
 + is_loose_thread      boolean default false     -- Set by post-session synthesis; clears on approved resolution_state flip
 ```
+
+**Thread lifecycle implementation patch (July 2026).** Objective entries have stable IDs, explicit `order_index`, `state='open'|'completed'`, and nullable `completed_at`. Completion sets `completed_at`; reopening clears it. Thread title, summary, visible state (`active`, `loose`, `dormant`, `failed`, `resolved`), resolution explanation, and objective mutations use Saga-scoped optimistic writes. Each explicit GM mutation writes a manual source plus `canon_audit` operation, optionally linked to a validated Session. The MVP timeline is derived from this audit/source evidence plus `session_active_threads` and Thread rows in `session_pinned_entities`; there is no timeline-event table or writable timeline path.
 
 ### 3.7 `sessions`
 

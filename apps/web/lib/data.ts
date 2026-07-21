@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { entityConfigs } from "@/lib/entities";
 import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
-import type { AppContext, EntitySummary, EntityType, HierarchyContext, IdParams, LibraryRecordDetail, SearchResult, StageLiteralSearchDocument } from "@/lib/types";
+import type { AppContext, EntitySummary, EntityType, HierarchyContext, IdParams, LibraryRecordDetail, SearchResult, StageLiteralSearchDocument, ThreadDetail, ThreadObjective, ThreadTimelineEntry } from "@/lib/types";
 
 type WorkspaceContext = { id: string; name: string; usage_limits?: Record<string, unknown>; hierarchy?: HierarchyContext };
 type WorldContext = { id: string; name: string; summary?: string | null; default_game_system?: string | null };
@@ -197,6 +197,34 @@ export async function getEntityList(params: IdParams, type: EntityType, includeA
 export async function getEntity(params: IdParams, type: EntityType, id: string) {
   const rows = await getEntityList(params, type, true);
   return rows.find((row) => row.id === id) ?? null;
+}
+
+export async function getThreadDetail(params: IdParams, threadId: string): Promise<ThreadDetail | null> {
+  const { supabase } = await requireSagaContext(params);
+  const { data, error } = await supabase.rpc("get_thread_detail", {
+    workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, thread_id: threadId,
+  });
+  if (error) {
+    if (error.code === "42501") return null;
+    throw new Error(error.message);
+  }
+  if (!data || typeof data !== "object" || !("record" in data)) return null;
+  const raw = data as unknown as ThreadDetail & { record: Record<string, unknown> };
+  const record = normalizeEntityRow(raw.record, "thread") as ThreadDetail["record"];
+  record.resolution_state = ["dormant", "resolved", "failed"].includes(String(raw.record.resolution_state))
+    ? raw.record.resolution_state as ThreadDetail["record"]["resolution_state"] : "active";
+  record.resolution_details = typeof raw.record.resolution_details === "string" ? raw.record.resolution_details : null;
+  record.objectives_log = normalizeObjectives(raw.record.objectives_log);
+  return { ...raw, record };
+}
+
+export async function getThreadTimeline(params: IdParams, threadId: string): Promise<ThreadTimelineEntry[]> {
+  const { supabase } = await requireSagaContext(params);
+  const { data, error } = await supabase.rpc("get_thread_timeline", {
+    workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, thread_id: threadId,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as ThreadTimelineEntry[];
 }
 
 export async function getLibraryRecordDetail(params: IdParams, type: EntityType, id: string): Promise<LibraryRecordDetail | null> {
@@ -458,14 +486,32 @@ export function normalizeEntityRow(row: Record<string, unknown>, type: EntityTyp
     is_stub: Boolean(row.is_stub),
     status: type === "thread" ? threadStatus(row) : row.status as string | undefined,
     objectives_log: Array.isArray(row.objectives_log) ? row.objectives_log : undefined,
+    resolution_state: type === "thread" && ["active", "dormant", "resolved", "failed"].includes(String(row.resolution_state)) ? row.resolution_state as EntitySummary["resolution_state"] : undefined,
+    resolution_details: type === "thread" && typeof row.resolution_details === "string" ? row.resolution_details : null,
     updated_at: row.updated_at as string | undefined
   };
 }
 
 function threadStatus(row: Record<string, unknown>) {
   if (row.resolution_state === "resolved") return "resolved";
+  if (row.resolution_state === "failed") return "failed";
   if (row.is_loose_thread === true) return "loose";
   if (row.resolution_state === "active") return "active";
   if (typeof row.status === "string") return row.status;
   return "dormant";
+}
+
+function normalizeObjectives(value: unknown): ThreadObjective[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item, index): ThreadObjective => {
+    if (typeof item === "string") return { id: `legacy-${index}`, text: item, state: "open", completed_at: null, order_index: index };
+    const row = item && typeof item === "object" ? item as Record<string, unknown> : {};
+    return {
+      id: String(row.id ?? `legacy-${index}`), text: String(row.text ?? ""),
+      state: row.state === "completed" ? "completed" : "open",
+      completed_at: typeof row.completed_at === "string" ? row.completed_at : null,
+      order_index: typeof row.order_index === "number" ? row.order_index : index,
+      created_at: typeof row.created_at === "string" ? row.created_at : undefined,
+    };
+  }).sort((a, b) => a.order_index - b.order_index);
 }

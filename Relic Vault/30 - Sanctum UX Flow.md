@@ -370,7 +370,7 @@ Each row is tappable and routes to the relevant entity or thread detail.
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-`SNC-FR-34` — Default filter is `Active + Loose` combined. Dormant and Resolved are collapsed accordion sections (one-tap to expand). Failed threads render inside Resolved.
+`SNC-FR-34` — Default filter is `Active + Loose` combined. Dormant, Failed, and Resolved are distinct groups; Failed must not be folded into Resolved because its reason and recovery meaning differ.
 
 `SNC-FR-35` — Thread rows show: name (Cormorant 18px), kind badge (mono), objective count (with completed), last-touched session number, and 2-line summary. Canon chip applies (`◆` amber dot for active, `◈` amber open-diamond for loose, `○` stone for dormant, `✓` Verdigris for resolved).
 
@@ -413,7 +413,7 @@ Missing courier ●────────────────●───�
 
 Hover (web) / tap (mobile) on any marker → tooltip showing the event summary and session name.
 
-`SNC-FR-36` — The timeline is read-only. It is derived from `threads.objectives_log` (objective completions) and `canon_audit` rows where `entity_type='thread'` (resolution state changes) joined to session dates. No new schema. No AI task. No quota cost.
+`SNC-FR-36` — The timeline is read-only. It is derived from current `threads.objectives_log`, append-only `canon_audit` Thread operations, their source/Session links, `session_active_threads`, Thread rows in `session_pinned_entities`, and Sessions. Objective create/edit/reorder/complete/reopen operations are audited so earlier transitions remain visible after the current JSON objective state changes. No timeline-event schema, AI task, or quota cost is introduced. Every entry exposes its evidence kind and source/audit identifier; missing or deleted related records render as unavailable rather than breaking the projection.
 
 `SNC-FR-37` — Timeline is rendered client-side from data fetched in one query. The query joins `threads`, `sessions`, `objectives_log` (jsonb), and `canon_audit` for the saga. Performance budget: <300ms p50 for a 15-session saga with 20 threads.
 
@@ -451,11 +451,11 @@ Each thread detail page extends the standard entity detail layout (§6) with thr
 └───────────────────────────────────────────────────────────────────────┘
 ```
 
-`SNC-FR-39` — Objectives are inline-editable. `+ Add objective` appends to `threads.objectives_log`. Toggling a checkmark sets `state='completed'` and `completed_at=now()` on the objective's log entry. Both are autosaved.
+`SNC-FR-39` — Objectives are inline-editable and orderable. `+ Add objective` appends a stable-ID entry to `threads.objectives_log`. Completing sets `state='completed'` and `completed_at=now()`; reopening restores `state='open'` and clears `completed_at`. Edit, toggle, reopen, and order changes use optimistic Saga-scoped writes and surface stale-version conflicts instead of silently overwriting.
 
 `SNC-FR-40` — The `Propose a complication` button invokes `propose_thread_complication` (Registry v1.0 §8). Output renders as 1–3 complication cards below the AI assist panel. Each card shows the summary, narrative, entities implicated, escalation level, and sources. GM taps a card → text is pre-filled into the narrative editor for editing. No canon write occurs until the GM saves the edited narrative.
 
-`SNC-FR-41` — The `Resolve / close this thread` button opens a modal with resolution state choices: `resolved` (with a one-line outcome field) or `failed` (with a one-line reason field). On confirm, writes a `drafts` row with `change_kind='update'`, sets `resolution_state`. Routes through standard approval write path (Schema §10.1), but since this is a GM-direct action (not AI-proposed), it writes through the manual-GM-edit path: `created_by='gm'`, `confidence_band='high'`, synthetic draft immediately approved.
+`SNC-FR-41` — The Thread state control supports `active`, `loose`, `dormant`, `resolved`, and `failed`. Resolved requires an outcome; Failed requires a reason. Confirmation is an explicit GM-direct canon edit through the scoped manual write/source/audit path with optimistic version checking. It does not create an AI draft or bypass audit, and changing away from Resolved/Failed clears the obsolete explanation.
 
 ---
 

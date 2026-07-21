@@ -7,7 +7,7 @@ import { parseDicePool, rollDice, rollDicePool } from "@/lib/dice";
 import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
 import { sagaPath } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
-import type { IdParams, LibraryRecordDetail } from "@/lib/types";
+import type { IdParams, LibraryRecordDetail, ThreadDetail, ThreadTimelineEntry } from "@/lib/types";
 
 type RpcObject = {
   id?: string;
@@ -381,6 +381,53 @@ export async function addThreadObjectiveAction(formData: FormData) {
     throw new Error(error.message);
   }
   revalidatePath(`${sagaPath(params)}/threads/${threadId}`);
+}
+
+async function readThreadState(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  params: IdParams,
+  threadId: string,
+) {
+  const args = { workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, thread_id: threadId };
+  const [detailResult, timelineResult] = await Promise.all([
+    supabase.rpc("get_thread_detail", args), supabase.rpc("get_thread_timeline", args),
+  ]);
+  if (detailResult.error) throw new Error(detailResult.error.message);
+  if (timelineResult.error) throw new Error(timelineResult.error.message);
+  return { detail: detailResult.data as unknown as ThreadDetail, timeline: (timelineResult.data ?? []) as unknown as ThreadTimelineEntry[] };
+}
+
+export async function updateThreadDetailsAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const threadId = value(formData, "threadId");
+  const { error } = await supabase.rpc("update_thread_details", {
+    workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, thread_id: threadId,
+    expected_version: value(formData, "expectedVersion"), thread_title: value(formData, "threadTitle"),
+    thread_summary: value(formData, "threadSummary"), thread_state: value(formData, "threadState"),
+    resolution_details: value(formData, "resolutionDetails"), session_id: value(formData, "sessionId") || null,
+  });
+  if (error) return { ok: false as const, conflict: error.code === "40001", error: error.code === "40001" ? "This Thread changed elsewhere. Refresh before continuing." : error.message };
+  const state = await readThreadState(supabase, params, threadId);
+  revalidatePath(`${sagaPath(params)}/threads/${threadId}`); revalidatePath(`${sagaPath(params)}/threads`);
+  return { ok: true as const, ...state };
+}
+
+export async function mutateThreadObjectiveAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const threadId = value(formData, "threadId");
+  const { error } = await supabase.rpc("mutate_thread_objective", {
+    workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId, thread_id: threadId,
+    expected_version: value(formData, "expectedVersion"), operation: value(formData, "operation"),
+    objective_id: value(formData, "objectiveId") || null, objective_text: value(formData, "objectiveText") || null,
+    target_index: value(formData, "targetIndex") ? Number(value(formData, "targetIndex")) : null,
+    session_id: value(formData, "sessionId") || null,
+  });
+  if (error) return { ok: false as const, conflict: error.code === "40001", error: error.code === "40001" ? "This Thread changed elsewhere. Refresh before continuing." : error.message };
+  const state = await readThreadState(supabase, params, threadId);
+  revalidatePath(`${sagaPath(params)}/threads/${threadId}`); revalidatePath(`${sagaPath(params)}/threads`);
+  return { ok: true as const, ...state };
 }
 
 export async function createSessionAction(formData: FormData) {

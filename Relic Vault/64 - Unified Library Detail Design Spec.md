@@ -89,6 +89,8 @@ Archived records must be recoverable and visually subdued. Hard-delete requires 
 
 For MVP, hard-delete is available only for an archived, unreferenced record. The GM must first open the permanent-delete disclosure, check the irreversible-action confirmation, and type the record name exactly. Relationships, active suggested/accepted mentions, Note attachments, Session pins/active Thread usage, and pending drafts are blocking references. Intrinsic source and canon-audit history remain as tombstones after deletion; derived embeddings do not.
 
+The D3 Thread detail specialization reuses this relationship contract. It exposes separate Failed and Resolved states with required explanations, stable orderable objectives with complete/reopen timestamps, Session carry-forward/pin history, and a chronological read-only evidence projection. Timeline rows show their audit/source kind and identifier; missing endpoints use an unavailable-record fallback and archived endpoints remain labeled.
+
 ## 10. AI behavior
 
 AI is invoked by the GM through explicit buttons. Entity assists can draft from prompt where the owning task exists. Thread complication generates ephemeral cards that the GM may copy into narrative. Stub fleshing creates an update draft routed through the approval write path.

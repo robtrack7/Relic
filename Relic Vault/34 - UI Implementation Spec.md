@@ -351,9 +351,9 @@ Build as the loop dashboard, not a generic project homepage.
 
 ### 5.4 Threads
 
-- List states: Active, Loose, Dormant, Resolved.
-- Detail page with summary, objectives log, related entities, source references.
-- Read-only Thread Timeline derived from `threads.objectives_log`, sessions, and canon audit.
+- List states: Active, Loose, Dormant, Failed, Resolved.
+- Detail page with optimistic title/summary/state/resolution editing, orderable objective lifecycle, D2 related entities, Session pin history, and source references.
+- Read-only Thread Timeline derived from objective state plus append-only Thread canon audit, Session-linked sources, Session active/pinned rows, and Sessions. Entries expose trace IDs and tolerate missing/archived related records.
 - No writable timeline editor.
 
 ### 5.5 Library

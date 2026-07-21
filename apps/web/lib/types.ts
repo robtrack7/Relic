@@ -37,6 +37,8 @@ export type EntitySummary = {
   is_stub?: boolean;
   status?: string;
   objectives_log?: unknown[];
+  resolution_state?: "active" | "dormant" | "resolved" | "failed";
+  resolution_details?: string | null;
   updated_at?: string;
 };
 
@@ -59,7 +61,43 @@ export type LibraryRelationship = {
   related_type: EntityType;
   related_id: string;
   related_name: string;
+  related_archived?: boolean;
   created_at: string;
+};
+
+export type ThreadObjective = {
+  id: string;
+  text: string;
+  state: "open" | "completed";
+  completed_at: string | null;
+  order_index: number;
+  created_at?: string;
+};
+
+export type ThreadDetail = {
+  record: Omit<EntitySummary, "entityType" | "objectives_log"> & {
+    entityType: "thread";
+    resolution_state: "active" | "dormant" | "resolved" | "failed";
+    resolution_details: string | null;
+    objectives_log: ThreadObjective[];
+  };
+  relationships: LibraryRelationship[];
+  candidates: LibraryCandidate[];
+};
+
+export type ThreadTimelineEntry = {
+  event_id: string;
+  thread_id: string;
+  objective_id: string | null;
+  session_id: string | null;
+  session_number: number | null;
+  session_name: string | null;
+  event_type: string;
+  title: string;
+  detail: string;
+  occurred_at: string;
+  source_type: string;
+  source_id: string;
 };
 
 export type LibraryMention = {

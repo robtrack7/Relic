@@ -207,6 +207,7 @@ Stage is not a default navigation rail destination. It is opened from this Ready
 - A GM can create Session 1 from first-run in under two minutes after scaffold commit.
 - A GM can create a blank planned session without AI.
 - A GM can pin/unpin entities and active threads.
+- Each saved active-Thread selection remains Session-scoped evidence. Thread detail may project that row as read-only pin/carry-forward history; Prep does not edit timeline entries or mutate Thread state implicitly.
 - AI prep suggestions are never committed automatically.
 - Ready for Stage produces a readable Stage packet.
 - Quota and provider failures never erase manual prep.

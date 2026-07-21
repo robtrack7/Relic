@@ -13,7 +13,7 @@ depends_on:
   - "[[34 - UI Implementation Spec]]"
   - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-07-21
 source_file: "Relic Vault/42 - UI Manual Flow Implementation Plan.md"
 ---
 
@@ -54,12 +54,12 @@ Build the MVP loop as a usable manual product before wiring AI calls: Create -> 
 
 - Build dashboard states: no sessions, planned/ready session, in-progress session, review-ready session, empty Saga.
 - Build Library/detail CRUD with manual create, edit, archive, source/provenance placeholders, duplicate warnings, and state chips.
-- Build Threads list, Thread detail, resolution actions, objectives log, and read-only Thread Timeline.
+- **Complete through Packet D3:** Threads list/detail now cover separate Active/Loose/Dormant/Failed/Resolved groups, optimistic title/summary/state/resolution edits, objective create/edit/complete/reopen/order, D2 related entities, Session pin history, and a source-traceable read-only timeline. Stage remains compact/read-only.
 - Build notes and lore surfaces as sub-sections of Library.
 
 ### 4. Session Prep Without AI Wiring
 
-- Build session list, create planned session, full prep editor, inline dashboard prep, active threads, pinned entities, checklist, packet preview, and Ready for Stage. Prepare is the rail destination for this workflow; Stage opens from Ready/Open Stage and live-session context.
+- **Current Packet D4:** complete session list/planned-session behavior, full-editor/inline-dashboard parity, autosave/recovery, prior-session summary, scheduled-session affordances, actions, archived-pin recovery, checklist, packet preview, and Ready for Stage. Prepare is the rail destination for this workflow; Stage opens from Ready/Open Stage and live-session context.
 - Show prep briefing and AI assist areas as empty/mocked/disabled surfaces with manual alternatives until AI runtime is accepted.
 - Preserve autosave and quota/provider failure states without needing live AI calls.
 
