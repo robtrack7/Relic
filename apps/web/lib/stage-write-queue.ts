@@ -9,14 +9,15 @@ export type StageWriteScope = {
   sessionId: string;
 };
 
-export type StageWriteIntentKind = "quick_capture" | "quick_stub" | "mark_moment" | "end_session" | "undo_end_session";
-export type StageWriteQueueStatus = "idle" | "queued" | "uploading" | "failed" | "recovered";
+export type StageWriteIntentKind = "start_session" | "quick_capture" | "quick_stub" | "record_consent" | "go_live" | "mark_moment" | "end_session" | "undo_end_session";
+export type StageWriteQueueStatus = "idle" | "queued" | "uploading" | "failed" | "conflict" | "recovered";
 
 export type StageWriteQueueSummary = {
   status: StageWriteQueueStatus;
   queued: number;
   uploading: number;
   failed: number;
+  conflicts: number;
   lastError: string | null;
 };
 
@@ -40,6 +41,17 @@ type StageWriteSession = StageWriteScope & {
   lastError: string | null;
 };
 
+export type StoredStageWriteConflict = StageWriteScope & {
+  id: string;
+  sessionKey: string;
+  intentId: string;
+  kind: StageWriteIntentKind;
+  localValue: unknown;
+  serverValue: unknown;
+  message: string;
+  createdAt: string;
+};
+
 export interface StageWriteStore {
   getSession(sessionKey: string): Promise<StageWriteSession | null>;
   putSession(session: StageWriteSession): Promise<void>;
@@ -47,6 +59,9 @@ export interface StageWriteStore {
   putIntent(intent: StoredStageWriteIntent): Promise<void>;
   listIntents(sessionKey: string): Promise<StoredStageWriteIntent[]>;
   deleteIntent(id: string): Promise<void>;
+  putConflict(conflict: StoredStageWriteConflict): Promise<void>;
+  listConflicts(sessionKey: string): Promise<StoredStageWriteConflict[]>;
+  deleteConflict(id: string): Promise<void>;
 }
 
 export interface StageWriteTransport {
@@ -71,6 +86,7 @@ function cleanError(error: unknown) {
 export class MemoryStageWriteStore implements StageWriteStore {
   private sessions = new Map<string, StageWriteSession>();
   private intents = new Map<string, StoredStageWriteIntent>();
+  private conflicts = new Map<string, StoredStageWriteConflict>();
 
   async getSession(sessionKey: string) { return this.sessions.get(sessionKey) ?? null; }
   async putSession(session: StageWriteSession) { this.sessions.set(session.sessionKey, { ...session }); }
@@ -83,10 +99,13 @@ export class MemoryStageWriteStore implements StageWriteStore {
       .map((intent) => ({ ...intent, payload: { ...intent.payload } }));
   }
   async deleteIntent(id: string) { this.intents.delete(id); }
+  async putConflict(conflict: StoredStageWriteConflict) { this.conflicts.set(conflict.id, { ...conflict }); }
+  async listConflicts(sessionKey: string) { return [...this.conflicts.values()].filter((conflict) => conflict.sessionKey === sessionKey).map((conflict) => ({ ...conflict })); }
+  async deleteConflict(id: string) { this.conflicts.delete(id); }
 }
 
 const DB_NAME = "relic-stage-writes";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 function requestResult<T>(request: IDBRequest<T>) {
   return new Promise<T>((resolve, reject) => {
@@ -117,6 +136,10 @@ export class IndexedDbStageWriteStore implements StageWriteStore {
             const store = db.createObjectStore("intents", { keyPath: "id" });
             store.createIndex("sessionKey", "sessionKey", { unique: false });
           }
+          if (!db.objectStoreNames.contains("conflicts")) {
+            const store = db.createObjectStore("conflicts", { keyPath: "id" });
+            store.createIndex("sessionKey", "sessionKey", { unique: false });
+          }
         });
         request.addEventListener("success", () => resolve(request.result), { once: true });
         request.addEventListener("error", () => reject(request.error ?? new Error("IndexedDB is unavailable.")), { once: true });
@@ -125,7 +148,7 @@ export class IndexedDbStageWriteStore implements StageWriteStore {
     return this.dbPromise;
   }
 
-  private async transaction(name: "sessions" | "intents", mode: IDBTransactionMode) {
+  private async transaction(name: "sessions" | "intents" | "conflicts", mode: IDBTransactionMode) {
     const db = await this.open();
     return db.transaction(name, mode);
   }
@@ -167,6 +190,23 @@ export class IndexedDbStageWriteStore implements StageWriteStore {
     const transaction = await this.transaction("intents", "readwrite");
     const store = transaction.objectStore("intents");
     await requestResult(store.delete(id));
+    await transactionDone(transaction);
+  }
+
+  async putConflict(conflict: StoredStageWriteConflict) {
+    const transaction = await this.transaction("conflicts", "readwrite");
+    await requestResult(transaction.objectStore("conflicts").put(conflict));
+    await transactionDone(transaction);
+  }
+
+  async listConflicts(sessionKey: string) {
+    const transaction = await this.transaction("conflicts", "readonly");
+    return await requestResult(transaction.objectStore("conflicts").index("sessionKey").getAll(sessionKey)) as StoredStageWriteConflict[];
+  }
+
+  async deleteConflict(id: string) {
+    const transaction = await this.transaction("conflicts", "readwrite");
+    await requestResult(transaction.objectStore("conflicts").delete(id));
     await transactionDone(transaction);
   }
 }
@@ -255,16 +295,19 @@ export class StageWriteQueue {
     const uploading = intents.filter((intent) => intent.state === "uploading").length;
     const failed = intents.filter((intent) => intent.state === "failed").length;
     const queued = intents.filter((intent) => intent.state === "queued").length;
+    const conflicts = (await this.store.listConflicts(session.sessionKey)).length;
     const status: StageWriteQueueStatus = uploading
       ? "uploading"
       : failed
         ? "failed"
+        : conflicts
+          ? "conflict"
         : queued
           ? "queued"
           : session.recoveredAt
             ? "recovered"
             : "idle";
-    return { status, queued, uploading, failed, lastError: session.lastError };
+    return { status, queued, uploading, failed, conflicts, lastError: session.lastError };
   }
 
   private async emit(scope: StageWriteScope) {
@@ -284,6 +327,7 @@ export class StageWriteQueue {
 
   private async flushUnlocked(scope: StageWriteScope, retryNow: boolean) {
     const session = await this.session(scope);
+    if ((await this.store.listConflicts(session.sessionKey)).length) return this.emit(scope);
     const intents = await this.store.listIntents(session.sessionKey);
     for (const intent of intents) {
       if (!retryNow && intent.state === "failed" && intent.nextRetryAt && Date.parse(intent.nextRetryAt) > Date.now()) {
@@ -295,7 +339,23 @@ export class StageWriteQueue {
       await this.store.putIntent(intent);
       await this.emit(scope);
       try {
-        await this.transport.deliver(intent);
+        const result = await this.transport.deliver(intent);
+        if (result.outcome === "conflict") {
+          await this.store.putConflict({
+            ...scope,
+            id: `stage_conflict:${intent.id}`,
+            sessionKey: intent.sessionKey,
+            intentId: intent.id,
+            kind: intent.kind,
+            localValue: result.local_value ?? intent.payload,
+            serverValue: result.server_value ?? null,
+            message: typeof result.message === "string" ? result.message : "Server state changed while Stage was offline.",
+            createdAt: new Date().toISOString(),
+          });
+          await this.store.deleteIntent(intent.id);
+          await this.store.putSession(session);
+          return this.emit(scope);
+        }
         if (intent.attempts > 0) session.recoveredAt = new Date().toISOString();
         await this.store.deleteIntent(intent.id);
         session.lastError = null;
@@ -314,9 +374,19 @@ export class StageWriteQueue {
     return this.emit(scope);
   }
 
-  async recoverAll() {
+  async listConflicts(scope: StageWriteScope) {
+    return this.store.listConflicts(stageWriteSessionKey(scope));
+  }
+
+  async acknowledgeConflict(scope: StageWriteScope, conflictId: string) {
+    await this.store.deleteConflict(conflictId);
+    await this.emit(scope);
+    return this.flushSession(scope, true);
+  }
+
+  async recoverAll(retryNow = false) {
     const sessions = await this.store.listSessions();
-    return Promise.all(sessions.map((session) => this.flushSession(session)));
+    return Promise.all(sessions.map((session) => this.flushSession(session, retryNow)));
   }
 }
 

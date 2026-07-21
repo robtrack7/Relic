@@ -90,4 +90,42 @@ describe("StageWriteQueue", () => {
     expect(delivered).toEqual([intent.id]);
     expect(await restartedQueue.getSummary(scope)).toMatchObject({ status: "idle", queued: 0, failed: 0 });
   });
+
+  it("replays the complete offline lifecycle in FIFO order after restart", async () => {
+    const store = new MemoryStageWriteStore();
+    const offlineQueue = new StageWriteQueue(store, transport(async () => { throw new Error("offline"); }));
+    const kinds = ["start_session", "quick_capture", "quick_stub", "record_consent", "go_live", "mark_moment", "end_session"] as const;
+    for (const kind of kinds) await offlineQueue.enqueue(scope, kind, { expected_status: kind === "start_session" ? "ready" : "in_progress" });
+
+    const delivered: string[] = [];
+    const reloadedQueue = new StageWriteQueue(store, transport(async (intent) => {
+      delivered.push(intent.id);
+      return { id: intent.id, outcome: "applied" };
+    }));
+    await reloadedQueue.recoverAll(true);
+
+    expect(delivered).toHaveLength(kinds.length);
+    expect(new Set(delivered).size).toBe(kinds.length);
+    expect((await store.listIntents(`${scope.workspaceId}:${scope.worldId}:${scope.sagaId}:${scope.sessionId}`))).toEqual([]);
+  });
+
+  it("persists and surfaces a reconnect conflict without replaying later dependencies", async () => {
+    const store = new MemoryStageWriteStore();
+    const delivered: string[] = [];
+    const queue = new StageWriteQueue(store, transport(async (intent) => {
+      delivered.push(intent.kind);
+      if (intent.kind === "start_session") {
+        return { outcome: "conflict", intent_kind: intent.kind, local_value: "ready", server_value: "ended", message: "Session changed while offline." };
+      }
+      return { outcome: "applied", id: intent.id };
+    }));
+    await queue.enqueue(scope, "start_session", { expected_status: "ready" });
+    await queue.enqueue(scope, "quick_capture", { body: "Preserve this" });
+
+    expect(await queue.flushSession(scope, true)).toMatchObject({ status: "conflict", conflicts: 1, queued: 1 });
+    expect(delivered).toEqual(["start_session"]);
+    expect(await queue.listConflicts(scope)).toEqual([
+      expect.objectContaining({ kind: "start_session", localValue: "ready", serverValue: "ended" }),
+    ]);
+  });
 });

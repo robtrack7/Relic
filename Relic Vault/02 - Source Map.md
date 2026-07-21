@@ -20,8 +20,8 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[11 - Product Basepoint]] | Product north star, scope, naming, exclusions | Primary |
 | [[12 - MVP PRD]] | P0 requirements and acceptance framing | Primary |
 | [[13 - Design System]] | v0.4 web UI tokens, typography, palette, app shell, Loom carriage, component feel; wrapper for [[14 - Design System Source.html]] | Primary design |
-| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, Stage evidence markers and write-receipt contract | Implementation |
-| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, Stage audio/non-audio recovery, provider-backed transcription/retry, deployment, monitoring | Implementation |
+| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, Stage evidence markers, exactly-once write receipts, and conflict outcomes | Implementation |
+| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, Stage packet/audio/write recovery, scoped Storage paths, provider-backed transcription/retry, deployment, monitoring | Implementation |
 | [[22 - Memory and Retrieval]] | Embeddings, retrieval, task profiles, context assembly | Implementation |
 | [[23 - AI Task Registry]] | Standalone MVP AI task contracts, task routing, prompt versions, validation, and draft/canon behavior | Implementation |
 | [[24 - Approval Queue]] | Approval UX, diff, source citation, canon commit behavior | Implementation |

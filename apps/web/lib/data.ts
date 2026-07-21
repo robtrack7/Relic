@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { entityConfigs } from "@/lib/entities";
 import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
-import type { AppContext, EntitySummary, EntityType, IdParams, SearchResult } from "@/lib/types";
+import type { AppContext, EntitySummary, EntityType, IdParams, SearchResult, StageLiteralSearchDocument } from "@/lib/types";
 
 type WorkspaceContext = { id: string; name: string; usage_limits?: Record<string, unknown> };
 type WorldContext = { id: string; name: string; summary?: string | null; default_game_system?: string | null };
@@ -64,6 +64,7 @@ export type StagePacket = {
   dice_rolls?: Array<{ id: string; expression: string; result_total: number; result_breakdown: number[]; label?: string | null; created_at?: string }>;
   consent_state?: string;
   start_warning?: Record<string, unknown>;
+  literal_search_index?: StageLiteralSearchDocument[];
 };
 
 export async function requireUser() {

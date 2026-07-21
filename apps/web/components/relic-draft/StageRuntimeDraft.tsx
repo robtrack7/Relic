@@ -11,18 +11,18 @@ import {
 } from "react";
 import {
   recordDicePoolAction,
-  recordSessionConsentAction,
   setSessionStatusAction,
 } from "@/app/actions";
 import { RelicIcon, type IconName } from "@/components/RelicIcon";
 import { hasSupabaseEnv } from "@/lib/env";
 import { getStageAudioUploadQueue, stageAudioSessionKey, type StageAudioQueueSummary, type StageAudioScope } from "@/lib/stage-audio-queue";
-import { getStageWriteQueue, stageWriteSessionKey, type StageWriteIntentKind, type StageWriteQueueSummary, type StageWriteScope } from "@/lib/stage-write-queue";
+import { getStageOfflineCache, searchStageLiteralIndex, stageOfflineSessionKey, type StageOfflineSnapshot } from "@/lib/stage-offline-cache";
+import { getStageWriteQueue, stageWriteSessionKey, type StageWriteIntentKind, type StageWriteQueueSummary, type StageWriteScope, type StoredStageWriteConflict } from "@/lib/stage-write-queue";
 import { parseGmNotesTags, formatStageElapsed, quickCreateEntityType, remainingUndoSeconds } from "@/lib/stage";
 import { StageRecordingAdapter, type StageRecordingChunk } from "@/lib/stage-recording";
 import { sagaPath } from "@/lib/routes";
 import type { StagePacket } from "@/lib/data";
-import type { EntitySummary, IdParams, SearchResult } from "@/lib/types";
+import type { EntitySummary, IdParams, SearchResult, StageLiteralSearchDocument } from "@/lib/types";
 
 type StageSession = {
   id: string;
@@ -39,6 +39,7 @@ type StageSession = {
 
 type StageRuntimeDraftProps = {
   params: IdParams;
+  ownerId?: string;
   saga: { name: string; game_system?: string | null };
   session: StageSession;
   packet?: StagePacket;
@@ -200,7 +201,7 @@ function DiceTool({ packetRolls, busy, onRoll, onPin, onClose }: {
   </StageDialog>;
 }
 
-export function StageRuntimeDraft({ params, saga, session, packet, pinned, activeThreads, results, query }: StageRuntimeDraftProps) {
+export function StageRuntimeDraft({ params, ownerId = "local-stage-owner", saga, session, packet, pinned, activeThreads, results, query }: StageRuntimeDraftProps) {
   const router = useRouter();
   const pathname = usePathname();
   const root = sagaPath(params);
@@ -218,23 +219,33 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   const [recording, setRecording] = useState(false);
   const [recordingNote, setRecordingNote] = useState("");
   const [audioSummary, setAudioSummary] = useState<StageAudioQueueSummary>({ status: "idle", queued: 0, uploading: 0, failed: 0, totalChunks: 0, lastError: null });
-  const [writeSummary, setWriteSummary] = useState<StageWriteQueueSummary>({ status: "idle", queued: 0, uploading: 0, failed: 0, lastError: null });
+  const [writeSummary, setWriteSummary] = useState<StageWriteQueueSummary>({ status: "idle", queued: 0, uploading: 0, failed: 0, conflicts: 0, lastError: null });
+  const [conflicts, setConflicts] = useState<StoredStageWriteConflict[]>([]);
+  const [showConflicts, setShowConflicts] = useState(false);
+  const [offline, setOffline] = useState(false);
+  const [packetState, setPacketState] = useState(packet);
+  const [pinnedState, setPinnedState] = useState(pinned);
+  const [activeThreadsState, setActiveThreadsState] = useState(activeThreads);
+  const [literalIndex, setLiteralIndex] = useState<StageLiteralSearchDocument[]>(packet?.literal_search_index ?? []);
+  const [offlineResults, setOfflineResults] = useState<SearchResult[] | null>(null);
+  const [offlineQuery, setOfflineQuery] = useState<string | null>(null);
   const [consent, setConsent] = useState(packet?.consent_state ?? session.consent_state ?? "unknown");
   const [endedPendingAt, setEndedPendingAt] = useState(session.ended_pending_undo_at ?? null);
   const initialClock = session.started_at ? Date.parse(session.started_at) : 0;
   const [now, setNow] = useState(Number.isFinite(initialClock) ? initialClock : 0);
   const [hiddenPins, setHiddenPins] = useState<string[]>([]);
-  const initialPins = pinned.filter((item): item is { pin: { entity_type: string; entity_id: string }; entity: EntitySummary } => Boolean(item.entity));
+  const currentSession = packetState?.session ?? session;
+  const initialPins = pinnedState.filter((item): item is { pin: { entity_type: string; entity_id: string }; entity: EntitySummary } => Boolean(item.entity));
   const visiblePinned = initialPins.filter(({ entity }) => !hiddenPins.includes(entity.id));
   const [selectedId, setSelectedId] = useState(initialPins[0]?.entity.id ?? "");
   const selectedEntity = visiblePinned.find(({ entity }) => entity.id === selectedId)?.entity ?? visiblePinned[0]?.entity;
-  const threads = activeThreads.filter((thread): thread is EntitySummary => Boolean(thread));
+  const threads = activeThreadsState.filter((thread): thread is EntitySummary => Boolean(thread));
   const live = status === "started" || status === "in_progress";
   const canWrite = live;
   const endedPending = status === "ended_pending_undo";
   const undoSeconds = endedPending ? remainingUndoSeconds(endedPendingAt, now) : 60;
   const elapsed = formatStageElapsed(session.started_at, now);
-  const sceneNotes = (session.scene_notes ?? "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const sceneNotes = (currentSession.scene_notes ?? "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const tags = selectedEntity ? parseGmNotesTags(selectedEntity.gm_notes) : null;
   const [pinnedDice, setPinnedDice] = useState<{ pool: number[]; modifier: number; mode: string } | null>(null);
   const [pinnedResult, setPinnedResult] = useState<Record<string, unknown> | null>(null);
@@ -242,6 +253,22 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   const audioSessionKey = stageAudioSessionKey(audioScope);
   const writeScope: StageWriteScope = { workspaceId: params.workspaceId, worldId: params.worldId, sagaId: params.sagaId, sessionId: session.id };
   const writeSessionKey = stageWriteSessionKey(writeScope);
+  const offlineSessionKey = stageOfflineSessionKey(ownerId, writeScope);
+
+  async function persistSnapshot(overrides: Partial<StageOfflineSnapshot> = {}) {
+    if (typeof indexedDB === "undefined") return;
+    const nextPacket = overrides.packet ?? packetState ?? packet ?? {};
+    await getStageOfflineCache().put({
+      ...writeScope,
+      ownerId,
+      sessionKey: offlineSessionKey,
+      cachedAt: new Date().toISOString(),
+      packet: nextPacket,
+      pinned: overrides.pinned ?? pinnedState,
+      activeThreads: overrides.activeThreads ?? activeThreadsState,
+      literalSearchIndex: overrides.literalSearchIndex ?? literalIndex,
+    });
+  }
 
   useEffect(() => {
     setNow(Date.now());
@@ -250,14 +277,48 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   }, []);
 
   useEffect(() => {
+    if (typeof indexedDB === "undefined") return;
+    const updateNetwork = () => setOffline(!navigator.onLine);
+    updateNetwork();
+    window.addEventListener("online", updateNetwork);
+    window.addEventListener("offline", updateNetwork);
+    const cache = getStageOfflineCache();
+    if (navigator.onLine) {
+      void persistSnapshot().catch((caught) => setError(caught instanceof Error ? caught.message : "Stage packet cache failed."));
+    } else {
+      void cache.get(ownerId, writeScope).then((cached) => {
+        if (!cached) return;
+        setPacketState(cached.packet);
+        setPinnedState(cached.pinned);
+        setActiveThreadsState(cached.activeThreads);
+        setLiteralIndex(cached.literalSearchIndex);
+        const cachedSession = cached.packet.session;
+        if (cachedSession) {
+          setStatus(cachedSession.status);
+          setConsent(cached.packet.consent_state ?? cachedSession.consent_state ?? "unset");
+          setEndedPendingAt(cachedSession.ended_pending_undo_at ?? null);
+        }
+      }).catch((caught) => setError(caught instanceof Error ? caught.message : "Cached Stage packet could not be opened."));
+    }
+    return () => {
+      window.removeEventListener("online", updateNetwork);
+      window.removeEventListener("offline", updateNetwork);
+    };
+  // The route scope and initial server snapshot are immutable for this mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offlineSessionKey]);
+
+  useEffect(() => {
     if (!hasSupabaseEnv() || typeof indexedDB === "undefined") return;
     const queue = getStageAudioUploadQueue();
     const update = (scope: StageAudioScope, summary: StageAudioQueueSummary) => {
-      if (stageAudioSessionKey(scope) === audioSessionKey) setAudioSummary(summary);
+      if (stageAudioSessionKey(scope) !== audioSessionKey) return;
+      setAudioSummary(summary);
+      if (summary.status === "failed" && summary.lastError) setRecordingNote(`Saved audio could not sync: ${summary.lastError}`);
     };
     const unsubscribe = queue.subscribe(update);
     void queue.prepareSession(audioScope)
-      .then(() => queue.flushSession(audioScope))
+      .then(() => navigator.onLine ? queue.flushSession(audioScope) : queue.getSummary(audioScope))
       .then(setAudioSummary)
       .catch((caught) => setRecordingNote(caught instanceof Error ? caught.message : "Saved audio is waiting to retry."));
     return unsubscribe;
@@ -271,11 +332,12 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
     const update = (scope: StageWriteScope, summary: StageWriteQueueSummary) => {
       if (stageWriteSessionKey(scope) !== writeSessionKey) return;
       setWriteSummary(summary);
+      if (summary.conflicts > 0) void queue.listConflicts(writeScope).then(setConflicts);
       if (summary.status === "idle" || summary.status === "recovered") router.refresh();
     };
     const unsubscribe = queue.subscribe(update);
     void queue.prepareSession(writeScope)
-      .then(() => queue.flushSession(writeScope))
+      .then(() => navigator.onLine ? queue.flushSession(writeScope) : queue.getSummary(writeScope))
       .then(setWriteSummary)
       .catch((caught) => setError(caught instanceof Error ? caught.message : "Saved Stage writes are waiting to retry."));
     return unsubscribe;
@@ -342,9 +404,10 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
     setBusy(true); setError("");
     try {
       const queue = getStageWriteQueue();
-      await queue.enqueue(writeScope, kind, payload);
-      void queue.flushSession(writeScope).then(setWriteSummary);
-      return true;
+      const intent = await queue.enqueue(writeScope, kind, payload);
+      if (typeof navigator !== "undefined" && navigator.onLine) void queue.flushSession(writeScope).then(setWriteSummary);
+      else setWriteSummary(await queue.getSummary(writeScope));
+      return intent;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Stage write could not be saved locally.");
       return false;
@@ -359,20 +422,41 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   }
 
   async function beginSession() {
-    if (status === "ready") await changeStatus("started");
-    else if (status === "started") await changeStatus("in_progress");
+    if (status === "ready") {
+      const saved = await queueWrite("start_session", { expected_status: "ready", requested_at: new Date().toISOString() });
+      if (!saved) return;
+      setStatus("started");
+      const nextPacket = { ...(packetState ?? {}), session: { ...(currentSession ?? session), status: "started" } };
+      setPacketState(nextPacket);
+      await persistSnapshot({ packet: nextPacket });
+    } else if (status === "started") {
+      const saved = await queueWrite("go_live", { expected_status: "started", requested_at: new Date().toISOString() });
+      if (!saved) return;
+      setStatus("in_progress");
+      const nextPacket = { ...(packetState ?? {}), session: { ...(currentSession ?? session), status: "in_progress" } };
+      setPacketState(nextPacket);
+      await persistSnapshot({ packet: nextPacket });
+    }
   }
 
   async function saveNote(payload: { title: string; body: string; tag: string }) {
     const prefix = `[${payload.tag}]${payload.title ? ` ${payload.title}` : ""}`;
-    const saved = await queueWrite("quick_capture", { body: `${prefix}\n${payload.body}` });
-    if (saved) { setNotice("Note saved locally · sync queued."); setOverlay(null); }
+    const saved = await queueWrite("quick_capture", { title: payload.title || null, body: `${prefix}\n${payload.body}` });
+    if (saved) {
+      const document: StageLiteralSearchDocument = { source_kind: "note", source_entity_type: "note", source_entity_id: saved.id, name: payload.title || "Stage Note", summary: payload.body, narrative: `${prefix}\n${payload.body}`, canon_state: "canon", is_stub: false, updated_at: saved.createdAt };
+      const next = [document, ...literalIndex];
+      const nextPacket = { ...(packetState ?? {}), quick_captures: [{ id: saved.id, title: document.name, body: document.narrative, created_at: saved.createdAt }, ...(packetState?.quick_captures ?? [])] };
+      setLiteralIndex(next); setPacketState(nextPacket); await persistSnapshot({ literalSearchIndex: next, packet: nextPacket });
+      setNotice("Note saved locally · sync queued."); setOverlay(null);
+    }
   }
 
   async function markMoment(label: string) {
     if (!recording) return;
     const saved = await queueWrite("mark_moment", { label, occurred_at: new Date().toISOString() });
     if (saved) {
+      const nextPacket = { ...(packetState ?? {}), marked_moments: [{ id: saved.id, label, occurred_at: saved.createdAt }, ...(packetState?.marked_moments ?? [])] };
+      setPacketState(nextPacket); await persistSnapshot({ packet: nextPacket });
       setNotice(`Marked locally · ${elapsed}.`);
       setOverlay(null);
     }
@@ -385,6 +469,8 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
       ? await queueWrite("quick_capture", { title: name, body: summary || name })
       : await queueWrite("quick_stub", { entity_type: entityType, name, summary });
     if (saved) {
+      const document: StageLiteralSearchDocument = { source_kind: entityType === "note" ? "note" : "entity", source_entity_type: entityType, source_entity_id: saved.id, name, summary: summary || name, narrative: summary || name, canon_state: "canon", is_stub: entityType !== "note", updated_at: saved.createdAt };
+      const next = [document, ...literalIndex]; setLiteralIndex(next); await persistSnapshot({ literalSearchIndex: next });
       setNotice(entityType === "note" ? "Note saved locally · sync queued." : `${createTypes.find((item) => item.key === type)?.label} saved locally as a GM-authored stub.`);
       setOverlay(null);
     }
@@ -398,13 +484,16 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   async function saveRecordingChunk(chunk: StageRecordingChunk) {
     const queue = getStageAudioUploadQueue();
     await queue.enqueueChunk(audioScope, chunk.blob, chunk.mimeType, chunk.durationMs, chunk.recordedAt);
-    void queue.flushSession(audioScope).then(setAudioSummary);
+    if (typeof navigator !== "undefined" && navigator.onLine) void queue.flushSession(audioScope).then(setAudioSummary);
+    else setAudioSummary(await queue.getSummary(audioScope));
   }
 
   async function setRecordingConsent(granted: boolean) {
-    const result = await perform(recordSessionConsentAction, { granted: String(granted) });
-    if (result === false) return false;
+    const result = await queueWrite("record_consent", { expected_consent_state: consent === "unknown" ? "unset" : consent, granted });
+    if (!result) return false;
     setConsent(granted ? "granted" : "denied");
+    const nextPacket = { ...(packetState ?? {}), consent_state: granted ? "granted" : "denied", session: { ...(currentSession ?? session), consent_state: granted ? "granted" : "denied" } };
+    setPacketState(nextPacket); await persistSnapshot({ packet: nextPacket });
     if (!granted) setRecordingNote("Recording disabled for this session. Existing notes and Mark Moment remain unchanged.");
     return true;
   }
@@ -423,7 +512,13 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
       await queue.prepareSession(audioScope);
       recordingAdapter.current ??= new StageRecordingAdapter();
       await recordingAdapter.current.start(saveRecordingChunk);
-      if (status === "started") await changeStatus("in_progress");
+      if (status === "started") {
+        const saved = await queueWrite("go_live", { expected_status: "started", requested_at: new Date().toISOString() });
+        if (!saved) return;
+        setStatus("in_progress");
+        const nextPacket = { ...(packetState ?? {}), session: { ...(currentSession ?? session), status: "in_progress" } };
+        setPacketState(nextPacket); await persistSnapshot({ packet: nextPacket });
+      }
       setRecording(true); setRecordingNote(""); setOverlay(null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Microphone access failed.");
@@ -438,29 +533,38 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
       setRecording(false);
     }
     if (audioSummary.totalChunks > 0 || stoppedChunkCount > 0) {
-      setAudioSummary(await getStageAudioUploadQueue().requestFinalization(audioScope));
+      setAudioSummary(await getStageAudioUploadQueue().requestFinalization(audioScope, !offline));
     }
     const requestedAt = new Date().toISOString();
-    const saved = await queueWrite("end_session", { requested_at: requestedAt });
+    const saved = await queueWrite("end_session", { expected_status: "in_progress", requested_at: requestedAt });
     if (!saved) return;
     setEndedPendingAt(requestedAt);
     setStatus("ended_pending_undo");
     setOverlay(null);
     setNow(Date.now());
+    const nextPacket = { ...(packetState ?? {}), session: { ...(currentSession ?? session), status: "ended_pending_undo", ended_pending_undo_at: requestedAt } };
+    setPacketState(nextPacket); await persistSnapshot({ packet: nextPacket });
   }
 
   async function undoEndSession() {
-    const saved = await queueWrite("undo_end_session", { requested_at: new Date().toISOString() });
+    const saved = await queueWrite("undo_end_session", { expected_status: "ended_pending_undo", requested_at: new Date().toISOString() });
     if (!saved) return;
     finalizing.current = false;
     setEndedPendingAt(null);
     setStatus("in_progress");
     setNotice("Session resumed locally · sync queued.");
+    const nextPacket = { ...(packetState ?? {}), session: { ...(currentSession ?? session), status: "in_progress", ended_pending_undo_at: null } };
+    setPacketState(nextPacket); await persistSnapshot({ packet: nextPacket });
   }
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const value = searchRef.current?.value.trim() ?? "";
+    if (offline) {
+      setOfflineQuery(value);
+      setOfflineResults(searchStageLiteralIndex(literalIndex, value));
+      return;
+    }
     router.push(value ? `${pathname}?q=${encodeURIComponent(value)}` : pathname);
   }
 
@@ -468,6 +572,8 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
   const relatedNpcs = visiblePinned.filter(({ entity }) => entity.entityType === "character" && entity.id !== selectedEntity?.id).map(({ entity }) => entity);
   const pendingAudio = audioSummary.queued + audioSummary.uploading + audioSummary.failed;
   const pendingWrites = writeSummary.queued + writeSummary.uploading + writeSummary.failed;
+  const displayedQuery = offlineQuery ?? query;
+  const displayedResults = offlineResults ?? results;
   const audioStateLabel = audioSummary.status === "idle"
     ? "Synced"
     : audioSummary.status === "recovered"
@@ -483,21 +589,23 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
       ? "Writes recovered"
       : writeSummary.status === "uploading"
         ? `Syncing · ${pendingWrites}`
+        : writeSummary.status === "conflict"
+          ? `Conflict · ${writeSummary.conflicts}`
         : writeSummary.status === "failed"
           ? `Writes failed · ${writeSummary.failed}`
           : `Writes queued · ${pendingWrites}`;
 
   return <div className="stage-runtime stage-v2-shell">
     <header className="stage-v2-session-bar">
-      <div className="stage-v2-session-left"><div className="stage-v2-labels" aria-label="Stage identity"><span>The Stage</span><small>Session {session.session_number ?? (session.name.replace(/\D+/g, "") || "—")}</small></div><div className="stage-v2-chips"><span className={live ? "live" : "ready"}><i />{status === "in_progress" ? "Live" : status === "started" ? "Started" : status === "ended_pending_undo" ? "Ending" : "Ready"}</span>{live && <span className={recording ? "recording active" : "recording"}><i />{recording ? "Recording" : "Not recording"}</span>}<span className={audioSummary.status}><RelicIcon name={audioSummary.status === "failed" ? "alert" : audioSummary.status === "idle" || audioSummary.status === "recovered" ? "check" : "clock"} size={11} />{audioStateLabel}</span><span className={writeSummary.status}><RelicIcon name={writeSummary.status === "failed" ? "alert" : writeSummary.status === "idle" || writeSummary.status === "recovered" ? "check" : "clock"} size={11} />{writeStateLabel}</span></div></div>
+      <div className="stage-v2-session-left"><div className="stage-v2-labels" aria-label="Stage identity"><span>The Stage</span><small>Session {currentSession.session_number ?? (currentSession.name.replace(/\D+/g, "") || "—")}</small></div><div className="stage-v2-chips"><span className={live ? "live" : "ready"}><i />{status === "in_progress" ? "Live" : status === "started" ? "Started" : status === "ended_pending_undo" ? "Ending" : "Ready"}</span>{offline && <span className="queued"><RelicIcon name="clock" size={11} />Offline · packet cached</span>}{live && <span className={recording ? "recording active" : "recording"}><i />{recording ? "Recording" : "Not recording"}</span>}<span className={audioSummary.status}><RelicIcon name={audioSummary.status === "failed" ? "alert" : audioSummary.status === "idle" || audioSummary.status === "recovered" ? "check" : "clock"} size={11} />{audioStateLabel}</span><span className={writeSummary.status}><RelicIcon name={writeSummary.status === "failed" || writeSummary.status === "conflict" ? "alert" : writeSummary.status === "idle" || writeSummary.status === "recovered" ? "check" : "clock"} size={11} />{writeStateLabel}</span>{conflicts.length > 0 && <button className="stage-v2-conflict-chip" type="button" onClick={() => setShowConflicts((value) => !value)}><RelicIcon name="alert" size={11} />Conflict · {conflicts.length}</button>}</div></div>
       <div className="stage-v2-session-right">{live && <div className="stage-v2-elapsed"><RelicIcon name="clock" size={14} /><strong>{elapsed}</strong><span>elapsed</span></div>}{(status === "ready" || status === "started") && <button className="stage-v2-start" disabled={busy} onClick={beginSession}>{status === "ready" ? "Start Session" : "Go live"}</button>}<button className="stage-v2-mobile-loom" onClick={() => setOverlay("loom")}><RelicIcon name="spark" size={14} />Loom</button><Link className="stage-v2-sanctum" href={root}><RelicIcon name="chevronRight" size={13} />To Sanctum</Link><Link className="stage-v2-profile" href={`${root}/settings`} aria-label="GM profile"><RelicIcon name="profile" size={22} /></Link></div>
     </header>
 
     <div className="stage-v2-body">
       <main className="stage-v2-main">
         <div className="stage-v2-scroll">
-          <h1 className="stage-v2-title">{session.name}</h1>
-          <section className="stage-v2-card stage-v2-agenda" aria-label="Agenda"><header><RelicIcon name="file" size={16} /><span>Agenda</span><RelicIcon name="chevronDown" size={16} /></header><div className="stage-v2-agenda-grid"><article><h2><RelicIcon name="target" size={17} />Objective</h2><p>{session.objective || "No objective has been prepared."}</p></article><article><h2><RelicIcon name="bookmark" size={17} />Opening Scene</h2><p>{session.opening_scene || "No opening scene has been prepared."}</p></article><article><h2><RelicIcon name="file" size={17} />Scene Notes ({sceneNotes.length})</h2>{sceneNotes.length ? <ul>{sceneNotes.map((note) => <li key={note}>{note}</li>)}</ul> : <p>No scene notes yet.</p>}</article></div></section>
+          <h1 className="stage-v2-title">{currentSession.name}</h1>
+          <section className="stage-v2-card stage-v2-agenda" aria-label="Agenda"><header><RelicIcon name="file" size={16} /><span>Agenda</span><RelicIcon name="chevronDown" size={16} /></header><div className="stage-v2-agenda-grid"><article><h2><RelicIcon name="target" size={17} />Objective</h2><p>{currentSession.objective || "No objective has been prepared."}</p></article><article><h2><RelicIcon name="bookmark" size={17} />Opening Scene</h2><p>{currentSession.opening_scene || "No opening scene has been prepared."}</p></article><article><h2><RelicIcon name="file" size={17} />Scene Notes ({sceneNotes.length})</h2>{sceneNotes.length ? <ul>{sceneNotes.map((note) => <li key={note}>{note}</li>)}</ul> : <p>No scene notes yet.</p>}</article></div></section>
           <section className="stage-v2-active-threads" aria-label="Active Threads">
             <header><span><RelicIcon name="threads" size={15} />Active Threads</span><small>{threads.length} carried into this session</small></header>
             {threads.length ? <div className="stage-v2-thread-grid">{threads.map((thread) => {
@@ -510,8 +618,8 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
               </article>;
             })}</div> : <p className="stage-v2-thread-empty">No active Threads were carried into this session.</p>}
           </section>
-          <form className="stage-v2-search" role="search" onSubmit={submitSearch}><RelicIcon name="search" size={17} /><label className="sr-only" htmlFor="stage-saga-search">Search saga during play</label><input ref={searchRef} id="stage-saga-search" type="search" defaultValue={query} placeholder="Search saga…" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); const value = event.currentTarget.value.trim(); router.push(value ? `${pathname}?q=${encodeURIComponent(value)}` : pathname); } else if (event.key === "Escape") { event.currentTarget.value = ""; router.push(pathname); } }} /><kbd>⌘ K</kbd></form>
-          {query && <section className="stage-v2-search-results" aria-label="Saga search results"><header>Search results <span>{results.length}</span></header>{results.length ? results.slice(0, 8).map((result) => <button key={`${result.source_kind}-${result.source_entity_id}`} onClick={() => { if (visiblePinned.some(({ entity }) => entity.id === result.source_entity_id)) setSelectedId(result.source_entity_id); }}><span>{result.source_entity_type ?? result.source_kind}</span><p>{result.snippet}</p></button>) : <p>No canon results. Adjust the search or create a quick stub.</p>}</section>}
+          <form className="stage-v2-search" role="search" onSubmit={submitSearch}><RelicIcon name="search" size={17} /><label className="sr-only" htmlFor="stage-saga-search">Search saga during play</label><input ref={searchRef} id="stage-saga-search" type="search" defaultValue={query} placeholder="Search saga…" onKeyDown={(event) => { if (event.key === "Escape") { event.currentTarget.value = ""; if (offline) { setOfflineQuery(""); setOfflineResults([]); } else router.push(pathname); } }} /><kbd>{offline ? "Cached" : "⌘ K"}</kbd></form>
+          {displayedQuery && <section className="stage-v2-search-results" aria-label="Saga search results"><header>{offline ? "Cached literal results" : "Search results"} <span>{displayedResults.length}</span></header>{displayedResults.length ? displayedResults.slice(0, 8).map((result) => <button key={`${result.source_kind}-${result.source_entity_id}`} onClick={() => { if (visiblePinned.some(({ entity }) => entity.id === result.source_entity_id)) setSelectedId(result.source_entity_id); }}><span>{result.source_entity_type ?? result.source_kind}{result.is_stub ? " · stub" : ""}</span><p>{result.snippet}</p></button>) : <p>No canon results. Adjust the search or create a quick stub.</p>}</section>}
           <section className="stage-v2-card stage-v2-pinned" aria-label="Pinned entities"><header><span><RelicIcon name="pin" size={15} />Pinned Entities</span><button onClick={() => setOverlay("manage")}><RelicIcon name="settings" size={14} />Manage</button></header>{visiblePinned.length ? <div className="stage-v2-pinned-grid">{visiblePinned.map(({ entity }) => <button key={entity.id} className={selectedEntity?.id === entity.id ? "selected" : ""} onClick={() => setSelectedId(entity.id)}><Portrait entity={entity} small /><span><strong>{entity.name}</strong><small>{entity.entityType} · {entity.status || (entity.is_stub ? "Stub" : "Canon")}</small><em><i />{entity.status || "Active"}</em></span></button>)}</div> : <p className="stage-v2-empty">No pinned entities. Use Manage to restore this board or return to Prepare to pin canon.</p>}</section>
           {selectedEntity ? <section className="stage-v2-card stage-v2-entity"><div className="stage-v2-entity-art"><Portrait entity={selectedEntity} /></div><div className="stage-v2-entity-summary"><h2>{selectedEntity.name}<RelicIcon name="pin" size={16} /></h2><small>{selectedEntity.entityType} · {selectedEntity.status || "Canon"}</small>{selectedEntity.narrative && <blockquote>“{selectedEntity.narrative}”</blockquote>}<h3>Summary</h3><p>{selectedEntity.summary || "No summary recorded."}</p></div><div className="stage-v2-entity-notes"><h3>Wants / Voice</h3>{tags?.wants && <p><strong>Wants:</strong> {tags.wants}</p>}{tags?.voice && <p><strong>Voice:</strong> {tags.voice}</p>}{!tags?.wants && !tags?.voice && <p>No structured wants or voice notes.</p>}<h3>GM Notes</h3><p>{tags?.body || "No GM notes recorded."}</p></div><div className="stage-v2-entity-links"><h3>Links</h3>{threads.map((thread) => <span key={thread.id}><RelicIcon name="threads" size={14} />{thread.name}</span>)}<h3>Places</h3>{relatedPlaces.map((place) => <span key={place.id}><RelicIcon name="map" size={14} />{place.name}</span>)}<h3>Related NPCs</h3>{relatedNpcs.map((npc) => <span key={npc.id}><RelicIcon name="users" size={14} />{npc.name}</span>)}<Link href={`${root}/entities/${selectedEntity.entityType}/${selectedEntity.id}`}>Open in Library <RelicIcon name="arrowRight" size={12} /></Link></div></section> : <section className="stage-v2-card stage-v2-empty-card">Pin entities in Prepare to see their live detail here.</section>}
         </div>
@@ -531,15 +639,16 @@ export function StageRuntimeDraft({ params, saga, session, packet, pinned, activ
         ].map((item) => <button key={item.key} className={item.tone} disabled={!canWrite || busy || endedPending} onClick={() => setOverlay(item.key as OverlayName)}><RelicIcon name={item.icon as IconName} size={18} />{item.label}</button>)}</nav>
       </main>
 
-      <aside className={`stage-v2-loom${loomOpen ? " open" : " collapsed"}`} aria-label="The Loom"><button className="stage-v2-loom-tab" onClick={() => setLoomOpen((value) => !value)} aria-label={loomOpen ? "Collapse The Loom" : "Open The Loom"}><RelicIcon name={loomOpen ? "chevronRight" : "chevronDown"} size={15} /></button>{loomOpen ? <><header><RelicIcon name="spark" size={20} /><div><strong>The Loom</strong><span>Your AI partner for live story support.</span></div></header><div className="stage-v2-loom-modes"><button className={loomMode === "prep" ? "active" : ""} onClick={() => setLoomMode("prep")}>Prep Mode</button><button className={loomMode === "live" ? "active" : ""} onClick={() => setLoomMode("live")}>Live Mode</button></div><div className="stage-v2-loom-body">{loomMode === "live" ? <><section><h2>Recent Context</h2><p><RelicIcon name="file" size={15} />{packet?.quick_captures?.length ?? 0} scene captures</p><p><RelicIcon name="threads" size={15} />{threads.length} active threads</p></section><section><h2>Recent Dice</h2>{(packet?.dice_rolls ?? []).slice(0, 4).map((roll) => <p key={roll.id}><RelicIcon name="dice" size={15} />{roll.label ? `${roll.label} · ` : ""}{roll.expression} = {roll.result_total}</p>)}</section></> : <><section><h2>Continuity Alerts</h2>{threads.length ? threads.map((thread) => <p key={thread.id}><RelicIcon name="alert" size={15} />{thread.name}</p>) : <p>No active threads are pinned to this session.</p>}</section><section><h2>Prep Suggestion</h2><p>Keep the objective and opening scene visible; capture deviations as scene notes.</p></section></>}</div><footer><p>Relic can make mistakes. Verify important details.</p></footer></> : <div className="stage-v2-loom-rail"><RelicIcon name="spark" size={20} /><span>The Loom</span></div>}</aside>
+      <aside className={`stage-v2-loom${loomOpen ? " open" : " collapsed"}`} aria-label="The Loom"><button className="stage-v2-loom-tab" onClick={() => setLoomOpen((value) => !value)} aria-label={loomOpen ? "Collapse The Loom" : "Open The Loom"}><RelicIcon name={loomOpen ? "chevronRight" : "chevronDown"} size={15} /></button>{loomOpen ? <><header><RelicIcon name="spark" size={20} /><div><strong>The Loom</strong><span>Your AI partner for live story support.</span></div></header><div className="stage-v2-loom-modes"><button className={loomMode === "prep" ? "active" : ""} onClick={() => setLoomMode("prep")}>Prep Mode</button><button className={loomMode === "live" ? "active" : ""} onClick={() => setLoomMode("live")}>Live Mode</button></div><div className="stage-v2-loom-body">{loomMode === "live" ? <><section><h2>Recent Context</h2><p><RelicIcon name="file" size={15} />{packetState?.quick_captures?.length ?? 0} scene captures</p><p><RelicIcon name="bookmark" size={15} />{packetState?.marked_moments?.length ?? 0} marked moments</p><p><RelicIcon name="threads" size={15} />{threads.length} active threads</p></section><section><h2>Recent Dice</h2>{(packetState?.dice_rolls ?? []).slice(0, 4).map((roll) => <p key={roll.id}><RelicIcon name="dice" size={15} />{roll.label ? `${roll.label} · ` : ""}{roll.expression} = {roll.result_total}</p>)}</section></> : <><section><h2>Continuity Alerts</h2>{threads.length ? threads.map((thread) => <p key={thread.id}><RelicIcon name="alert" size={15} />{thread.name}</p>) : <p>No active threads are pinned to this session.</p>}</section><section><h2>Prep Suggestion</h2><p>Keep the objective and opening scene visible; capture deviations as scene notes.</p></section></>}</div><footer><p>Relic can make mistakes. Verify important details.</p></footer></> : <div className="stage-v2-loom-rail"><RelicIcon name="spark" size={20} /><span>The Loom</span></div>}</aside>
     </div>
 
     {notice && <div className="stage-v2-toast" role="status">{notice}<button onClick={() => setNotice("")} aria-label="Dismiss"><RelicIcon name="x" size={13} /></button></div>}
+    {showConflicts && conflicts.length > 0 && <aside className="stage-v2-conflict-panel" aria-label="Stage sync conflicts"><header><div><strong>Reconnect conflicts</strong><span>No server value was silently overwritten.</span></div><button onClick={() => setShowConflicts(false)} aria-label="Close sync conflicts"><RelicIcon name="x" size={14} /></button></header>{conflicts.map((conflict) => <article key={conflict.id}><strong>{conflict.kind.replaceAll("_", " ")}</strong><p>{conflict.message}</p><dl><div><dt>Queued locally</dt><dd>{JSON.stringify(conflict.localValue)}</dd></div><div><dt>Server kept</dt><dd>{JSON.stringify(conflict.serverValue)}</dd></div></dl><button className="stage-v2-secondary" onClick={() => void getStageWriteQueue().acknowledgeConflict(writeScope, conflict.id).then((summary) => { setWriteSummary(summary); setConflicts((items) => items.filter((item) => item.id !== conflict.id)); })}>Keep server value and continue</button></article>)}</aside>}
     {(error || recordingNote) && <div className={`stage-v2-banner ${error ? "error" : "info"}`} role="alert">{error || recordingNote}<button onClick={() => { setError(""); setRecordingNote(""); }} aria-label="Dismiss"><RelicIcon name="x" size={13} /></button></div>}
 
-    {overlay === "record" && <StageDialog title="Recording" icon="mic" tone="rust" onClose={() => setOverlay(null)}><div className="stage-v2-dialog-body stage-v2-record"><div className={recording ? "stage-v2-record-ring active" : "stage-v2-record-ring"}><RelicIcon name={recording ? "mic" : "micOff"} size={31} /></div><div><h3>{recording ? "Recording in progress" : consent === "unknown" || consent === "unset" ? "Players consented to recording?" : consent === "denied" ? "Recording disabled" : "Ready to record"}</h3><p>{session.name} · Consent {consent}</p></div><p className="stage-v2-record-note">Completed chunks are saved locally before upload. Queued or failed audio stays on this device and retries on reconnect.</p>{(consent === "unknown" || consent === "unset") ? <div className="stage-v2-consent-actions"><button className="stage-v2-secondary" disabled={busy} onClick={() => void setRecordingConsent(false)}>No</button><button className="stage-v2-primary" disabled={busy} onClick={async () => { if (await setRecordingConsent(true)) await toggleRecording(true); }}>Yes, start recording</button></div> : consent === "denied" ? <button className="stage-v2-secondary" disabled={busy} onClick={() => void setRecordingConsent(true)}>Players now consent</button> : <button className={recording ? "stage-v2-danger" : "stage-v2-primary"} disabled={busy} onClick={() => void toggleRecording()}>{recording ? "Stop Recording" : "Start Recording"}</button>}{pendingAudio > 0 && <div className={`stage-v2-upload-state ${audioSummary.status}`}><strong>{audioStateLabel}</strong><span>{audioSummary.lastError || "Audio is preserved until upload and registration complete."}</span>{audioSummary.status === "failed" && <button className="stage-v2-secondary" onClick={() => void getStageAudioUploadQueue().flushSession(audioScope, true).then(setAudioSummary)}>Retry upload</button>}</div>}</div></StageDialog>}
+    {overlay === "record" && <StageDialog title="Recording" icon="mic" tone="rust" onClose={() => setOverlay(null)}><div className="stage-v2-dialog-body stage-v2-record"><div className={recording ? "stage-v2-record-ring active" : "stage-v2-record-ring"}><RelicIcon name={recording ? "mic" : "micOff"} size={31} /></div><div><h3>{recording ? "Recording in progress" : consent === "unknown" || consent === "unset" ? "Players consented to recording?" : consent === "denied" ? "Recording disabled" : "Ready to record"}</h3><p>{currentSession.name} · Consent {consent}</p></div><p className="stage-v2-record-note">Completed chunks are saved locally before upload. Queued or failed audio stays on this device and retries on reconnect.</p>{(consent === "unknown" || consent === "unset") ? <div className="stage-v2-consent-actions"><button className="stage-v2-secondary" disabled={busy} onClick={() => void setRecordingConsent(false)}>No</button><button className="stage-v2-primary" disabled={busy} onClick={async () => { if (await setRecordingConsent(true)) await toggleRecording(true); }}>Yes, start recording</button></div> : consent === "denied" ? <button className="stage-v2-secondary" disabled={busy} onClick={() => void setRecordingConsent(true)}>Players now consent</button> : <button className={recording ? "stage-v2-danger" : "stage-v2-primary"} disabled={busy} onClick={() => void toggleRecording()}>{recording ? "Stop Recording" : "Start Recording"}</button>}{pendingAudio > 0 && <div className={`stage-v2-upload-state ${audioSummary.status}`}><strong>{audioStateLabel}</strong><span>{audioSummary.lastError || "Audio is preserved until upload and registration complete."}</span>{audioSummary.status === "failed" && <button className="stage-v2-secondary" onClick={() => void getStageAudioUploadQueue().flushSession(audioScope, true).then(setAudioSummary)}>Retry upload</button>}</div>}</div></StageDialog>}
     {overlay === "note" && <QuickNote busy={busy} scene={session.name} recording={recording} onClose={() => setOverlay(null)} onSave={saveNote} onMark={markMoment} />}
-    {overlay === "dice" && <DiceTool packetRolls={packet?.dice_rolls ?? []} busy={busy} onRoll={rollPool} onPin={(config) => { setPinnedDice(config); setOverlay(null); }} onClose={() => setOverlay(null)} />}
+    {overlay === "dice" && <DiceTool packetRolls={packetState?.dice_rolls ?? []} busy={busy} onRoll={rollPool} onPin={(config) => { setPinnedDice(config); setOverlay(null); }} onClose={() => setOverlay(null)} />}
     {overlay === "create" && <QuickCreate busy={busy} onClose={() => setOverlay(null)} onCreate={createQuick} />}
     {overlay === "end" && <EndSession busy={busy} elapsed={elapsed} sceneCount={sceneNotes.length} onClose={() => setOverlay(null)} onConfirm={endSession} />}
     {overlay === "manage" && <StageDialog title="Manage Pinned Entities" icon="pin" tone="amber" onClose={() => setOverlay(null)}><div className="stage-v2-dialog-body stage-v2-manage"><p>Choose what stays on this live board. Prep remains the source of the saved pin set.</p>{initialPins.map(({ entity }) => <label key={entity.id}><input type="checkbox" checked={!hiddenPins.includes(entity.id)} onChange={(e) => setHiddenPins((items) => e.target.checked ? items.filter((id) => id !== entity.id) : [...items, entity.id])} /><Portrait entity={entity} small /><span>{entity.name}<small>{entity.entityType}</small></span></label>)}</div><footer className="stage-v2-dialog-foot"><button className="stage-v2-secondary" onClick={() => setHiddenPins([])}>Restore all</button><button className="stage-v2-primary" onClick={() => setOverlay(null)}>Done</button></footer></StageDialog>}

@@ -77,6 +77,7 @@ values
   ('active_saga_matches', 'RLS helper must evaluate active Saga claims consistently.'),
   ('user_can_access_workspace', 'Ownership helper for scoped definer RPCs.'),
   ('user_can_access_saga', 'Hierarchy helper for scoped definer RPCs.'),
+  ('storage_path_allowed', 'Storage RLS helper validates scoped object paths against authenticated ownership.'),
   ('assert_saga_access', 'Shared failure point for scoped definer RPCs.'),
   ('scoped_entity_exists', 'Scope validator for entity references.'),
   ('write_manual_canon_source', 'Internal helper that creates synthetic GM instruction sources.'),

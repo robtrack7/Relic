@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 
 ## Changelog
 
+**Stage airplane-mode recovery patch (July 2026).** Defines the web B2 ready-packet/literal-index cache, adds Start Session, recording consent, and Go Live to the existing FIFO receipt boundary, and makes unexpected reconnect state a durable surfaced conflict rather than a silent overwrite.
+
 **Stage non-audio recovery patch (July 2026).** Extends the web IndexedDB recovery contract to Quick Capture, Quick Stub, Mark Moment, End Session, and Undo. Replay is session-scoped FIFO, stops on the first failed dependency, reuses stable idempotency keys, and enters Supabase through one scoped transactional RPC backed by a private receipt ledger.
 
 **Post-session transcription delivery patch (July 2026).** Implements the `relic-transcribe` LiteLLM audio call behind the Edge worker, ordered scoped Storage reads, timestamped response validation, idempotent duration metering, service-role-only worker completion/failure boundaries, retry/dead-letter recovery, and scoped session-review/read/retry RPCs. Deterministic local provider mode is test evidence only; the hosted LiteLLM path still requires deployed secrets and a live smoke test.
@@ -236,6 +238,8 @@ The pattern above covers most mixed-scope content. Structural and operational ta
 ### 2.5 Storage RLS
 
 Supabase Storage uses RLS-style policies on `storage.objects`. The bucket structure (§12) namespaces by Workspace/World/Saga IDs in the object path. Example audio policy:
+
+The shipped path helper authorizes those three UUID segments through the same authenticated GM ownership boundary as the scoped Stage audio RPCs. It must not depend on an optional active-Saga JWT claim: a valid owner may reconnect and upload a preserved chunk with an ordinary authenticated session, while a path for any Workspace/World/Saga the caller does not own still fails the Storage policy.
 
 ```sql
 create policy "audio_chunks_select"
@@ -1364,13 +1368,17 @@ create table pending_sync (
 
 Each Stage action (Quick Capture, Quick Stub, Mark Moment, audio chunk upload) and each session prep workspace functional-minimum edit writes to both the local table and `pending_sync` in a SQLite transaction. The local table change is immediately reflected in the UI; the sync queue handles the upstream push.
 
-**Web B1 short-window queue.** Web keeps a separate IndexedDB intent store for `quick_capture`, `quick_stub`, `mark_moment`, `end_session`, and `undo_end_session`. Each row carries immutable Workspace/World/Saga/Session scope, a per-session monotonic sequence, the canonical JSON payload, a stable UUID-backed idempotency key, and `queued | uploading | failed` delivery state. Session metadata retains `recovered_at` and the last failure so the Stage can expose the same `queued | uploading | failed | recovered` vocabulary as audio.
+**Web B1/B2 short-window queue.** Web keeps a separate IndexedDB intent store for `start_session`, `quick_capture`, `quick_stub`, `record_consent`, `go_live`, `mark_moment`, `end_session`, and `undo_end_session`. Each row carries immutable Workspace/World/Saga/Session scope, a per-session monotonic sequence, the canonical JSON payload, a stable UUID-backed idempotency key, and `queued | uploading | failed` delivery state. Session metadata retains `recovered_at` and the last failure so the Stage can expose the same `queued | uploading | failed | recovered` vocabulary as audio.
 
 Replay reads the session queue in sequence order and stops at the first failure. This makes End Session depend on every earlier capture and Mark Moment without a second dependency graph. Success deletes only the local intent; failure preserves it with exponential-backoff metadata. Reconnect, app mount, and the Stage route all retry the same intent rather than constructing a replacement.
 
 The browser calls `apply_stage_write_intent` with the existing authenticated Supabase client. The RPC rechecks hierarchy access and session writability, serializes on `(auth.uid(), idempotency_key)`, and commits the domain write plus `internal.stage_write_receipts` row atomically. Duplicate delivery returns the first result; mismatched reuse of a key fails closed. The internal table is not Data API-visible, and the public RPC is revoked from `PUBLIC` and `anon` and granted only to `authenticated`.
 
 Quick Capture and Quick Stub retain their existing GM-authored canon/source/audit behavior. Mark Moment retains the client occurrence timestamp carried by the queued payload. End Session carries the client confirmation timestamp so a delayed replay does not restart the GM's 60-second window; server-owned expiry still performs the final `ended` transition and exactly-once pipeline enqueue. Undo is queued behind End when necessary and is accepted only through the same lifecycle contract.
+
+For B2, the browser writes the Ready Stage packet to a separate IndexedDB cache before treating the route as offline-ready. The cached snapshot contains the scoped session read model, resolved pins, resolved active Threads, and a normalized literal-search document set for current Saga canon plus eligible World canon. It contains no sibling-Saga rows, embeddings, Approval Queue drafts, or AI output. A cache key includes GM, Workspace, World, Saga, and Session identity; a different authenticated GM cannot hydrate it. Server data refresh replaces the snapshot atomically. Local Quick Captures and Quick Stubs are folded into the in-memory literal index immediately so they remain findable before replay.
+
+`start_session`, `record_consent`, and `go_live` use the same queue instead of a server-action exception path. Their payloads declare the server status or consent value observed by the cached packet. If replay finds a different value, `apply_stage_write_intent` writes an immutable `outcome='conflict'` receipt containing the local and server values and makes no domain change. The browser moves that result to its local conflict log, preserves all later intents, and requires an explicit GM acknowledgement before continuing past the conflicting dependency. Duplicate conflict delivery returns the same receipt and cannot create a second effect.
 
 ### 15.5 Reconnect flush with conflict surfacing
 
@@ -1379,10 +1387,10 @@ On `Online` transition, the sync worker:
 1. Reads `pending_sync` rows in `created_at` order.
 2. For each, replays against Supabase (`insert`/`update`/`delete` on the named table).
 3. On success: deletes the `pending_sync` row.
-4. On conflict (server has a newer `updated_at`): **last-write-wins per Basepoint §13** — the local change wins (the GM explicitly authored it). The server's competing value is captured in `pending_sync.server_value` for surfacing.
+4. On editable-record conflict (server has a newer `updated_at`): **last-write-wins per Basepoint §13** — the local change wins (the GM explicitly authored it). The server's competing value is captured in `pending_sync.server_value` for surfacing. On Stage lifecycle or consent conflict, no overwrite occurs: the receipt records both values and replay pauses behind the conflict.
 5. On hard failure (validation, RLS denial): marks `attempts++`. After 3 attempts, surfaces in saga settings as "unsynced changes" with manual review.
 
-After flush completes, the Sanctum shows a "Sync conflicts" badge if any rows had server-value capture. The conflict surface lists each affected row with both versions visible. The GM can confirm the local write or revert to the server value. No data is silently lost — last-write-wins applies, but the GM sees what was overwritten.
+After flush completes, the Sanctum shows a "Sync conflicts" badge if any rows had server-value capture. The conflict surface lists each affected row with both versions visible. The GM can confirm the local write or revert to the server value. The web Stage may show the same count as a non-blocking reconnect chip and an on-demand detail panel; it must not open a blocking resolver during play. No data is silently lost — editable-record last-write-wins is visible, while lifecycle/consent conflicts do not overwrite at all.
 
 ### 15.6 Last-write-wins, in detail
 
@@ -1403,7 +1411,7 @@ Web uses IndexedDB for the same short-window queue contract. The queue survives 
 
 ### 15.8 What about web?
 
-The web Stage uses the same Stage UI but does **not** maintain a SQLite cache — it relies on React Query's cache plus Supabase's real-time subscriptions. Web offline is short-window only (the IndexedDB cache lasts a session). For laptop play in a basement with patchy wifi: works, but doesn't survive a full network drop the way mobile does.
+The web Stage uses the same Stage UI but does **not** maintain a SQLite cache. Its B2 short-window IndexedDB snapshot holds one current Ready/live packet and literal index, while the existing IndexedDB write/audio queues preserve local work. This supports an already-open Stage through a full network drop and a route/component reload while the application shell remains available; installable cold boot with no cached web shell remains a mobile/native or later PWA concern. For laptop play in a basement with patchy wifi: the live loop survives, but web does not claim the multi-session durable store planned for mobile.
 
 This is an intentional platform asymmetry, not a product-surface split. The Stage is clean and focused on both web and mobile; mobile gets deeper offline resilience because table use benefits from it. Web Stage remains first-class for the web-first build and laptop play.
 

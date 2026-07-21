@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 
 ## Changelog
 
+**Stage airplane-mode recovery patch (July 2026).** Extends the Stage receipt boundary to `start_session`, `record_consent`, and `go_live`, and defines conflict results as immutable receipt outcomes rather than silent lifecycle/consent overwrites. `get_stage_packet` now carries a scope-filtered literal search document set for the current Stage cache; the index is a read-model payload, not a new canon table.
+
 **Stage non-audio recovery patch (July 2026).** Adds the private `internal.stage_write_receipts` idempotency ledger for web Quick Capture, Quick Stub, Mark Moment, End Session, and Undo replay. Receipts are operational metadata rather than canon or source rows; the scoped RPC remains the only authenticated access path.
 
 **Stage evidence recovery patch (July 2026).** Adds `sessions.audio_chunk_count_expected` and `recording_finalized_at` so late retry-safe chunk registration cannot enqueue an incomplete transcription, and records scheduled server-owned undo expiry as the lifecycle implementation.
@@ -951,7 +953,7 @@ create table internal.stage_write_receipts (
   saga_id            uuid not null references sagas(id) on delete cascade,
   session_id         uuid not null references sessions(id) on delete cascade,
   idempotency_key    text not null,
-  intent_kind        text not null,        -- quick_capture | quick_stub | mark_moment | end_session | undo_end_session
+  intent_kind        text not null,        -- start_session | quick_capture | quick_stub | record_consent | go_live | mark_moment | end_session | undo_end_session
   payload            jsonb not null,
   result             jsonb not null,
   created_at         timestamptz not null default now(),
@@ -963,7 +965,7 @@ create index on internal.stage_write_receipts (world_id);
 create index on internal.stage_write_receipts (saga_id);
 ```
 
-`apply_stage_write_intent` authenticates the GM, rechecks Workspace/World/Saga/Session scope, serializes delivery by `(gm_id, idempotency_key)`, and writes the product row plus receipt in one transaction. A repeated key returns the recorded result only when scope, kind, and canonicalized JSON payload match; key reuse with different input fails closed. This ledger never substitutes for `sources` or `canon_audit` where those are required by the owning write path.
+`apply_stage_write_intent` authenticates the GM, rechecks Workspace/World/Saga/Session scope, serializes delivery by `(gm_id, idempotency_key)`, and writes the product row plus receipt in one transaction. A repeated key returns the recorded result only when scope, kind, and canonicalized JSON payload match; key reuse with different input fails closed. Successful results record `outcome='applied'`. If a queued lifecycle or consent intent no longer matches the server state it expected, the RPC records `outcome='conflict'` with the local intent and current server value and performs no domain overwrite. Replaying that conflict returns the same receipt. This ledger never substitutes for `sources` or `canon_audit` where those are required by the owning write path.
 
 ### 8.6 `pipeline_runs`
 

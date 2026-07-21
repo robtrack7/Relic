@@ -63,3 +63,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-07-20 - Stage Dice and Quick Create Proof]]
 - [[Session Logs/2026-07-20 - Stage Active Threads and Shell Polish]]
 - [[Session Logs/2026-07-20 - Stage Non-Audio Write Recovery]]
+- [[Session Logs/2026-07-20 - Stage Airplane Mode Recovery]]

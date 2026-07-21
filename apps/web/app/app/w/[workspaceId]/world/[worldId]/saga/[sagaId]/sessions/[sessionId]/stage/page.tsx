@@ -9,7 +9,7 @@ export default async function StagePage({ params, searchParams }: { params: Prom
   const all = await params;
   const ids: IdParams = all;
   const query = await searchParams;
-  const [{ saga }, session, packet, pinned, activeThreads, results] = await Promise.all([
+  const [{ saga, user }, session, packet, pinned, activeThreads, results] = await Promise.all([
     requireSagaContext(ids),
     getSession(ids, all.sessionId),
     getStagePacket(ids, all.sessionId),
@@ -22,6 +22,7 @@ export default async function StagePage({ params, searchParams }: { params: Prom
   return (
     <StageRuntimeDraft
       params={ids}
+      ownerId={user.id}
       saga={saga}
       session={session}
       packet={packet}

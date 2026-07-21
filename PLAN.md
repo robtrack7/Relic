@@ -37,11 +37,11 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 
 | Priority | Complete | Partial | Missing | Blocked | Needs verification |
 |---|---:|---:|---:|---:|---:|
-| P0 | 5 | 10 | 5 | 2 | 0 |
+| P0 | 6 | 9 | 5 | 2 | 0 |
 | P1 | 0 | 5 | 2 | 0 | 1 |
 | P2 | 0 | 2 | 1 | 0 | 1 |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, and durable FIFO recovery for non-audio Stage writes. The immediate packet is B2 packet/search caching plus the full airplane-mode workflow. The largest remaining product path is evidence → synthesis → source-aware draft → explicit approval.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, and the complete B2 short-window web airplane-mode workflow. The immediate lane is Phase C evidence → synthesis → source-aware draft → explicit approval.
 
 ## 3. Quality-gate system
 
@@ -142,14 +142,15 @@ Stop rules:
 - **Done when:** unit tests cover enqueue, replay, duplicate delivery, partial failure, and app restart.
 - **Evidence:** Quick Note, all Quick Create mappings, Mark Moment, End Session, and Undo now commit a stable UUID-backed intent to IndexedDB before replay. The per-session monotonic sequence stops at the first failed dependency; a scoped transactional RPC records exactly-once GM receipts and rejects mismatched key reuse. Four queue tests cover enqueue/replay, duplicate redelivery, partial failure, and restart recovery; 19 pgTAP assertions prove one domain effect per key, client timestamps, End/Undo replay, and anonymous denial. The clean migration replay, 320-test database suite, 53-test web suite, production build, and authenticated loop all pass.
 
-#### Packet B2 — Airplane-mode workflow
+#### Packet B2 — Airplane-mode workflow — complete 2026-07-20
 
 - Cache the ready Stage packet and literal search index needed for live play.
 - Exercise start → note → stub → record → mark → end entirely offline, then reconnect.
 - Surface conflicts instead of silently overwriting newer server state.
 - **Done when:** one deterministic browser test proves exactly-once flush after reload/reconnect with all evidence intact.
+- **Evidence:** The authenticated Stage caches its scoped packet, resolved pins/Threads, and current-Saga plus eligible World literal index in an owner-keyed IndexedDB snapshot. Start, note, stub, consent, Go Live, mark, and End share B1's FIFO queue and immutable receipt boundary; lifecycle/consent mismatches become stored conflict receipts and pause later replay without overwriting the server. Focused cache/queue tests, 20 B2 pgTAP assertions, a clean 340-test database suite, and the browser airplane-mode proof cover offline reload, one queued audio Blob, seven queued writes, reconnect, exactly one server effect, and four responsive viewports.
 
-**Milestone B gate:** clean database reset, offline flow twice (fresh and reload recovery), pgTAP idempotency checks, web build, and responsive Stage smoke.
+**Milestone B gate — passed 2026-07-20:** clean database reset, offline flow twice (fresh and reload recovery), pgTAP idempotency checks, web build, responsive Stage smoke, and the A1–A3 authenticated regression all passed.
 
 ### Phase C — Close the post-session loop
 

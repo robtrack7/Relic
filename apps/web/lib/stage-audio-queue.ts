@@ -300,11 +300,11 @@ export class StageAudioUploadQueue {
     return chunk;
   }
 
-  async requestFinalization(scope: StageAudioScope) {
+  async requestFinalization(scope: StageAudioScope, flushNow = true) {
     const session = await this.session(scope);
     session.finalizationRequested = true;
     await this.store.putSession(session);
-    return this.flushSession(scope, true);
+    return flushNow ? this.flushSession(scope, true) : this.emit(scope);
   }
 
   async getSummary(scope: StageAudioScope) {
@@ -386,9 +386,9 @@ export class StageAudioUploadQueue {
     return this.emit(scope);
   }
 
-  async recoverAll() {
+  async recoverAll(retryNow = false) {
     const sessions = await this.store.listSessions();
-    return Promise.all(sessions.map((session) => this.flushSession(session)));
+    return Promise.all(sessions.map((session) => this.flushSession(session, retryNow)));
   }
 }
 

@@ -30,7 +30,9 @@ This document is optimized for downstream consumption by AI coding agents (vibe-
 
 ## Changelog
 
-**Web non-audio recovery patch (July 2026).** Quick Capture, Quick Stub, Mark Moment, End Session, and Undo now share the web Stage's explicit `queued`, `uploading`, `failed`, and `recovered` recovery language. IndexedDB intent replay is FIFO and End Session cannot pass earlier evidence writes. This is short-window web durability; Packet caching and the complete airplane-mode workflow remain separate work.
+**Web airplane-mode recovery patch (July 2026).** Defines the B2 Ready packet and literal-index cache, routes Start Session, recording consent, and Go Live through the durable FIFO boundary, and adds a non-blocking reconnect-conflict count/detail surface with no silent lifecycle overwrite.
+
+**Web non-audio recovery patch (July 2026).** Quick Capture, Quick Stub, Mark Moment, End Session, and Undo now share the web Stage's explicit `queued`, `uploading`, `failed`, and `recovered` recovery language. IndexedDB intent replay is FIFO and End Session cannot pass earlier evidence writes. This B1 checkpoint supplied the durable-write foundation completed by the B2 cache and airplane-mode patch above.
 
 **v0.6 (May 2026).** Priority 7 closeout. Clarifies alpha Stage distribution through Expo preview/internal builds, notification tap behavior into Stage/Sanctum destinations, Stage-safe failure UX, and quota-blocked/manual-fallback states. No live-session feature expansion.
 
@@ -876,6 +878,8 @@ Mobile SQLite cache (Tech Arch §15.2) hydrates with:
 - Saga tag dictionary and relevant World tag/context dictionary.
 - All quick captures and stubs for this session (local).
 
+The web B2 cache stores the same current-session functional packet in IndexedDB for the short Stage window: session lifecycle/agenda data, resolved pins, resolved active Threads, existing captures/marks/dice/consent, and a normalized literal index for eligible Saga and World canon. It is keyed by GM + Workspace + World + Saga + Session. Quick Captures and Quick Stubs join the local index immediately, before reconnect replay. Hybrid retrieval, sibling-Saga content, drafts, embeddings, and AI output are never cached into this index.
+
 ### 15.2 What works offline
 
 | Feature | Offline |
@@ -906,15 +910,15 @@ Tap chip → panel showing what's queued.
 
 ### 15.4 Conflict handling
 
-Per Tech Arch §15.6, last-write-wins on reconnect. Conflicts surface in Sanctum as "unsynced changes" — **not in the Stage.** The GM is playing and cannot resolve conflicts mid-scene.
+Per Tech Arch §15.6, editable-record last-write-wins conflicts surface in Sanctum as "unsynced changes." Stage lifecycle and consent conflicts do not overwrite: the idempotency receipt records both the queued local expectation and current server value. During play, Stage shows only a quiet conflict count; it never opens a resolver automatically. The GM may open an on-demand detail panel, and the same conflict remains available after play until explicitly acknowledged.
 
 ### 15.5 Web offline (Tech Arch §15.8)
 
 Web Stage uses React Query cache + Supabase real-time. Short-window offline works. Full network drop on web: recording keeps writing locally (MediaRecorder), entity cache is best-effort. Mobile is the primary and resilience-first Stage surface.
 
-For the web-first B1 boundary, Quick Capture, Quick Stub, Mark Moment, End Session, and Undo are written to IndexedDB before network delivery begins. The Stage closes the input sheet immediately and uses explicit write-queue copy: `queued`, `uploading`, `failed`, or `recovered`. Reconnect and later app loads retry the same stable intent. End Session remains behind earlier queued captures and marks; a failed predecessor prevents lifecycle replay from passing it. The GM can keep playing through a transient write failure, and no failed intent is silently discarded.
+For the web-first B1/B2 boundary, Start Session, Quick Capture, Quick Stub, recording consent, Go Live, Mark Moment, End Session, and Undo are written to IndexedDB before network delivery begins. The Stage closes the input sheet immediately and uses explicit write-queue copy: `queued`, `uploading`, `failed`, `conflict`, or `recovered`. Reconnect and later app loads retry the same stable intent. End Session remains behind every earlier lifecycle/evidence intent; a failed or conflicting predecessor prevents replay from passing it until the GM explicitly acknowledges the conflict. The GM can keep playing through a transient write failure, and no failed intent is silently discarded.
 
-This does not claim the full §15.1 packet cache or offline literal index. Those remain the airplane-mode packet after the durable-write foundation.
+The B2 cache completes the short-window web airplane-mode packet and literal search boundary. It does not claim an installable offline web cold boot or the mobile multi-session SQLite store.
 
 ---
 

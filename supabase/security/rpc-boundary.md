@@ -37,7 +37,7 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `quick_capture(...)` | Add a Stage quick-capture note. |
 | `quick_stub(...)` | Add a Stage quick-stub entity. |
 | `mark_moment(...)` | Add a Stage marked moment. |
-| `apply_stage_write_intent(...)` | Replay a scoped Quick Capture, Quick Stub, Mark Moment, End Session, or Undo exactly once per GM idempotency key. |
+| `apply_stage_write_intent(...)` | Replay the scoped Stage lifecycle/evidence queue exactly once per GM idempotency key and return immutable conflict receipts without overwriting competing lifecycle state. |
 | `record_session_consent(...)` | Record per-session Stage recording consent. |
 | `record_dice_roll(...)` | Record per-session Stage dice history. |
 | `get_stage_packet(...)` | Read a scoped Stage packet for rough UI smoke testing. |
@@ -80,6 +80,8 @@ These helpers are callable by `authenticated` because RLS policies or storage po
 - `saga_row_allowed(uuid, uuid, uuid)`
 - `storage_path_allowed(text)`
 - `storage_path_segment(text, integer)`
+
+`storage_path_allowed(text)` is a fixed-search-path `security definer` helper so Supabase Storage can validate the Workspace/World/Saga path against authenticated ownership without relying on an optional active-Saga JWT claim.
 
 ## Internal Definer Helpers
 

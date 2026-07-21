@@ -46,3 +46,15 @@ export type SearchResult = {
   canon_state: "canon" | "archived";
   is_stub: boolean;
 };
+
+export type StageLiteralSearchDocument = {
+  source_kind: string;
+  source_entity_type: EntityType | null;
+  source_entity_id: string;
+  name: string;
+  summary: string | null;
+  narrative: string | null;
+  canon_state: "canon" | "archived";
+  is_stub: boolean;
+  updated_at: string;
+};
