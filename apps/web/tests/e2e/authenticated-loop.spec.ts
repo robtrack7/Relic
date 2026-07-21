@@ -82,6 +82,16 @@ test("new GM can exercise the full manual MVP loop from sign-up through Stage", 
   await expect(page.getByRole("link", { name: "Sessions", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "No session", exact: true })).toBeVisible();
 
+  await page.goto(`${sagaRoot}/imports`);
+  const legacySource = "Legacy campaign notes remain raw and untrusted.\nThe sealed letter was last seen at the Moonwell Archive.";
+  await page.getByRole("textbox", { name: "Raw pasted text" }).fill(legacySource);
+  await page.getByRole("button", { name: "Save for review" }).click();
+  await expect(page.getByText(/ready for your review and remains non-canon/i)).toBeVisible();
+  await page.reload();
+  const importCard = page.locator("article.import-source").filter({ hasText: "Pasted text" });
+  await importCard.getByText("Inspect original content").click();
+  await expect(importCard.locator("pre")).toHaveText(legacySource);
+
   const characterUrl = await createEntity(
     sagaRoot,
     "character",

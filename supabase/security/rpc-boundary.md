@@ -127,6 +127,8 @@ Hierarchy reads return only owner-accessible Workspace/World/Saga choices and an
 
 Worker-only wrappers for operations are `complete_export_job_for_worker(...)`, `dispatch_notification_for_worker(...)`, `claim_cleanup_job_for_worker(...)`, and `complete_cleanup_job_for_worker(...)`; they are not granted to browser roles.
 
+Import Inbox writes use `save_import_inbox_source(...)`, reads use `get_import_inbox(...)`, and archive/restore uses `set_import_source_state(...)`. All three recheck the exact Workspace/World/Saga. The stable source UUID is the delivery key; identical scoped content deduplicates by uploader/hash, while changed key reuse and sibling-scope substitution fail closed. Imported content and provenance are immutable. These RPCs do not call Storage, retrieval, embeddings, AI runtime, metering, drafts, or canon paths.
+
 ## Verification
 
 Run:

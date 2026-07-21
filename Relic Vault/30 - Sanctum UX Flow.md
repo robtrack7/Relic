@@ -596,7 +596,11 @@ Everything else from v0.1 §9.4–9.6 is unchanged.
 
 ## 11. Imports — paste, Markdown, docx
 
-Unchanged from v0.1 §10, with one wording update:
+**D5 Import Inbox patch (July 2026).** The scoped `/imports` route accepts pasted text plus strict UTF-8 `.txt`, `.md`, and `.markdown`. Owner-and-hierarchy-keyed local recovery retains paste or decoded selected-file content, filename, MIME, byte size, stable source ID, and failed/rejected state through navigation, refresh, network failure, retry, and app restart. Ready and archived imports persist server-side with inspectable original content and immutable provenance. The UI labels all imports raw and untrusted and offers no summarize, split, embed, AI, proposal, or canon action.
+
+`.docx` is visibly unsupported in this slice. It may ship only behind the trusted-runtime extraction boundary in [[21 - Tech Architecture]]; PDF remains out of MVP.
+
+The former placeholder copy is superseded by:
 
 `SNC-FR-22` (updated) — The `+ Import` placeholder now reads:
 
@@ -604,11 +608,11 @@ Unchanged from v0.1 §10, with one wording update:
 ┌─ Import ──────────────────────────────────────────────┐
 │ Bring legacy notes into your saga.                     │
 │                                                        │
-│ For now, you can paste notes when creating a new saga  │
-│ ("Bring your notes" help level). The Import Inbox —   │
-│ Markdown, docx, PDF — ships next.                      │
+│ Paste text or choose UTF-8 .txt, .md, or .markdown.    │
+│ Review exact content and provenance before any later   │
+│ GM-directed use. docx and PDF are not supported yet.   │
 │                                                        │
-│ Creating a saga?  [ New saga → ]                       │
+│ [ Paste text ] [ Choose file ]                         │
 └────────────────────────────────────────────────────────┘
 ```
 

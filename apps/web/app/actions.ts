@@ -32,6 +32,10 @@ function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
+function rawValue(formData: FormData, key: string) {
+  return String(formData.get(key) ?? "");
+}
+
 function paramsFromForm(formData: FormData): IdParams {
   return {
     workspaceId: value(formData, "workspaceId"),
@@ -764,6 +768,46 @@ export async function saveSessionEvidenceAction(formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/review`);
   return { ok: true, source: data };
+}
+
+export async function saveImportInboxAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const method = value(formData, "ingestionMethod");
+  const filename = rawValue(formData, "filename") || null;
+  const mimeType = value(formData, "mimeType");
+  const byteSize = Number(value(formData, "byteSize"));
+  const encodedContent = rawValue(formData, "contentBase64");
+  if (!Number.isSafeInteger(byteSize) || byteSize < 1) return { ok: false as const, error: "Import size is invalid." };
+  let content: string;
+  try {
+    const bytes = Buffer.from(encodedContent, "base64");
+    if (!encodedContent || bytes.toString("base64") !== encodedContent.replace(/\s/g, "")) throw new Error("invalid base64");
+    content = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(bytes);
+    if (bytes.byteLength !== byteSize) throw new Error("size mismatch");
+  } catch {
+    return { ok: false as const, error: "Import encoding is invalid or changed in transit." };
+  }
+  const { data, error } = await supabase.rpc("save_import_inbox_source", {
+    workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId,
+    source_id: value(formData, "sourceId"), ingestion_method: method, original_filename: filename,
+    mime_type: mimeType, byte_size: byteSize, content,
+  });
+  if (error) return { ok: false as const, error: error.message };
+  revalidatePath(`${sagaPath(params)}/imports`);
+  return { ok: true as const, source: data as { id: string; state: string; duplicate?: boolean } };
+}
+
+export async function setImportSourceStateAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const { data, error } = await supabase.rpc("set_import_source_state", {
+    workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId,
+    source_id: value(formData, "sourceId"), next_state: value(formData, "nextState"),
+  });
+  if (error) return { ok: false as const, error: error.message };
+  revalidatePath(`${sagaPath(params)}/imports`);
+  return { ok: true as const, source: data };
 }
 
 export async function requestSagaExportAction(formData: FormData) {

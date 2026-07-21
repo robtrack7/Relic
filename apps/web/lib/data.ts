@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { entityConfigs } from "@/lib/entities";
 import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
-import type { AppContext, EntitySummary, EntityType, HierarchyContext, IdParams, LibraryRecordDetail, SearchResult, SessionPrepData, SessionPrepPin, StageLiteralSearchDocument, ThreadDetail, ThreadObjective, ThreadTimelineEntry } from "@/lib/types";
+import type { AppContext, EntitySummary, EntityType, HierarchyContext, IdParams, ImportSource, LibraryRecordDetail, SearchResult, SessionPrepData, SessionPrepPin, StageLiteralSearchDocument, ThreadDetail, ThreadObjective, ThreadTimelineEntry } from "@/lib/types";
 
 type WorkspaceContext = { id: string; name: string; usage_limits?: Record<string, unknown>; hierarchy?: HierarchyContext };
 type WorldContext = { id: string; name: string; summary?: string | null; default_game_system?: string | null };
@@ -269,6 +269,18 @@ export async function getSessions(params: IdParams) {
     throw new Error(error.message);
   }
   return (data ?? []) as SessionRow[];
+}
+
+export async function getImportInbox(params: IdParams, includeArchived = true): Promise<ImportSource[]> {
+  const { supabase } = await requireSagaContext(params);
+  const { data, error } = await supabase.rpc("get_import_inbox", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    include_archived: includeArchived,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as ImportSource[];
 }
 
 export async function getSession(params: IdParams, sessionId: string) {

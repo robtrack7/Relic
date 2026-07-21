@@ -10,7 +10,7 @@ type ShellProps = {
   workspace: { name: string; hierarchy?: HierarchyContext };
   world: { name: string };
   saga: { name: string };
-  active?: "home" | "threads" | "library" | "entities" | "prepare" | "sessions" | "review" | "search" | "guide" | "settings" | "export";
+  active?: "home" | "threads" | "library" | "entities" | "prepare" | "sessions" | "review" | "imports" | "search" | "guide" | "settings" | "export";
   currentSession?: { id: string; name: string; status: string } | null;
   reviewCount?: number;
   loomMode?: "ask" | "prep";
@@ -64,6 +64,7 @@ export function SanctumShell({
   ] as const;
 
   const lowerNav = [
+    { key: "imports", label: "Import Inbox", href: `${root}/imports`, icon: "file" as const },
     { key: "export", label: "Export", href: `${root}/export`, icon: "export" as const },
     { key: "settings", label: "Settings", href: `${root}/settings`, icon: "settings" as const },
   ] as const;

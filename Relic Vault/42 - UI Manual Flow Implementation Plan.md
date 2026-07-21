@@ -60,7 +60,8 @@ Build the MVP loop as a usable manual product before wiring AI calls: Create -> 
 ### 4. Session Prep Without AI Wiring
 
 - **Complete through Packet D4:** session list/planned-session behavior, full-editor/inline-dashboard parity, visible recoverable autosave, prior-session summary/fallback, scheduled-session affordances, state-valid actions, ordered archived/missing-pin recovery, checklist, packet preview, and latest-write Ready for Stage are implemented. Prepare remains the rail destination; Stage opens from Ready/Open Stage and live-session context.
-- **Current Packet D5:** build the manual Import Inbox boundary without invoking Prep AI or relaxing explicit GM canon approval.
+- **Completed Packet D5 (partial format scope):** paste and strict UTF-8 text/Markdown now enter the scoped Import Inbox as raw, immutable, reviewable sources without invoking AI or relaxing explicit GM canon approval. `.docx` remains deferred.
+- **Immediate next Packet E1:** deliver embedding and re-embedding workers without enrolling Import Inbox sources automatically.
 - Show prep briefing and AI assist areas as empty/mocked/disabled surfaces with manual alternatives until AI runtime is accepted.
 - Preserve autosave and quota/provider failure states without needing live AI calls.
 

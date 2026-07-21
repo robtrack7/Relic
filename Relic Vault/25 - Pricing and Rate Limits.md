@@ -133,6 +133,8 @@ Storage warning thresholds: 70%, 90%, 100%.
 
 ### 2.5 Import and export limits
 
+**D5 enforcement note (July 2026).** The shipped provider-independent Import Inbox enforces the conservative 1 MB single-file boundary for `.txt/.md/.markdown`, the 50,000-character paste boundary, and the effective Workspace `imports_monthly` hard/soft policy by counting immutable imported sources. Intake does not spend AI credits or create a usage charge. Larger plan-specific file caps remain a later settings/metering enhancement; `.docx` remains unsupported pending the trusted extraction contract.
+
 | Limit | Alpha Invite | Free | Standard | Power later |
 |---|---:|---:|---:|---:|
 | First-run pasted notes | 50,000 chars | 50,000 chars | 50,000 chars | 100,000 chars candidate |

@@ -23,6 +23,7 @@ describe("route hierarchy guards", () => {
       "app/app/w/[workspaceId]/world/[worldId]/settings/page.tsx",
       "app/app/w/[workspaceId]/world/[worldId]/saga/[sagaId]/export/page.tsx",
       "app/app/w/[workspaceId]/world/[worldId]/saga/[sagaId]/guide/page.tsx",
+      "app/app/w/[workspaceId]/world/[worldId]/saga/[sagaId]/imports/page.tsx",
       "app/app/w/[workspaceId]/world/[worldId]/saga/[sagaId]/sessions/[sessionId]/review/page.tsx"
     ];
 

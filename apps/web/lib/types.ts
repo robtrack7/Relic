@@ -4,6 +4,23 @@ export type IdParams = {
   sagaId: string;
 };
 
+export type ImportSource = {
+  id: string;
+  workspace_id: string;
+  world_id: string;
+  saga_id: string;
+  uploader_id: string;
+  filename: string | null;
+  mime_type: string;
+  byte_size: number;
+  ingestion_method: "paste" | "plain_text_file" | "markdown_file";
+  state: "ready_for_review" | "archived";
+  content: string;
+  created_at: string;
+  ready_at: string;
+  archived_at: string | null;
+};
+
 export type HierarchyOption = {
   id: string;
   name: string;

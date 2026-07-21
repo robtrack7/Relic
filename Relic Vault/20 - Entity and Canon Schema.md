@@ -40,6 +40,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 
 **Manual session evidence patch (July 2026).** Defines pasted notes and GM manual summaries as immutable Saga-scoped `sources` rows tied to one ended Session. A client-stable source UUID provides exact retry identity; an identical replay returns the same source, while key reuse with different scope, kind, or text fails closed. Saving evidence updates only pipeline input metadata and never creates notes, drafts, audit rows, or canon.
 
+**Import Inbox patch (July 2026).** Adds `imported_text` sources with immutable Workspace/World/Saga/uploader, filename when applicable, MIME, byte size, ingestion method, SHA-256, and creation/ready timestamps. Paste, `.txt`, `.md`, and `.markdown` enter only as raw `ready_for_review` evidence; archive changes lifecycle state without deleting provenance. The source UUID is the stable delivery key, exact content deduplicates per Saga/uploader, changed key reuse fails closed, and ingestion creates no note, entity, Thread, draft, embedding, AI run, canon audit, or usage charge. `.docx` remains rejected until a trusted extraction boundary ships.
+
 **Stage airplane-mode recovery patch (July 2026).** Extends the Stage receipt boundary to `start_session`, `record_consent`, and `go_live`, and defines conflict results as immutable receipt outcomes rather than silent lifecycle/consent overwrites. `get_stage_packet` now carries a scope-filtered literal search document set for the current Stage cache; the index is a read-model payload, not a new canon table.
 
 **Stage non-audio recovery patch (July 2026).** Adds the private `internal.stage_write_receipts` idempotency ledger for web Quick Capture, Quick Stub, Mark Moment, End Session, and Undo replay. Receipts are operational metadata rather than canon or source rows; the scoped RPC remains the only authenticated access path.
@@ -99,7 +101,7 @@ create type confidence_reason as enum (
 create type relationship_kind as enum ('member-of', 'located-at', 'owns', 'allied-with', 'opposed-to', 'related-to');
 create type note_type as enum ('lore', 'gm_note', 'quick_capture', 'summary');
 create type mention_state as enum ('suggested', 'accepted', 'dismissed', 'snoozed');
-create type source_kind as enum ('transcript_segment', 'note', 'pasted_text', 'gm_manual_summary', 'existing_entity', 'workshop_input', 'gm_instruction');
+create type source_kind as enum ('transcript_segment', 'note', 'pasted_text', 'gm_manual_summary', 'existing_entity', 'workshop_input', 'gm_instruction', 'imported_text');
 create type content_scope as enum ('world', 'saga');
 create type session_status as enum ('planned', 'ready', 'started', 'in_progress', 'ended_pending_undo', 'ended');
 create type workshop_path as enum ('build_with_ai', 'bring_your_notes', 'start_blank');

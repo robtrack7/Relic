@@ -41,7 +41,7 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 | P1       | 1        | 4       | 2       | 0       | 1                  |
 | P2       | 0        | 2       | 1       | 0       | 1                  |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup, D2's complete six-type Library lifecycle with explicit relationship/mention acceptance, D3's scoped Thread/objective lifecycle plus derived read-only timeline, and D4's recoverable autosaving Prep parity. The immediate lane is Packet D5 Import Inbox.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup, D2's complete six-type Library lifecycle with explicit relationship/mention acceptance, D3's scoped Thread/objective lifecycle plus derived read-only timeline, D4's recoverable autosaving Prep parity, and D5's raw paste/text/Markdown Import Inbox boundary. The immediate lane is Packet E1 embedding and re-embedding delivery; `.docx` remains a named D5 format gap.
 
 ## 3. Quality-gate system
 
@@ -224,14 +224,15 @@ Stop rules:
 - **Done when:** multiple future sessions coexist, live prep locks correctly, and failed saves preserve input.
 - **Evidence:** Home and full Prep now share one 800ms/blur autosave editor with owner/scoped local recovery, visible saving/saved/offline/failed/conflict/retry states, optimistic stale-write rejection, scheduled date/time, prior approved-summary fallback, state-valid lifecycle actions, and ordered recoverable entity/Thread pins. Planned and Ready remain editable; every later state is read-only. Ready flushes the latest local edit before transition, and Stage reads the persisted relational packet. Sixteen focused component tests, 31 D4 pgTAP assertions, the 103-test web suite, 629-test database suite, clean replay/lint/build/repository gates, and authenticated four-viewport plus fresh-server restart flows passed with explicit zero-provider and zero-canon-write assertions.
 
-#### Packet D5 — Import Inbox — current
+#### Packet D5 — Import Inbox — partially complete 2026-07-21 (`.docx` deferred)
 
 - Ship paste and Markdown ingestion first with size/type validation, raw source provenance, review state, and quota/manual fallback.
 - Add `.docx` extraction only after malformed, oversized, and unsupported-file tests are deterministic.
 - Keep imported material raw/untrusted until explicit GM creation or Approval Queue action.
-- **Done when:** text/Markdown and supported `.docx` inputs survive review/retry, retain provenance, and cannot enter canon automatically.
+- **Delivered:** paste plus strict UTF-8 `.txt`, `.md`, and `.markdown` survive navigation, refresh, failure, exact retry, and app restart; retain immutable scoped provenance; expose exact original content in ready/archive review states; enforce conservative size/type/MIME/encoding/filename/quota rules; and create zero canon, proposal, embedding, AI-run, or usage-charge effects.
+- **Deferred:** `.docx` remains rejected. No trusted extractor ships until deterministic encrypted, macro-enabled, malformed, nested, zip-bomb-like, oversized, MIME-mismatch, original-retention, derived-source-link, extraction-version, and safe-failure fixtures pass.
 
-**Milestone D gate:** complete the full manual Create → Organize → Prep → Run → Review → Approve → Continue browser loop after a clean reset, then repeat after app restart.
+**Milestone D gate — complete 2026-07-21:** after a clean reset, the authenticated signup/Create → Import review → Organize → Prep → Run spine passed together with the deterministic source-aware Review → Approve → Continue trust flow. Separate fresh-server runs preserved D4 Prep state, unresolved Approval Queue state, and D5 ready/archived imports. The gate passed with 667 pgTAP assertions, 120 web tests, 17 script tests, repository verification, TypeScript lint, production build, four-viewport browser checks, and explicit zero-provider/zero-canon-write/zero-embedding/zero-charge assertions. `.docx` remains an explicit D5 format deferral and does not block the provider-independent paste/text/Markdown boundary or E1.
 
 ### Phase E — Retrieval and AI experiences
 
@@ -402,4 +403,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate next packet: **D5 — Import Inbox**.
+Immediate next packet: **E1 — Embedding and re-embedding delivery**. D5 imported sources remain excluded unless a later explicit GM enrollment contract is added.

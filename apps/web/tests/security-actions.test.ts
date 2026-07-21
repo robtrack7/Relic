@@ -20,7 +20,9 @@ import {
   refreshDraftBaselineAction,
   retrySessionTranscriptionAction,
   restoreEntityAction,
+  saveImportInboxAction,
   saveSessionEvidenceAction,
+  setImportSourceStateAction,
   updateTranscriptAction,
   updateEntityAction
 } from "@/app/actions";
@@ -467,6 +469,32 @@ describe("security-hardened server actions", () => {
     expect(supabase.rpc).toHaveBeenCalledWith("save_session_evidence", {
       workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", session_id: "session-a",
       source_id: "source-a", evidence_kind: "pasted_text", evidence_text: "The bridge collapsed.",
+    });
+  });
+
+  it("saves raw imports only through the scoped idempotent RPC", async () => {
+    const supabase = authenticatedSupabase();
+    supabase.rpc.mockResolvedValueOnce({ data: { id: "source-a", state: "ready_for_review", duplicate: false }, error: null });
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    const result = await saveImportInboxAction(form({
+      workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", sourceId: "source-a",
+      ingestionMethod: "markdown_file", filename: "lore.md", mimeType: "text/markdown", byteSize: "13", contentBase64: Buffer.from("# Lore\n\nExact").toString("base64"),
+    }));
+    expect(result.ok).toBe(true);
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith("save_import_inbox_source", {
+      workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", source_id: "source-a",
+      ingestion_method: "markdown_file", original_filename: "lore.md", mime_type: "text/markdown", byte_size: 13, content: "# Lore\n\nExact",
+    });
+  });
+
+  it("archives imports through a scope-bound state RPC", async () => {
+    const supabase = authenticatedSupabase();
+    supabase.rpc.mockResolvedValueOnce({ data: { id: "source-a", state: "archived" }, error: null });
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    await setImportSourceStateAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", sourceId: "source-a", nextState: "archived" }));
+    expect(supabase.rpc).toHaveBeenCalledWith("set_import_source_state", {
+      workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", source_id: "source-a", next_state: "archived",
     });
   });
 

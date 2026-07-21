@@ -46,6 +46,8 @@ This spec translates the active Relic product, UX, schema, architecture, and des
 
 **Session Review manual-evidence patch (July 2026).** Render separate pasted-notes and GM-summary textareas above transcript editing. Persist unsaved text plus its stable source UUID locally under the authenticated GM and full Session scope, keep it on save/network failure, and clear it only after the scoped source RPC succeeds. Saved evidence renders read-only; Save evidence does not trigger synthesis or canon mutation.
 
+**Import Inbox patch (July 2026).** Add the Saga-scoped `/imports` rail route. Its paste/file composer exposes draft, validating, uploading, failed, rejected, and recovered local states; ready-for-review and archived records render immutable provenance plus keyboard-operable original-content disclosure. Strict UTF-8 `.txt/.md/.markdown` only; clear local state only after a confirmed scoped RPC result. Long filenames/content wrap or scroll without horizontal page overflow. No provider, embedding, proposal, or canon control appears on this page.
+
 **Session Prep parity patch (July 2026).** Render one shared editor on Home and the full Prepare route for planned/ready Sessions. It owns an 800ms/blur optimistic autosave, owner/hierarchy/Session-scoped local recovery, saving/saved/offline/failed/conflict/retry copy, optional scheduled date/time, prior approved-summary fallback, ordered recoverable entity/Thread pins, and only state-valid Reset/Archive/Duplicate actions. Ready must flush the latest local change before navigation; all later lifecycle states render the same packet read-only.
 
 **Approval Queue trust completion patch (July 2026).** Render field-level current/proposed editors, persistent C4 source disclosures, confidence/provenance/target consequences, and filters for status, type, batch, confidence, and conflict. Offer one-by-one, explicit selected, and prominent all-compatible approval; bulk actions state the exact visible count and exclude conflicts, broken sources, dirty edits, merge decisions, and archive confirmations. Preserve edits across failed commit, make archive-versus-delete explicit with Rust confirmation, and rebase stale targets without writing canon.
@@ -87,6 +89,7 @@ Use IDs in routes for MVP. Slugs may be added later for readability but must not
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/review` | Sanctum | Approval Queue | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/guide` | Sanctum | Relic Guide fallback page reached from sidecar/context | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/search` | Sanctum | Full search page, command-palette fallback | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/imports` | Sanctum | Raw paste/text/Markdown intake and source review | P1 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/settings` | Sanctum | Saga settings: name, system, profile override, retention | P0 |
 | `/app/w/:workspaceId/world/:worldId/settings` | Sanctum | Lightweight World settings | P0 minimal |
 | `/app/w/:workspaceId/settings` | Sanctum | Workspace settings, usage, future billing placeholder | P0 minimal |
