@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-20
+last_audited: 2026-07-21
 source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 ---
 
@@ -25,6 +25,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 ---
 
 ## Changelog
+
+**Manual session evidence patch (July 2026).** Defines pasted notes and GM manual summaries as immutable Saga-scoped `sources` rows tied to one ended Session. A client-stable source UUID provides exact retry identity; an identical replay returns the same source, while key reuse with different scope, kind, or text fails closed. Saving evidence updates only pipeline input metadata and never creates notes, drafts, audit rows, or canon.
 
 **Stage airplane-mode recovery patch (July 2026).** Extends the Stage receipt boundary to `start_session`, `record_consent`, and `go_live`, and defines conflict results as immutable receipt outcomes rather than silent lifecycle/consent overwrites. `get_stage_packet` now carries a scope-filtered literal search document set for the current Stage cache; the index is a read-model payload, not a new canon table.
 
@@ -842,6 +844,10 @@ create table sources (
 create index on sources (saga_id, kind);
 create index on sources (transcript_id, start_seconds) where transcript_id is not null;
 ```
+
+**Manual Session evidence.** `pasted_text` and `gm_manual_summary` sources are Saga-scoped, carry the exact Workspace/World/Saga/Session hierarchy, and store the submitted text in `raw_excerpt`. The Session must already be `ended`. These rows are immutable evidence inputs, not `notes`, and do not enter canon search/retrieval until a later approved output creates the owning canon record. The client supplies the source UUID before delivery so a save retry is exactly-once; the scoped RPC returns an existing row only when every immutable field matches.
+
+The latest `pipeline_runs.inputs_summary` records the source IDs/counts and `gm_summary_present` flag. This metadata says that synthesis has a surviving input; it is not itself an invocation, usage charge, proposal, or approval.
 
 ### 8.2 `draft_sources`
 

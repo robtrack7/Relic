@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-07-21
 source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 ---
 
@@ -25,6 +25,8 @@ source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 ---
 
 ## Changelog
+
+**Manual Session evidence patch (July 2026).** Session Review now accepts pasted notes and a GM manual summary as explicit evidence inputs, preserves unsaved text locally through refresh/save failure, and shows saved immutable sources separately from the editable local forms. Saving evidence does not start synthesis or create canon.
 
 **Priority 3 continuity architecture patch (May 2026).** Sanctum now presents the active Workspace / World / Saga hierarchy. The GM works mostly at Saga level, but the shell must preserve World context, expose World/Saga switching, distinguish World canon from Saga canon where relevant, and reserve Era/timeframe fields without shipping an Era editor. New Saga can reuse an existing World or create one behind the scenes.
 
@@ -633,7 +635,9 @@ Session 14  ▢ ended · played 2026-05-09
 
 `Open Review` separates the recovery path into explicit Audio, Transcription, and Synthesis stages. Audio may be queued/uploading/complete/failed; transcription may be queued/transcribing/complete/failed; synthesis may be queued/running/ready/failed. A failure explains what remains safe and gives the next action instead of collapsing everything into a generic pipeline error.
 
-When transcription fails, uploaded audio is preserved. The GM can retry transcription without recording or uploading again. The surface also points to pasted notes or a manual summary as the recovery path once those inputs ship; it must not imply that those inputs already exist.
+When transcription fails, uploaded audio is preserved. The GM can retry transcription without recording or uploading again, paste session notes, or add a manual summary. Either text path can independently become a surviving synthesis input. The two inputs are explicit Save actions: pasted notes are for raw/rough material; the manual summary is for the GM's concise account of what mattered.
+
+Each textarea preserves its unsaved value locally as the GM types and restores it after refresh. Save or network failure leaves the text in place with retry copy. Confirmed saves clear only that local draft and add an immutable evidence card showing source kind, excerpt, and saved time. The form must never imply that Save starts AI work or changes canon; synthesis remains a separate GM action in the next pipeline step.
 
 Completed transcript segments are editable as timestamp-labeled text blocks. A GM may change text or soft-hide a segment. Timestamps, segment boundaries, and audio references are immutable, and new transcript segments cannot be inserted in MVP. Original provider segments and already-captured citation excerpts stay frozen for audit/drift handling.
 

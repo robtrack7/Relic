@@ -40,6 +40,7 @@ export type SessionReviewData = {
   pipeline?: { id: string; state: string; failure_reason?: string | null; inputs_summary?: Record<string, unknown>; updated_at?: string } | null;
   transcript?: { id: string; state: string; model: string; language?: string | null; duration_seconds?: number | null; segments: TranscriptSegment[]; edited_at?: string | null; failure_reason?: string | null } | null;
   transcription_job?: { id: string; state: string; attempts: number; max_attempts: number; scheduled_at?: string; failure_reason?: string | null; updated_at?: string } | null;
+  manual_evidence: Array<{ id: string; kind: "pasted_text" | "gm_manual_summary"; text: string; created_at: string }>;
 };
 type PinRow = { entity_type: EntityType; entity_id: string; order_index?: number };
 type ActiveThreadRow = { thread_id: string };

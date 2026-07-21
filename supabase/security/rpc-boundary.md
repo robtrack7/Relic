@@ -49,6 +49,7 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `get_transcript_source_context(...)` | Read frozen citation text beside current transcript text for drift display. |
 | `get_session_review(...)` | Read scoped post-session audio, transcript, job, and pipeline state without exposing internal queue rows. |
 | `retry_session_transcription(...)` | Explicitly requeue a failed complete recording with a fresh retry budget. |
+| `save_session_evidence(...)` | Save idempotent pasted-note or GM-summary Session evidence without creating canon or starting synthesis. |
 | `update_draft_state(...)` | Resolve drafts and commit approved create/update/archive-request drafts to canon. |
 | `list_entities(...)` | Read scoped entity lists. |
 | `get_sessions_for_saga(...)` | Read scoped Session lists. |

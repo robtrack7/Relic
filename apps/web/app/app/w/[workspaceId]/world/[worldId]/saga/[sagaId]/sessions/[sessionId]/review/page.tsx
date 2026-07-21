@@ -12,7 +12,7 @@ type ReviewParams = IdParams & { sessionId: string };
 export default async function SessionReviewPage({ params }: { params: Promise<ReviewParams> }) {
   const all = await params;
   const ids: IdParams = all;
-  const [{ workspace, world, saga }, session, drafts, review] = await Promise.all([
+  const [{ user, workspace, world, saga }, session, drafts, review] = await Promise.all([
     requireSagaContext(ids),
     getSession(ids, all.sessionId),
     getPendingDrafts(ids, all.sessionId),
@@ -67,7 +67,7 @@ export default async function SessionReviewPage({ params }: { params: Promise<Re
             </div>
           </div>
 
-          <SessionReviewWorkspace params={ids} sessionId={session.id} review={review} />
+          <SessionReviewWorkspace ownerId={user.id} params={ids} sessionId={session.id} review={review} />
 
           <div className="card settings-content-card">
             <div className="sec-label" style={{ marginBottom: 14 }}>

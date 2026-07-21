@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-20
+last_audited: 2026-07-21
 source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md"
 ---
 
@@ -25,6 +25,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 ---
 
 ## Changelog
+
+**Manual session evidence patch (July 2026).** Adds the scoped, idempotent Session Review write boundary for pasted notes and GM manual summaries, owner-keyed local form recovery, and pipeline input metadata that can recover a no-input transcription failure without invoking synthesis or writing canon.
 
 **Stage airplane-mode recovery patch (July 2026).** Defines the web B2 ready-packet/literal-index cache, adds Start Session, recording consent, and Go Live to the existing FIFO receipt boundary, and makes unexpected reconnect state a durable surfaced conflict rather than a silent overwrite.
 
@@ -765,6 +767,14 @@ Whisper failures bubble to the pipeline (`synthesize_session`, Registry v1.0 §6
 If the pipeline has **no surviving input** (recording-only session, transcription failed), `pipeline_runs.state='failed'` with `failure_reason='no_inputs_after_transcription_failure'`. The GM sees a clear retry CTA in the pipeline UI: re-upload audio, paste notes, or add a manual summary. Per Registry Q11: pipeline tasks use visible retry, not silent.
 
 Retries reuse the same transcription job and complete idempotently. Retryable provider/network failures follow the existing `10s / 60s / 300s` schedule. After exhaustion, the stored audio remains available; an explicit GM retry resets the job to `pending`, clears safe failure/lock fields, restores the transcript to `pending`, and returns the pipeline to `queued`. Sessions with surviving non-audio evidence may continue to synthesis, while recording-only sessions remain visibly failed until retry or manual evidence is added.
+
+### 7.6.1 Manual evidence intake boundary
+
+Session Review saves `pasted_text` and `gm_manual_summary` through `save_session_evidence`. The authenticated RPC rechecks Workspace/World/Saga ownership, locks the exact ended Session, accepts only those two source kinds, validates bounded non-empty text, and inserts a Saga-scoped `sources` row using the client-provided UUID. Replaying the same UUID and identical immutable payload returns the first source; reusing it with different text, kind, or scope fails closed.
+
+After the source exists, the RPC creates a queued pipeline row if the ended Session has none or refreshes the latest run's `inputs_summary` from the Session's surviving manual sources. A prior `no_inputs_after_transcription_failure` state returns to `queued`; other pipeline states are not rewound. Evidence capture does not invoke `synthesize_session`, consume AI credits, create a note/draft/audit row, or mutate canon.
+
+The web form writes each unsaved textarea value and stable source UUID to owner + Workspace + World + Saga + Session + kind keyed local storage on every change. A failed save leaves that entry untouched. Only a confirmed server result clears it. `get_session_review` returns the saved manual evidence list so refresh distinguishes durable sources from local drafts.
 
 ### 7.7 Language handling
 

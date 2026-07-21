@@ -160,6 +160,7 @@ Stop rules:
 - Preserve draft text locally on save/network failure.
 - Create source rows with session provenance; do not create canon.
 - **Done when:** audio, pasted notes, or manual summary can independently provide a surviving synthesis input.
+- **Evidence:** Session Review now saves pasted notes and GM manual summaries as immutable, session-scoped `sources` through an authenticated, idempotent RPC. Owner/scoped local drafts survive refresh and failed saves, exact retries return one source, mismatched UUID reuse and cross-scope/live-session writes fail, and no note, draft, audit, synthesis run, credit charge, or canon row is created. Focused UI/action/storage tests, 27 C1 pgTAP assertions, the clean 367-test database suite, and an authenticated reload/save/readback browser proof passed while the A1–A3 loop remained green.
 
 #### Packet C2 — Synthesis orchestration
 

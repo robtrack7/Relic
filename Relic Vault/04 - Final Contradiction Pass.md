@@ -8,7 +8,7 @@ depends_on:
   - "[[02 - Source Map]]"
 supersedes:
   - "[[90 - Next Steps Before Coding]]"
-last_audited: 2026-07-20
+last_audited: 2026-07-21
 source_file: "Relic Vault/04 - Final Contradiction Pass.md"
 ---
 
@@ -49,6 +49,7 @@ AI task surfaces still require implementation-plan review before coding, but the
 - The July 2026 Stage non-audio recovery patch adds a separate short-window web intent queue for Quick Capture, Quick Stub, Mark Moment, End Session, and Undo. FIFO replay plus stable GM-scoped idempotency receipts prevents a lifecycle transition from passing earlier evidence and does not change the manual-GM canon paths or imply that the later full packet cache is complete.
 - The July 2026 B2 patch completes that bounded web cache: an owner-keyed Ready/live packet plus current-Saga/eligible-World literal index survives an offline route reload, while Start, consent, and Go Live join the FIFO receipt boundary. Lifecycle/consent mismatches are immutable surfaced conflicts and never silently overwrite the server. This is short-window web recovery, not an installable cold-boot shell or the planned native multi-session store.
 - The July 2026 post-session patch delivers the provider-backed transcription worker plus scoped transcript read/edit/retry recovery. Deterministic local provider mode is not a substitute for a deployed LiteLLM smoke test, and transcript/synthesis evidence never becomes canon without the existing explicit approval path.
+- The July 2026 C1 patch makes pasted notes and GM manual summaries independent, immutable Session evidence sources. Local draft recovery and stable client source IDs protect failed/repeated saves; intake does not invoke synthesis, meter credits, create proposals, or cross the explicit GM canon boundary.
 
 ## Current Backend Planning Addendum
 

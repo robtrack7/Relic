@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-07-21
 source_file: "Sourced - Downloaded - 260518/relic-ui-implementation-spec-v0_2.md"
 ---
 
@@ -41,6 +41,8 @@ This spec translates the active Relic product, UX, schema, architecture, and des
 - `[[72 - Navigation Design Spec]]`
 
 **Implementation rule:** build the loop first: Create → Organize → Prep → Run → Review → Approve → Continue.
+
+**Session Review manual-evidence patch (July 2026).** Render separate pasted-notes and GM-summary textareas above transcript editing. Persist unsaved text plus its stable source UUID locally under the authenticated GM and full Session scope, keep it on save/network failure, and clear it only after the scoped source RPC succeeds. Saved evidence renders read-only; Save evidence does not trigger synthesis or canon mutation.
 
 **MVP surface and build-order rule:** The Sanctum and The Stage are both product surfaces on web and mobile. Sanctum should feel literary, modern, and relaxing. Stage should feel clean and focused. Build the web app first with both surfaces and the full loop, then build the mobile app with platform-appropriate layouts and offline behavior.
 

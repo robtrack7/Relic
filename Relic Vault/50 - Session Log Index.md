@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-20
+last_audited: 2026-07-21
 source_file: "Relic Vault/50 - Session Log Index.md"
 ---
 
@@ -64,3 +64,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-07-20 - Stage Active Threads and Shell Polish]]
 - [[Session Logs/2026-07-20 - Stage Non-Audio Write Recovery]]
 - [[Session Logs/2026-07-20 - Stage Airplane Mode Recovery]]
+- [[Session Logs/2026-07-21 - Session Manual Evidence Intake]]

@@ -11,6 +11,7 @@ import {
   recordSessionConsentAction,
   requestSagaExportAction,
   retrySessionTranscriptionAction,
+  saveSessionEvidenceAction,
   updateTranscriptAction,
   updateEntityAction
 } from "@/app/actions";
@@ -388,6 +389,22 @@ describe("security-hardened server actions", () => {
     expect(supabase.from).not.toHaveBeenCalled();
     expect(supabase.rpc).toHaveBeenCalledWith("retry_session_transcription", {
       workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", session_id: "session-a",
+    });
+  });
+
+  it("saves manual Session evidence through the scoped idempotent RPC", async () => {
+    const supabase = authenticatedSupabase();
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    await saveSessionEvidenceAction(form({
+      workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", sessionId: "session-a",
+      sourceId: "source-a", kind: "pasted_text", text: "The bridge collapsed.",
+    }));
+
+    expect(supabase.from).not.toHaveBeenCalled();
+    expect(supabase.rpc).toHaveBeenCalledWith("save_session_evidence", {
+      workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", session_id: "session-a",
+      source_id: "source-a", evidence_kind: "pasted_text", evidence_text: "The bridge collapsed.",
     });
   });
 });

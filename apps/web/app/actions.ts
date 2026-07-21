@@ -481,6 +481,29 @@ export async function retrySessionTranscriptionAction(formData: FormData) {
   return { ok: true };
 }
 
+export async function saveSessionEvidenceAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const sessionId = value(formData, "sessionId");
+  const sourceId = value(formData, "sourceId");
+  const kind = value(formData, "kind");
+  const text = value(formData, "text");
+  if (kind !== "pasted_text" && kind !== "gm_manual_summary") throw new Error("Unsupported manual evidence kind.");
+
+  const { data, error } = await supabase.rpc("save_session_evidence", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId,
+    source_id: sourceId,
+    evidence_kind: kind,
+    evidence_text: text,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/review`);
+  return { ok: true, source: data };
+}
+
 export async function requestSagaExportAction(formData: FormData) {
   const { supabase } = await requireActionUser();
   const params = paramsFromForm(formData);

@@ -2,9 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { retrySessionTranscriptionAction, updateTranscriptAction } from "@/app/actions";
+import { retrySessionTranscriptionAction, saveSessionEvidenceAction, updateTranscriptAction } from "@/app/actions";
 import { RelicIcon } from "@/components/RelicIcon";
 import type { SessionReviewData, TranscriptSegment } from "@/lib/data";
+import {
+  clearSessionEvidenceDraft,
+  readSessionEvidenceDraft,
+  writeSessionEvidenceDraft,
+  type SessionEvidenceKind,
+} from "@/lib/session-evidence-draft";
 import type { IdParams } from "@/lib/types";
 
 function formatTimestamp(seconds: number) {
@@ -19,12 +25,19 @@ function stepTone(state: string | undefined, completeStates: string[]) {
   return "waiting";
 }
 
-export function SessionReviewWorkspace({ params, sessionId, review }: { params: IdParams; sessionId: string; review: SessionReviewData }) {
+const emptyEvidenceDrafts = {
+  pasted_text: { sourceId: "", text: "" },
+  gm_manual_summary: { sourceId: "", text: "" },
+};
+
+export function SessionReviewWorkspace({ ownerId, params, sessionId, review }: { ownerId: string; params: IdParams; sessionId: string; review: SessionReviewData }) {
   const router = useRouter();
   const transcript = review.transcript;
   const job = review.transcription_job;
   const [segments, setSegments] = useState<TranscriptSegment[]>(transcript?.segments ?? []);
   const [busy, setBusy] = useState(false);
+  const [evidenceBusy, setEvidenceBusy] = useState<SessionEvidenceKind | null>(null);
+  const [evidenceDrafts, setEvidenceDrafts] = useState(emptyEvidenceDrafts);
   const [message, setMessage] = useState("");
   const audioReady = Boolean(review.audio.finalized_at)
     && Number(review.audio.expected_chunks ?? 0) > 0
@@ -33,6 +46,16 @@ export function SessionReviewWorkspace({ params, sessionId, review }: { params: 
   useEffect(() => {
     setSegments(transcript?.segments ?? []);
   }, [transcript?.id, transcript?.edited_at, transcript?.state]);
+
+  useEffect(() => {
+    const scope = { ...params, sessionId };
+    const pasted = readSessionEvidenceDraft(ownerId, scope, "pasted_text");
+    const summary = readSessionEvidenceDraft(ownerId, scope, "gm_manual_summary");
+    setEvidenceDrafts({
+      pasted_text: { sourceId: pasted?.sourceId ?? "", text: pasted?.text ?? "" },
+      gm_manual_summary: { sourceId: summary?.sourceId ?? "", text: summary?.text ?? "" },
+    });
+  }, [ownerId, params.workspaceId, params.worldId, params.sagaId, sessionId]);
 
   function formData(extra: Record<string, string>) {
     const data = new FormData();
@@ -67,6 +90,34 @@ export function SessionReviewWorkspace({ params, sessionId, review }: { params: 
     } finally { setBusy(false); }
   }
 
+  function updateEvidenceDraft(kind: SessionEvidenceKind, text: string) {
+    const current = evidenceDrafts[kind];
+    const saved = writeSessionEvidenceDraft(ownerId, { ...params, sessionId }, kind, text, current.sourceId || undefined);
+    setEvidenceDrafts((drafts) => ({ ...drafts, [kind]: { sourceId: saved.sourceId, text: saved.text } }));
+  }
+
+  async function saveEvidence(kind: SessionEvidenceKind) {
+    const current = evidenceDrafts[kind];
+    if (!current.text.trim()) {
+      setMessage(kind === "pasted_text" ? "Add pasted session notes before saving." : "Add a manual summary before saving.");
+      return;
+    }
+    const stable = writeSessionEvidenceDraft(ownerId, { ...params, sessionId }, kind, current.text, current.sourceId || undefined);
+    setEvidenceDrafts((drafts) => ({ ...drafts, [kind]: { sourceId: stable.sourceId, text: stable.text } }));
+    setEvidenceBusy(kind); setMessage("");
+    try {
+      await saveSessionEvidenceAction(formData({ sourceId: stable.sourceId, kind, text: stable.text }));
+      clearSessionEvidenceDraft(ownerId, { ...params, sessionId }, kind);
+      setEvidenceDrafts((drafts) => ({ ...drafts, [kind]: { sourceId: "", text: "" } }));
+      setMessage(kind === "pasted_text"
+        ? "Pasted notes saved as Session evidence. Synthesis has not started."
+        : "Manual summary saved as Session evidence. Synthesis has not started.");
+      router.refresh();
+    } catch {
+      setMessage(`${kind === "pasted_text" ? "Pasted notes" : "Manual summary"} could not be saved. Your text remains on this device; retry when ready.`);
+    } finally { setEvidenceBusy(null); }
+  }
+
   const transcriptTone = stepTone(transcript?.state ?? job?.state, ["complete"]);
   const pipelineTone = stepTone(review.pipeline?.state, ["ready_for_review", "closed"]);
 
@@ -86,8 +137,17 @@ export function SessionReviewWorkspace({ params, sessionId, review }: { params: 
         <span className={`pipeline-ico ${pipelineTone}`}><RelicIcon name={pipelineTone === "failed" ? "alert" : pipelineTone === "done" ? "check" : "spark"} size={14} /></span>
         <div><div className="pipeline-title">Synthesis · {review.pipeline?.state ?? "waiting"}</div><div className="pipeline-desc">Transcript evidence can feed draft proposals, but nothing becomes canon until explicit GM approval.</div></div>
       </div>
-      {transcript?.state === "failed" && <div className="transcript-fallback">Audio remains preserved. You can retry, paste notes in a later recovery step, or continue manual review without accepting AI changes.</div>}
+      {transcript?.state === "failed" && <div className="transcript-fallback">Audio remains preserved. You can retry transcription, save pasted notes or a manual summary below, or continue manual review without accepting AI changes.</div>}
       {message && <div className="review-action-message" role="status">{message}</div>}
+    </section>
+
+    <section className="card settings-content-card session-review-card" aria-label="Manual session evidence">
+      <div className="transcript-card-head"><div><div className="sec-label"><RelicIcon name="file" size={11} /> Manual evidence</div><p>Save rough notes or your own summary as immutable Session sources. This does not start synthesis or change canon.</p></div></div>
+      <div className="manual-evidence-grid">
+        <div className="manual-evidence-field"><label><span>Pasted session notes <small>up to 50,000 characters</small></span><textarea aria-label="Pasted session notes" value={evidenceDrafts.pasted_text.text} maxLength={50000} disabled={evidenceBusy === "pasted_text"} onChange={(event) => updateEvidenceDraft("pasted_text", event.target.value)} placeholder="Paste rough notes, chat excerpts, or your table notes…" /></label><small>Preserved locally until the server confirms the source.</small><button className="btn btn-secondary btn-sm" type="button" disabled={evidenceBusy !== null || !evidenceDrafts.pasted_text.text.trim()} onClick={() => void saveEvidence("pasted_text")}>{evidenceBusy === "pasted_text" ? "Saving…" : "Save pasted notes"}</button></div>
+        <div className="manual-evidence-field"><label><span>GM manual summary <small>up to 10,000 characters</small></span><textarea aria-label="GM manual summary" value={evidenceDrafts.gm_manual_summary.text} maxLength={10000} disabled={evidenceBusy === "gm_manual_summary"} onChange={(event) => updateEvidenceDraft("gm_manual_summary", event.target.value)} placeholder="What changed, what mattered, and what should carry forward?" /></label><small>Use your own concise account when audio or transcript is incomplete.</small><button className="btn btn-secondary btn-sm" type="button" disabled={evidenceBusy !== null || !evidenceDrafts.gm_manual_summary.text.trim()} onClick={() => void saveEvidence("gm_manual_summary")}>{evidenceBusy === "gm_manual_summary" ? "Saving…" : "Save manual summary"}</button></div>
+      </div>
+      {(review.manual_evidence ?? []).length > 0 && <div className="saved-evidence-list"><div className="sec-label"><RelicIcon name="check" size={11} /> Saved sources</div>{review.manual_evidence.map((source) => <article className="saved-evidence-item" key={source.id}><header><strong>{source.kind === "pasted_text" ? "Pasted notes" : "GM manual summary"}</strong><span>Saved {source.created_at.slice(0, 10)}</span></header><p>{source.text}</p></article>)}</div>}
     </section>
 
     <section className="card settings-content-card session-review-card" aria-label="Transcript editor">
