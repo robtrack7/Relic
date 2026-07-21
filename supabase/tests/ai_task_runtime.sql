@@ -35,6 +35,10 @@ values
   ('90600000-0000-0000-0000-000000000002', '90100000-0000-0000-0000-000000000001', '90200000-0000-0000-0000-000000000001', '90400000-0000-0000-0000-000000000001', 'saga', 'transcript_segment', 'session', '90500000-0000-0000-0000-000000000001', '90500000-0000-0000-0000-000000000001', 'Transcript evidence for synthesis.')
 on conflict (id) do nothing;
 
+insert into public.pipeline_runs (id, workspace_id, world_id, saga_id, session_id, state, inputs_summary)
+values ('90700000-0000-0000-0000-000000000001', '90100000-0000-0000-0000-000000000001', '90200000-0000-0000-0000-000000000001', '90400000-0000-0000-0000-000000000001', '90500000-0000-0000-0000-000000000001', 'synthesizing', '{"fixture":"module9"}'::jsonb)
+on conflict (id) do update set state = excluded.state, inputs_summary = excluded.inputs_summary;
+
 insert into public.usage_monthly_rollups (workspace_id, period_start, period_end, ai_credits_used)
 values ('90100000-0000-0000-0000-000000000001', date_trunc('month', now())::date, (date_trunc('month', now()) + interval '1 month - 1 day')::date, 0)
 on conflict (workspace_id, period_start) do update set ai_credits_used = excluded.ai_credits_used;
@@ -117,16 +121,16 @@ begin
   execute '
     insert into internal.ai_task_runs (
       workspace_id, world_id, saga_id, session_id, gm_id, task_name, prompt_version,
-      quota_tier, ai_credits, model_tier, resolved_model, retrieval_profile,
+      quota_tier, ai_credits, model_tier, resolved_model, resolved_provider, retrieval_profile,
       source_policy, output_mode, status, attempts, repair_attempts, latency_ms,
-      allowed_source_ids
+      input_payload, allowed_source_ids
     )
     select
       $1, $2, $3, $4, $5, c.task_name, c.prompt_version,
-      c.quota_tier, c.ai_credits, c.model_tier, ''test-model'', c.retrieval_profile,
-      c.source_policy, c.output_mode, ''running'', 1, 0, 25, $6
+      c.quota_tier, c.ai_credits, c.model_tier, ''test-model'', ''deterministic-test'', c.retrieval_profile,
+      c.source_policy, c.output_mode, ''running'', 1, 0, 25, $6, $7
     from internal.ai_task_contracts() c
-    where c.task_name = $7
+    where c.task_name = $8
     returning id'
     using
       '90100000-0000-0000-0000-000000000001'::uuid,
@@ -134,6 +138,7 @@ begin
       '90400000-0000-0000-0000-000000000001'::uuid,
       '90500000-0000-0000-0000-000000000001'::uuid,
       '90000000-0000-0000-0000-000000000001'::uuid,
+      '{"pipeline_run_id":"90700000-0000-0000-0000-000000000001"}'::jsonb,
       array['90600000-0000-0000-0000-000000000001'::uuid, '90600000-0000-0000-0000-000000000002'::uuid],
       task_name
     into run_id;

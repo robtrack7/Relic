@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 
 ## Changelog
 
+**Source-aware synthesis writer patch (July 2026).** Adds an atomic, idempotent synthesis-result boundary that validates the full artifact batch and immutable source allowlist, writes only pending summary/entity/Thread/next-prep drafts, preserves run/batch/pipeline/task/prompt/model/provider provenance, and advances the pipeline to review without writing canon, audit, or embeddings.
+
 **Manual session evidence patch (July 2026).** Adds the scoped, idempotent Session Review write boundary for pasted notes and GM manual summaries, owner-keyed local form recovery, and pipeline input metadata that can recover a no-input transcription failure without invoking synthesis or writing canon.
 
 **Stage airplane-mode recovery patch (July 2026).** Defines the web B2 ready-packet/literal-index cache, adds Start Session, recording consent, and Go Live to the existing FIFO receipt boundary, and makes unexpected reconnect state a durable surfaced conflict rather than a silent overwrite.
@@ -775,6 +777,12 @@ Session Review saves `pasted_text` and `gm_manual_summary` through `save_session
 After the source exists, the RPC creates a queued pipeline row if the ended Session has none or refreshes the latest run's `inputs_summary` from the Session's surviving manual sources. A prior `no_inputs_after_transcription_failure` state returns to `queued`; other pipeline states are not rewound. Evidence capture does not invoke `synthesize_session`, consume AI credits, create a note/draft/audit row, or mutate canon.
 
 The web form writes each unsaved textarea value and stable source UUID to owner + Workspace + World + Saga + Session + kind keyed local storage on every change. A failed save leaves that entry untouched. Only a confirmed server result clears it. `get_session_review` returns the saved manual evidence list so refresh distinguishes durable sources from local drafts.
+
+### 7.6.2 Source-aware synthesis output boundary
+
+After provider output passes the Edge schema validator, the service-role worker calls one database result RPC with the immutable AI run ID, allowed source set, resolved model, and provider. The database locks the run, revalidates the complete `synthesize_session` shape, verifies that every cited `sources` row belongs to the run's exact Workspace, World, Saga, and evidence Session, then writes one batch transaction containing pending summary-note, entity-change, loose-Thread, and next-session prep drafts plus `draft_sources`.
+
+The AI run ID is the idempotency boundary and maps to exactly one internal batch ledger row. Exact output redelivery returns the existing complete batch; a different payload or provider/model provenance fails closed. Any insert or citation failure rolls back the batch, all draft rows, all junction rows, and the pipeline transition together. Success records task/prompt/model/provider and run/pipeline/Session provenance on each draft and flips only `pipeline_runs.state` to `ready_for_review`. It never inserts an entity/note/Thread/session canon row, `canon_audit`, or embeddings; Approval Queue remains the sole commit path.
 
 ### 7.7 Language handling
 

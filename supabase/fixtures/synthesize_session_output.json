@@ -1,0 +1,47 @@
+{
+  "session_summary": {
+    "title": "Session 7 Summary",
+    "body": "The Glass Bridge opened after Ilyra returned the sun key.",
+    "sources": [
+      "c3060000-0000-0000-0000-000000000001"
+    ],
+    "confidence_reason": "direct_gm_input"
+  },
+  "proposed_entity_changes": [
+    {
+      "change_kind": "create",
+      "entity_type": "place",
+      "proposed_scope": "saga",
+      "payload": {
+        "name": "Glass Bridge",
+        "summary": "A bridge that opens for the bearer of the sun key."
+      },
+      "sources": [
+        "c3060000-0000-0000-0000-000000000001",
+        "c3060000-0000-0000-0000-000000000002"
+      ],
+      "confidence_reason": "multiple_strong_sources"
+    }
+  ],
+  "loose_threads": [
+    {
+      "suggested_name": "Who forged the sun key?",
+      "reason": "The maker was named but their motive remains unresolved.",
+      "sources": [
+        "c3060000-0000-0000-0000-000000000002"
+      ],
+      "confidence_reason": "single_clear_segment"
+    }
+  ],
+  "next_prep_implications": [
+    {
+      "text": "Prepare the first scene beyond the Glass Bridge.",
+      "related_entity_ids": [],
+      "sources": [
+        "c3060000-0000-0000-0000-000000000001"
+      ],
+      "confidence_reason": "direct_gm_input"
+    }
+  ],
+  "stub_evidence_flags": []
+}

@@ -26,7 +26,7 @@ export async function callAiProvider(request: AiProviderRequest): Promise<AiProv
   const resolvedModel = modelForTier(request.taskRun.model_tier);
 
   if (mode === "test") {
-    return { output: testOutputFor(request.taskRun.task_name), resolvedModel, tokensIn: 0, tokensOut: 0, costEstimateUsd: 0 };
+    return { output: testOutputFor(request.taskRun.task_name), resolvedModel, provider: "deterministic-test", tokensIn: 0, tokensOut: 0, costEstimateUsd: 0 };
   }
 
   const baseUrl = Deno.env.get("AI_PROVIDER_BASE_URL");
@@ -67,6 +67,7 @@ export async function callAiProvider(request: AiProviderRequest): Promise<AiProv
   return {
     output: body?.choices?.[0]?.message?.content,
     resolvedModel,
+    provider: "configured-ai-provider",
     tokensIn: body?.usage?.prompt_tokens,
     tokensOut: body?.usage?.completion_tokens,
     costEstimateUsd: body?.usage?.cost

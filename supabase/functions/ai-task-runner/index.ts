@@ -41,6 +41,7 @@ async function recordUsage(
   service: ReturnType<typeof createServiceClient>,
   taskRun: AiTaskRun,
   resolvedModel: string,
+  resolvedProvider: string,
   tokensIn?: number,
   tokensOut?: number,
   costEstimateUsd?: number
@@ -62,7 +63,7 @@ async function recordUsage(
       quota_tier: taskRun.quota_tier,
       model_tier: taskRun.model_tier,
       model: resolvedModel,
-      provider: "configured-ai-provider",
+      provider: resolvedProvider,
       ai_credits: taskRun.ai_credits,
       tokens_in: tokensIn,
       tokens_out: tokensOut,
@@ -97,7 +98,7 @@ async function recordFailedUsage(taskRun: AiTaskRun, reason: string) {
       quota_tier: taskRun.quota_tier,
       model_tier: taskRun.model_tier,
       model: taskRun.resolved_model ?? taskRun.model_tier,
-      provider: "configured-ai-provider",
+      provider: taskRun.resolved_provider ?? "configured-ai-provider",
       ai_credits: 0,
       user_charge: false,
       failure_reason: reason.slice(0, 200)
@@ -129,14 +130,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     taskRun = await loadRun(service, runId);
     const retrievalContext = await retrieveContext(taskRun);
-    const providerResult = await callAiProvider({ taskRun, retrievalContext });
+    let providerResult = await callAiProvider({ taskRun, retrievalContext });
     let parsed = parseModelJson(providerResult.output);
     let validated = parsed.ok ? validateTaskOutput(taskRun, parsed.output) : parsed;
     let repairAttempts = 0;
 
     if (!validated.ok) {
       repairAttempts = 1;
-      const repaired = await callAiProvider({
+      providerResult = await callAiProvider({
         taskRun,
         retrievalContext,
         repair: {
@@ -145,7 +146,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           allowedSourceIds: taskRun.allowed_source_ids
         }
       });
-      parsed = parseModelJson(repaired.output);
+      parsed = parseModelJson(providerResult.output);
       validated = parsed.ok ? validateTaskOutput(taskRun, parsed.output) : parsed;
     }
 
@@ -158,6 +159,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       service,
       taskRun,
       providerResult.resolvedModel,
+      providerResult.provider,
       providerResult.tokensIn,
       providerResult.tokensOut,
       providerResult.costEstimateUsd
@@ -166,7 +168,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const { data, error } = await service.rpc("record_ai_task_output_for_worker", {
       p_run_id: runId,
       p_output: validated.output,
-      p_allowed_source_ids: taskRun.allowed_source_ids
+      p_allowed_source_ids: taskRun.allowed_source_ids,
+      p_resolved_model: providerResult.resolvedModel,
+      p_resolved_provider: providerResult.provider
     });
     if (error) throw new Error(error.message);
 

@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 
 ## Changelog
 
+**Source-aware synthesis writer patch (July 2026).** Adds draft batch/run/provider/Session provenance and locks `synthesize_session` persistence to one atomic, idempotent pending batch whose citations all belong to the exact evidence Session. The writer creates no canon, audit, embedding, or canonical summary row.
+
 **Manual session evidence patch (July 2026).** Defines pasted notes and GM manual summaries as immutable Saga-scoped `sources` rows tied to one ended Session. A client-stable source UUID provides exact retry identity; an identical replay returns the same source, while key reuse with different scope, kind, or text fails closed. Saving evidence updates only pipeline input metadata and never creates notes, drafts, audit rows, or canon.
 
 **Stage airplane-mode recovery patch (July 2026).** Extends the Stage receipt boundary to `start_session`, `record_consent`, and `go_live`, and defines conflict results as immutable receipt outcomes rather than silent lifecycle/consent overwrites. `get_stage_packet` now carries a scope-filtered literal search document set for the current Stage cache; the index is a read-model payload, not a new canon table.
@@ -538,10 +540,14 @@ The only path from AI proposal to canon.
 | `canon_state` | draft_canon_state | `'raw_input' \| 'ai_draft'` |
 | `confidence_band` | confidence_band | `'high' \| 'medium' \| 'low'`. **Application-computed from `confidence_reason`** per AI Task Registry v1.0 §0.4. Not directly written by the model. |
 | `confidence_reason` | confidence_reason | Enum: source-quality category that drives the band. Model returns this; band derives server-side. |
-| `ai_task_name` | text | From AI Task Registry, e.g. `'post_session_entity_diff'` |
+| `ai_task_name` | text | From AI Task Registry, e.g. `'synthesize_session'` |
 | `ai_model` | text | E.g. `'claude-sonnet-4'` |
-| `ai_prompt_version` | text | E.g. `'post_session_diff@v3'` |
+| `ai_provider` | text | Resolved provider route that produced the accepted validated output. |
+| `ai_prompt_version` | text | E.g. `'synthesize_session@1.0.0'` |
+| `ai_task_run_id` | uuid → internal AI run ledger | Immutable task-run identity for retries and provenance. |
+| `draft_batch_id` | uuid → internal AI draft-batch ledger | Groups every artifact written atomically from one synthesis result. |
 | `pipeline_run_id` | uuid → `pipeline_runs.id` on delete set null | |
+| `session_id` | uuid → `sessions.id` on delete set null | Evidence Session that produced the draft; a prep draft may target a different next Session. |
 | **Resolution fields (filled on approve/reject/merge):** | | |
 | `state` | draft_state default `'pending'` | |
 | `action` | approval_action | Null while pending |
@@ -560,6 +566,8 @@ create index on drafts (saga_id, state);
 create index on drafts (saga_id, target_entity_id) where state = 'pending';
 create index on drafts (saga_id, pipeline_run_id);
 ```
+
+**Source-aware synthesis batches.** A validated `synthesize_session` result writes its pending summary, entity, Thread, and next-session prep artifacts in one database transaction. Every row shares one batch ID and preserves the AI task run, pipeline, evidence Session, task, prompt, resolved model, and provider. An exact redelivery returns the existing complete batch. A changed redelivery, incomplete batch, malformed artifact, or source outside the run's immutable Workspace/World/Saga/Session allowlist fails closed. `draft_sources` is populated only from those verified Session sources. The writer does not insert canon rows, `canon_audit`, embeddings, or a canonical summary note.
 
 ### 4.2 `proposed_payload` shape rules
 

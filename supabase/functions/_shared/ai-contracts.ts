@@ -11,6 +11,7 @@ export type AiTaskRun = {
   ai_credits: number;
   model_tier: "relic-fast" | "relic-balanced" | "relic-deep";
   resolved_model: string | null;
+  resolved_provider: string | null;
   retrieval_profile: string;
   source_policy: string;
   output_mode: string;
@@ -31,6 +32,7 @@ export type AiProviderRequest = {
 export type AiProviderResult = {
   output: unknown;
   resolvedModel: string;
+  provider: string;
   tokensIn?: number;
   tokensOut?: number;
   costEstimateUsd?: number;

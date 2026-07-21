@@ -102,7 +102,7 @@ Approval Queue commits must apply create/update/archive-request drafts and write
 
 Embedding helpers must only enqueue or materialize chunk text from embeddable fields. `gm_notes` columns and `note_type='gm_note'` notes are excluded from embedding chunks. Provider workers may fill `embeddings.embedding`, but retrieval must continue to function lexically without provider keys.
 
-AI task execution must start with `preflight_ai_task(...)`, then run through the internal Edge task runner. Worker-only wrappers expose the internal `ai_task_runs` ledger to service-role workers without granting browser execution. AI output writers must validate source IDs before writing and may only write to the task's registered output surface.
+AI task execution must start with `preflight_ai_task(...)`, then run through the internal Edge task runner. Worker-only wrappers expose the internal `ai_task_runs` ledger to service-role workers without granting browser execution. The five-argument `record_ai_task_output_for_worker(...)` result boundary also receives the final resolved model/provider. For `synthesize_session`, it revalidates the immutable source set and exact Workspace/World/Saga/Session ownership, then atomically writes one pending draft batch. It cannot write canon, canon audit rows, or embeddings.
 
 Export and notification operations use scoped browser RPCs for request/status/preference/device state. Worker-only internals own export completion, stale-pipeline scanning, notification dispatch, and cleanup finalization.
 

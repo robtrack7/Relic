@@ -41,7 +41,7 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 | P1 | 0 | 5 | 2 | 0 | 1 |
 | P2 | 0 | 2 | 1 | 0 | 1 |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, and the complete B2 short-window web airplane-mode workflow. The immediate lane is Phase C evidence → synthesis → source-aware draft → explicit approval.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, and C3's atomic source-aware synthesis draft batch. The immediate lane is Packet C4 citation context/drift UI, followed by Approval Queue trust completion.
 
 ## 3. Quality-gate system
 
@@ -169,14 +169,17 @@ Stop rules:
 - Make reruns idempotent and prevent pending drafts from becoming retrieval canon.
 - **Done when:** pgTAP/source tests prove one run per idempotency key, safe retry, and zero canon writes.
 
-#### Packet C3 — Source-aware output writer
+#### Packet C3 — Source-aware output writer — complete 2026-07-21
 
 - Convert validated synthesis output into pending summary/entity/thread/prep drafts.
 - Write `draft_sources` only from allowed session source IDs.
 - Preserve confidence, task/prompt/model provenance, and batch identity.
 - **Done when:** fixture synthesis creates the expected draft batch and rejects hallucinated/cross-Saga source IDs.
+- **Evidence:** The final validated provider response now carries resolved model/provider provenance into a service-role-only result RPC. The database locks the AI run, revalidates the complete synthesis shape and immutable allowlist, verifies every citation against the exact Workspace/World/Saga/Session, and atomically writes one pending summary/entity/Thread/next-prep batch with derived confidence bands plus run/pipeline/task/prompt/model/provider provenance. Exact replay returns the same batch; changed delivery, malformed output, missing/hallucinated/cross-session/cross-Saga/cross-tenant sources, and allowlist expansion fail closed. A deterministic public worker-RPC fixture creates four drafts and five citations; injected mid-batch failure rolls back all rows. Focused schema/runtime tests and 44 C3 pgTAP assertions pass, the clean migration replay passes, and the full 411-test database suite proves zero note/entity/Thread/session canon writes, canon audit rows, or embeddings.
 
 #### Packet C4 — Source context and citation drift UI
+
+**Next packet.** Do not begin C5 until the C4 citation-navigation gates are green.
 
 - Consume `get_transcript_source_context` in a timestamped source panel/route.
 - Show frozen excerpt, current segment, edited/deleted drift warning, and safe broken-source state.

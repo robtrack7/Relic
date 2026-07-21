@@ -65,3 +65,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-07-20 - Stage Non-Audio Write Recovery]]
 - [[Session Logs/2026-07-20 - Stage Airplane Mode Recovery]]
 - [[Session Logs/2026-07-21 - Session Manual Evidence Intake]]
+- [[Session Logs/2026-07-21 - Source-Aware Synthesis Output Writer]]

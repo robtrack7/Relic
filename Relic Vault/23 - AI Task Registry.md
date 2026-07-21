@@ -14,7 +14,7 @@ depends_on:
   - "[[24 - Approval Queue]]"
   - "[[25 - Pricing and Rate Limits]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-07-21
 source_file: "Relic Vault/23 - AI Task Registry.md"
 ---
 
@@ -35,6 +35,8 @@ source_file: "Relic Vault/23 - AI Task Registry.md"
 ---
 
 ## Changelog
+
+**Source-aware synthesis writer patch (July 2026).** Requires confidence on next-prep implications and defines one atomic, idempotent pending batch for summary, entity, Thread, and next-prep artifacts with exact-Session citations and complete AI/pipeline provenance. No synthesis result writes canon, audit, or embeddings.
 
 **v1.0 (May 2026).** Standalone rewrite. Adds the missing base task contracts for `scaffold_saga`, `draft_entity_from_prompt`, `generate_session_prep`, `compose_prep_briefing`, and `synthesize_session`; adds universal task envelope, model tiers, quota tiers, confidence reasons, prompt versioning, source validation, draft/canon behavior, task inventory, and retrieval-profile mapping. Preserves the v0.8 contracts for `propose_scene_beats`, `propose_thread_complication`, `propose_npc_for_scene`, `answer_saga_question`, and `propose_quick_stub_fleshing`.
 
@@ -695,7 +697,8 @@ Return a short body, 3-5 bullets, and source IDs.
       text: string,
       related_thread_id?: uuid,
       related_entity_ids?: [uuid],
-      sources: [source_id]
+      sources: [source_id],
+      confidence_reason: confidence_reason
     }
   ],
   stub_evidence_flags: [
@@ -739,6 +742,7 @@ Identify loose threads and next-prep implications separately from canon drafts.
 - `target_entity_id` exists for updates.
 - `expected_version` present for update/archive proposals when target exists.
 - Summary note sources reference transcript/capture/GM summary evidence.
+- Loose-Thread and next-prep artifacts have non-empty Session sources and a confidence reason.
 - Stub evidence flags reference existing `is_stub=true` entities.
 
 **Failure modes.**
@@ -748,7 +752,7 @@ Identify loose threads and next-prep implications separately from canon drafts.
 - Budget exceeded -> split transcript evidence into ordered passes, then merge proposals; source IDs remain pass-local validated before final output.
 - Parse failure -> one repair retry for the failed artifact; valid artifacts may remain.
 
-**Draft-status default.** Creates pending `drafts` and `draft_sources` for summary note and entity changes. It never writes entity canon directly. Approval Queue owns commit/reject/merge/archive behavior.
+**Draft-status default.** Creates one atomic, idempotent pending batch: summary note, entity changes, loose Threads, and next-session prep implications, each with verified `draft_sources`. All rows retain batch/run/pipeline/Session identity plus task, prompt, resolved model, provider, and confidence provenance. Exact output redelivery returns the existing batch; any malformed or unauthorized artifact rolls the whole batch back. It never writes entity/note/Thread/session canon, `canon_audit`, or embeddings directly. Approval Queue owns commit/reject/merge/archive behavior.
 
 **Latency.** p50 45s · p95 180s for a normal 2-hour session after transcription is complete.
 

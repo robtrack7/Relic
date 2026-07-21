@@ -79,6 +79,9 @@ test("ai task runner uses internal auth and provider adapter boundaries", () => 
 
   assert.match(runner, /requireInternalAuth/, "AI task runner should require internal auth");
   assert.match(runner, /callAiProvider/, "AI task runner should use the shared provider adapter");
+  assert.match(runner, /p_resolved_model:\s*providerResult\.resolvedModel/, "AI task runner should persist the resolved model used for the accepted output");
+  assert.match(runner, /p_resolved_provider:\s*providerResult\.provider/, "AI task runner should persist provider provenance for the accepted output");
+  assert.match(provider, /provider:\s*"deterministic-test"/, "deterministic provider mode should identify its provenance");
   assert.doesNotMatch(provider, /new\s+OpenAI\s*\(/i, "provider adapter should not construct OpenAI clients directly");
   assert.doesNotMatch(provider, /new\s+Anthropic\s*\(/i, "provider adapter should not construct Anthropic clients directly");
   assert.doesNotMatch(provider, /fetch\s*\(\s*["'`]https?:\/\//i, "provider adapter should not hardcode provider URLs");
