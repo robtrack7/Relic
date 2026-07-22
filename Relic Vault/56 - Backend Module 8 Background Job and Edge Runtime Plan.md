@@ -48,10 +48,11 @@ Implemented on 2026-06-02 in `supabase/migrations/20260601235500_job_runtime.sql
 - Internal queue tables now have normalized scheduling, lock, attempt, and idempotency metadata where needed.
 - Claim helpers for embedding, transcription, cleanup, export, and notification jobs mark due work `running` with `FOR UPDATE SKIP LOCKED` semantics.
 - Generic completion, retry, dead-letter, failure-surfacing, and stalled-job watchdog helpers are covered by pgTAP.
-- `issue-scoped-jwt` is the only Edge Function that reads `SUPABASE_JWT_SECRET`; shared helpers enforce internal bearer auth and scoped-client issuance.
+- `issue-scoped-jwt` is the only Edge Function that reads `RELIC_JWT_SIGNING_SECRET`; shared helpers enforce internal bearer auth and scoped-client issuance.
 - Dispatcher stubs exist for embeddings, transcription, cleanup, export, notifications, and transcript re-embedding without provider-specific work.
 - Source-safety tests verify the Edge Function tree, secret hygiene, shared runtime usage, and scoped-JWT secret isolation.
 - Verification: `npm run test:supabase` passed with 193 tests, `npm run test:scripts` passed with 7 tests, `npm run verify` passed, `npx pnpm@10.11.0 --filter @relic/web test` passed with 14 tests, and `npm run backend:baseline:reset` completed with `RELIC_BACKEND_BASELINE_OK`.
+- Packet E1 adds `npm run supabase:functions:serve` for local execution. The wrapper discovers one local Auth container, injects its signing secret under the non-reserved `RELIC_JWT_SIGNING_SECRET` name through a temporary mode-`0600` environment file, and deletes the file on normal exit. The authorized E1 hosted smoke proved the issuer → worker → database path without exposing the secret.
 
 ## Files
 
@@ -151,7 +152,7 @@ Add a helper that checks `Authorization: Bearer <INTERNAL_TOKEN>` and returns ty
 
 - [x] **Step 2: Scoped JWT issuer**
 
-Implement `issue-scoped-jwt` as the only function that reads `SUPABASE_JWT_SECRET`. It validates internal auth, requires `gm_user_id` and `purpose`, returns a short-lived authenticated JWT, and never grants service-role claims.
+Implement `issue-scoped-jwt` as the only function that reads `RELIC_JWT_SIGNING_SECRET`. The custom name avoids Supabase's reserved `SUPABASE_` secret prefix. It validates internal auth, requires `gm_user_id` and `purpose`, returns a short-lived authenticated JWT, and never grants service-role claims.
 
 - [x] **Step 3: Scoped Supabase client helper**
 
@@ -254,7 +255,7 @@ Record passing verification in this plan and [[46 - Backend Audit and Module Pla
 
 - Queue workers can claim, complete, retry, and dead-letter jobs without duplicate processing.
 - User-data jobs run through scoped user identity unless a service-role exception is documented and tested.
-- `issue-scoped-jwt` is the only function that touches `SUPABASE_JWT_SECRET`.
+- `issue-scoped-jwt` is the only function that touches `RELIC_JWT_SIGNING_SECRET`.
 - Edge Function scaffolding exists for runtime-owned workers without provider-specific AI behavior.
 - Failure states are inspectable by operators and visible to the relevant product surfaces.
 - Logs and source files do not expose secrets, tokens, prompts, or private user content.

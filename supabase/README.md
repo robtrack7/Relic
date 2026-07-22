@@ -41,6 +41,18 @@ The reset command applies local migrations, runs seed data, then runs the pgTAP 
 
 Do not paste local Supabase keys, JWT secrets, storage keys, or generated service credentials into notes, logs, commits, or screenshots.
 
+To serve Edge Functions locally, use the repository wrapper:
+
+```bash
+npm run supabase:functions:serve
+```
+
+The wrapper reads the JWT signing secret directly from the running local Auth
+container, adds it to a temporary mode-`0600` Edge environment file, and removes
+that file when the function server exits. It never prints or persists the JWT
+secret in the repository. If multiple local Supabase projects are running, set
+`SUPABASE_AUTH_CONTAINER` to the intended Auth container name before starting.
+
 ## Transcription Worker Configuration
 
 `transcribe-session` has a deterministic `TRANSCRIPTION_PROVIDER_MODE=test` path for local contract verification. Hosted transcription uses the canonical OpenAI-compatible LiteLLM audio endpoint and requires server-side Edge Function secrets only:
@@ -49,7 +61,7 @@ Do not paste local Supabase keys, JWT secrets, storage keys, or generated servic
 - `LITELLM_PROXY_KEY`
 - `TRANSCRIPTION_MODEL=relic-transcribe`
 - `INTERNAL_TOKEN`
-- `SUPABASE_JWT_SECRET`
+- `RELIC_JWT_SIGNING_SECRET`
 
 `TRANSCRIPTION_PROVIDER_BASE_URL` and `TRANSCRIPTION_PROVIDER_API_KEY` are optional per-worker overrides. Never prefix these values with `NEXT_PUBLIC_` or expose them to browser code. A live-provider smoke test is a deployment check, not part of the deterministic local suite.
 

@@ -495,10 +495,10 @@ We need a way for an Edge Function — running as `service_role` — to mint a P
 A single Edge Function, `issue-scoped-jwt`, is the **only** function that holds the JWT secret. All other Edge Functions call it via internal HTTP to obtain a scoped token.
 
 ```typescript
-// issue-scoped-jwt Edge Function — the ONLY function with SUPABASE_JWT_SECRET in its env
+// issue-scoped-jwt Edge Function — the ONLY function that reads RELIC_JWT_SIGNING_SECRET
 import { create, getNumericDate, Header, Payload } from "jwt";
 
-const JWT_SECRET = Deno.env.get("SUPABASE_JWT_SECRET")!;
+const JWT_SECRET = Deno.env.get("RELIC_JWT_SIGNING_SECRET")!;
 const INTERNAL_TOKEN = Deno.env.get("INTERNAL_TOKEN")!;
 const ALGORITHM = "HS256";
 
@@ -597,7 +597,7 @@ These tests run in CI.
 
 Same lifecycle as Supabase Auth's JWT secret. When rotated:
 
-1. Update `issue-scoped-jwt`'s `SUPABASE_JWT_SECRET` env var.
+1. Update `issue-scoped-jwt`'s `RELIC_JWT_SIGNING_SECRET` env var. The custom name avoids Supabase's reserved `SUPABASE_` secret prefix.
 2. In-flight scoped JWTs (≤5 min old) signed with the old secret remain valid for their TTL.
 3. New issuances use the new secret immediately.
 4. Total disruption window: ~0 (in-flight tokens self-expire).
@@ -1478,6 +1478,8 @@ Promotion path: PR merge → auto-deploy to dev → manual promote to staging �
 ### 16.4 LiteLLM proxy
 
 Fly.io app per environment (`relic-llm-dev`, `relic-llm-staging`, `relic-llm-prod`). Deploys via `fly deploy` triggered from the CI pipeline on merges to `main`. Provider keys are Fly secrets, not in any config file.
+
+Packet E1 verified the development boundary through `relic-llm-dev`: a local Supabase Edge worker obtained a short-lived scoped JWT and made exactly two authenticated `relic-embed` calls (one stored-record embedding and one query embedding) at 1536 dimensions. The stored job completed with one idempotent hosted-usage event and zero canon writes. LiteLLM may echo the public alias in its response model field; the adapter records the configured resolved model (`text-embedding-3-small`) when that occurs. Local function serving uses the repository wrapper, which injects `RELIC_JWT_SIGNING_SECRET` from the local Auth container into a temporary permission-restricted environment file and removes it on normal shutdown; secret values are never printed or committed.
 
 Rolling restarts are zero-downtime — Fly bounces machines one at a time behind a load balancer. Cold-start is ~5s; during a rollout the proxy may be ~5s slower than usual for a small window.
 

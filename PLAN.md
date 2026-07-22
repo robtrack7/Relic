@@ -41,7 +41,7 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 | P1       | 1        | 4       | 2       | 0       | 1                  |
 | P2       | 0        | 2       | 1       | 0       | 1                  |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup, D2's complete six-type Library lifecycle with explicit relationship/mention acceptance, D3's scoped Thread/objective lifecycle plus derived read-only timeline, D4's recoverable autosaving Prep parity, and D5's raw paste/text/Markdown Import Inbox boundary. The immediate lane is Packet E1 embedding and re-embedding delivery; `.docx` remains a named D5 format gap.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup, D2's complete six-type Library lifecycle with explicit relationship/mention acceptance, D3's scoped Thread/objective lifecycle plus derived read-only timeline, D4's recoverable autosaving Prep parity, D5's raw paste/text/Markdown Import Inbox boundary, and E1's content-versioned embedding/re-embedding delivery with scoped hybrid retrieval and lexical fallback. The immediate lane is Packet E2 hosted provider and observability; `.docx` remains a named D5 format gap.
 
 ## 3. Quality-gate system
 
@@ -238,10 +238,13 @@ Stop rules:
 
 #### Packet E1 — Embedding and re-embedding delivery
 
-- Implement the embedding provider handler and transcript-edit re-embedding worker.
-- Add deterministic local mode, idempotent metering, dead-letter recovery, and retrieval eval fixtures.
-- Verify hybrid retrieval excludes sibling Sagas and falls back lexically when semantic delivery fails.
-- **Done when:** seeded recall/latency thresholds pass locally and one hosted embedding smoke succeeds.
+- **E1.1 — contract/dependency audit:** lock retrieval eligibility, embedding text, version identity, state transitions, transcript behavior, provider/deployment configuration, and lexical fallback in the owning active specifications before runtime changes.
+- **E1.2–E1.3 — provider boundary:** implement explicit non-production deterministic mode and an isolated server-only LiteLLM `relic-embed` adapter with shared normalization, bounded timeout, response validation, safe failure classes, and injected failure coverage.
+- **E1.4–E1.7 — delivery lifecycle:** add content-versioned idempotent jobs, replacement-before-flip persistence, scope revalidation, transcript-window supersession, dead-letter/replay, and provider-accepted idempotent usage accounting. Embeddings remain derived indexes and make zero canon writes.
+- **E1.8–E1.9 — retrieval/evaluation:** add scoped RRF hybrid retrieval while preserving the existing lexical RPC as an independent fallback. Evaluate realistic Saga/World/transcript fixtures, isolation, stale/missing vectors, transcript edits, recall/rank, provider latency, and database latency. Initial thresholds remain provisional and warning-only until the Decision Stop 2 review.
+- **E1.10 — hosted gate:** after deterministic, database, runtime, build, secret-scan, and authenticated route/worker checks pass, present the exact non-sensitive smoke for explicit authorization before any hosted call.
+- **Complete (2026-07-21):** the lifecycle contract, deterministic provider, server-only LiteLLM adapter, content-versioned queue/persistence, transcript edit/hide supersession, bounded retry/dead-letter/replay, idempotent metering, scoped RRF hybrid retrieval, independent lexical fallback, and deterministic evaluation corpus pass. Decision Stop 2 approved the initial warning-only thresholds. The authorized local-development hosted smoke made exactly two successful calls through Fly app `relic-llm-dev` using alias `relic-embed` → `openai/text-embedding-3-small` at 1536 dimensions; the job completed with one usage event and zero canon writes. The existing `vector(1536)` column/index required no dimension migration.
+- **Done when:** deterministic delivery, retry/replay/metering/isolation paths, transcript re-embedding, hybrid retrieval with lexical fallback, and the evaluation gate pass; one explicitly authorized hosted embedding smoke must also succeed. If hosted access is unavailable, record E1 as functionally complete but environment-gated rather than complete.
 
 #### Packet E2 — Hosted provider and observability gate
 
@@ -403,4 +406,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate next packet: **E1 — Embedding and re-embedding delivery**. D5 imported sources remain excluded unless a later explicit GM enrollment contract is added.
+Immediate next packet: **E2 — Hosted provider and observability gate**. E1 is complete; D5 imported sources remain excluded unless a later explicit GM enrollment contract is added.

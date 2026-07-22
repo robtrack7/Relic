@@ -41,6 +41,8 @@ test("module 8 edge runtime function tree exists", () => {
     "supabase/functions/_shared/storage-cleanup.ts",
     "supabase/functions/_shared/notification-provider.ts",
     "supabase/functions/_shared/transcription-provider.ts",
+    "supabase/functions/_shared/embedding-provider.ts",
+    "supabase/functions/_shared/embedding-worker.ts",
     "supabase/functions/issue-scoped-jwt/index.ts",
     "supabase/functions/ai-task-runner/index.ts",
     "supabase/functions/embed-row-dispatch/index.ts",
@@ -50,6 +52,7 @@ test("module 8 edge runtime function tree exists", () => {
     "supabase/functions/export-saga/index.ts",
     "supabase/functions/send-notification/index.ts",
     "supabase/functions/transcript-edit-reembed/index.ts"
+    ,"supabase/functions/hybrid-search/index.ts"
   ];
 
   for (const file of expectedFiles) {
@@ -73,6 +76,27 @@ test("transcription worker uses scoped audio, provider, result, and usage bounda
   assert.doesNotMatch(provider, /fetch\s*\(\s*["'`]https?:\/\//i, "provider should not hardcode a provider URL");
 });
 
+test("embedding delivery uses the scoped worker, validated provider, and lexical fallback boundaries", () => {
+  const dispatcher = read("supabase/functions/embed-row-dispatch/index.ts");
+  const transcriptDispatcher = read("supabase/functions/transcript-edit-reembed/index.ts");
+  const worker = read("supabase/functions/_shared/embedding-worker.ts");
+  const provider = read("supabase/functions/_shared/embedding-provider.ts");
+  const hybrid = read("supabase/functions/hybrid-search/index.ts");
+
+  assert.match(dispatcher, /createEmbeddingWorkerHandler/, "embedding dispatcher should use the real worker lifecycle");
+  assert.match(transcriptDispatcher, /claim_transcript_embedding_job_for_worker/, "transcript worker should claim only transcript work");
+  assert.match(worker, /prepare_embedding_job/, "worker input should be prepared through scoped identity");
+  assert.match(worker, /complete_embedding_job_for_worker/, "worker should persist through the service-only completion boundary");
+  assert.match(worker, /fail_embedding_job_for_worker/, "worker should classify failures through the embedding lifecycle");
+  assert.match(provider, /EMBEDDING_PROVIDER_MODE.*live/s, "embedding provider should default to live mode");
+  assert.match(provider, /deterministic-development-test/, "deterministic provenance should be explicit");
+  assert.doesNotMatch(provider, /fetch\s*\(\s*["'`]https?:\/\//i, "provider should not hardcode a hosted URL");
+  assert.match(hybrid, /requireInternalAuth/, "query embedding should be server-only");
+  assert.match(hybrid, /search_for_ui_hybrid/, "hybrid search should use the vector-aware RPC");
+  assert.match(hybrid, /search_for_ui/, "hybrid search should retain lexical fallback");
+  assert.doesNotMatch(hybrid, /query_text:\s*query[^,]*[,}]\s*\}\)/, "telemetry must not log raw queries");
+});
+
 test("ai task runner uses internal auth and provider adapter boundaries", () => {
   const runner = read("supabase/functions/ai-task-runner/index.ts");
   const provider = read("supabase/functions/_shared/ai-provider.ts");
@@ -87,13 +111,21 @@ test("ai task runner uses internal auth and provider adapter boundaries", () => 
   assert.doesNotMatch(provider, /fetch\s*\(\s*["'`]https?:\/\//i, "provider adapter should not hardcode provider URLs");
 });
 
-test("only issue-scoped-jwt reads the Supabase JWT secret", () => {
+test("only issue-scoped-jwt reads the Relic JWT signing secret", () => {
   const files = walkFiles(functionsRoot);
   const secretReaders = files
-    .filter((file) => readFileSync(file, "utf8").includes("SUPABASE_JWT_SECRET"))
+    .filter((file) => readFileSync(file, "utf8").includes("RELIC_JWT_SIGNING_SECRET"))
     .map((file) => file.replace(`${root}\\`, "").replaceAll("\\", "/"));
 
   assert.deepEqual(secretReaders, ["supabase/functions/issue-scoped-jwt/index.ts"]);
+});
+
+test("local function server injects the Auth JWT secret without persisting it", () => {
+  const server = read("scripts/serve-functions-local.mjs");
+  assert.match(server, /GOTRUE_JWT_SECRET/, "local server should read the active Auth signing secret");
+  assert.match(server, /tmpdir\(\)/, "the composed Edge environment should live outside the repository");
+  assert.match(server, /unlinkSync\(runtimeEnvPath\)/, "the temporary secret file should be removed");
+  assert.doesNotMatch(server, /console\.(?:log|error).*jwtSecret/i, "the signing secret must never be logged");
 });
 
 test("edge runtime source does not contain checked-in local secrets", () => {
@@ -102,7 +134,7 @@ test("edge runtime source does not contain checked-in local secrets", () => {
     /sb_publishable_[A-Za-z0-9_-]+/,
     /SUPABASE_SERVICE_ROLE_KEY\s*=\s*["'][^"']+["']/,
     /INTERNAL_TOKEN\s*=\s*["'][^"']+["']/,
-    /SUPABASE_JWT_SECRET\s*=\s*["'][^"']+["']/
+    /RELIC_JWT_SIGNING_SECRET\s*=\s*["'][^"']+["']/
   ];
 
   for (const file of walkFiles(functionsRoot)) {
@@ -126,9 +158,9 @@ test("worker dispatchers use the shared runtime wrapper", () => {
 
   for (const dispatcher of dispatchers) {
     const source = read(`supabase/functions/${dispatcher}/index.ts`);
-    assert.match(source, /createWorkerHandler/, `${dispatcher} should use the shared worker wrapper`);
+    assert.match(source, /create(?:Embedding)?WorkerHandler/, `${dispatcher} should use the shared worker wrapper`);
     assert.doesNotMatch(source, /SUPABASE_SERVICE_ROLE_KEY/, `${dispatcher} should not read service credentials directly`);
-    assert.doesNotMatch(source, /SUPABASE_JWT_SECRET/, `${dispatcher} should not read JWT secret directly`);
+    assert.doesNotMatch(source, /RELIC_JWT_SIGNING_SECRET/, `${dispatcher} should not read JWT secret directly`);
   }
 });
 

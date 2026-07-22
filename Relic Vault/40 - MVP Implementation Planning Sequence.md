@@ -47,7 +47,7 @@ Do not code directly from this router. Use it to select the correct detailed pla
 
 ## Current immediate packet
 
-The current packet pointer lives in root `PLAN.md`. D5 paste/text/Markdown intake is complete with `.docx` explicitly deferred behind the trusted extraction boundary; the immediate packet is E1 embedding and re-embedding delivery. This sequencing note must not retain an older packet as current truth.
+The current packet pointer lives in root `PLAN.md`. D5 paste/text/Markdown intake is complete with `.docx` explicitly deferred behind the trusted extraction boundary, and E1 embedding/re-embedding delivery is complete. The immediate packet is E2 hosted provider and observability. This sequencing note must not retain an older packet as current truth.
 
 ## Phase 1 Complete
 

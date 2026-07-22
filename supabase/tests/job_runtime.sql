@@ -47,13 +47,13 @@ delete from internal.transcription_jobs where workspace_id = '80200000-0000-0000
 delete from internal.embedding_jobs where workspace_id = '80200000-0000-0000-0000-000000000001';
 -- Embedding claims are global; keep this fixture deterministic when prior local UI
 -- runs have queued due embedding work outside the module workspace.
-delete from internal.embedding_jobs where state in ('pending', 'running');
+delete from internal.embedding_jobs where state in ('queued', 'retryable', 'running');
 delete from public.transcripts where workspace_id = '80200000-0000-0000-0000-000000000001';
 
-insert into internal.embedding_jobs (id, workspace_id, world_id, saga_id, gm_id, source_kind, source_entity_type, source_entity_id, debounce_until, idempotency_key)
+insert into internal.embedding_jobs (id, workspace_id, world_id, saga_id, gm_id, source_kind, source_entity_type, source_entity_id, debounce_until, idempotency_key, input_hash, source_version, request_identity)
 values
-  ('81000000-0000-0000-0000-000000000001', '80200000-0000-0000-0000-000000000001', '80300000-0000-0000-0000-000000000001', '80500000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000001', 'entity', 'character', '81100000-0000-0000-0000-000000000001', now() - interval '1 minute', 'module8-embed-due'),
-  ('81000000-0000-0000-0000-000000000002', '80200000-0000-0000-0000-000000000001', '80300000-0000-0000-0000-000000000001', '80500000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000001', 'entity', 'place', '81100000-0000-0000-0000-000000000002', now() + interval '1 hour', 'module8-embed-future');
+  ('81000000-0000-0000-0000-000000000001', '80200000-0000-0000-0000-000000000001', '80300000-0000-0000-0000-000000000001', '80500000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000001', 'entity', 'character', '81100000-0000-0000-0000-000000000001', now() - interval '1 minute', 'module8-embed-due', repeat('1',64), 'module8-v1', 'module8-embed-due'),
+  ('81000000-0000-0000-0000-000000000002', '80200000-0000-0000-0000-000000000001', '80300000-0000-0000-0000-000000000001', '80500000-0000-0000-0000-000000000001', '80000000-0000-0000-0000-000000000001', 'entity', 'place', '81100000-0000-0000-0000-000000000002', now() + interval '1 hour', 'module8-embed-future', repeat('2',64), 'module8-v1', 'module8-embed-future');
 
 insert into public.transcripts (id, workspace_id, world_id, saga_id, session_id, whisper_model, state)
 values ('81200000-0000-0000-0000-000000000001', '80200000-0000-0000-0000-000000000001', '80300000-0000-0000-0000-000000000001', '80500000-0000-0000-0000-000000000001', '80600000-0000-0000-0000-000000000001', 'pending', 'pending');
@@ -95,9 +95,9 @@ select is((internal.claim_notification_job('worker-n')->>'id'), '81000000-0000-0
 
 select lives_ok(
   $$ select internal.fail_job('embedding_jobs', '81000000-0000-0000-0000-000000000001', 'temporary provider timeout token=secret prompt body', true, '{}'::jsonb) $$,
-  'retryable failure returns embedding job to pending'
+  'retryable failure returns embedding job to the ready queue'
 );
-select is((select state from internal.embedding_jobs where id = '81000000-0000-0000-0000-000000000001'), 'pending', 'retryable embedding failure is pending');
+select is((select state from internal.embedding_jobs where id = '81000000-0000-0000-0000-000000000001'), 'queued', 'legacy retry maps to the E1 queued state');
 select is((select attempts from internal.embedding_jobs where id = '81000000-0000-0000-0000-000000000001'), 1, 'retryable embedding failure increments attempts');
 select ok((select debounce_until > now() from internal.embedding_jobs where id = '81000000-0000-0000-0000-000000000001'), 'retryable embedding failure schedules future retry');
 select isnt((select failure_reason from internal.embedding_jobs where id = '81000000-0000-0000-0000-000000000001'), 'temporary provider timeout token=secret prompt body', 'failure reason is sanitized before storage');

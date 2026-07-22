@@ -1,0 +1,14 @@
+model_list:
+  - model_name: relic-embed
+    litellm_params:
+      model: openai/text-embedding-3-small
+      api_key: os.environ/OPENAI_API_KEY
+
+litellm_settings:
+  set_verbose: false
+  turn_off_message_logging: true
+  log_raw_request_response: false
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  store_prompts_in_spend_logs: false

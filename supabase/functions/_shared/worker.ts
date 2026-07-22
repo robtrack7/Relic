@@ -5,7 +5,8 @@ import { createServiceClient } from "./service-client.ts";
 type HandlerResult =
   | { state: "complete"; result?: Record<string, unknown> }
   | { state: "retry"; reason: string; result?: Record<string, unknown> }
-  | { state: "failed"; reason: string; result?: Record<string, unknown> };
+  | { state: "failed"; reason: string; result?: Record<string, unknown> }
+  | { state: "managed"; result?: Record<string, unknown> };
 
 type WorkerOptions = {
   queueName: string;
@@ -54,7 +55,7 @@ export function createWorkerHandler(options: WorkerOptions) {
           p_job_id: job.id,
           p_result: result.result ?? {}
         });
-      } else {
+      } else if (result.state !== "managed") {
         await service.rpc("fail_job_for_worker", {
           p_job_table: options.jobTable,
           p_job_id: job.id,

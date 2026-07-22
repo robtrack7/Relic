@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
   const authFailure = requireInternalAuth(req);
   if (authFailure) return authFailure;
 
-  const jwtSecret = Deno.env.get("SUPABASE_JWT_SECRET");
+  const jwtSecret = Deno.env.get("RELIC_JWT_SIGNING_SECRET");
   if (!jwtSecret) {
     return errorResponse(500, "jwt_secret_not_configured", "JWT issuance is not configured.");
   }

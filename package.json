@@ -14,7 +14,9 @@
     "test:web": "pnpm --filter @relic/web test",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop --no-backup",
-    "test:supabase": "supabase test db"
+    "supabase:functions:serve": "node scripts/serve-functions-local.mjs",
+    "test:supabase": "supabase test db",
+    "eval:retrieval:e1": "node scripts/evaluate-retrieval-e1.mjs"
   },
   "engines": {
     "node": ">=22.0.0"

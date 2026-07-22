@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { entityConfigs } from "@/lib/entities";
-import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
+import { getSupabaseUrl, hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
 import type { AppContext, EntitySummary, EntityType, HierarchyContext, IdParams, ImportSource, LibraryRecordDetail, SearchResult, SessionPrepData, SessionPrepPin, StageLiteralSearchDocument, ThreadDetail, ThreadObjective, ThreadTimelineEntry } from "@/lib/types";
 
 type WorkspaceContext = { id: string; name: string; usage_limits?: Record<string, unknown>; hierarchy?: HierarchyContext };
@@ -434,7 +434,35 @@ export async function searchForUi(params: IdParams, query: string, literalOnly =
   if (!query.trim()) {
     return [];
   }
-  const { supabase } = await requireSagaContext(params);
+  const { supabase, user } = await requireSagaContext(params);
+  const internalToken = process.env.INTERNAL_TOKEN;
+  if (!literalOnly && surface === "sanctum" && internalToken) {
+    try {
+      const response = await fetch(`${getSupabaseUrl()}/functions/v1/hybrid-search`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${internalToken}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          gm_user_id: user.id,
+          workspace_id: params.workspaceId,
+          world_id: params.worldId,
+          saga_id: params.sagaId,
+          query_text: query,
+          top_k: 12,
+          include_world_canon: true,
+        }),
+        cache: "no-store",
+      });
+      if (response.ok) {
+        const payload = await response.json() as { results?: SearchResult[] };
+        if (Array.isArray(payload.results)) return payload.results;
+      }
+    } catch {
+      // Search remains usable through the scoped lexical RPC below.
+    }
+  }
   const { data, error } = await supabase.rpc("search_for_ui", {
     workspace_id: params.workspaceId,
     world_id: params.worldId,
@@ -443,7 +471,7 @@ export async function searchForUi(params: IdParams, query: string, literalOnly =
     surface,
     top_k: 12,
     include_archived: false,
-    literal_only: literalOnly,
+    literal_only: true,
     include_world_canon: true
   });
   if (error) {

@@ -90,6 +90,9 @@ values
   ('register_push_device', true, 'Scoped push device registration RPC.'),
   ('record_usage_event', true, 'Scoped idempotent usage event writer RPC.'),
   ('search_for_ui', true, 'Scoped lexical UI search RPC.'),
+  ('prepare_embedding_job', true, 'Scoped worker preparation RPC for a claimed embedding job.'),
+  ('get_embedding_job_status', true, 'Scoped embedding job status read RPC.'),
+  ('search_for_ui_hybrid', true, 'Scoped hybrid UI search RPC with hard retrieval visibility filters.'),
   ('retrieve_for_task', true, 'Scoped retrieval RPC with hard-canon filters.');
 
 create temp table module1_security_definer_functions (
@@ -107,7 +110,6 @@ values
   ('scoped_entity_exists', 'Scope validator for entity references.'),
   ('write_manual_canon_source', 'Internal helper that creates synthetic GM instruction sources.'),
   ('write_manual_canon_audit', 'Internal helper that appends canon audit rows for manual GM writes.'),
-  ('materialize_embedding_job_for_test', 'Internal test/worker-contract helper that materializes safe embedding chunks without provider vectors.'),
   ('validate_session_pinned_entity_scope', 'Trigger guard for session pinned entities.'),
   ('validate_session_active_thread_scope', 'Trigger guard for active thread references.'),
   ('source_belongs_to_scope', 'Scope helper for source validation.'),
@@ -196,9 +198,17 @@ values
   ('claim_cleanup_job_for_worker', 'Worker-only cleanup claim wrapper.'),
   ('claim_transcription_job_for_worker', 'Worker-only transcription claim wrapper.'),
   ('complete_transcription_job_for_worker', 'Worker-only transcription result wrapper.'),
+  ('claim_embedding_job_for_worker', 'Worker-only embedding job claim wrapper.'),
+  ('claim_transcript_embedding_job_for_worker', 'Worker-only transcript embedding claim wrapper.'),
+  ('prepare_embedding_job', 'Scoped worker preparation RPC for eligible embedding input.'),
+  ('complete_embedding_job_for_worker', 'Worker-only validated embedding persistence and metering wrapper.'),
+  ('fail_embedding_job_for_worker', 'Worker-only classified embedding failure and retry wrapper.'),
+  ('replay_embedding_job_for_worker', 'Worker-only dead-letter replay wrapper.'),
+  ('get_embedding_job_status', 'Scoped embedding job status read RPC.'),
   ('complete_job_for_worker', 'Worker-only generic job completion wrapper.'),
   ('fail_job_for_worker', 'Worker-only generic job failure wrapper.'),
   ('search_for_ui', 'Scoped UI search RPC.'),
+  ('search_for_ui_hybrid', 'Scoped hybrid UI search RPC.'),
   ('retrieve_for_task', 'Scoped retrieval RPC.');
 
 with public_functions as (

@@ -66,10 +66,10 @@ insert into public.drafts (id, workspace_id, world_id, saga_id, scope, entity_ty
 values ('b8000000-0000-0000-0000-000000000001', 'b2000000-0000-0000-0000-000000000001', 'b3000000-0000-0000-0000-000000000001', 'b5000000-0000-0000-0000-000000000001', 'saga', 'character', 'b6000000-0000-0000-0000-000000000002', 'pending', 'update', '{"summary":"pending draft content moonstone"}'::jsonb)
 on conflict (id) do nothing;
 
-truncate internal.embedding_jobs;
 delete from public.embeddings where workspace_id = 'b2000000-0000-0000-0000-000000000001';
+delete from internal.embedding_jobs where workspace_id = 'b2000000-0000-0000-0000-000000000001';
 
-select has_function('public', 'materialize_embedding_job_for_test', array['uuid'], 'test worker materialization helper exists');
+select has_function('public', 'complete_embedding_job_for_worker', array['uuid','jsonb','text','text','integer','jsonb','text','boolean'], 'validated embedding completion boundary exists');
 select has_function('internal', 'embedding_queue_metrics', array[]::name[], 'internal embedding queue metrics function exists');
 
 set local role authenticated;
@@ -95,11 +95,18 @@ select is(
 );
 
 select ok(
-  (select source_id is not null from internal.embedding_jobs where source_kind = 'entity' and source_entity_id = (select id from module4_created_character)),
-  'queued entity job carries a source id for citation'
+  (select input_hash is not null and request_identity is not null from internal.embedding_jobs where source_kind = 'entity' and source_entity_id = (select id from module4_created_character)),
+  'queued entity job carries stable input and request identities'
 );
 
-select public.materialize_embedding_job_for_test((select id from internal.embedding_jobs where source_entity_id = (select id from module4_created_character)));
+update internal.embedding_jobs set state = 'running'
+where source_entity_id = (select id from module4_created_character);
+select public.prepare_embedding_job((select id from internal.embedding_jobs where source_entity_id = (select id from module4_created_character)));
+select public.complete_embedding_job_for_worker(
+  (select id from internal.embedding_jobs where source_entity_id = (select id from module4_created_character)),
+  to_jsonb(array_prepend(1::numeric, array_fill(0::numeric, array[1535]))),
+  'deterministic-development-test', 'text-embedding-3-small', 1536, '{}', null, false
+);
 
 select ok(
   not exists (
@@ -111,24 +118,29 @@ select ok(
   'materialized entity chunk excludes gm_notes'
 );
 
-insert into internal.embedding_jobs (id, workspace_id, world_id, saga_id, gm_id, source_kind, source_entity_id, source_id)
-values ('b9000000-0000-0000-0000-000000000001', 'b2000000-0000-0000-0000-000000000001', 'b3000000-0000-0000-0000-000000000001', 'b5000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'note', 'b6200000-0000-0000-0000-000000000004', null)
-on conflict do nothing;
-
-select throws_like(
-  $$ select public.materialize_embedding_job_for_test('b9000000-0000-0000-0000-000000000001') $$,
-  '%not embeddable%',
-  'gm_note materialization is rejected'
+select is(
+  internal.enqueue_embedding_job(
+    'b2000000-0000-0000-0000-000000000001', 'b3000000-0000-0000-0000-000000000001',
+    'b5000000-0000-0000-0000-000000000001', 'note', null,
+    'b6200000-0000-0000-0000-000000000004', null, interval '0 seconds'
+  ),
+  null::uuid,
+  'gm_note enrollment creates no embedding work'
 );
 
-insert into internal.embedding_jobs (id, workspace_id, world_id, saga_id, gm_id, source_kind, source_entity_id, source_id)
-values
-  ('b9000000-0000-0000-0000-000000000002', 'b2000000-0000-0000-0000-000000000001', 'b3000000-0000-0000-0000-000000000001', 'b5000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'note', 'b6200000-0000-0000-0000-000000000002', 'b7000000-0000-0000-0000-000000000005'),
-  ('b9000000-0000-0000-0000-000000000003', 'b2000000-0000-0000-0000-000000000001', 'b3000000-0000-0000-0000-000000000001', 'b5000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'session', 'b6100000-0000-0000-0000-000000000001', 'b7000000-0000-0000-0000-000000000007')
-on conflict do nothing;
-
-select public.materialize_embedding_job_for_test('b9000000-0000-0000-0000-000000000002');
-select public.materialize_embedding_job_for_test('b9000000-0000-0000-0000-000000000003');
+select internal.enqueue_embedding_job(
+  'b2000000-0000-0000-0000-000000000001', 'b3000000-0000-0000-0000-000000000001',
+  'b5000000-0000-0000-0000-000000000001', 'session', 'session',
+  'b6100000-0000-0000-0000-000000000001', 'b7000000-0000-0000-0000-000000000007', interval '0 seconds'
+);
+update internal.embedding_jobs set state = 'running'
+where source_kind = 'session' and source_entity_id = 'b6100000-0000-0000-0000-000000000001';
+select public.prepare_embedding_job((select id from internal.embedding_jobs where source_kind = 'session' and source_entity_id = 'b6100000-0000-0000-0000-000000000001'));
+select public.complete_embedding_job_for_worker(
+  (select id from internal.embedding_jobs where source_kind = 'session' and source_entity_id = 'b6100000-0000-0000-0000-000000000001'),
+  to_jsonb(array_prepend(0.5::numeric, array_prepend(0.5::numeric, array_fill(0::numeric, array[1534])))),
+  'deterministic-development-test', 'text-embedding-3-small', 1536, '{}', null, false
+);
 
 select ok(
   not exists (

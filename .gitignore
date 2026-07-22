@@ -26,6 +26,8 @@ supabase/.temp/
 .env
 .env.*
 !.env.example
+infra/litellm/.secrets.*
+!infra/litellm/.secrets.dev.example
 
 # Logs
 *.log

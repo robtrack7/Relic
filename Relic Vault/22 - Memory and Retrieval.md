@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-07-21
 source_file: "Sourced - Downloaded - 260518/relic-memory-retrieval-spec-v0_8.md"
 ---
 
@@ -18,7 +18,7 @@ source_file: "Sourced - Downloaded - 260518/relic-memory-retrieval-spec-v0_8.md"
 > Implementation-critical note: Treat this as coding input only after reading the authority order in [[00 - Start Here]].
 # Relic — AI Memory & Retrieval Specification
 
-**Version:** v0.9
+**Version:** v1.0
 **Source of truth:** `[[11 - Product Basepoint]]` · `[[12 - MVP PRD]]` · `[[20 - Entity and Canon Schema]]` · `[[21 - Tech Architecture]]` · `[[23 - AI Task Registry]]` · `[[31 - Session Prep Flow]]` · Memory Research Brief v0.1
 **Status:** Implementation-ready. Engineering can build from this.
 **Scope:** P0 (MVP). V1 in §14.
@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-memory-retrieval-spec-v0_8.md"
 ---
 
 ## Changelog
+
+**v1.0 (July 2026).** Packet E1 delivery contract. Locks the server-only LiteLLM embedding route, deterministic development/test mode, content-versioned queue identity, replacement-before-flip persistence, transcript edit/hide behavior, safe failure and replay states, idempotent usage metering, and lexical fallback. Corrects the stale instruction to re-embed entities when a separately embedded attached lore note changes.
 
 **v0.9 (May 2026).** Aligns with standalone AI Task Registry v1.0. Makes `sanctum_grounding` and `sanctum_qa_grounding` explicit task profiles, adds a task-to-profile mapping, and keeps `compose_prep_briefing` hard canon-only.
 
@@ -132,9 +134,11 @@ Async Edge Function triggered on substantive change. Debounce: 5s per row.
 | Entity created | Enqueue |
 | `name`/`summary`/`narrative` changed | Enqueue (debounced) |
 | Archived / un-archived | No regen (filter handles it) |
-| Lore note `title`/`body` changed | Enqueue note + every attached entity |
-| `note_attachments` added/removed | Enqueue affected entities |
+| Lore note `title`/`body` changed | Enqueue the note |
+| `note_attachments` added/removed | No regen; attachment metadata is not embedded |
 | Transcript → `complete` | Enqueue chunking + embedding |
+| Transcript text edited | Supersede affected-window work and enqueue replacements per §3.6 |
+| Transcript text soft-hidden/restored | Remove/re-enable affected-window semantic eligibility and enqueue as required per §3.6 |
 | Approved summary lands in `notes` | Enqueue |
 | `gm_notes`-only edit | **No-op** |
 | Entity renamed | Enqueue regen + mention re-detection |
@@ -156,6 +160,54 @@ MVP default: `text-embedding-3-small`, 1536 dims. Stored in `embeddings.model` a
 - **Transcripts:** do **not** store `chunk_text`. Reconstruct from `transcripts.segments` + chunk bounds (`start_seconds`, `end_seconds` on the source row). Saves ~80% of embedding-table bytes on transcript-heavy sagas.
 
 The LLM never reads `chunk_text` directly. Assembly fetches current canon by ID (§10.1).
+
+### 3.6 Packet E1 delivery lifecycle
+
+#### Eligibility and ownership
+
+An embedding is a derived retrieval index, never canon. The embedding owner is the canonical/source record named in §3.1: one entity, Thread, Session, eligible note, post-session Quick Capture, or transcript window. Lore attachments do not merge note text into an entity embedding. A job and every produced row carry and revalidate `workspace_id`, `world_id`, `saga_id`, owner type/ID, embedding purpose, provider alias, resolved model, dimensions, normalized-input hash, and source version.
+
+The following are ineligible at both enqueue/materialization and retrieval boundaries: pending or rejected drafts; unapproved AI output; raw Import Inbox material; `gm_note` and all GM-private fields; uncommitted workshop conversation; archived/deleted records unless an explicitly historical UI request opts into archived lexical results; soft-hidden transcript text; sibling-Saga records; and records from another Workspace or World. Service-role worker functions resolve the owner and scope from stored rows and do not trust caller-supplied substitutions.
+
+#### Text, identity, and staleness
+
+Input normalization is shared by deterministic and hosted providers: Unicode normalization, line-ending normalization, whitespace compaction that preserves paragraph boundaries, and the type-specific composition/chunking rules in §4. Empty input is terminally invalid. Entity/session single chunks are capped at 6000 characters; note and transcript chunkers keep provider input within the configured maximum without silently dropping an eligible section.
+
+The stable delivery identity is:
+
+```
+owner scope + owner type/ID + embedding purpose
++ normalized-input SHA-256 + source version
++ provider alias + resolved model + dimensions + model version
+```
+
+Exact redelivery confirms the existing job/result and never repeats persistence or metering. Changed normalized content or model configuration creates a new required version and marks older queued/retryable work stale. A running older job may finish its provider call, but completion re-resolves the latest identity and cannot replace newer work. `embeddings` stores provider, resolved model, model version, dimensions, input hash, source version, request identity, provider-request provenance where safe, creation time, and current/superseded state. A row is stale when its identity no longer matches the current normalized source/configuration or when source `updated_at` exceeds embedding `created_at` by more than five minutes.
+
+Replacement is write-then-flip: the prior usable embedding remains current until every replacement chunk validates and is persisted atomically. Model/dimension changes use the parallel-row migration in §10.4. Hidden/deleted/ineligible content is an exception: its prior vector becomes retrieval-ineligible immediately, without deleting frozen source evidence.
+
+#### Job states, retries, and replay
+
+Embedding jobs use explicit `queued`, `running`, `retryable`, `complete`, `stale`, `terminal`, and `dead_letter` states. Claims are lease-bounded. Hosted transient failures use at most five attempts with 1/4/16/60/240-second backoff; deterministic validation failures such as empty input, malformed finite-number data, or an incompatible dimension are terminal. Exhausted retryable work becomes dead-lettered. Stored errors are category codes and safe operational metadata only—never source text, prompts, secrets, raw provider bodies, or vectors.
+
+Replay is service-only and idempotent. It retains the original scoped identity and metering key, creates or re-queues at most one eligible delivery, and becomes stale rather than overwriting a newer source/configuration version. Quota denial preserves recoverable work in a visible non-running state. No retry, repair, exact redelivery, concurrent claim, or replay may duplicate a provider-accepted usage event.
+
+#### Provider and deployment contract
+
+Production uses the server-only LiteLLM alias `relic-embed`, resolved to `openai/text-embedding-3-small`, with 1536 dimensions. The Supabase Edge worker is the only provider caller; `LITELLM_PROXY_URL`, `LITELLM_PROXY_KEY`, provider metadata, and response bodies never reach browser bundles or user-visible RPC errors. LiteLLM is self-hosted per environment on Fly.io as specified in [[21 - Tech Architecture]]. The worker uses bounded timeouts, validates response count/shape/dimensions/finite numbers, and classifies retryable provider/network failures separately from terminal input/configuration failures.
+
+Deterministic mode exercises the same claim, preparation, validation, persistence, retrieval, and completion boundaries without network calls. It must be explicitly configured and is rejected when the runtime environment is production. It emits no billable `usage_events` rows.
+
+#### Transcript edits and citation evidence
+
+The retrieval unit is the §4.3 transcript window. Completing a transcript creates eligible window sources and queues their embeddings. During open pipeline review, edits accumulate and obsolete window jobs are superseded; closing the pipeline releases one current pass. Post-close edits use a 30-second debounce. A text edit preserves segment timestamp identity, changes affected window source versions, and queues replacements. Soft-hide immediately excludes each overlapping window; restore recreates current eligible work. Repeated edits collapse to the latest identity.
+
+`transcripts.original_segments`, existing `sources.raw_excerpt`, source bounds, transcript provenance, and canon status never change as an embedding side effect. Citation display continues to use frozen excerpts. Current-context/drift navigation reconstructs text from all current non-hidden segments overlapping the cited source bounds, so window-sized citations remain valid after edits. Provider failure leaves editable transcript content and frozen evidence intact and retains any prior eligible vector until a replacement succeeds.
+
+#### Hybrid retrieval and fallback
+
+Hybrid search uses BM25 and cosine candidate pools of 50 each, fused with reciprocal-rank fusion at `k=60`, then applies the existing stable recency/source-preference tie-break and a deterministic ID tie-break. Current-Saga results and eligible World canon follow §5 scope rules; sibling Sagas, other tenants, ineligible drafts/imports, and incompatible/stale vectors are rejected in SQL.
+
+Lexical search remains independently callable and is the mandatory fallback when query embedding, stored compatible embeddings, vector infrastructure, or the hosted provider is unavailable. Mixed result sets may fuse semantic candidates only for records with current compatible embeddings while preserving lexical candidates for every eligible record. Semantic failure must never turn a non-empty lexical result into an empty response. Telemetry records safe mode/category and separates provider from database latency; it does not store raw query text, source text, or vectors.
 
 ---
 
@@ -818,6 +870,5 @@ Used by `derive_system_schema`, `generate_from_context`, and GM-invoked rules-qu
 ---
 
 *End v0.9. Implementation-ready. Engineering can build §5, §10, §11.3, and profile contracts from this spec alongside AI Task Registry v1.0 and Tech Architecture v1.2.*
-
 
 
