@@ -194,6 +194,7 @@ function validateGuideOutput(taskRun: AiTaskRun, value: Record<string, unknown>)
   }
 
   let groundedCount = 0;
+  let substantiveCount = 0;
   let totalTextLength = 0;
   normalized.blocks.forEach((candidate, index) => {
     const path = `blocks[${index}]`;
@@ -204,6 +205,7 @@ function validateGuideOutput(taskRun: AiTaskRun, value: Record<string, unknown>)
 
     if (candidate.type === "grounded_answer") {
       groundedCount += 1;
+      substantiveCount += 1;
       hasOnlyFields(candidate, new Set(["type", "text", "citations"]), path, errors);
       if (!isString(candidate.text)) errors.push(`${path}.text is required`);
       else {
@@ -238,6 +240,61 @@ function validateGuideOutput(taskRun: AiTaskRun, value: Record<string, unknown>)
       candidate.citations = normalizedCitations;
       if (isString(candidate.text)) {
         validateGuideSupport(taskRun, candidate.text, [...seen], path, errors);
+      }
+      return;
+    }
+
+    if (candidate.type === "grounded_proposal") {
+      groundedCount += 1;
+      substantiveCount += 1;
+      hasOnlyFields(candidate, new Set(["type", "text", "citations"]), path, errors);
+      if (!isString(candidate.text)) errors.push(`${path}.text is required`);
+      else {
+        totalTextLength += candidate.text.length;
+        if (candidate.text.length > 1500) errors.push(`${path}.text must contain at most 1,500 characters`);
+        if (EXECUTABLE_OR_MUTATION_PATTERN.test(candidate.text)) {
+          errors.push(`${path}.text contains executable or mutation instructions`);
+        }
+      }
+      if (!Array.isArray(candidate.citations) || candidate.citations.length === 0) {
+        errors.push(`${path} requires at least one citation`);
+        return;
+      }
+      const seen = new Set<string>();
+      const normalizedCitations: Array<{ source_id: string }> = [];
+      candidate.citations.forEach((citation, citationIndex) => {
+        const citationPath = `${path}.citations[${citationIndex}]`;
+        if (!isRecord(citation)) {
+          errors.push(`${citationPath} must be an object`);
+          return;
+        }
+        hasOnlyFields(citation, new Set(["source_id"]), citationPath, errors);
+        if (!isUuid(citation.source_id)) {
+          errors.push(`${citationPath}.source_id must be a UUID`);
+        } else if (!allowedSourceIds.has(citation.source_id)) {
+          errors.push(`${citationPath}.source_id is outside the allowed retrieval set`);
+        } else if (!seen.has(citation.source_id)) {
+          seen.add(citation.source_id);
+          normalizedCitations.push({ source_id: citation.source_id });
+        }
+      });
+      candidate.citations = normalizedCitations;
+      if (isString(candidate.text)) {
+        validateGuideSupport(taskRun, candidate.text, [...seen], path, errors);
+      }
+      return;
+    }
+
+    if (candidate.type === "creative_proposal") {
+      substantiveCount += 1;
+      hasOnlyFields(candidate, new Set(["type", "text"]), path, errors);
+      if (!isString(candidate.text) || candidate.text.length > 1500) {
+        errors.push(`${path}.text is required and must be bounded`);
+      } else {
+        totalTextLength += candidate.text.length;
+        if (EXECUTABLE_OR_MUTATION_PATTERN.test(candidate.text)) {
+          errors.push(`${path}.text contains executable or mutation instructions`);
+        }
       }
       return;
     }
@@ -290,8 +347,8 @@ function validateGuideOutput(taskRun: AiTaskRun, value: Record<string, unknown>)
   });
 
   if (totalTextLength > 6000) errors.push("Guide output text must contain at most 6,000 characters");
-  if (normalized.no_answer === false && (groundedCount < 1 || groundedCount > 4)) {
-    errors.push("no_answer=false requires one to four grounded answer paragraphs");
+  if (normalized.no_answer === false && (substantiveCount < 1 || substantiveCount > 4)) {
+    errors.push("no_answer=false requires one to four answer or proposal paragraphs");
   }
   if (normalized.no_answer === true) {
     if (!isString(normalized.insufficiency_reason)

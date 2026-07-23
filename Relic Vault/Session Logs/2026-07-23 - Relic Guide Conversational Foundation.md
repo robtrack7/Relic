@@ -41,6 +41,8 @@ depends_on:
 - Real composer → server action → hybrid retrieval → shared runner → validated answer persisted and recovered after refresh.
 - Explicit draft confirmation created one pending reviewed draft; preview created zero.
 - Safe post-reset telemetry showed deterministic AI/embedding providers only, zero repair, and non-billable delivery.
+- Final closeout rerun: 63 script/runtime tests, 29 pgTAP files / 801 assertions, 28 web files / 130 tests, TypeScript lint, production build, repository verification, diff checks, and touched-vault link/stale/version checks passed.
+- Final staging audit: `hybrid-search` and `ai-task-runner` gateway JWT verification restored, both dispatch schedules active, AI/embedding queues empty, synthetic fixture/provider-event residue zero, and no temporary Fly app remaining.
 
 ## Provider incident
 
@@ -51,8 +53,11 @@ The harness was stopped and replaced with an authoritative temporary environment
 ## Open follow-ups
 
 - E3 remains functionally complete but environment-gated.
-- Obtain explicit Decision Stop 4 authorization, an isolated least-privilege staging proxy/key, concrete resolved-model evidence, and a hard-coded fixture-only smoke harness.
-- Do not reuse the E2 allowance or temporary broad proxy exception without exact authorization.
+- Decision Stop 4 is authorized for several synthetic calls under a hard cumulative USD $0.50 ceiling. The fixture-only harness, isolated temporary proxy, attempt/budget guards, and restoration path are implemented.
+- The zero-inference staging preflight passed scoped auth/RLS, source eligibility/exclusion, zero-provider-work, and full cleanup.
+- The provider-reaching smoke failed closed at turn one. A payload-free probe confirmed OpenAI `401 missing_scope`: the protected staging key lacks Chat Completions write permission. No valid completion, usage event, draft, or canon write was produced.
+- Install a staging key with Chat Completions write permission and configured `gpt-5.6-terra` access, then rerun the same bounded harness.
+- All attempts restored the original provider, both schedules, gateway JWT verification, synthetic database state, and temporary Fly resources.
 - Do not begin E4 until the E3 hosted gate passes.
 
 Back to [[50 - Session Log Index]].

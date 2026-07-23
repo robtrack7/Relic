@@ -44,6 +44,41 @@ test("Guide accepts a directly supported paragraph-level cited answer", () => {
   assert.deepEqual(validateTaskOutput(taskRun, valid), { ok: true, output: valid });
 });
 
+test("Guide accepts labeled creative and cited grounded proposals", () => {
+  const output = {
+    no_answer: false,
+    blocks: [
+      {
+        type: "creative_proposal",
+        text: "A new bell keeper could complicate passage through the gate."
+      },
+      {
+        type: "grounded_proposal",
+        text: "Captain Mara could question travelers at the Iron Gate.",
+        citations: [{ source_id: sourceB }]
+      }
+    ],
+    confidence_reason: "inferred_from_context"
+  };
+  assert.deepEqual(validateTaskOutput(taskRun, output), { ok: true, output });
+});
+
+test("Guide requires citations for grounded proposals but not creative proposals", () => {
+  const grounded = validateTaskOutput(taskRun, {
+    no_answer: false,
+    blocks: [{ type: "grounded_proposal", text: "Captain Mara could question travelers." }],
+    confidence_reason: "inferred_from_context"
+  });
+  const creative = {
+    no_answer: false,
+    blocks: [{ type: "creative_proposal", text: "A new bell keeper could question travelers." }],
+    confidence_reason: "tonal_or_genre_match"
+  };
+  assert.equal(grounded.ok, false);
+  assert.match(grounded.errors.join("\n"), /citation/i);
+  assert.deepEqual(validateTaskOutput(taskRun, creative), { ok: true, output: creative });
+});
+
 test("Guide accepts a strict no-answer response with safe guidance", () => {
   const output = {
     no_answer: true,

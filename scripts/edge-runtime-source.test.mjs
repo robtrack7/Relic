@@ -145,7 +145,12 @@ test("Relic Guide submission derives scope, retrieval, quota, and dispatch on th
 
   assert.match(submit, /requireInternalAuth/, "Guide submission must be server-only");
   assert.match(submit, /createScopedClient/, "Guide permission and quota checks must use the GM identity");
+  assert.match(submit, /\.from\("guide_turns"\)/, "Guide exact retries must resolve from their stored logical turn");
   assert.match(submit, /preflight_ai_task/, "Guide must preflight the registered task before retrieval or dispatch");
+  assert.ok(
+    submit.indexOf('.from("guide_turns")') < submit.indexOf("preflight_ai_task"),
+    "exact retry detection must happen before quota or provider work"
+  );
   assert.ok(
     submit.indexOf("preflight_ai_task") < submit.indexOf("/functions/v1/hybrid-search"),
     "quota preflight must happen before retrieval/provider work"

@@ -30,8 +30,30 @@ Deno.serve(async (req) => {
     return errorResponse(400, "invalid_request", "The Guide question is invalid.");
   }
 
-  const scoped = await createScopedClient(body.gm_user_id, "guide_submit", body.saga_id);
   const service = createServiceClient();
+  const { data: existing, error: replayError } = await service
+    .from("guide_turns")
+    .select("id,thread_id,ai_task_run_id,status,question,workspace_id,world_id")
+    .eq("gm_id", body.gm_user_id)
+    .eq("saga_id", body.saga_id)
+    .eq("idempotency_key", body.idempotency_key)
+    .maybeSingle();
+  if (replayError) return errorResponse(500, "guide_replay_failed", "Relic Guide could not verify this retry.");
+  if (existing) {
+    if (existing.workspace_id !== body.workspace_id || existing.world_id !== body.world_id
+      || existing.question !== question || existing.id !== body.turn_id) {
+      return errorResponse(409, "idempotency_conflict", "This Guide retry does not match the original question.");
+    }
+    return jsonResponse({
+      thread_id: existing.thread_id,
+      turn_id: existing.id,
+      run_id: existing.ai_task_run_id,
+      status: existing.status,
+      replayed: true
+    });
+  }
+
+  const scoped = await createScopedClient(body.gm_user_id, "guide_submit", body.saga_id);
   const { data: preflight, error: preflightError } = await scoped.rpc("preflight_ai_task", {
     p_workspace_id: body.workspace_id,
     p_world_id: body.world_id,
