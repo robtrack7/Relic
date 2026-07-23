@@ -196,7 +196,7 @@ begin
       select 1
       from internal.ai_task_runs
       where id = $1
-        and prompt_version = ''answer_saga_question@1.0.0''
+        and prompt_version = ''answer_saga_question@1.1.0''
         and model_tier = ''relic-balanced''
         and resolved_model = ''test-model''
         and workspace_id = ''90100000-0000-0000-0000-000000000001''
@@ -243,7 +243,12 @@ select set_eq(
 select ok(not exists (
   select 1
   from pg_temp.module9_contract_rows()
-  where prompt_version !~ ('^' || task_name || '@1\.0\.0$')
+  where (
+       task_name = 'answer_saga_question' and prompt_version <> 'answer_saga_question@1.1.0'
+     )
+     or (
+       task_name <> 'answer_saga_question' and prompt_version !~ ('^' || task_name || '@1\.0\.0$')
+     )
      or quota_tier not in ('light', 'standard', 'heavy', 'pipeline_synthesis')
      or model_tier not in ('relic-fast', 'relic-balanced', 'relic-deep')
      or retrieval_profile not in ('none', 'session_prep_grounding', 'sanctum_grounding', 'sanctum_qa_grounding', 'post_session_synthesis')

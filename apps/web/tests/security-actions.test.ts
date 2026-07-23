@@ -12,6 +12,9 @@ import {
   recordDiceRollAction,
   recordSessionConsentAction,
   requestSagaExportAction,
+  submitGuideQuestionAction,
+  setGuideActionStateAction,
+  newGuideThreadAction,
   renameSagaAction,
   deleteSagaAction,
   hardDeleteEntityAction,
@@ -68,8 +71,77 @@ function authenticatedSupabase() {
 describe("security-hardened server actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
     process.env.NEXT_PUBLIC_SUPABASE_URL = "http://127.0.0.1:54321";
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "test-key";
+  });
+
+  it("submits Guide questions through the server-only boundary without trusting browser retrieval or model fields", async () => {
+    const supabase = authenticatedSupabase();
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    process.env.INTERNAL_TOKEN = "local-internal-test";
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue({ thread_id: "thread-a", turn_id: "turn-a" })
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await submitGuideQuestionAction(form({
+      workspaceId: "workspace-a",
+      worldId: "world-a",
+      sagaId: "saga-a",
+      threadId: "thread-a",
+      turnId: "turn-a",
+      idempotencyKey: "idem-a",
+      question: "  Who guards the gate?  ",
+      sourceIds: "[\"forged-source\"]",
+      providerAlias: "forged-provider",
+      model: "forged-model"
+    }));
+
+    expect(result.ok).toBe(true);
+    const request = fetchMock.mock.calls[0][1] as RequestInit;
+    const body = JSON.parse(String(request.body));
+    expect(body).toEqual({
+      gm_user_id: "user-a",
+      workspace_id: "workspace-a",
+      world_id: "world-a",
+      saga_id: "saga-a",
+      thread_id: "thread-a",
+      turn_id: "turn-a",
+      idempotency_key: "idem-a",
+      question: "Who guards the gate?"
+    });
+    expect(JSON.stringify(body)).not.toMatch(/forged-source|forged-provider|forged-model/);
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it("routes Guide thread creation and reviewed action decisions through scoped RPCs", async () => {
+    const supabase = authenticatedSupabase();
+    supabase.rpc
+      .mockResolvedValueOnce({ data: "thread-b", error: null })
+      .mockResolvedValueOnce({ data: { state: "dismissed" }, error: null });
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    const created = await newGuideThreadAction(form({
+      workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a"
+    }));
+    const dismissed = await setGuideActionStateAction(form({
+      workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a",
+      actionId: "action-a", state: "dismissed", targetId: "forged-target"
+    }));
+
+    expect(created).toEqual({ ok: true, threadId: "thread-b" });
+    expect(dismissed).toMatchObject({ ok: true, state: "dismissed" });
+    expect(supabase.rpc.mock.calls[0]).toEqual(["new_guide_thread", {
+      p_workspace_id: "workspace-a", p_world_id: "world-a", p_saga_id: "saga-a"
+    }]);
+    expect(supabase.rpc.mock.calls[1]).toEqual(["set_guide_action_state", {
+      p_workspace_id: "workspace-a", p_world_id: "world-a", p_saga_id: "saga-a",
+      p_action_id: "action-a", p_state: "dismissed"
+    }]);
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 
   it("creates entities through a scoped RPC instead of direct table mutation", async () => {

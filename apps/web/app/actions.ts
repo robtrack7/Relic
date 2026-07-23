@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { editableEntityTypes, isEditableEntityType, normalizeScope } from "@/lib/entities";
 import { parseDicePool, rollDice, rollDicePool } from "@/lib/dice";
-import { hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
+import { getSupabaseUrl, hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
 import { sagaPath } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
 import type { IdParams, LibraryRecordDetail, ThreadDetail, ThreadTimelineEntry } from "@/lib/types";
@@ -42,6 +42,91 @@ function paramsFromForm(formData: FormData): IdParams {
     worldId: value(formData, "worldId"),
     sagaId: value(formData, "sagaId")
   };
+}
+
+export async function submitGuideQuestionAction(formData: FormData) {
+  const { user } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const question = rawValue(formData, "question").normalize("NFKC").trim();
+  const threadId = value(formData, "threadId") || null;
+  const turnId = value(formData, "turnId");
+  const idempotencyKey = value(formData, "idempotencyKey");
+  if (!question || question.length > 2000 || !turnId || !idempotencyKey) {
+    return { ok: false, category: "invalid_question" };
+  }
+  const internalToken = process.env.INTERNAL_TOKEN;
+  if (!internalToken) return { ok: false, category: "provider_unavailable" };
+  try {
+    const response = await fetch(`${getSupabaseUrl()}/functions/v1/guide-submit`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${internalToken}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        gm_user_id: user.id,
+        workspace_id: params.workspaceId,
+        world_id: params.worldId,
+        saga_id: params.sagaId,
+        thread_id: threadId,
+        turn_id: turnId,
+        idempotency_key: idempotencyKey,
+        question
+      }),
+      cache: "no-store"
+    });
+    const payload = await response.json().catch(() => ({}));
+    revalidatePath(`${sagaPath(params)}/guide`);
+    return {
+      ok: response.ok,
+      category: response.status === 429 ? "quota_blocked" : response.ok ? "complete" : "provider_unavailable",
+      threadId: payload.thread_id as string | undefined,
+      turnId: payload.turn_id as string | undefined
+    };
+  } catch {
+    return { ok: false, category: "network_failure" };
+  }
+}
+
+export async function setGuideActionStateAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const actionId = value(formData, "actionId");
+  const state = value(formData, "state");
+  if (!actionId || !["accepted", "dismissed"].includes(state)) {
+    return { ok: false, category: "invalid_action" };
+  }
+  const { data, error } = await supabase.rpc("set_guide_action_state", {
+    p_workspace_id: params.workspaceId,
+    p_world_id: params.worldId,
+    p_saga_id: params.sagaId,
+    p_action_id: actionId,
+    p_state: state
+  });
+  if (error) return { ok: false, category: "action_conflict" };
+  if (data?.allowed === false) {
+    return { ok: false, category: "quota_blocked", state: data?.state };
+  }
+  if (state === "accepted" && data?.run_id && process.env.INTERNAL_TOKEN) {
+    await fetch(`${getSupabaseUrl()}/functions/v1/ai-task-runner`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${process.env.INTERNAL_TOKEN}`, "content-type": "application/json" },
+      body: JSON.stringify({ run_id: data.run_id }),
+      cache: "no-store"
+    }).catch(() => undefined);
+  }
+  revalidatePath(`${sagaPath(params)}/guide`);
+  return { ok: true, state: data?.state, runId: data?.run_id };
+}
+
+export async function newGuideThreadAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const { data, error } = await supabase.rpc("new_guide_thread", {
+    p_workspace_id: params.workspaceId,
+    p_world_id: params.worldId,
+    p_saga_id: params.sagaId
+  });
+  if (error) return { ok: false };
+  revalidatePath(`${sagaPath(params)}/guide`);
+  return { ok: true, threadId: data as string };
 }
 
 export async function signInAction(formData: FormData) {

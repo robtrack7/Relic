@@ -23,6 +23,15 @@ export type AiTaskRun = {
   repair_attempts?: number;
   input_payload: Record<string, unknown>;
   allowed_source_ids: string[];
+  guide_thread_id?: string | null;
+  guide_turn_id?: string | null;
+  retrieval_context?: Array<{
+    source_id: string;
+    text: string;
+    source_version?: string | null;
+    source_kind?: string | null;
+    title?: string | null;
+  }>;
   output_payload?: Record<string, unknown> | null;
   scheduled_at?: string;
   provider_completed_at?: string | null;

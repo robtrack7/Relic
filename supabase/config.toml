@@ -29,3 +29,6 @@ file_size_limit = "50MiB"
 
 [analytics]
 enabled = false
+
+[functions.guide-submit]
+verify_jwt = false

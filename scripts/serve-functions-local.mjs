@@ -41,13 +41,51 @@ if (secretResult.status !== 0 || !jwtSecret || /[\r\n]/.test(jwtSecret)) {
   throw new Error("The local Supabase Auth JWT secret is unavailable.");
 }
 
-const sourceEnv = readFileSync(sourceEnvPath, "utf8")
-  .split(/\r?\n/)
-  .filter((line) => !/^RELIC_JWT_SIGNING_SECRET\s*=/.test(line))
+const localProviderMode = (process.env.RELIC_LOCAL_PROVIDER_MODE ?? "deterministic").trim().toLowerCase();
+if (!["deterministic", "live"].includes(localProviderMode)) {
+  throw new Error("RELIC_LOCAL_PROVIDER_MODE must be deterministic or live.");
+}
+
+const deterministicOverrides = new Map([
+  ["RELIC_ENV", "test"],
+  ["AI_PROVIDER_MODE", "test"],
+  ["EMBEDDING_PROVIDER_MODE", "deterministic"],
+  ["TRANSCRIPTION_PROVIDER_MODE", "test"],
+]);
+const liveCredentialKeys = new Set([
+  "LITELLM_PROXY_URL",
+  "LITELLM_PROXY_KEY",
+  "AI_PROVIDER_BASE_URL",
+  "AI_PROVIDER_API_KEY",
+  "EMBEDDING_PROVIDER_BASE_URL",
+  "EMBEDDING_PROVIDER_API_KEY",
+  "TRANSCRIPTION_PROVIDER_BASE_URL",
+  "TRANSCRIPTION_PROVIDER_API_KEY",
+]);
+const sourceLines = readFileSync(sourceEnvPath, "utf8").split(/\r?\n/);
+const sourceEnv = sourceLines
+  .filter((line) => {
+    const match = /^([A-Z0-9_]+)\s*=/.exec(line);
+    if (!match) return true;
+    if (match[1] === "RELIC_JWT_SIGNING_SECRET") return false;
+    if (localProviderMode === "deterministic" && (deterministicOverrides.has(match[1]) || liveCredentialKeys.has(match[1]))) {
+      return false;
+    }
+    return true;
+  })
+  .concat(localProviderMode === "deterministic"
+    ? [...deterministicOverrides].map(([key, value]) => `${key}=${value}`)
+    : [])
   .join("\n")
   .replace(/\n*$/, "\n");
 const runtimeEnvPath = join(tmpdir(), `relic-edge-${randomUUID()}.env`);
 writeFileSync(runtimeEnvPath, `${sourceEnv}RELIC_JWT_SIGNING_SECRET=${jwtSecret}\n`, { mode: 0o600 });
+
+if (localProviderMode === "deterministic") {
+  console.log("Local provider isolation: deterministic AI, embeddings, and transcription; live provider credentials omitted.");
+} else {
+  console.warn("Local provider isolation: LIVE mode explicitly enabled.");
+}
 
 let child;
 function cleanup() {

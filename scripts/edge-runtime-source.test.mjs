@@ -46,6 +46,7 @@ test("module 8 edge runtime function tree exists", () => {
     "supabase/functions/_shared/observability.ts",
     "supabase/functions/issue-scoped-jwt/index.ts",
     "supabase/functions/ai-task-runner/index.ts",
+    "supabase/functions/guide-submit/index.ts",
     "supabase/functions/embed-row-dispatch/index.ts",
     "supabase/functions/transcribe-session/index.ts",
     "supabase/functions/cleanup-audio/index.ts",
@@ -138,6 +139,26 @@ test("ai task runner uses internal auth and provider adapter boundaries", () => 
   assert.doesNotMatch(provider, /fetch\s*\(\s*["'`]https?:\/\//i, "provider adapter should not hardcode provider URLs");
 });
 
+test("Relic Guide submission derives scope, retrieval, quota, and dispatch on the server", () => {
+  const submit = read("supabase/functions/guide-submit/index.ts");
+  const runner = read("supabase/functions/ai-task-runner/index.ts");
+
+  assert.match(submit, /requireInternalAuth/, "Guide submission must be server-only");
+  assert.match(submit, /createScopedClient/, "Guide permission and quota checks must use the GM identity");
+  assert.match(submit, /preflight_ai_task/, "Guide must preflight the registered task before retrieval or dispatch");
+  assert.ok(
+    submit.indexOf("preflight_ai_task") < submit.indexOf("/functions/v1/hybrid-search"),
+    "quota preflight must happen before retrieval/provider work"
+  );
+  assert.match(submit, /create_guide_turn_for_worker/, "Guide must persist the logical submission through its scoped RPC");
+  assert.match(submit, /idempotency_key/, "Guide must carry a stable logical-submission identity");
+  assert.match(submit, /sourceIds[\s\S]*slice\(0,\s*20\)/, "Guide retrieval must cap its immutable allowlist");
+  assert.match(submit, /runnerResponse\?\.ok\s*\?\s*200\s*:\s*202/, "dispatch failure must preserve a recoverable queued turn");
+  assert.doesNotMatch(submit, /console\.(?:log|error)/, "Guide submission must not log questions or evidence");
+  assert.match(runner, /get_guide_evidence_for_worker/, "the shared runner must use frozen Guide evidence");
+  assert.match(runner, /complete_guide_turn_for_worker/, "the shared runner must persist only validated Guide output");
+});
+
 test("provider observability omits sensitive payloads and uses stable safe fields", () => {
   const observability = read("supabase/functions/_shared/observability.ts");
   const worker = read("supabase/functions/_shared/worker.ts");
@@ -190,6 +211,10 @@ test("local function server injects the Auth JWT secret without persisting it", 
   assert.match(server, /GOTRUE_JWT_SECRET/, "local server should read the active Auth signing secret");
   assert.match(server, /tmpdir\(\)/, "the composed Edge environment should live outside the repository");
   assert.match(server, /unlinkSync\(runtimeEnvPath\)/, "the temporary secret file should be removed");
+  assert.match(server, /RELIC_LOCAL_PROVIDER_MODE \?\? "deterministic"/, "local functions should default to deterministic provider isolation");
+  assert.match(server, /\["AI_PROVIDER_MODE", "test"\]/, "local deterministic mode should explicitly disable hosted AI");
+  assert.match(server, /\["EMBEDDING_PROVIDER_MODE", "deterministic"\]/, "local deterministic mode should explicitly disable hosted embeddings");
+  assert.match(server, /liveCredentialKeys/, "local deterministic mode should omit live provider credentials");
   assert.doesNotMatch(server, /console\.(?:log|error).*jwtSecret/i, "the signing secret must never be logged");
 });
 

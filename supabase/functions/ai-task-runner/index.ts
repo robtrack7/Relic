@@ -22,11 +22,23 @@ async function claimRun(
   return data as AiTaskRun;
 }
 
-async function retrieveContext(taskRun: AiTaskRun): Promise<unknown[]> {
+async function retrieveContext(
+  service: ReturnType<typeof createServiceClient>,
+  taskRun: AiTaskRun
+): Promise<unknown[]> {
   if (taskRun.retrieval_profile === "none" || !taskRun.gm_id || !taskRun.saga_id) return [];
+  if (taskRun.guide_turn_id) {
+    const { data, error } = await service.rpc("get_guide_evidence_for_worker", { p_run_id: taskRun.id });
+    if (error) throw new Error(`retrieval failed: ${error.message}`);
+    const evidence = Array.isArray(data) ? data : [];
+    taskRun.retrieval_context = evidence as AiTaskRun["retrieval_context"];
+    return evidence;
+  }
 
   const scoped = await createScopedClient(taskRun.gm_id, "ai_task_runner", taskRun.saga_id);
-  const queryText = typeof taskRun.input_payload?.prompt === "string"
+  const queryText = typeof taskRun.input_payload?.question === "string"
+    ? taskRun.input_payload.question
+    : typeof taskRun.input_payload?.prompt === "string"
     ? taskRun.input_payload.prompt
     : taskRun.task_name;
 
@@ -171,6 +183,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (taskRun.claim_state !== "claimed") {
       throw new Error("AI task claim state is invalid.");
     }
+    if (taskRun.guide_turn_id) {
+      await service.rpc("set_guide_turn_state_for_worker", {
+        p_run_id: taskRun.id,
+        p_status: "running",
+        p_failure_category: null
+      });
+    }
 
     await recordProviderPipelineEvent({
       eventName: "worker_claimed", workerType: `ai_task:${taskRun.task_name}`,
@@ -206,7 +225,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       if (!validated.ok) throw new Error("Checkpointed AI output no longer validates.");
     } else {
       phase = "retrieval";
-      const retrievalContext = await retrieveContext(taskRun);
+      const retrievalContext = await retrieveContext(service, taskRun);
       const providerStartedAt = performance.now();
       inputSize = JSON.stringify({ input: taskRun.input_payload, retrieval: retrievalContext }).length;
       await recordProviderPipelineEvent({
@@ -295,6 +314,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
       p_resolved_provider: providerResult.provider
     });
     if (error) throw new Error(error.message);
+    if (taskRun.guide_turn_id) {
+      const { error: guideError } = await service.rpc("complete_guide_turn_for_worker", {
+        p_run_id: runId,
+        p_output: validated.output
+      });
+      if (guideError) throw new Error(guideError.message);
+    }
 
     const outputSize = typeof providerResult.output === "string"
       ? providerResult.output.length : JSON.stringify(providerResult.output).length;
@@ -328,6 +354,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const retryable = error instanceof AiProviderError ? error.retryable : true;
     if (taskRun) {
       const failure = await failRun(service, runId, workerId, category, retryable, repairAttempts).catch(() => null);
+      if (taskRun.guide_turn_id) {
+        const guideState = failure?.status === "dead_letter" ? "dead_letter"
+          : category === "provider_unavailable" || category === "timeout" ? "provider_unavailable"
+          : "failed";
+        await service.rpc("set_guide_turn_state_for_worker", {
+          p_run_id: taskRun.id,
+          p_status: guideState,
+          p_failure_category: category
+        }).catch(() => undefined);
+      }
       if (failure?.status === "terminal" || failure?.status === "dead_letter") {
         await recordFailedUsage(taskRun, category).catch(() => undefined);
       }

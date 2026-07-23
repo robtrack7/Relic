@@ -21,6 +21,8 @@ source_file: "Relic Vault/68 - Ask Search Design Spec.md"
 
 # Search And Relic Guide Design Spec
 
+**Packet E3 conversational Guide patch (July 2026).** Relic Guide is a persistent GM-owned, Saga-scoped conversational assistant over registered Relic tasks and deterministic tools. It retains bounded thread state across navigation, refresh, app restart, and later mobile handoff without treating conversation as canon or citation evidence. Typed provenance separates grounded facts from creative proposals, guidance, action previews, and insufficiency. E3 enables only open-record and confirmed entity-draft actions.
+
 ## 1. Purpose
 
 Search and Relic Guide help the GM find, query, and act on current Saga canon plus relevant World canon. Search is a persistent top-context affordance. Relic Guide is an always-available collapsible sidecar/sheet, not a left-rail destination.
@@ -61,7 +63,7 @@ Secondary actions include filter by record type/scope/state, switch search mode,
 
 Top context bar includes a global Search entry beside Workspace/World/Saga context and a Relic Guide toggle/handle. Search modal or page shows grouped results: Threads first when relevant, then Library records, sessions, notes, and review/source hits.
 
-Relic Guide uses a single-column prompt/result/action layout with source citations inline and source panel/sheet. On desktop it docks as a collapsible right sidecar across Sanctum and Stage; on mobile it opens as a sheet/drawer. It can be minimized to a slim handle without losing state. It should feel like a sourced project-action assistant, not a personality-driven chatbot.
+Relic Guide uses a single-column conversational prompt/result/action layout with source citations inline and source panel/sheet. On desktop it docks as a collapsible right sidecar across Sanctum and Stage; on mobile it opens as a sheet/drawer. It can be minimized to a slim handle without losing state, and the same Saga thread can resume after refresh or later on mobile. It should feel like a sourced project-action assistant, not a personality-driven general chatbot.
 
 Mobile uses search as a full-screen modal and Relic Guide as a sheet/drawer.
 
@@ -89,7 +91,7 @@ Relic Guide can apply low-risk session/prep working-state changes only after GM 
 
 ## 11. Source/provenance behavior
 
-Relic Guide citations are mandatory when `no_answer=false` and the answer makes factual canon claims. Citation rows should show source label and open a source preview, Library detail, note, or transcript segment as appropriate.
+Relic Guide citations are mandatory per grounded factual paragraph. Creative proposal material from registered creation tasks is visibly labeled new/non-canon and does not receive fabricated citations; when a proposal uses canon constraints, citations support those constraints without implying the new material is already canon. Citation rows should show source label and open a source preview, Library detail, note, or transcript segment as appropriate.
 
 Search results should show enough provenance to distinguish Canon, AI Draft where allowed, Raw/session source, Archived, and World vs Saga scope. Default search should emphasize current Saga canon plus relevant World canon and exclude sibling Sagas.
 

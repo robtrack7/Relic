@@ -2,7 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { entityConfigs } from "@/lib/entities";
 import { getSupabaseUrl, hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
+import { sagaPath } from "@/lib/routes";
 import type { AppContext, EntitySummary, EntityType, HierarchyContext, IdParams, ImportSource, LibraryRecordDetail, SearchResult, SessionPrepData, SessionPrepPin, StageLiteralSearchDocument, ThreadDetail, ThreadObjective, ThreadTimelineEntry } from "@/lib/types";
+import type { GuideBlock, GuideThread, GuideTurn } from "@/components/RelicGuideConversation";
 
 type WorkspaceContext = { id: string; name: string; usage_limits?: Record<string, unknown>; hierarchy?: HierarchyContext };
 type WorldContext = { id: string; name: string; summary?: string | null; default_game_system?: string | null };
@@ -478,6 +480,100 @@ export async function searchForUi(params: IdParams, query: string, literalOnly =
     throw new Error(error.message);
   }
   return (data ?? []) as SearchResult[];
+}
+
+export async function getGuideThread(params: IdParams, threadId?: string | null): Promise<GuideThread> {
+  const { supabase } = await requireSagaContext(params);
+  const { data, error } = await supabase.rpc("get_guide_thread", {
+    p_workspace_id: params.workspaceId,
+    p_world_id: params.worldId,
+    p_saga_id: params.sagaId,
+    p_thread_id: threadId ?? null
+  });
+  if (error) throw new Error(error.message);
+  if (!data) return { id: "", state: "active", turns: [] };
+
+  const raw = data as {
+    id: string;
+    state: "active" | "archived";
+    turns?: Array<{
+      id: string;
+      question: string;
+      status: GuideTurn["status"];
+      retrieval_mode?: string;
+      response?: { no_answer?: boolean; insufficiency_reason?: string; blocks?: Array<Record<string, unknown>> } | null;
+      actions?: Array<Record<string, unknown>>;
+    }>;
+  };
+  const turns = await Promise.all((raw.turns ?? []).map(async (turn): Promise<GuideTurn> => {
+    const contextResult = await supabase.rpc("get_guide_source_context", {
+      p_workspace_id: params.workspaceId,
+      p_world_id: params.worldId,
+      p_saga_id: params.sagaId,
+      p_turn_id: turn.id
+    });
+    const contexts = Array.isArray(contextResult.data)
+      ? contextResult.data as Array<DraftCitationContext & { source_id?: string; source_entity_type?: string; source_entity_id?: string }>
+      : [];
+    const contextBySource = new Map(contexts.map((context) => [context.source_id, context]));
+    const actions = new Map((turn.actions ?? []).map((action) => [Number(action.block_index), action]));
+    const blocks: GuideBlock[] = (turn.response?.blocks ?? []).flatMap((block, blockIndex) => {
+      if (block.type === "grounded_answer" || block.type === "grounded_proposal") {
+        const citations = Array.isArray(block.citations) ? block.citations : [];
+        return [{
+          type: block.type,
+          text: String(block.text ?? ""),
+          citations: citations.flatMap((citation) => {
+            const sourceId = typeof citation === "object" && citation !== null
+              ? String((citation as Record<string, unknown>).source_id ?? "") : "";
+            const context = contextBySource.get(sourceId);
+            return context ? [{ sourceId, context }] : [];
+          })
+        } as GuideBlock];
+      }
+      if (block.type === "guidance" || block.type === "creative_proposal") {
+        return [{ type: block.type, text: String(block.text ?? "") } as GuideBlock];
+      }
+      if (block.type === "action_preview") {
+        const stored = actions.get(blockIndex);
+        if (!stored) return [];
+        if (stored.type === "open_record") {
+          const context = contextBySource.get(String(stored.source_id ?? ""));
+          const href = context?.source_entity_type && context.source_entity_id
+            ? `${sagaPath(params)}/entities/${context.source_entity_type}/${context.source_entity_id}`
+            : `${sagaPath(params)}/search?q=${encodeURIComponent(turn.question)}`;
+          return [{
+            type: "action_preview",
+            actionId: String(stored.id),
+            action: { type: "open_record", href },
+            explanation: String(stored.explanation ?? block.explanation ?? ""),
+            state: String(stored.state ?? "pending") as Extract<GuideBlock, { type: "action_preview" }>["state"]
+          }];
+        }
+        return [{
+          type: "action_preview",
+          actionId: String(stored.id),
+          action: {
+            type: "draft_entity",
+            entityType: String(stored.entity_type) as "character",
+            intent: String(stored.intent ?? "")
+          },
+          explanation: String(stored.explanation ?? block.explanation ?? ""),
+          state: String(stored.state ?? "pending") as Extract<GuideBlock, { type: "action_preview" }>["state"]
+        }];
+      }
+      return [];
+    });
+    return {
+      id: turn.id,
+      question: turn.question,
+      status: turn.status,
+      noAnswer: turn.response?.no_answer,
+      insufficiencyReason: turn.response?.insufficiency_reason,
+      blocks
+    };
+  }));
+  return { id: raw.id, state: raw.state, turns };
 }
 
 export async function getUsageSummary(workspaceId: string) {

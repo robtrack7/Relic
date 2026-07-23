@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 
 ## Changelog
 
+**Packet E3 conversational Guide patch (July 2026).** Relic Guide now uses persistent GM-owned, Saga-scoped threads that survive navigation, refresh, and app restart. Bounded prior turns support follow-up interpretation but never become canon or citation evidence. Responses distinguish grounded factual paragraphs, creative/proposal material from registered creation tasks, guidance, action previews, and insufficiency. E3 enables only open-record and confirmed entity-draft actions.
+
 **Session Prep parity patch (July 2026).** The planned/ready Home workspace and full Prepare route share one functional editor: visible recoverable autosave, scheduling, prior-session context, ordered pin recovery, state-valid actions, and latest-write Ready transition. Multiple future Sessions remain selectable and distinguishable. Started/live/ending/ended Prep is read-only, and manual Prep makes no provider call or automatic canon mutation.
 
 **Citation context and drift patch (July 2026).** Session Review and Approval Queue now expose every synthesis citation as a keyboard-operable evidence disclosure, with timestamped transcript anchors, frozen/current/deleted drift context, untimestamped manual evidence, and safe non-identifying fallback states.
@@ -578,6 +580,12 @@ Unchanged from v0.1 §9.1–9.3. Search bar persistent, Literal default, Hybrid 
 ### 10.4 Relic Guide — RAG-backed Q&A and actions
 
 Relic Guide uses the same Workspace/World/Saga retrieval boundary as Memory Spec v0.9: current Saga canon first, relevant World/Era canon second, no sibling Sagas by default.
+
+Guide is conversational rather than a sequence of unrelated search forms. Each GM-owned thread belongs to exactly one Saga, persists across navigation/refresh/app restart, and can be started anew, cleared, or archived without changing canon. Web and later mobile resume the same thread. The backend selects a bounded prior-turn context; the browser never supplies trusted history. Every factual follow-up retrieves current evidence again, and conversation itself is never citable.
+
+Guide messages visibly separate grounded factual paragraphs with inline citations; creative or grounded proposals from registered creation tasks, clearly marked non-canon; process guidance; reviewed action previews; and `no_answer` insufficiency.
+
+The E3 action subset is intentionally narrow: open an already authorized cited record, or confirm an entity-draft intent that then invokes `draft_entity_from_prompt` and routes through normal review. Prep, Stage, dice, rulebook, image, relationship, objective, and Saga-creation tools remain disabled until their owning packet registers them.
 
 
 **v0.2 update: `answer_saga_question` task is registered (Registry v1.0 §10).** Relic Guide uses this task for cited answers and can prepare GM-reviewed actions that either apply inline to working state or route to Approval Queue for canon-impacting changes. The v0.1 note about the missing task ("This spec assumes one will be added in a Registry revision") is resolved by the registry task contract.

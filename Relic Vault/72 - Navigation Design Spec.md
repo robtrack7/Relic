@@ -25,6 +25,8 @@ source_file: "Relic Vault/72 - Navigation Design Spec.md"
 
 **Hierarchy and Saga lifecycle patch (July 2026).** The web MVP resolves the switcher treatment as three separate Workspace, World, and Saga dropdowns. Each dropdown changes only through an authorized server-provided landing target; empty branches enter New saga with the selected parent context. A live or ending Session disables all context dropdowns until the GM resumes or ends it.
 
+**Packet E3 Guide patch (July 2026).** `/guide` is the full persistent Saga conversation workspace, while the shell carriage remains a compact entry/shortcut surface. Both route to the same active Saga boundary; neither may silently create canon. Web refresh/navigation and later mobile sheets recover the server-owned thread rather than relying on browser-only chat state.
+
 ## 0. Purpose
 
 This spec defines Relic's primary navigation model for the web app and the canonical navigation vocabulary for downstream screen specs. It translates the product hierarchy, the Sanctum/Stage surface model, and the core GM loop into a clear navigation system. Mobile adapts this model through [[70 - Mobile App Design Spec]] without changing the product IA.

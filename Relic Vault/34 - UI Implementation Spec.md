@@ -58,6 +58,8 @@ This spec translates the active Relic product, UX, schema, architecture, and des
 
 ## Changelog
 
+**Packet E3 conversational Guide patch (July 2026).** The Guide fallback route and sidecar/sheet render one persistent Saga-scoped conversation with typed provenance blocks, paragraph citations, recoverable queued/running/failed turns, and stored reviewed action intents. Conversation survives navigation, refresh, and app restart; it does not follow the GM across Saga scope. Creative proposal blocks are labeled non-canon and never receive fabricated citations.
+
 **v0.2 (May 2026).** Document-control and naming refresh. Updates build-against references to the current versioned files and renames the new-saga continuation route parameter from `:workshopSessionId` to `:creationSessionId` so implementation naming no longer revives retired Saga Creation language. No UI scope expansion.
 
 
@@ -394,6 +396,11 @@ Build as the loop dashboard, not a generic project homepage.
 
 - GM-invoked only.
 - Reached from the persistent Relic Guide sidecar/sheet, contextual action, or fallback page; not the primary left rail.
+- Shows a bounded persistent thread rather than a search-result wrapper. New thread, clear, archive, retry, and edit/resubmit preserve explicit state without writing canon.
+- Renders grounded answer paragraphs, creative/grounded proposal blocks, guidance, action previews, and insufficiency with distinct accessible semantics.
+- Grounded paragraphs remain hidden unless all citations validate and resolve to authorized C4 source context. Citation disclosures are keyboard/touch operable and return focus to their marker.
+- E3 action cards support open-record and confirmed entity-draft only. They explain consequences, cost/review routing, stale conflicts, and acceptance state; preview/dismissal are zero-write.
+- Queued/running updates use polite live announcements. Error, quota, fallback, drift, and insufficiency never rely on colour alone.
 - Shows answer state: Canon / Draft / Raw / Transcript sources.
 - No answer may be presented as canon unless grounded in canon.
 - Can prepare create/edit actions, but canon mutation requires inline GM review or Approval Queue.

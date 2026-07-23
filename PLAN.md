@@ -255,21 +255,29 @@ Stop rules:
 - **Cost incident:** the repeat harness conservatively counted 41 inference attempts against the user-authorized ceiling of 40 because a generic idle embedding dispatch claimed a different queued synthetic job after the target proof had passed. This was not an exact-retry duplicate or user charge duplication. The idle dispatch was removed, all synthetic residue was cleaned, and the runner is hard-disabled at 41/40; total exposure remained below the E2 `$1` stop and project `$5` cap. No further provider call is authorized by this packet.
 - **Done when:** staging evidence exists for real provider delivery, not only deterministic mode.
 
-#### Packet E3 — Relic Guide
+#### Packet E3 — Relic Guide conversational foundation
 
-- Wire `answer_saga_question` with citations or `no_answer=true`.
-- Add source context, insufficiency copy, quota/provider fallback, and reviewed action cards.
-- **Done when:** uncited factual answers cannot render and actions require GM review.
+- Add persistent GM-owned, Saga-scoped Guide threads that survive refresh, navigation, app restart, and later web/mobile handoff. Only bounded server-selected prior context may enter a turn; conversation is never canon or citation evidence.
+- Wire factual turns through `answer_saga_question` with typed provenance blocks, paragraph-level citations, or `no_answer=true`.
+- Distinguish grounded answers, creative proposals, grounded proposals, guidance, action previews, and insufficiency so newly created material is never given fabricated citations or presented as established canon.
+- Add source context, insufficiency copy, quota/provider/retrieval fallback, turn-level idempotency, supersession, and an extensible server-owned action registry.
+- Ship only `open_record` and explicitly confirmed `draft_entity` Guide actions in E3. E4 and E5 add their registered task families to the same conversational shell only after their dedicated contracts pass.
+- **Functionally complete / environment-gated (2026-07-23):** the search-shaped placeholder is replaced by persistent Saga-scoped conversations over `answer_saga_question@1.1.0`; strict typed-block validation, paragraph citations, immutable evidence snapshots, bounded prior context, `no_answer`, quota/provider/manual recovery, exact logical retry, supersession, source drift inspection, and reviewed `open_record` / `draft_entity` paths pass locally. Clean migration replay, 21 focused pgTAP assertions, 23 Guide/runtime source assertions, the full web suite, production build, and the authenticated four-viewport composer-to-runtime browser proof pass with deterministic non-billable providers.
+- **E3 provider incident:** a local Edge test helper initially inherited live provider values from `supabase/.env.local`, causing four synthetic LiteLLM requests before the mismatch was detected: one embedding, one entity draft, and an answer plus bounded repair. No private data or production environment was involved. The helper now defaults to an isolated temporary environment with deterministic AI/embedding/transcription modes and omits all live provider credentials; the rerun proves only deterministic providers and zero billable calls. Record this incident in the E3 session log and security register.
+- **Remaining gate:** do not mark E3 complete or begin E4 until one separately authorized, isolated staging Guide smoke passes. No E2 allowance or `relic-llm-dev` exception carries forward.
+- **Done when:** factual blocks cannot render without authorized paragraph citations, creative blocks cannot masquerade as canon, conversation cannot cross Saga scope, and every action follows its risk-appropriate GM review boundary.
 
 #### Packet E4 — Session Prep AI
 
 - Wire canon-only prep briefing, session suggestions, scene beats, complications, NPC candidates, and inline Quick Stub review.
+- Register the completed Prep task family as Guide tools without bypassing the dedicated Prepare workflow or its working-state confirmation path.
 - Keep ephemeral suggestions out of canon and preserve manual prep.
 - **Done when:** each task validates sources/quota and accepts only through the specified working-state path.
 
 #### Packet E5 — AI-assisted Saga creation
 
 - Add GM profile defaults/override, Build with AI, Bring your notes, 50k validation, resumable creation, scaffold review, per-item reject/regenerate, and explicit commit.
+- Expose the completed scaffold workflow through the Guide tool registry only where it preserves resumable creation and per-item review.
 - **Done when:** both paths produce editable source-aware drafts and abandonment/resume works without canon writes.
 
 **Milestone E gate:** deterministic suite first, then authorized staging smoke for every MVP task family. Recheck quota, provenance, citation validation, and explicit-approval invariants.
@@ -408,4 +416,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate next packet: **E3 — Relic Guide**. E2 is complete; D5 imported sources remain excluded unless a later explicit GM enrollment contract is added.
+Immediate next gate: **E3 hosted Guide authorization and isolated staging smoke**. E3 is functionally complete locally but environment-gated; E4 must not begin until this gate passes. D5 imported sources remain excluded unless a later explicit GM enrollment contract is added.

@@ -27,6 +27,8 @@ source_file: "Sourced - Downloaded - 260518/relic-memory-retrieval-spec-v0_8.md"
 
 ## Changelog
 
+**Packet E3 conversational Guide patch (July 2026).** Persistent Guide history is Saga-scoped interpretation context, not retrievable canon and never citation evidence. Every factual turn performs fresh `sanctum_qa_grounding`; its exact source IDs and source versions form an immutable run allowlist. Grounded answer paragraphs require direct allowlisted support, while creative proposals from other registered tasks are labeled non-canon rather than receiving fabricated citations. E3 keeps `top_k=20`, caps assembled evidence at 48,000 normalized characters, and preserves independent lexical fallback.
+
 **Packet E2 hosted proof and observability patch (July 2026).** Replaces the older raw-query production logging language with correlated safe metadata, explicit provider/database latency, fallback state, and permitted scope IDs. Hosted record/query embedding resolves to `text-embedding-3-small` at 1536 dimensions, persists through the scoped worker, participates in hybrid retrieval, preserves independent lexical fallback, meters exact retry once, and excludes sibling-Saga/pending-draft/unapproved-import sources. No query text, source text, transcript/import content, prompt, provider response, or vector is stored in telemetry.
 
 **v1.0 (July 2026).** Packet E1 delivery contract. Locks the server-only LiteLLM embedding route, deterministic development/test mode, content-versioned queue identity, replacement-before-flip persistence, transcript edit/hide behavior, safe failure and replay states, idempotent usage metering, and lexical fallback. Corrects the stale instruction to re-embed entities when a separately embedded attached lore note changes.
@@ -126,6 +128,7 @@ A buildable specification for Relic's retrieval layer. Five concrete things:
 | `relationships.notes` | ✗ | Too short |
 | `dice_rolls`, `audio_chunks` | ✗ | N/A |
 | `workshop_sessions.conversation` | ✗ until committed | Committed entities embed normally |
+| Relic Guide threads/turns | ✗ | Persistent interpretation context; never canon or citation evidence |
 
 ### 3.2 When embeddings regenerate
 
@@ -633,6 +636,16 @@ retrieve_for_task(
 ```
 
 No `[UNTRUSTED INPUT]` section — this task takes no untrusted input (the prior summary note is canon, GM-approved).
+
+---
+
+### 8.6 Conversational Relic Guide
+
+Each Guide turn retrieves afresh from the normalized current question. Up to eight server-selected prior turns and 6,000 normalized characters may be supplied separately to resolve conversational references, but history never enters the source allowlist and cannot support a factual claim.
+
+`sanctum_qa_grounding` returns at most 20 current eligible records. Context assembly retains type, title, source ID, current source version, scope, and anchor, caps each item at 6,000 characters and the complete evidence section at 48,000 characters, and wraps every item as untrusted evidence. Retrieved instructions have no authority.
+
+The server freezes the exact source/version allowlist before provider dispatch. Citation validation and C4 context resolution use that same snapshot. A later source edit produces an explicit drift/stale state; deletion, archival, loss of permission, or unsupported type never silently substitutes another source. Semantic failure preserves lexical candidates, and complete retrieval failure yields `no_answer` rather than model-general knowledge.
 
 ---
 
