@@ -43,6 +43,7 @@ test("module 8 edge runtime function tree exists", () => {
     "supabase/functions/_shared/transcription-provider.ts",
     "supabase/functions/_shared/embedding-provider.ts",
     "supabase/functions/_shared/embedding-worker.ts",
+    "supabase/functions/_shared/observability.ts",
     "supabase/functions/issue-scoped-jwt/index.ts",
     "supabase/functions/ai-task-runner/index.ts",
     "supabase/functions/embed-row-dispatch/index.ts",
@@ -72,7 +73,13 @@ test("transcription worker uses scoped audio, provider, result, and usage bounda
   assert.match(provider, /audio\/transcriptions/, "provider should use the OpenAI-compatible audio endpoint");
   assert.match(provider, /verbose_json/, "provider should request timestamped segments");
   assert.match(provider, /relic-transcribe/, "provider should use the canonical LiteLLM alias");
-  assert.match(provider, /TRANSCRIPTION_PROVIDER_MODE"\) \?\? "live"/, "provider should fail closed into live configuration unless test mode is explicit");
+  assert.match(provider, /TRANSCRIPTION_PROVIDER_MODE/, "provider mode should be explicit and fail closed");
+  assert.match(provider, /configuredMode \?\? "live"/, "provider should default to live rather than deterministic mode");
+  assert.match(provider, /RELIC_ENV/, "deterministic transcription mode should be environment-gated");
+  assert.match(provider, /TRANSCRIPTION_RESOLVED_MODEL/, "hosted transcription should require explicit resolved-model provenance");
+  assert.match(provider, /AbortController/, "transcription provider calls should have a bounded timeout");
+  assert.doesNotMatch(provider, /AI_PROVIDER_BASE_URL/, "transcription must not silently fall back to the generic AI provider endpoint");
+  assert.doesNotMatch(provider, /AI_PROVIDER_API_KEY/, "transcription must not silently fall back to generic AI credentials");
   assert.doesNotMatch(provider, /fetch\s*\(\s*["'`]https?:\/\//i, "provider should not hardcode a provider URL");
 });
 
@@ -89,6 +96,7 @@ test("embedding delivery uses the scoped worker, validated provider, and lexical
   assert.match(worker, /complete_embedding_job_for_worker/, "worker should persist through the service-only completion boundary");
   assert.match(worker, /fail_embedding_job_for_worker/, "worker should classify failures through the embedding lifecycle");
   assert.match(provider, /EMBEDDING_PROVIDER_MODE.*live/s, "embedding provider should default to live mode");
+  assert.match(provider, /providerReportedModel.*expectedModel/s, "hosted embeddings should reject unexpected resolved models");
   assert.match(provider, /deterministic-development-test/, "deterministic provenance should be explicit");
   assert.doesNotMatch(provider, /fetch\s*\(\s*["'`]https?:\/\//i, "provider should not hardcode a hosted URL");
   assert.match(hybrid, /requireInternalAuth/, "query embedding should be server-only");
@@ -103,12 +111,43 @@ test("ai task runner uses internal auth and provider adapter boundaries", () => 
 
   assert.match(runner, /requireInternalAuth/, "AI task runner should require internal auth");
   assert.match(runner, /callAiProvider/, "AI task runner should use the shared provider adapter");
+  assert.match(runner, /claim_ai_task_run_for_worker/, "AI task runner should atomically lease a run before provider work");
+  assert.doesNotMatch(runner, /\bsession_id:\s*taskRun\.session_id,/, "session scoping must use the retrieval RPC filters contract");
+  assert.match(runner, /filters:\s*taskRun\.session_id\s*\?\s*\{\s*session_id:\s*taskRun\.session_id\s*\}\s*:\s*\{\}/, "session-scoped retrieval should use filters.session_id");
+  assert.match(runner, /checkpoint_ai_task_provider_output_for_worker/, "AI task runner should checkpoint validated output before delivery");
+  assert.match(runner, /fail_ai_task_run_for_worker/, "AI task runner should use the bounded retry and dead-letter boundary");
+  assert.ok(
+    runner.indexOf("checkpoint_ai_task_provider_output_for_worker") < runner.indexOf("await recordUsage("),
+    "validated provider output should be checkpointed before metering"
+  );
+  assert.ok(
+    runner.indexOf("await recordUsage(") < runner.indexOf('service.rpc("record_ai_task_output_for_worker"'),
+    "idempotent metering should precede output persistence"
+  );
   assert.match(runner, /p_resolved_model:\s*providerResult\.resolvedModel/, "AI task runner should persist the resolved model used for the accepted output");
   assert.match(runner, /p_resolved_provider:\s*providerResult\.provider/, "AI task runner should persist provider provenance for the accepted output");
   assert.match(provider, /provider:\s*"deterministic-test"/, "deterministic provider mode should identify its provenance");
+  assert.match(provider, /AI_PROVIDER_MODE/, "AI provider mode should be explicit and fail closed");
+  assert.match(provider, /configuredMode \?\? "live"/, "AI provider should default to live mode");
+  assert.match(provider, /RELIC_ENV/, "deterministic AI mode should be environment-gated");
+  assert.match(provider, /LITELLM_PROXY_URL/, "hosted AI calls should use the shared server-only proxy boundary");
+  assert.match(provider, /AI_RESOLVED_MODEL/, "hosted AI aliases should require explicit resolved-model provenance");
+  assert.match(provider, /AbortController/, "AI provider calls should have a bounded timeout");
   assert.doesNotMatch(provider, /new\s+OpenAI\s*\(/i, "provider adapter should not construct OpenAI clients directly");
   assert.doesNotMatch(provider, /new\s+Anthropic\s*\(/i, "provider adapter should not construct Anthropic clients directly");
   assert.doesNotMatch(provider, /fetch\s*\(\s*["'`]https?:\/\//i, "provider adapter should not hardcode provider URLs");
+});
+
+test("provider observability omits sensitive payloads and uses stable safe fields", () => {
+  const observability = read("supabase/functions/_shared/observability.ts");
+  const worker = read("supabase/functions/_shared/worker.ts");
+  const aiRunner = read("supabase/functions/ai-task-runner/index.ts");
+
+  assert.match(observability, /record_provider_pipeline_event_for_worker/, "safe events should persist through the service-only database boundary");
+  assert.match(observability, /SENSITIVE_FIELD_NAMES/, "observability should centrally omit sensitive field names");
+  assert.doesNotMatch(observability, /console\.(?:log|error)\([^\n]*(?:prompt|transcript|authorization|cookie|jwt|signed_url)/i, "observability must not directly log private fields");
+  assert.doesNotMatch(worker, /reason:\s*(?:claimError\.message|reason)/, "shared worker logs must not include raw error messages");
+  assert.doesNotMatch(aiRunner, /logRuntimeEvent\([^\n]*reason/, "AI runtime logs must not include raw internal failure text");
 });
 
 test("only issue-scoped-jwt reads the Relic JWT signing secret", () => {
@@ -118,6 +157,32 @@ test("only issue-scoped-jwt reads the Relic JWT signing secret", () => {
     .map((file) => file.replace(`${root}\\`, "").replaceAll("\\", "/"));
 
   assert.deepEqual(secretReaders, ["supabase/functions/issue-scoped-jwt/index.ts"]);
+});
+
+test("scoped clients use the SDK access-token boundary for worker RLS", () => {
+  const scopedClient = read("supabase/functions/_shared/scoped-client.ts");
+  const issuer = read("supabase/functions/issue-scoped-jwt/index.ts");
+
+  assert.match(
+    scopedClient,
+    /accessToken:\s*async\s*\(\)\s*=>\s*token/,
+    "scoped worker JWTs should use the supported Supabase client accessToken option"
+  );
+  assert.doesNotMatch(
+    scopedClient,
+    /global:\s*\{\s*headers:\s*\{\s*authorization:/,
+    "a lowercase global authorization header can be shadowed by the SDK API-key header"
+  );
+  assert.match(
+    scopedClient,
+    /saga_id:\s*sagaId/,
+    "scoped workers should request a token bound to the job Saga"
+  );
+  assert.match(
+    issuer,
+    /\.\.\.\(sagaId\s*\?\s*\{\s*saga_id:\s*sagaId\s*\}\s*:\s*\{\}\)/,
+    "the issuer should include the validated active Saga claim"
+  );
 });
 
 test("local function server injects the Auth JWT secret without persisting it", () => {

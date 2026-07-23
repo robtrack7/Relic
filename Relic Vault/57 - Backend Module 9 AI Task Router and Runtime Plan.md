@@ -16,7 +16,7 @@ depends_on:
   - "[[46 - Backend Audit and Module Plan]]"
   - "[[56 - Backend Module 8 Background Job and Edge Runtime Plan]]"
 supersedes: []
-last_audited: 2026-06-02
+last_audited: 2026-07-23
 source_file: "Relic Vault/57 - Backend Module 9 AI Task Router and Runtime Plan.md"
 ---
 
@@ -49,6 +49,7 @@ Implemented on 2026-06-02:
 - `public.preflight_ai_task(...)` exposes scoped browser preflight for task contract and quota state while preserving manual fallback.
 - `internal.validate_ai_source_ids(...)` and `internal.record_ai_task_output(...)` enforce source-ID boundaries and write only the registered output surface.
 - `supabase/functions/ai-task-runner/` adds the internal Edge route, provider adapter boundary, schema validation, one repair retry, and worker failure handling.
+- Packet E2 hardens this route so hosted mode requires explicit canonical aliases and resolved-model provenance, rejects deterministic staging/production use and unexpected models, bounds calls with timeouts, atomically leases each run, checkpoints validated provider output before metering/persistence, short-circuits completed or busy redelivery before another provider call, retries at most twice, dead-letters only safe identifiers/categories, validates the complete `propose_thread_complication` light schema, and emits payload-free safe telemetry. Replay cannot replace a completed or newer result. Hosted `propose_thread_complication` and `synthesize_session` both pass through the shared runner with scoped sources, idempotent metering/output, exact-retry replay, safe failure/recovery, provenance, sibling-Saga denial, and zero canon writes; the Vault-authenticated AI schedule dispatches only a due run ID.
 
 ## Registry Tasks
 

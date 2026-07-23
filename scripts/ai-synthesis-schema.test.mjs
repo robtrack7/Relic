@@ -80,3 +80,36 @@ test("synthesize_session enforces Saga-only entity changes and update concurrenc
   assert.equal(incompleteUpdate.ok, false);
   assert.match(incompleteUpdate.errors.join("\n"), /target_entity_id.*expected_version/i);
 });
+
+test("propose_thread_complication validates its complete light-task registry schema", () => {
+  const lightRun = {
+    ...taskRun,
+    task_name: "propose_thread_complication",
+    prompt_version: "propose_thread_complication@1.0.0",
+    quota_tier: "light",
+    ai_credits: 1,
+    model_tier: "relic-balanced",
+    retrieval_profile: "sanctum_grounding",
+    source_policy: "canon_only",
+    output_mode: "ephemeral"
+  };
+  const valid = {
+    complications: [{
+      id: "complication-1",
+      summary: "The witness changes their story",
+      narrative: "A canon witness offers a contradictory detail without resolving the mystery.",
+      entities_implicated: ["Lantern Keeper"],
+      escalation_level: "medium",
+      sources: [taskRun.allowed_source_ids[0]]
+    }],
+    confidence_reason: "single_clear_segment"
+  };
+
+  assert.deepEqual(validateTaskOutput(lightRun, valid), { ok: true, output: valid });
+  const invalid = validateTaskOutput(lightRun, {
+    ...valid,
+    complications: [{ ...valid.complications[0], escalation_level: "catastrophic", sources: [] }]
+  });
+  assert.equal(invalid.ok, false);
+  assert.match(invalid.errors.join("\n"), /escalation_level|source/i);
+});

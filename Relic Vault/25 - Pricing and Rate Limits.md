@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-18
+last_audited: 2026-07-23
 source_file: "Sourced - Downloaded - 260518/relic-pricing-rate-limits-v0_2.md"
 ---
 
@@ -41,6 +41,8 @@ This document locks the MVP rate-limit model and alpha pricing hypothesis. It do
 ---
 
 ## Changelog
+
+**Packet E2 metering patch (July 2026).** Hosted delivery proves one idempotent usage event for transcription, embeddings, and AI task output, with exact retry producing no duplicate user charge or draft. Safe operational events record only aggregate units, latency, alias/model, attempt, and charge state. The E2 environment was capped at `$5` by the OpenAI project and `$1` for the packet. Final conservative count was 41 attempts against an authorized ceiling of 40: after the intended restart proof, generic idle embedding dispatch claimed a different queued synthetic job. It was not an exact-retry duplicate, total exposure remained below both monetary caps, cleanup passed, repeat-mode idle dispatch was removed, and the runner is hard-disabled from making any additional E2 call.
 
 **v0.2 (May 2026).** Document-control refresh. Adds explicit source-of-truth inputs and aligns references to the current versioned files. No cap values, quota behavior, or tier definitions changed.
 

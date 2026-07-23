@@ -107,7 +107,7 @@ These public-schema helpers are `security definer` because they are called by sc
 - `write_manual_canon_source(...)`
 - `write_manual_canon_audit(...)`
 - `materialize_embedding_job_for_test(...)`
-- AI worker wrappers: `get_ai_task_run_for_worker(...)`, `record_ai_task_output_for_worker(...)`, `mark_ai_task_run_failed_for_worker(...)`, and `set_ai_task_usage_for_worker(...)`
+- AI worker wrappers: `get_ai_task_run_for_worker(...)`, `claim_ai_task_run_for_worker(...)`, `checkpoint_ai_task_provider_output_for_worker(...)`, `record_ai_task_output_for_worker(...)`, `fail_ai_task_run_for_worker(...)`, `replay_ai_task_run_for_worker(...)`, `reset_stalled_ai_task_runs_for_worker(...)`, and `set_ai_task_usage_for_worker(...)`
 - validation trigger helpers for session pins, active threads, notes, relationships, mentions, sources, and draft sources
 - private `internal.library_*` lookup/dependency helpers plus the exact-mention trigger; none are browser-callable
 
@@ -126,6 +126,10 @@ Export and notification operations use scoped browser RPCs for request/status/pr
 Hierarchy reads return only owner-accessible Workspace/World/Saga choices and an authorized landing target for each switchable branch. `rename_saga(...)` and `delete_saga(...)` revalidate the exact hierarchy server-side. Deletion requires an exact typed Saga name, rejects `in_progress` and `ended_pending_undo` Sessions, soft-hides the Saga, and enqueues one idempotent Storage cleanup job. Only a successful worker Storage pass may call cleanup completion; that completion hard-deletes the Saga and its cascaded database rows while preserving sibling Sagas.
 
 Worker-only wrappers for operations are `complete_export_job_for_worker(...)`, `dispatch_notification_for_worker(...)`, `claim_cleanup_job_for_worker(...)`, and `complete_cleanup_job_for_worker(...)`; they are not granted to browser roles.
+
+Provider observability uses three service-role-only wrappers: `record_provider_pipeline_event_for_worker(...)` accepts fixed safe fields plus a flat metadata allowlist, while `get_provider_operations_summary_for_worker(...)` and `get_provider_operational_alerts_for_worker(...)` expose aggregate worker, queue, cron, metering, and alert state. All three have fixed `search_path`, reject browser execution, and never accept raw prompts, transcripts, imported content, source excerpts, provider responses, signed URLs, credentials, or embedding vectors.
+
+Hosted E2 hardening revokes browser execution from every `internal` function and browser privileges from every internal table. Supabase's generic advisor still notes that internal tables do not enable RLS; this is defense-in-depth work, not current Data API exposure, because browser roles have neither schema usage nor object privileges. Do not enable no-policy RLS blindly: service-worker behavior must first be covered with role-specific tests.
 
 Import Inbox writes use `save_import_inbox_source(...)`, reads use `get_import_inbox(...)`, and archive/restore uses `set_import_source_state(...)`. All three recheck the exact Workspace/World/Saga. The stable source UUID is the delivery key; identical scoped content deduplicates by uploader/hash, while changed key reuse and sibling-scope substitution fail closed. Imported content and provenance are immutable. These RPCs do not call Storage, retrieval, embeddings, AI runtime, metering, drafts, or canon paths.
 

@@ -2,6 +2,7 @@ import { createWorkerHandler } from "../_shared/worker.ts";
 import { createScopedClient } from "../_shared/scoped-client.ts";
 import { createServiceClient } from "../_shared/service-client.ts";
 import { callTranscriptionProvider, TranscriptionProviderError } from "../_shared/transcription-provider.ts";
+import { recordProviderPipelineEvent } from "../_shared/observability.ts";
 
 type TranscriptionJob = {
   id: string;
@@ -10,6 +11,8 @@ type TranscriptionJob = {
   saga_id: string;
   session_id: string;
   gm_id: string;
+  attempts?: number;
+  idempotency_key?: string;
 };
 
 function extensionFor(path: string) {
@@ -31,7 +34,7 @@ Deno.serve(createWorkerHandler({
   workerPurpose: "transcribe_session",
   async handleJob(rawJob) {
     const job = rawJob as TranscriptionJob;
-    const scoped = await createScopedClient(job.gm_id, "transcribe_session");
+    const scoped = await createScopedClient(job.gm_id, "transcribe_session", job.saga_id);
     const service = createServiceClient();
 
     const { data: session, error: sessionError } = await scoped
@@ -57,9 +60,10 @@ Deno.serve(createWorkerHandler({
 
     const orderedChunks = chunks ?? [];
     const expected = Number(session?.audio_chunk_count_expected ?? 0);
-    if (!session?.recording_finalized_at || expected <= 0 || orderedChunks.length < expected) {
-      return { state: "retry", reason: "Recording evidence is not complete yet." };
-    }
+    if (!session) return { state: "retry", reason: "Recording session is not visible to the scoped worker." };
+    if (!session.recording_finalized_at) return { state: "retry", reason: "Recording is not finalized." };
+    if (expected <= 0) return { state: "retry", reason: "Recording expected chunk count is missing." };
+    if (orderedChunks.length < expected) return { state: "retry", reason: "Recording chunk count is incomplete." };
 
     const parts: Blob[] = [];
     for (const chunk of orderedChunks) {
@@ -72,12 +76,21 @@ Deno.serve(createWorkerHandler({
     const audio = new File(parts, `session-${job.session_id}.${extension}`, { type: mimeFor(extension) });
 
     try {
+      const providerStartedAt = performance.now();
+      await recordProviderPipelineEvent({
+        eventName: "provider_call_started", workerType: "transcription", jobId: job.id,
+        workspaceId: job.workspace_id, worldId: job.world_id, sagaId: job.saga_id,
+        sessionId: job.session_id, idempotencyIdentifier: job.idempotency_key,
+        attemptCount: Number(job.attempts ?? 0), state: "running",
+        providerAlias: "relic-transcribe", inputUnits: audio.size, inputUnitType: "byte"
+      }).catch(() => undefined);
       const result = await callTranscriptionProvider(audio);
+      const providerLatencyMs = Math.round(performance.now() - providerStartedAt);
       const durationSeconds = Math.max(0, Math.ceil(result.durationSeconds));
       const { error: completionError } = await service.rpc("complete_transcription_job_for_worker", {
         p_job_id: job.id,
         p_segments: result.segments,
-        p_whisper_model: result.model,
+        p_whisper_model: result.resolvedModel,
         p_language: result.language,
         p_duration_seconds: durationSeconds,
       });
@@ -93,11 +106,30 @@ Deno.serve(createWorkerHandler({
         p_idempotency_key: `transcription-job:${job.id}`,
         p_metadata: {
           audio_seconds: durationSeconds,
-          model: result.model,
-          provider: "configured-transcription-provider",
+          model: result.resolvedModel,
+          provider: result.provider,
+          provider_alias: result.alias,
           user_charge: true,
         },
       });
+
+      await recordProviderPipelineEvent({
+        eventName: usageError ? "metering_conflict" : "transcription_completed",
+        severity: usageError ? "error" : "info", workerType: "transcription", jobId: job.id,
+        workspaceId: job.workspace_id, worldId: job.world_id, sagaId: job.saga_id,
+        sessionId: job.session_id, idempotencyIdentifier: job.idempotency_key,
+        attemptCount: Number(job.attempts ?? 0), state: usageError ? "retryable_failure" : "success",
+        providerAlias: result.alias, resolvedModel: result.resolvedModel, provider: result.provider,
+        providerLatencyMs, inputUnits: audio.size, inputUnitType: "byte",
+        outputUnits: result.segments.length, outputUnitType: "segment",
+        usageUnits: durationSeconds, usageUnitType: "second",
+        errorCategory: usageError ? "metering_persistence_failed" : null,
+        safeMetadata: {
+          provider_request_id_present: Boolean(result.requestId),
+          billable: result.billable,
+          metered: !usageError
+        }
+      }).catch(() => undefined);
 
       return {
         state: "complete",
@@ -105,9 +137,19 @@ Deno.serve(createWorkerHandler({
       };
     } catch (error) {
       if (error instanceof TranscriptionProviderError) {
-        return { state: error.retryable ? "retry" : "failed", reason: error.message };
+        await recordProviderPipelineEvent({
+          eventName: error.category === "configuration" ? "configuration_rejected" : "provider_call_failed",
+          severity: "error", workerType: "transcription", jobId: job.id,
+          workspaceId: job.workspace_id, worldId: job.world_id, sagaId: job.saga_id,
+          sessionId: job.session_id, idempotencyIdentifier: job.idempotency_key,
+          attemptCount: Number(job.attempts ?? 0),
+          state: error.retryable ? "retryable_failure" : "terminal_failure",
+          providerAlias: "relic-transcribe", errorCategory: error.category,
+          retryPath: error.retryable ? "bounded_queue_retry" : null
+        }).catch(() => undefined);
+        return { state: error.retryable ? "retry" : "failed", reason: error.category };
       }
-      return { state: "retry", reason: error instanceof Error ? error.message : "Transcription failed." };
+      return { state: "retry", reason: "transcription_internal_failure" };
     }
   }
 }));

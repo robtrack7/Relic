@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-21
+last_audited: 2026-07-23
 source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md"
 ---
 
@@ -25,6 +25,10 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 ---
 
 ## Changelog
+
+**Packet E2 hosted-observability patch (July 2026).** Adds a fixed-field, service-only provider event ledger and database-native operational/alert queries for transcription, embedding, retrieval fallback, and AI task delivery. Hosted modes require explicit environment, alias, resolved-model, and proxy configuration; deterministic transcription/AI modes are rejected in staging/production. Telemetry may retain permitted scope/correlation IDs, sizes, usage, state, and latency, but never prompts, transcript/import/source text, audio, provider bodies, vectors, credentials, tokens, cookies, or signed URLs. The bounded E2 gate deployed a separate `relic-staging` project, five explicit aliases on the temporary `relic-llm-dev` proxy, server-only/Vault configuration, and authenticated one-minute dispatch schedules. Synthetic transcription, record/query embedding, light/deep tasks, retry/replay, metering, isolation, cleanup, and restart proof passed. The final conservative count was 41 against an authorized 40-call ceiling because repeat mode dispatched a different queued synthetic embedding job; that path is removed and hard-disabled, and exposure remained below the E2 `$1` and project `$5` caps. This exception does not authorize production. A separate `relic-llm-staging` proxy and asymmetric issuer remain required before normal staging/production use.
+
+**E2 staging timeout calibration (July 2026).** The temporary Fly proxy autostop path showed more than 12 seconds of cold-start/provider latency, so the bounded staging gate uses `EMBEDDING_TIMEOUT_MS=60000`. The worker remains inside the 180-second hosted request bound and still fails closed into the lexical/retry path. This is staging evidence, not a production latency target; normal staging must use a separately isolated proxy and production values must be tuned from warm/cold telemetry.
 
 **Hierarchy and Saga lifecycle patch (July 2026).** Adds owner-scoped hierarchy navigation reads plus Saga rename/delete RPCs, exact-name and live-Session guards, and a service-role-only cleanup claim boundary. `cleanup-saga` now enumerates the canonical Workspace/World/Saga prefix in all private buckets, removes real objects through the Storage API in batches of at most 1,000, and only then invokes transactional database finalization.
 
@@ -44,7 +48,7 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 
 **Stage non-audio recovery patch (July 2026).** Extends the web IndexedDB recovery contract to Quick Capture, Quick Stub, Mark Moment, End Session, and Undo. Replay is session-scoped FIFO, stops on the first failed dependency, reuses stable idempotency keys, and enters Supabase through one scoped transactional RPC backed by a private receipt ledger.
 
-**Post-session transcription delivery patch (July 2026).** Implements the `relic-transcribe` LiteLLM audio call behind the Edge worker, ordered scoped Storage reads, timestamped response validation, idempotent duration metering, service-role-only worker completion/failure boundaries, retry/dead-letter recovery, and scoped session-review/read/retry RPCs. Deterministic local provider mode is test evidence only; the hosted LiteLLM path still requires deployed secrets and a live smoke test.
+**Post-session transcription delivery patch (July 2026).** Implements the `relic-transcribe` LiteLLM audio call behind the Edge worker, ordered scoped Storage reads, timestamped response validation, idempotent duration metering, service-role-only worker completion/failure boundaries, retry/dead-letter recovery, and scoped session-review/read/retry RPCs. Deterministic local provider mode is test evidence only; the hosted route/function/alias are deployed but still require server-side secrets, provider authentication, and a live synthetic smoke.
 
 **Stage evidence recovery patch (July 2026).** Locks the web-first IndexedDB queue, retry-safe direct Storage upload/registration, explicit expected-chunk finalization marker, and scheduled server-owned `ended_pending_undo` expiry. Transcription enqueue waits for the ended Session plus every declared chunk.
 
@@ -298,7 +302,7 @@ LiteLLM is a thin HTTP service that exposes an OpenAI-compatible API and routes 
 
 ### 3.2 Deployment shape
 
-**Self-hosted container on Fly.io.** One container per environment, each with its own LiteLLM config and provider keys.
+**Self-hosted container on Fly.io.** One container per environment, each with its own LiteLLM config and provider keys. Packet E2 may temporarily reuse the development proxy for a bounded, non-sensitive staging smoke only; the staging database, server-only proxy credential, event labels, call/cost cap, and cleanup remain separate.
 
 Why Fly over Vercel/Supabase Edge:
 
@@ -311,44 +315,36 @@ Trade-off accepted: one more service to operate. Mitigation: LiteLLM is a single
 
 ### 3.3 Tier-to-model mapping
 
-The mapping lives in LiteLLM's `config.yaml`, source-controlled in the same repo as the Edge Functions. Initial map for alpha, with provider fallbacks configured for outage resilience:
+The mapping lives in LiteLLM's `config.yaml`, source-controlled in the same repo as the Edge Functions. E2 uses one explicit OpenAI-only map with no transparent cross-tier or cross-provider fallback. A missing alias or unavailable model therefore fails visibly instead of silently changing behavior:
 
 ```yaml
 model_list:
+  - model_name: relic-transcribe
+    litellm_params:
+      model: openai/whisper-1
+      api_key: os.environ/OPENAI_API_KEY
+  - model_name: relic-embed
+    litellm_params:
+      model: openai/text-embedding-3-small
+      dimensions: 1536
+      api_key: os.environ/OPENAI_API_KEY
   - model_name: relic-fast
     litellm_params:
-      model: anthropic/claude-haiku-4-5-20251001
-      api_key: os.environ/ANTHROPIC_API_KEY
+      model: openai/gpt-5.6-luna
+      api_key: os.environ/OPENAI_API_KEY
   - model_name: relic-balanced
     litellm_params:
-      model: anthropic/claude-sonnet-4-6
-      api_key: os.environ/ANTHROPIC_API_KEY
-  - model_name: relic-deep
-    litellm_params:
-      model: anthropic/claude-opus-4-7
-      api_key: os.environ/ANTHROPIC_API_KEY
-
-  # Fallback alternates — same logical tier, different provider.
-  # LiteLLM's fallback router fires on 5xx from the primary.
-  - model_name: relic-balanced
-    litellm_params:
-      model: openai/gpt-5
+      model: openai/gpt-5.6-terra
       api_key: os.environ/OPENAI_API_KEY
   - model_name: relic-deep
     litellm_params:
-      model: google/gemini-2.5-pro
-      api_key: os.environ/GEMINI_API_KEY
-
-router_settings:
-  routing_strategy: simple-shuffle
-  fallbacks:
-    - relic-fast: [relic-balanced]
-    - relic-balanced: [relic-deep]
+      model: openai/gpt-5.6-sol
+      api_key: os.environ/OPENAI_API_KEY
 ```
 
 App-side, every AI call references `relic-fast`, `relic-balanced`, or `relic-deep`. Tier names are stable. The model behind a tier rotates via config redeploy; **no Registry consumer references model names directly** (Registry v1.0 §0.2).
 
-The `fallbacks` block matters: if Anthropic returns 5xx, LiteLLM transparently retries against the next entry. The app sees a slower call, not a failure. Fallback firing rate is tracked as a PostHog `ai_call_fallback` event so we can spot provider degradation.
+Provider diversification remains a later configuration decision. E2 must not add a silent fallback: retry stays bounded in the Relic job ledger, records the alias and resolved model, and dead-letters after exhaustion. A future fallback must use an explicit reviewed compatibility map and emit `ai_call_fallback` rather than changing model behavior invisibly.
 
 ### 3.4 Embedding model
 
@@ -392,9 +388,9 @@ To stay future-compatible without building BYOK now:
 
 ### 3.8 Observability
 
-LiteLLM emits per-call metrics: provider, model, tokens in/out, latency, cost. These ship to PostHog as a single `ai_call` event (§16) so we have one dashboard for "what tasks are expensive."
+LiteLLM and Relic workers emit safe per-call metrics: task/worker, provider alias, resolved model, attempt, queue/provider/end-to-end latency, safe sizes/usage, state, fallback/retry path, and permitted correlation IDs. Relic's database-native event ledger is the minimum operational source; an already-owned PostHog/Sentry account may receive the same allowlisted metadata after retention and privacy review.
 
-LiteLLM also logs the prompt and response. Storage of those logs is short-lived (7 days) and per-environment. Not for analytics — for debugging when a draft looks wrong.
+Prompt/response logging is disabled at the proxy and application layers. Raw prompts, transcript/import/source text, audio, full provider responses, vectors, authorization material, cookies, JWTs, internal/service keys, and signed URLs are never telemetry. Operators trace a failed run through IDs and safe categories, then inspect user-visible evidence only through its normal scoped product boundary.
 
 ---
 
@@ -493,6 +489,8 @@ We need a way for an Edge Function — running as `service_role` — to mint a P
 ### 5.2 The mechanism: dedicated issuer function
 
 A single Edge Function, `issue-scoped-jwt`, is the **only** function that holds the JWT secret. All other Edge Functions call it via internal HTTP to obtain a scoped token.
+
+**E2 hosted compatibility boundary.** The current implementation signs HS256 tokens with the project's legacy Auth secret. Supabase now advises against shared-secret signing for production because possession permits user impersonation and rotation is tightly coupled to legacy API keys. The isolated E2 staging gate may use this path only with synthetic data and a five-minute token lifetime. Before production, preserve the dedicated-issuer/scoped-RLS design but replace its signing implementation with an imported ES256 key whose private JWK is available only to the issuer and whose public key is active in Supabase Auth. If that cannot be operated safely, replace custom minting with a reviewed service-only worker/RPC boundary; do not distribute the legacy secret to more workers.
 
 ```typescript
 // issue-scoped-jwt Edge Function — the ONLY function that reads RELIC_JWT_SIGNING_SECRET
@@ -593,9 +591,9 @@ Additional test specific to the dedicated issuer:
 
 These tests run in CI.
 
-### 5.6 JWT secret rotation
+### 5.6 JWT signing-key rotation
 
-Same lifecycle as Supabase Auth's JWT secret. When rotated:
+Current staging-only HS256 compatibility lifecycle:
 
 1. Update `issue-scoped-jwt`'s `RELIC_JWT_SIGNING_SECRET` env var. The custom name avoids Supabase's reserved `SUPABASE_` secret prefix.
 2. In-flight scoped JWTs (≤5 min old) signed with the old secret remain valid for their TTL.
@@ -603,6 +601,8 @@ Same lifecycle as Supabase Auth's JWT secret. When rotated:
 4. Total disruption window: ~0 (in-flight tokens self-expire).
 
 Other Edge Functions do not need to be redeployed during rotation — they don't hold the secret.
+
+Production target: generate and securely retain an ES256 private key, import its public identity as a standby Supabase Auth signing key, deploy the matching private JWK and `kid` only to `issue-scoped-jwt`, activate/verify the new key, then revoke the prior key after all five-minute tokens expire. Never place either private signing material or the legacy shared secret in client configuration, logs, migrations, fixtures, or repository files.
 
 ---
 
@@ -1483,6 +1483,8 @@ Packet E1 verified the development boundary through `relic-llm-dev`: a local Sup
 
 Rolling restarts are zero-downtime — Fly bounces machines one at a time behind a load balancer. Cold-start is ~5s; during a rollout the proxy may be ~5s slower than usual for a small window.
 
+E2 requires a dedicated staging Supabase project and real hosted Edge workers. The authorized bounded exception may call the existing `relic-llm-dev` gateway while it remains OpenAI-only, explicitly mapped, independently authenticated from the browser, and limited to non-sensitive fixtures under the E2 call/cost stop. This exception expires at E2 closeout: a separate `relic-llm-staging` app is still required before normal staging traffic. Production promotion is a later manual decision after staging passes.
+
 ### 16.5 Database migrations
 
 Migrations live in `supabase/migrations/` in the repo. Numbered, immutable once committed.
@@ -1570,6 +1572,8 @@ Four PostHog dashboards, named by the Basepoint loop plus Cost:
 - **Run.** Session duration, recording adoption, Stage search latency p50/p95, offline-flush events.
 - **Review.** Pipeline duration end-to-end, draft approval rates, conflict-overlay frequency, citation-drift surface frequency, stale-pipeline counts.
 - **Cost.** `ai_call` events aggregated by task and tier. Watched daily during alpha to ensure quota caps hold.
+
+Before external analytics is enabled, service-role operators use `get_provider_operations_summary_for_worker` and `get_provider_operational_alerts_for_worker`. These report current queues, cron state, alias/model routes, p95 latency, failures/dead letters, quota blocks, fallback activation, stranded jobs, missing execution, duplicate metering, hosted deterministic-mode use, and sensitive-field rejection without making operational data browser-readable.
 
 ### 17.4 Health probes
 
@@ -1771,7 +1775,7 @@ For traceability against upstream specs.
 | T2 | One Supabase project per environment; PgBouncer transaction mode | CF-baseline |
 | T3 | RLS policy template via Workspace/World/Saga helper functions; saga-creation sessions use user scope until commit | CF-18 / Priority 3 |
 | T4 | LiteLLM proxy deployed on Fly.io; tier→model mapping in `config.yaml` | CF-3 |
-| T5 | Initial tier mapping: fast = Haiku 4.5, balanced = Sonnet 4.6, deep = Opus 4.7; GPT-5 + Gemini 2.5 Pro as fallbacks | CF-3 |
+| T5 | E2 hosted map: transcribe = Whisper 1, embed = `text-embedding-3-small` at 1536 dimensions, fast = GPT-5.6 Luna, balanced = GPT-5.6 Terra, deep = GPT-5.6 Sol; no silent fallback. Provider diversification requires a later reviewed compatibility map. | CF-3 |
 | T6 | Embedding queue: trigger-driven via `pg_net` + dispatcher Edge Function; cron watchdog as backup | CF-5 |
 | T7 | JWT issuance for async jobs: dedicated `issue-scoped-jwt` Edge Function holds the secret; other Edge Functions call it over internal HTTP; 5-min TTL; no `SECURITY DEFINER` on user-data paths | CF-6 |
 | T8 | Embedding queue: dedup via UNIQUE constraint; debounce via `debounce_until`; fanout grouped by `fanout_root_id` | CF-7 |

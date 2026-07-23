@@ -10,6 +10,7 @@ export type EmbeddingUsage = {
 
 export type EmbeddingResult = {
   vector: number[];
+  alias: string;
   provider: string;
   resolvedModel: string;
   dimensions: number;
@@ -26,7 +27,8 @@ export type EmbeddingFailureCategory =
   | "provider_unavailable"
   | "provider_rejected"
   | "malformed_response"
-  | "dimension_mismatch";
+  | "dimension_mismatch"
+  | "model_mismatch";
 
 export class EmbeddingProviderError extends Error {
   readonly category: EmbeddingFailureCategory;
@@ -77,21 +79,29 @@ function positiveInteger(value: string | undefined, fallback: number): number {
 }
 
 export function resolveEmbeddingConfig(env: EnvironmentReader = runtimeEnv()): EmbeddingConfig {
-  const rawMode = env.get("EMBEDDING_PROVIDER_MODE") ?? "live";
+  const configuredMode = env.get("EMBEDDING_PROVIDER_MODE");
+  const rawMode = configuredMode ?? "live";
   if (rawMode !== "live" && rawMode !== "deterministic") {
     throw new EmbeddingProviderError("configuration", false);
   }
 
   const runtimeEnvironment = (env.get("RELIC_ENV") ?? "production").toLowerCase();
+  const hosted = runtimeEnvironment === "staging" || runtimeEnvironment === "production";
   if (rawMode === "deterministic" && !["development", "test", "local"].includes(runtimeEnvironment)) {
     throw new EmbeddingProviderError("configuration", false);
   }
+  if (hosted && configuredMode !== "live") {
+    throw new EmbeddingProviderError("configuration", false);
+  }
+
+  const configuredAlias = env.get("EMBEDDING_MODEL_ALIAS");
+  const configuredResolvedModel = env.get("EMBEDDING_RESOLVED_MODEL");
 
   const config: EmbeddingConfig = {
     mode: rawMode,
     runtimeEnvironment,
-    alias: env.get("EMBEDDING_MODEL_ALIAS") ?? EMBEDDING_ALIAS,
-    expectedModel: env.get("EMBEDDING_RESOLVED_MODEL") ?? EMBEDDING_MODEL,
+    alias: configuredAlias ?? EMBEDDING_ALIAS,
+    expectedModel: configuredResolvedModel ?? EMBEDDING_MODEL,
     dimensions: positiveInteger(env.get("EMBEDDING_DIMENSIONS"), EMBEDDING_DIMENSIONS),
     timeoutMs: positiveInteger(env.get("EMBEDDING_TIMEOUT_MS"), 12_000),
     baseUrl: env.get("EMBEDDING_PROVIDER_BASE_URL") ?? env.get("LITELLM_PROXY_URL"),
@@ -99,6 +109,12 @@ export function resolveEmbeddingConfig(env: EnvironmentReader = runtimeEnv()): E
   };
 
   if (config.dimensions !== EMBEDDING_DIMENSIONS) {
+    throw new EmbeddingProviderError("configuration", false);
+  }
+  if (config.alias !== EMBEDDING_ALIAS || config.expectedModel !== EMBEDDING_MODEL) {
+    throw new EmbeddingProviderError("configuration", false);
+  }
+  if (hosted && (!configuredAlias || !configuredResolvedModel)) {
     throw new EmbeddingProviderError("configuration", false);
   }
   if (config.mode === "live" && (!config.baseUrl || !config.apiKey)) {
@@ -246,6 +262,7 @@ export async function callEmbeddingProvider(
     if (options.testFault === "dimension_mismatch") vector = (vector as number[]).slice(1);
     return {
       vector: validateEmbeddingVector(vector, config.dimensions),
+      alias: config.alias,
       provider: "deterministic-development-test",
       resolvedModel: config.expectedModel,
       dimensions: config.dimensions,
@@ -291,11 +308,16 @@ export async function callEmbeddingProvider(
     const providerReportedModel = typeof body.model === "string" ? body.model.trim() : "";
     // LiteLLM may echo the public alias rather than the backing provider model.
     // The configured resolved model remains the provenance value in that case.
-    const resolvedModel = providerReportedModel && providerReportedModel !== config.alias
-      ? providerReportedModel
-      : config.expectedModel;
+    const providerModelTail = providerReportedModel.split("/").at(-1);
+    if (providerReportedModel && providerReportedModel !== config.alias
+      && providerReportedModel !== config.expectedModel
+      && providerModelTail !== config.expectedModel) {
+      throw new EmbeddingProviderError("model_mismatch", false);
+    }
+    const resolvedModel = config.expectedModel;
     return {
       vector: validateEmbeddingVector(vector, config.dimensions),
+      alias: config.alias,
       provider: response.headers.get("x-litellm-provider") ?? "litellm",
       resolvedModel,
       dimensions: config.dimensions,

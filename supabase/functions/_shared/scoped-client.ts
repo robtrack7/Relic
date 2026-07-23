@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
-export async function createScopedClient(gmUserId: string, purpose: string) {
+export async function createScopedClient(gmUserId: string, purpose: string, sagaId?: string) {
   const url = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const functionsUrl = Deno.env.get("EDGE_FUNCTIONS_URL") ?? `${url}/functions/v1`;
@@ -16,7 +16,7 @@ export async function createScopedClient(gmUserId: string, purpose: string) {
       authorization: `Bearer ${internalToken}`,
       "content-type": "application/json"
     },
-    body: JSON.stringify({ gm_user_id: gmUserId, purpose })
+    body: JSON.stringify({ gm_user_id: gmUserId, purpose, saga_id: sagaId })
   });
 
   if (!res.ok) {
@@ -26,6 +26,6 @@ export async function createScopedClient(gmUserId: string, purpose: string) {
   const { token } = await res.json();
   return createClient(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { authorization: `Bearer ${token}` } }
+    accessToken: async () => token
   });
 }

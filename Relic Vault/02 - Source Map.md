@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-21
+last_audited: 2026-07-23
 source_file: "Relic Vault/02 - Source Map.md"
 ---
 
@@ -21,7 +21,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[12 - MVP PRD]] | P0 requirements and acceptance framing | Primary |
 | [[13 - Design System]] | v0.4 web UI tokens, typography, palette, app shell, Loom carriage, component feel; wrapper for [[14 - Design System Source.html]] | Primary design |
 | [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, hierarchy/Saga lifecycle and staged delete cascade, Stage evidence markers, exactly-once write receipts, conflict outcomes, manual Session evidence provenance, source-aware synthesis batch identity, draft-scoped citation context, C5 approval receipts/commit invariants, D3 optimistic Thread/objective projections, D4 scheduled/ordered/recoverable Prep contracts, and D5 immutable Import Inbox provenance/lifecycle | Implementation |
-| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, hierarchy navigation/lifecycle RPCs, reserved-prefix-safe scoped JWT signing, real Storage-before-database Saga cleanup, Stage packet/audio/write recovery, recoverable optimistic web Prep autosave, provider-backed transcription/retry, manual evidence intake, provider-independent Import Inbox transport/retention and deferred docx extraction boundary, atomic synthesis output persistence, citation context/drift reads, approval read/edit/rebase/commit boundaries, deployment, monitoring | Implementation |
+| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, hierarchy navigation/lifecycle RPCs, reserved-prefix-safe scoped JWT signing, real Storage-before-database Saga cleanup, Stage packet/audio/write recovery, recoverable optimistic web Prep autosave, provider-backed transcription/retry, manual evidence intake, provider-independent Import Inbox transport/retention and deferred docx extraction boundary, atomic synthesis output persistence, citation context/drift reads, approval read/edit/rebase/commit boundaries, hosted provider configuration, safe telemetry, and completed E2 synthetic staging delivery/scheduler/restart gate | Implementation |
 | [[22 - Memory and Retrieval]] | Embedding eligibility/text/version identity, deterministic and hosted delivery, transcript re-embedding, hybrid retrieval with lexical fallback, task profiles, and context assembly | Implementation |
 | [[23 - AI Task Registry]] | Standalone MVP AI task contracts, task routing, prompt versions, validation, source-aware synthesis artifacts, and draft/canon behavior | Implementation |
 | [[24 - Approval Queue]] | Approval UX, field diffs, source citation/context, safe drift/conflict states, explicit one/selected/all-compatible actions, and canon/audit commit behavior | Implementation |
@@ -47,8 +47,8 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[53 - Backend Module 5 Session Prep and Stage Data Plan]] | Detailed implementation plan for Session Prep, Stage lifecycle, quick captures, consent, dice, and packet read models | Planning |
 | [[54 - Backend Module 6 Usage Quota and Metering Plan]] | Detailed implementation plan for quota preflight, usage event charging, monthly rollups, overrides, and usage summaries | Planning |
 | [[55 - Backend Module 7 Storage Audio Transcription Cleanup Plan]] | Detailed implementation plan for Storage RLS, audio chunks, transcription jobs, transcript edits, retention, and cleanup jobs | Planning |
-| [[56 - Backend Module 8 Background Job and Edge Runtime Plan]] | Detailed implementation plan for async job claiming, retries, dead letters, reserved-prefix-safe scoped JWTs, and Edge Function runtime scaffolding | Planning |
-| [[57 - Backend Module 9 AI Task Router and Runtime Plan]] | Completed implementation record for Registry v1.0 AI task routing, validation, quota, retrieval, output writers, provider adapter boundary, and run logging | Planning |
+| [[56 - Backend Module 8 Background Job and Edge Runtime Plan]] | Completed runtime record plus E2 safe provider events, operational summary/alerts, Vault-authenticated schedules, retention, and restart evidence | Planning |
+| [[57 - Backend Module 9 AI Task Router and Runtime Plan]] | Completed Registry runtime record plus E2 explicit aliases/models, bounded provider calls, hosted light/deep proof, guarded replay, and payload-free telemetry | Planning |
 | [[58 - Backend Module 10 Notifications Export Operations Plan]] | Detailed implementation plan for notifications, exports, stale pipeline scans, cleanup workers, and operational loops | Planning |
 | [[50 - Session Log Index]] | Session closeout trail and implementation continuity logs | Operations |
 

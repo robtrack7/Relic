@@ -15,7 +15,7 @@ depends_on:
   - "[[52 - Backend Module 4 Retrieval and Embeddings Plan]]"
   - "[[55 - Backend Module 7 Storage Audio Transcription Cleanup Plan]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-07-23
 source_file: "Relic Vault/56 - Backend Module 8 Background Job and Edge Runtime Plan.md"
 ---
 
@@ -53,6 +53,7 @@ Implemented on 2026-06-02 in `supabase/migrations/20260601235500_job_runtime.sql
 - Source-safety tests verify the Edge Function tree, secret hygiene, shared runtime usage, and scoped-JWT secret isolation.
 - Verification: `npm run test:supabase` passed with 193 tests, `npm run test:scripts` passed with 7 tests, `npm run verify` passed, `npx pnpm@10.11.0 --filter @relic/web test` passed with 14 tests, and `npm run backend:baseline:reset` completed with `RELIC_BACKEND_BASELINE_OK`.
 - Packet E1 adds `npm run supabase:functions:serve` for local execution. The wrapper discovers one local Auth container, injects its signing secret under the non-reserved `RELIC_JWT_SIGNING_SECRET` name through a temporary mode-`0600` environment file, and deletes the file on normal exit. The authorized E1 hosted smoke proved the issuer → worker → database path without exposing the secret.
+- Packet E2 adds and deploys a service-only fixed-field provider event ledger, worker/provider correlation, live queue/Cron summary, 30-day retention, AI watchdog, and alert queries to `relic-staging`. Edge logs omit raw failure text and all prompt/transcript/import/source/audio/response/vector/credential fields. Three Vault-authenticated one-minute provider dispatch schedules now run successfully; queues are empty, alerts are `[]`, safe idle heartbeats arrive, and affected proxy/workers passed restart/redeploy proof.
 
 ## Files
 

@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-21
+last_audited: 2026-07-23
 source_file: "Sourced - Downloaded - 260518/relic-memory-retrieval-spec-v0_8.md"
 ---
 
@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-memory-retrieval-spec-v0_8.md"
 ---
 
 ## Changelog
+
+**Packet E2 hosted proof and observability patch (July 2026).** Replaces the older raw-query production logging language with correlated safe metadata, explicit provider/database latency, fallback state, and permitted scope IDs. Hosted record/query embedding resolves to `text-embedding-3-small` at 1536 dimensions, persists through the scoped worker, participates in hybrid retrieval, preserves independent lexical fallback, meters exact retry once, and excludes sibling-Saga/pending-draft/unapproved-import sources. No query text, source text, transcript/import content, prompt, provider response, or vector is stored in telemetry.
 
 **v1.0 (July 2026).** Packet E1 delivery contract. Locks the server-only LiteLLM embedding route, deterministic development/test mode, content-versioned queue identity, replacement-before-flip persistence, transcript edit/hide behavior, safe failure and replay states, idempotent usage metering, and lexical fallback. Corrects the stale instruction to re-embed entities when a separately embedded attached lore note changes.
 
@@ -658,11 +660,13 @@ Run on CI on every change to: embedding model, retrieval SQL, chunking, fusion m
 
 Per `retrieve_for_task` and `search_for_ui` call, log:
 
-- `workspace_id`, `world_id`, `saga_id`, `era_id`, `task_profile` or `surface`, `query_text`, `top_k`
-- Returned row IDs in rank order
-- Downstream outcome: GM click (search) or draft approval/rejection (retrieval)
+- Permitted `workspace_id`, `world_id`, `saga_id`, `era_id`, task profile/surface, top-k, query hash, result count, and retrieval mode.
+- Provider alias/resolved model plus queue, provider, database, and end-to-end latency.
+- Safe fallback/error category, stale/missing-vector state, and downstream aggregate outcome where authorized.
 
 Drives later tuning: reranker addition, embedding model swap, RRF k adjustment.
+
+Never log raw query text, returned source text, transcript/import content, prompts, provider bodies, or vectors. Row/source IDs may be retained only inside the service-only operational boundary when required to correlate a scoped run; they are not product analytics properties.
 
 ### 9.4 Not user-visible
 
@@ -870,5 +874,3 @@ Used by `derive_system_schema`, `generate_from_context`, and GM-invoked rules-qu
 ---
 
 *End v0.9. Implementation-ready. Engineering can build §5, §10, §11.3, and profile contracts from this spec alongside AI Task Registry v1.0 and Tech Architecture v1.2.*
-
-

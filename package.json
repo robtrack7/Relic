@@ -16,7 +16,10 @@
     "supabase:stop": "supabase stop --no-backup",
     "supabase:functions:serve": "node scripts/serve-functions-local.mjs",
     "test:supabase": "supabase test db",
-    "eval:retrieval:e1": "node scripts/evaluate-retrieval-e1.mjs"
+    "eval:retrieval:e1": "node scripts/evaluate-retrieval-e1.mjs",
+    "e2:preflight": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/e2-secure-bootstrap.ps1",
+    "e2:audio-fixture": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-e2-audio-fixture.ps1",
+    "e2:smoke:hosted": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/invoke-e2-hosted-smoke.ps1"
   },
   "engines": {
     "node": ">=22.0.0"

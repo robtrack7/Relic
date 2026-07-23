@@ -61,6 +61,39 @@ function validateOptionalUuidArray(value: unknown, path: string, errors: string[
   }
 }
 
+function validateThreadComplication(taskRun: AiTaskRun, value: Record<string, unknown>): string[] {
+  const errors: string[] = [];
+  const allowedSourceIds = new Set(taskRun.allowed_source_ids);
+  if (!Array.isArray(value.complications) || value.complications.length < 1 || value.complications.length > 3) {
+    errors.push("complications must contain one to three items");
+  } else {
+    value.complications.forEach((candidate, index) => {
+      const path = `complications[${index}]`;
+      if (!isRecord(candidate)) {
+        errors.push(`${path} must be an object`);
+        return;
+      }
+      if (!isString(candidate.id)) errors.push(`${path}.id is required`);
+      if (!isString(candidate.summary) || candidate.summary.length > 80) {
+        errors.push(`${path}.summary must contain at most 80 characters`);
+      }
+      if (!isString(candidate.narrative) || candidate.narrative.length > 1200) {
+        errors.push(`${path}.narrative is required and must be bounded`);
+      }
+      if (!Array.isArray(candidate.entities_implicated)
+        || candidate.entities_implicated.some((entry) => !isString(entry))) {
+        errors.push(`${path}.entities_implicated must be a string array`);
+      }
+      if (!new Set(["low", "medium", "high"]).has(String(candidate.escalation_level))) {
+        errors.push(`${path}.escalation_level is invalid`);
+      }
+      validateSourceIds(candidate.sources, path, errors, allowedSourceIds);
+    });
+  }
+  validateConfidence(value.confidence_reason, "output", errors);
+  return errors;
+}
+
 function validateSynthesisOutput(taskRun: AiTaskRun, value: Record<string, unknown>): string[] {
   const errors: string[] = [];
   const allowedSourceIds = new Set(taskRun.allowed_source_ids);
@@ -227,6 +260,10 @@ export function validateTaskOutput(taskRun: AiTaskRun, output: unknown): Validat
     if (value.no_answer === false && (!isString(value.answer) || !Array.isArray(value.citations) || value.citations.length === 0)) {
       errors.push("factual saga answers require an answer and citations");
     }
+  }
+
+  if (taskRun.task_name === "propose_thread_complication") {
+    errors.push(...validateThreadComplication(taskRun, value));
   }
 
   return errors.length > 0 ? fail(errors, output) : { ok: true, output: value };

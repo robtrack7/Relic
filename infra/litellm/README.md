@@ -1,8 +1,16 @@
 # Relic development LiteLLM gateway
 
-This package deploys the E1 development gateway. It exposes only the stable
-`relic-embed` alias, backed by `openai/text-embedding-3-small`. It deliberately
-has no LiteLLM database or admin UI.
+This package deploys the development gateway. Packet E2 temporarily reuses it
+for a bounded, non-sensitive hosted smoke while the staging database remains a
+separate Supabase project. It exposes explicit `relic-transcribe`,
+`relic-embed`, `relic-fast`, `relic-balanced`, and `relic-deep` aliases. There
+is no silent provider/model fallback, LiteLLM database, or admin UI.
+
+The E2 map is OpenAI-only: `whisper-1`, `text-embedding-3-small` at 1536
+dimensions, GPT-5.6 Luna, GPT-5.6 Terra, and GPT-5.6 Sol. The OpenAI key remains
+only in Fly secret storage. A separate `relic-llm-staging` application is still
+required before ordinary staging traffic; this temporary exception expires at
+E2 closeout.
 
 ## What each secret does
 
@@ -97,6 +105,7 @@ fly checks list -a relic-llm-dev
 Invoke-RestMethod https://relic-llm-dev.fly.dev/health/liveliness
 ```
 
-Do not send ad-hoc requests to `/v1/embeddings`. The authorized E1 harness made
-exactly two successful calls and cleaned up its non-sensitive fixture. Future
-hosted smoke calls remain gated by the packet-specific authorization process.
+Do not send ad-hoc provider requests. E2 is closed and its runner is hard-disabled:
+the final conservative count is 41 attempts against the authorized 40-call ceiling,
+with total exposure below the packet `$1` and project `$5` caps. Any later provider
+request requires a new packet-level authorization and independently tracked budget.

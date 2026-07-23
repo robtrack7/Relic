@@ -12,11 +12,27 @@ export type AiTaskRun = {
   model_tier: "relic-fast" | "relic-balanced" | "relic-deep";
   resolved_model: string | null;
   resolved_provider: string | null;
+  provider_alias?: string | null;
   retrieval_profile: string;
   source_policy: string;
   output_mode: string;
+  status?: "pending" | "running" | "retryable" | "complete" | "failed" | "terminal" | "dead_letter";
+  claim_state?: "claimed" | "busy" | "not_due" | "complete" | "terminal";
+  attempts?: number;
+  max_attempts?: number;
+  repair_attempts?: number;
   input_payload: Record<string, unknown>;
   allowed_source_ids: string[];
+  output_payload?: Record<string, unknown> | null;
+  scheduled_at?: string;
+  provider_completed_at?: string | null;
+  provider_tokens_in?: number | null;
+  provider_tokens_out?: number | null;
+  provider_cost_estimate_usd?: number | null;
+  provider_billable?: boolean | null;
+  provider_request_id_present?: boolean;
+  usage_event_id?: string | null;
+  created_at?: string;
 };
 
 export type AiProviderRequest = {
@@ -31,9 +47,12 @@ export type AiProviderRequest = {
 
 export type AiProviderResult = {
   output: unknown;
+  alias: string;
   resolvedModel: string;
   provider: string;
+  requestId?: string | null;
   tokensIn?: number;
   tokensOut?: number;
   costEstimateUsd?: number;
+  billable: boolean;
 };

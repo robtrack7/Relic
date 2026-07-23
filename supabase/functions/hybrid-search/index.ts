@@ -2,7 +2,7 @@ import { jsonResponse } from "../_shared/http.ts";
 import { requireInternalAuth } from "../_shared/internal-auth.ts";
 import { createScopedClient } from "../_shared/scoped-client.ts";
 import { callEmbeddingProvider, EmbeddingProviderError } from "../_shared/embedding-provider.ts";
-import { logRuntimeEvent } from "../_shared/worker.ts";
+import { recordProviderPipelineEvent } from "../_shared/observability.ts";
 
 type SearchRequest = {
   gm_user_id?: string;
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
 
   const queryHash = await safeQueryHash(query);
   const providerStartedAt = performance.now();
-  const scoped = await createScopedClient(body.gm_user_id, "hybrid_search");
+  const scoped = await createScopedClient(body.gm_user_id, "hybrid_search", body.saga_id);
 
   const lexicalFallback = async (category: string, providerLatencyMs: number) => {
     const databaseStartedAt = performance.now();
@@ -56,15 +56,14 @@ Deno.serve(async (req) => {
       include_world_canon: body.include_world_canon ?? true,
     });
     const databaseLatencyMs = Math.round(performance.now() - databaseStartedAt);
-    logRuntimeEvent("hybrid_search_fallback", {
-      query_hash: queryHash,
-      workspace_id: body.workspace_id,
-      world_id: body.world_id,
-      saga_id: body.saga_id,
-      category,
-      provider_latency_ms: Math.round(providerLatencyMs),
-      database_latency_ms: databaseLatencyMs,
-    });
+    await recordProviderPipelineEvent({
+      eventName: "lexical_fallback_activated", severity: "warn", workerType: "hybrid_search",
+      workspaceId: body.workspace_id, worldId: body.world_id, sagaId: body.saga_id,
+      idempotencyIdentifier: queryHash, providerAlias: "relic-embed",
+      providerLatencyMs: Math.round(providerLatencyMs), endToEndLatencyMs: databaseLatencyMs,
+      state: "fallback", errorCategory: category, fallbackPath: "lexical_search_for_ui",
+      safeMetadata: { retrieval_mode: "lexical_fallback", result_count: data?.length ?? 0 }
+    }).catch(() => undefined);
     if (error) return jsonResponse({ error: "search_unavailable" }, { status: 503 });
     return jsonResponse({ results: data ?? [], retrieval_mode: "lexical_fallback" });
   };
@@ -85,17 +84,16 @@ Deno.serve(async (req) => {
     });
     const databaseLatencyMs = Math.round(performance.now() - databaseStartedAt);
     if (error) return lexicalFallback("vector_unavailable", providerLatencyMs);
-    logRuntimeEvent("hybrid_search_complete", {
-      query_hash: queryHash,
-      workspace_id: body.workspace_id,
-      world_id: body.world_id,
-      saga_id: body.saga_id,
-      provider: embedding.provider,
-      model: embedding.resolvedModel,
-      provider_latency_ms: Math.round(providerLatencyMs),
-      database_latency_ms: databaseLatencyMs,
-      result_count: data?.length ?? 0,
-    });
+    await recordProviderPipelineEvent({
+      eventName: "hybrid_search_completed", workerType: "hybrid_search",
+      workspaceId: body.workspace_id, worldId: body.world_id, sagaId: body.saga_id,
+      idempotencyIdentifier: queryHash, providerAlias: embedding.alias,
+      resolvedModel: embedding.resolvedModel, provider: embedding.provider,
+      providerLatencyMs: Math.round(providerLatencyMs), endToEndLatencyMs: databaseLatencyMs,
+      state: "success", inputUnits: query.length, inputUnitType: "character",
+      outputUnits: data?.length ?? 0, outputUnitType: "result",
+      safeMetadata: { retrieval_mode: "hybrid", result_count: data?.length ?? 0 }
+    }).catch(() => undefined);
     return jsonResponse({ results: data ?? [], retrieval_mode: "hybrid" });
   } catch (error) {
     const category = error instanceof EmbeddingProviderError ? error.category : "provider_unavailable";

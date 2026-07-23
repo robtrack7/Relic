@@ -26,9 +26,15 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const gmUserId = body.gm_user_id;
   const purpose = body.purpose;
+  const sagaId = body.saga_id;
 
   if (!gmUserId || !purpose) {
     return errorResponse(400, "missing_parameters", "gm_user_id and purpose are required.");
+  }
+  if (sagaId !== undefined
+    && (typeof sagaId !== "string"
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sagaId))) {
+    return errorResponse(400, "invalid_scope", "saga_id must be a valid UUID when provided.");
   }
 
   const token = await create(
@@ -40,7 +46,8 @@ Deno.serve(async (req) => {
       iss: "supabase",
       iat: getNumericDate(0),
       exp: getNumericDate(60 * 5),
-      purpose
+      purpose,
+      ...(sagaId ? { saga_id: sagaId } : {})
     },
     await signingKey(jwtSecret)
   );

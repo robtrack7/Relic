@@ -59,11 +59,76 @@ secret in the repository. If multiple local Supabase projects are running, set
 
 - `LITELLM_PROXY_URL`
 - `LITELLM_PROXY_KEY`
-- `TRANSCRIPTION_MODEL=relic-transcribe`
+- `RELIC_ENV=staging` or `production`
+- `TRANSCRIPTION_PROVIDER_MODE=live`
+- `TRANSCRIPTION_MODEL_ALIAS=relic-transcribe`
+- `TRANSCRIPTION_RESOLVED_MODEL=<the exact deployed backing model>`
+- `TRANSCRIPTION_TIMEOUT_MS`
 - `INTERNAL_TOKEN`
 - `RELIC_JWT_SIGNING_SECRET`
 
-`TRANSCRIPTION_PROVIDER_BASE_URL` and `TRANSCRIPTION_PROVIDER_API_KEY` are optional per-worker overrides. Never prefix these values with `NEXT_PUBLIC_` or expose them to browser code. A live-provider smoke test is a deployment check, not part of the deterministic local suite.
+`TRANSCRIPTION_PROVIDER_BASE_URL` and `TRANSCRIPTION_PROVIDER_API_KEY` are local-development overrides only. Hosted staging/production must use the shared LiteLLM proxy variables and cannot fall back to generic AI credentials. Never prefix these values with `NEXT_PUBLIC_` or expose them to browser code. A live-provider smoke test is a deployment check, not part of the deterministic local suite.
+
+## Hosted AI Task Configuration
+
+`ai-task-runner` defaults to live mode and rejects deterministic mode in staging/production. Hosted task delivery requires these server-only Edge secrets/configuration values:
+
+- `RELIC_ENV=staging` or `production`
+- `AI_PROVIDER_MODE=live`
+- `LITELLM_PROXY_URL`
+- `LITELLM_PROXY_KEY`
+- `AI_MODEL_RELIC_FAST=relic-fast`
+- `AI_RESOLVED_MODEL_RELIC_FAST=<exact backing model>`
+- `AI_MODEL_RELIC_BALANCED=relic-balanced`
+- `AI_RESOLVED_MODEL_RELIC_BALANCED=<exact backing model>`
+- `AI_MODEL_RELIC_DEEP=relic-deep`
+- `AI_RESOLVED_MODEL_RELIC_DEEP=<exact backing model>`
+- `AI_TIMEOUT_MS`
+
+The public aliases must match the Registry tiers exactly. A missing mapping or provider-reported model mismatch fails closed with a safe category. Provider keys remain in the LiteLLM host's secret store; only the proxy credential reaches Supabase Edge secrets.
+
+## E2 Secure Bootstrap
+
+Run the non-mutating preflight at any time:
+
+```powershell
+npm run e2:preflight
+```
+
+`scripts/e2-secure-bootstrap.ps1` defaults to preflight and performs no hosted write or provider call. Its `-Apply` path is deliberately unavailable until the Supabase CLI is authenticated and `RELIC_JWT_SIGNING_SECRET` already exists remotely or is present only in the current process. It:
+
+- generates or reuses a staging-only `INTERNAL_TOKEN`;
+- reads the proxy credential from the ignored local secret state without printing it;
+- uploads Edge configuration through a protected OS-temporary env file;
+- optionally sends `OPENAI_API_KEY` to Fly through standard input rather than a command argument;
+- verifies configured secret **names** only;
+- deletes the temporary env file in `finally` after validating that its resolved path is under the OS temporary directory;
+- retains only the staging internal/proxy credentials in ignored, ACL-restricted `infra/litellm/.secrets.e2-staging` for the subsequent smoke run. It never retains the OpenAI key or Auth signing secret.
+
+E2 bootstrap is complete. Treat `-Apply` as a recovery/rotation operation that requires a fresh reviewed authorization; it is not a routine smoke command. Never pass secret values as script parameters, paste them into chat, or commit the ignored state file.
+
+Generate the deliberately synthetic transcription fixture with:
+
+```powershell
+npm run e2:audio-fixture
+```
+
+The generator speaks a fixed non-sensitive sentence into an OS-temporary WAV file. It reads no application or user content and can regenerate the fixture immediately before the hosted smoke.
+
+## E2 Operational Queries
+
+The additive E2 migration records fixed-field, service-only provider pipeline events. It rejects non-allowlisted metadata rather than storing prompts, transcripts, source text, audio, responses, vectors, credentials, tokens, or signed URLs.
+
+Service-role operators can call:
+
+```sql
+select public.get_provider_operations_summary_for_worker(60);
+select public.get_provider_operational_alerts_for_worker();
+```
+
+The first query reports event states, p95 queue/provider/end-to-end latency, alias/model routes, live queue counts, and Relic cron run state. The second reports provider failures, dead-letter growth, stranded jobs, model/dimension mismatches, repeated quota denial, hosted deterministic-mode use, missing worker/scheduler execution, duplicate metering, and sensitive-field logging regressions. These functions are revoked from browser roles.
+
+Staging schedules `relic-dispatch-transcription`, `relic-dispatch-embeddings`, and `relic-dispatch-ai-tasks` run once per minute using only Vault secret-name lookups. The AI command selects one due pending/retryable run and passes its `run_id`; an empty AI queue issues no HTTP/provider request. Latest E2 closeout evidence records all three as successful with empty queues and no active alerts.
 
 ## Public RPCs Added By Foundation
 

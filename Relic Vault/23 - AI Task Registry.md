@@ -14,7 +14,7 @@ depends_on:
   - "[[24 - Approval Queue]]"
   - "[[25 - Pricing and Rate Limits]]"
 supersedes: []
-last_audited: 2026-07-21
+last_audited: 2026-07-23
 source_file: "Relic Vault/23 - AI Task Registry.md"
 ---
 
@@ -35,6 +35,8 @@ source_file: "Relic Vault/23 - AI Task Registry.md"
 ---
 
 ## Changelog
+
+**Packet E2 delivery-safety patch (July 2026).** Hosted provider modes require explicit stable aliases and resolved-model provenance and reject deterministic mode outside local/test environments. `propose_thread_complication` passed as the registry-level light smoke through `relic-balanced`/GPT-5.6 Terra; `synthesize_session` passed as the deep smoke through `relic-deep`/GPT-5.6 Sol. Both preserved source allowlists, provenance, quota/idempotent metering, exact-retry replay, sibling-Saga denial, safe failure/recovery, and zero canon writes. AI deliveries use an atomic lease, at most two provider attempts, one schema-repair call per attempt, a validated-output checkpoint before metering/persistence, safe dead-letter exhaustion, and replay guards that cannot replace a completed or newer result. Shared telemetry stores only safe correlation, size, usage, attempt, model, latency, validation, retry, and state fields—not task input, retrieved text, prompts, output bodies, or credentials.
 
 **Source-aware synthesis writer patch (July 2026).** Requires confidence on next-prep implications and defines one atomic, idempotent pending batch for summary, entity, Thread, and next-prep artifacts with exact-Session citations and complete AI/pipeline provenance. No synthesis result writes canon, audit, or embeddings.
 
@@ -1130,7 +1132,8 @@ Identify loose threads and next-prep implications separately from canon drafts.
 
 - Register every task in backend task routing with prompt version, quota tier, model tier, retrieval profile, and JSON schema.
 - Add quota preflight before task execution.
-- Log task, prompt version, Workspace/World/Saga IDs, token/cost metadata, validation result, and source IDs.
+- Log task, prompt version, permitted Workspace/World/Saga/run IDs, alias/resolved model, size/usage, latency, validation state, and safe source correlation only inside the service-only operational boundary.
+- Never send raw task input, retrieved context, source excerpts, prompts, provider responses, or output payloads to logs/analytics.
 - Reject hallucinated source IDs before draft creation.
 - Keep all user-facing task failures manual-friendly: retry, edit input, or continue manually.
 - Do not expose V1 model controls, local-model settings, or BYOK UI.
