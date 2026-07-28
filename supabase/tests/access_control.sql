@@ -97,7 +97,8 @@ values
   ('prepare_embedding_job', true, 'Scoped worker preparation RPC for a claimed embedding job.'),
   ('get_embedding_job_status', true, 'Scoped embedding job status read RPC.'),
   ('search_for_ui_hybrid', true, 'Scoped hybrid UI search RPC with hard retrieval visibility filters.'),
-  ('retrieve_for_task', true, 'Scoped retrieval RPC with hard-canon filters.');
+  ('retrieve_for_task', true, 'Scoped retrieval RPC with hard-canon filters.'),
+  ('retrieve_for_task_relaxed', true, 'Scoped conservative natural-language fallback for Guide task grounding.');
 
 create temp table module1_security_definer_functions (
   function_name text primary key,
@@ -231,7 +232,8 @@ values
   ('get_provider_operational_alerts_for_worker', 'Worker-only provider operational alert reader.'),
   ('search_for_ui', 'Scoped UI search RPC.'),
   ('search_for_ui_hybrid', 'Scoped hybrid UI search RPC.'),
-  ('retrieve_for_task', 'Scoped retrieval RPC.');
+  ('retrieve_for_task', 'Scoped retrieval RPC.'),
+  ('retrieve_for_task_relaxed', 'Scoped conservative natural-language fallback for Guide task grounding.');
 
 with public_functions as (
   select p.oid, p.proname

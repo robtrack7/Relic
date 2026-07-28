@@ -8,6 +8,27 @@ import { recordProviderPipelineEvent } from "../_shared/observability.ts";
 import type { AiProviderResult, AiTaskRun } from "../_shared/ai-contracts.ts";
 import type { ValidationResult } from "../_shared/ai-schemas.ts";
 
+function validationCategories(errors: string[]) {
+  const categories = errors.map((error) => {
+    if (/outside the allowed retrieval set/i.test(error)) return "citation_allowlist";
+    if (/citation.*UUID/i.test(error)) return "citation_identifier";
+    if (/requires at least one citation/i.test(error)) return "citation_required";
+    if (/unsupported by cited evidence|contradicts cited evidence/i.test(error)) return "evidence_support";
+    if (/no_answer=false requires/i.test(error)) return "substantive_block_required";
+    if (/requires a safe insufficiency reason/i.test(error)) return "insufficiency_reason_required";
+    if (/cannot contain grounded factual prose/i.test(error)) return "no_answer_grounded_block";
+    if (/may contain guidance only/i.test(error)) return "no_answer_block_type";
+    if (/insufficiency_reason is only permitted/i.test(error)) return "unexpected_insufficiency_reason";
+    if (/no_answer/i.test(error)) return "no_answer_contract";
+    if (/confidence_reason/i.test(error)) return "confidence_contract";
+    if (/action/i.test(error)) return "action_contract";
+    if (/at most|bounded|length/i.test(error)) return "bounds";
+    if (/block|field|object|array|type/i.test(error)) return "response_shape";
+    return "schema_contract";
+  });
+  return [...new Set(categories)].slice(0, 5);
+}
+
 async function claimRun(
   service: ReturnType<typeof createServiceClient>,
   runId: string,
@@ -260,6 +281,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     if (!validated.ok) {
+      const safeValidationCategories = validationCategories(validated.errors);
       const failure = await failRun(service, runId, workerId, "validation_failed", false, repairAttempts);
       await recordFailedUsage(taskRun, "validation_failed").catch(() => undefined);
       await recordProviderPipelineEvent({
@@ -273,7 +295,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
         inputUnitType: "character", retryPath: "single_schema_repair",
         safeMetadata: { validation_repair_attempts: repairAttempts, billable: providerResult.billable }
       }).catch(() => undefined);
-      return jsonResponse({ ok: false, run_id: runId, error: "validation_failed", state: failure.status }, { status: 422 });
+      return jsonResponse({
+        ok: false,
+        run_id: runId,
+        error: "validation_failed",
+        state: failure.status,
+        validation_categories: safeValidationCategories
+      }, { status: 422 });
     }
 
     if (!usedCheckpoint) {

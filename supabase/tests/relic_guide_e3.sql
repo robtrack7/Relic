@@ -1,6 +1,6 @@
 create extension if not exists pgtap with schema extensions;
 begin;
-select plan(21);
+select plan(30);
 
 insert into auth.users(id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at,raw_app_meta_data,raw_user_meta_data,is_super_admin,confirmation_token,email_change,email_change_token_new,recovery_token)
 values
@@ -20,12 +20,21 @@ on conflict(id) do nothing;
 insert into public.characters(id,workspace_id,world_id,saga_id,scope,name,summary,narrative,canon_state)
 values
 ('e3040000-0000-0000-0000-000000000001','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000001','saga','Mara','Gate captain','Mara guards the sealed Iron Gate.','canon'),
-('e3040000-0000-0000-0000-000000000002','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000002','saga','Sibling Mara','Forbidden sibling','Must never appear.','canon')
+('e3040000-0000-0000-0000-000000000002','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000002','saga','Sibling Mara','Forbidden sibling','Must never appear.','canon'),
+('e3040000-0000-0000-0000-000000000003','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000001','saga','Amber Warden','Archive guardian','The Amber Warden guards the Sunken Archive beneath the eastern cliffs.','canon'),
+('e3040000-0000-0000-0000-000000000004','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000002','saga','Sibling Amber Warden','Forbidden sibling sentinel','The sibling Warden guards a hidden place.','canon')
+on conflict(id) do nothing;
+insert into public.places(id,workspace_id,world_id,saga_id,scope,name,summary,narrative,canon_state)
+values
+('e3050000-0000-0000-0000-000000000001','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001',null,'world','Sunken Archive','Flooded library beneath the eastern cliffs.','The Amber Warden watches its sealed entrance.','canon')
 on conflict(id) do nothing;
 insert into public.sources(id,workspace_id,world_id,saga_id,scope,kind,source_entity_type,source_entity_id,raw_excerpt)
 values
 ('e3060000-0000-0000-0000-000000000001','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000001','saga','existing_entity','character','e3040000-0000-0000-0000-000000000001','Mara guards the sealed Iron Gate.'),
-('e3060000-0000-0000-0000-000000000002','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000002','saga','existing_entity','character','e3040000-0000-0000-0000-000000000002','Forbidden sibling evidence.')
+('e3060000-0000-0000-0000-000000000002','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000002','saga','existing_entity','character','e3040000-0000-0000-0000-000000000002','Forbidden sibling evidence.'),
+('e3060000-0000-0000-0000-000000000003','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000001','saga','existing_entity','character','e3040000-0000-0000-0000-000000000003','The Amber Warden guards the Sunken Archive.'),
+('e3060000-0000-0000-0000-000000000004','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001',null,'world','existing_entity','place','e3050000-0000-0000-0000-000000000001','The Sunken Archive is a flooded library beneath the eastern cliffs.'),
+('e3060000-0000-0000-0000-000000000005','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000002','saga','existing_entity','character','e3040000-0000-0000-0000-000000000004','Forbidden sibling Amber evidence.')
 on conflict(id) do nothing;
 
 select is((select prompt_version from internal.ai_task_contracts() where task_name='answer_saga_question'),'answer_saga_question@1.1.0','Guide task contract is versioned');
@@ -46,6 +55,126 @@ select is((select count(*)::int from internal.guide_evidence_snapshots where tur
 select is((select prompt_version from internal.ai_task_runs where guide_turn_id='e3100000-0000-0000-0000-000000000001'),'answer_saga_question@1.1.0','Turn invokes registered task');
 select is((select allowed_source_ids from internal.ai_task_runs where guide_turn_id='e3100000-0000-0000-0000-000000000001'),array['e3060000-0000-0000-0000-000000000001']::uuid[],'Run freezes its source allowlist');
 
+set local role authenticated;
+select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000001',true);
+select set_config('request.jwt.claim.role','authenticated',true);
+select is(
+  (
+    select count(*)
+    from public.retrieve_for_task(
+      'e3010000-0000-0000-0000-000000000001',
+      'e3020000-0000-0000-0000-000000000001',
+      'e3030000-0000-0000-0000-000000000001',
+      null,
+      'What does the Amber Warden guard, and where is that place?',
+      'answer_saga_question',
+      '{}'::jsonb,
+      20
+    )
+  ),
+  0::bigint,
+  'The exact hosted question has no strict lexical match without vectors'
+);
+select ok(
+  (
+    select count(*) = 2
+      and bool_and(source_id in (
+        'e3060000-0000-0000-0000-000000000003'::uuid,
+        'e3060000-0000-0000-0000-000000000004'::uuid
+      ))
+    from public.retrieve_for_task_relaxed(
+      'e3010000-0000-0000-0000-000000000001',
+      'e3020000-0000-0000-0000-000000000001',
+      'e3030000-0000-0000-0000-000000000001',
+      'What does the Amber Warden guard, and where is that place?',
+      'answer_saga_question',
+      20
+    )
+  ),
+  'Natural-language fallback returns only citeable current-Saga and World sources'
+);
+select is(
+  (select count(*) from public.retrieve_for_task_relaxed(
+    'e3010000-0000-0000-0000-000000000001',
+    'e3020000-0000-0000-0000-000000000001',
+    'e3030000-0000-0000-0000-000000000001',
+    '"Amber Warden"',
+    'answer_saga_question',
+    20
+  )),
+  0::bigint,
+  'Quoted searches retain strict web-search semantics'
+);
+select is(
+  (select count(*) from public.retrieve_for_task_relaxed(
+    'e3010000-0000-0000-0000-000000000001',
+    'e3020000-0000-0000-0000-000000000001',
+    'e3030000-0000-0000-0000-000000000001',
+    'Amber OR Archive',
+    'answer_saga_question',
+    20
+  )),
+  0::bigint,
+  'OR searches retain strict web-search semantics'
+);
+select is(
+  (select count(*) from public.retrieve_for_task_relaxed(
+    'e3010000-0000-0000-0000-000000000001',
+    'e3020000-0000-0000-0000-000000000001',
+    'e3030000-0000-0000-0000-000000000001',
+    'Amber -Archive',
+    'answer_saga_question',
+    20
+  )),
+  0::bigint,
+  'Negated searches retain strict web-search semantics'
+);
+select is(
+  (select count(*) from public.retrieve_for_task_relaxed(
+    'e3010000-0000-0000-0000-000000000001',
+    'e3020000-0000-0000-0000-000000000001',
+    'e3030000-0000-0000-0000-000000000001',
+    'Moon Emperor favorite dessert',
+    'answer_saga_question',
+    20
+  )),
+  0::bigint,
+  'A genuinely unsupported question still retrieves no evidence'
+);
+select is(
+  (select count(*) from public.retrieve_for_task_relaxed(
+    'e3010000-0000-0000-0000-000000000001',
+    'e3020000-0000-0000-0000-000000000001',
+    'e3030000-0000-0000-0000-000000000001',
+    'Amber Warden hidden place',
+    'answer_saga_question',
+    20
+  ) where source_entity_id='e3040000-0000-0000-0000-000000000004'),
+  0::bigint,
+  'Relaxed task retrieval excludes sibling-Saga evidence'
+);
+reset role;
+
+select lives_ok($$
+  select public.create_guide_turn_for_worker(
+    'e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001',
+    'e3030000-0000-0000-0000-000000000001','e3000000-0000-0000-0000-000000000001',
+    null,'e3100000-0000-0000-0000-000000000002','e3110000-0000-0000-0000-000000000002',
+    'What does the Amber Warden guard, and where is that place?','lexical_fallback',
+    array(
+      select source_id
+      from public.retrieve_for_task_relaxed(
+        'e3010000-0000-0000-0000-000000000001',
+        'e3020000-0000-0000-0000-000000000001',
+        'e3030000-0000-0000-0000-000000000001',
+        'What does the Amber Warden guard, and where is that place?',
+        'answer_saga_question',
+        20
+      )
+    )
+  )
+$$,'Relaxed task results freeze into a Guide evidence allowlist');
+
 select lives_ok($$
   select public.create_guide_turn_for_worker(
     'e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001',
@@ -54,7 +183,12 @@ select lives_ok($$
     'e3100000-0000-0000-0000-000000000099','e3110000-0000-0000-0000-000000000001',
     'What protects the eastern road?','lexical_fallback',array['e3060000-0000-0000-0000-000000000001']::uuid[])
 $$,'Exact retry returns the existing turn');
-select is((select count(*)::int from public.guide_turns where saga_id='e3030000-0000-0000-0000-000000000001'),1,'Exact retry creates no duplicate turn');
+select is((
+  select count(*)::int
+  from public.guide_turns
+  where saga_id='e3030000-0000-0000-0000-000000000001'
+    and idempotency_key='e3110000-0000-0000-0000-000000000001'
+),1,'Exact retry creates no duplicate turn');
 select throws_ok($$
   select public.create_guide_turn_for_worker(
     'e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001',
@@ -75,6 +209,15 @@ select is((select count(*)::int from public.canon_audit where saga_id='e3030000-
 select set_config('request.jwt.claim.sub','e3000000-0000-0000-0000-000000000001',true);
 select set_config('request.jwt.claim.role','authenticated',true);
 set local role authenticated;
+select ok(
+  jsonb_array_length(public.get_guide_source_context(
+    'e3010000-0000-0000-0000-000000000001',
+    'e3020000-0000-0000-0000-000000000001',
+    'e3030000-0000-0000-0000-000000000001',
+    'e3100000-0000-0000-0000-000000000002'
+  )) = 2,
+  'Authenticated Guide citation context exposes both frozen retrieval sources'
+);
 select ok(public.get_guide_thread('e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000001',null) is not null,'Owner recovers the active Guide thread');
 select is(
   (public.set_guide_action_state(

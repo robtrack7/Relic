@@ -110,6 +110,8 @@ npm run test:supabase
 
 Result on 2026-06-01: `npm run test:supabase` passed with `access_control.sql` and `foundation.sql`.
 
+Packet E3 catalog extension (2026-07-28): `retrieve_for_task_relaxed` is an authenticated, Saga-access-checked `security definer` RPC used only after registered Guide task retrieval returns no rows for an ordinary natural-language query. It is included in both Module 1 catalogs, has a fixed `search_path`, grants no anonymous access, and returns only current-Saga or eligible World canon with citeable non-import source IDs.
+
 ## Task 3: Document the RPC Boundary
 
 **Files:**

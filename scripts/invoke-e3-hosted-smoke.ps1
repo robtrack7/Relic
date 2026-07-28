@@ -2,6 +2,7 @@
 param(
   [switch]$Execute,
   [switch]$ValidateFixture,
+  [switch]$UseExistingProxy,
   [string]$SupabaseProjectRef = "scagegrrilvrpuilthzz"
 )
 
@@ -13,8 +14,8 @@ $e2StatePath = Join-Path $repoRoot "infra/litellm/.secrets.e2-staging"
 $providerStatePath = Join-Path $repoRoot "infra/litellm/.secrets.dev"
 $flyctlPath = Join-Path $env:USERPROFILE ".fly/bin/flyctl.exe"
 $priorProxyUrl = "https://relic-llm-dev.fly.dev/v1"
-$costCeiling = [decimal]0.50
-$remainingProxyBudget = [decimal]0.49
+$costCeiling = [decimal]1.00
+$remainingProxyBudget = [decimal]0.99
 $aiAttemptLimit = 6
 $embeddingAttemptLimit = 3
 
@@ -66,19 +67,47 @@ function Set-StagingProvider([string]$ProxyUrl, [string]$ProxyKey, [string]$Temp
   if ($result.ExitCode -ne 0) { throw "Supabase rejected the isolated E3 provider update." }
 }
 
-function Deploy-E3Functions([bool]$DisableGatewayJwt) {
+function Disable-E3FunctionGatewayJwt(
+  [System.Collections.Generic.List[string]]$ChangedFunctions
+) {
   foreach ($functionName in @("hybrid-search", "ai-task-runner", "guide-submit")) {
     $arguments = @(
       "functions", "deploy", $functionName,
-      "--project-ref", $SupabaseProjectRef, "--use-api"
+      "--project-ref", $SupabaseProjectRef, "--use-api", "--no-verify-jwt"
     )
-    if ($DisableGatewayJwt) { $arguments += "--no-verify-jwt" }
+    # A failed CLI response can arrive after the platform accepted the setting,
+    # so restoration must cover every function whose change was attempted.
+    [void]$ChangedFunctions.Add($functionName)
     $result = Invoke-SupabaseCommand $arguments
     if ($result.ExitCode -ne 0) {
       $result = Invoke-SupabaseCommand $arguments
     }
     if ($result.ExitCode -ne 0) { throw "The E3 function deployment failed safely for $functionName." }
   }
+}
+
+function Restore-E3FunctionGatewayJwt(
+  [System.Collections.Generic.List[string]]$ChangedFunctions
+) {
+  $firstFailure = $null
+  foreach ($functionName in @($ChangedFunctions)) {
+    try {
+      $arguments = @(
+        "functions", "deploy", $functionName,
+        "--project-ref", $SupabaseProjectRef, "--use-api"
+      )
+      $result = Invoke-SupabaseCommand $arguments
+      if ($result.ExitCode -ne 0) {
+        $result = Invoke-SupabaseCommand $arguments
+      }
+      if ($result.ExitCode -ne 0 -and -not $firstFailure) {
+        $firstFailure = [Exception]::new("Could not restore gateway JWT verification for $functionName.")
+      }
+    } catch {
+      if (-not $firstFailure) { $firstFailure = $_ }
+    }
+  }
+  return $firstFailure
 }
 
 function Write-TemporaryProxyFiles([string]$Directory, [string]$AppName, [bool]$Bootstrap) {
@@ -104,7 +133,7 @@ litellm_settings:
   set_verbose: false
   turn_off_message_logging: true
   log_raw_request_response: false
-  max_budget: 0.49
+  max_budget: 0.99
   budget_duration: 2h
 general_settings:
   master_key: $masterKey
@@ -243,6 +272,7 @@ if (-not $Execute -and -not $ValidateFixture) {
     }
     generic_ai_and_embedding_dispatch_paused_during_fixture = $true
     restores_prior_proxy = $true
+    existing_proxy_reuse_requires_explicit_switch = $true
     secrets_printed = $false
   } | ConvertTo-Json -Depth 6
   exit 0
@@ -292,65 +322,69 @@ if ($ValidateFixture) {
 }
 
 $priorProxyKey = Read-DotEnvValue $e2StatePath "LITELLM_PROXY_KEY"
-$openAiKey = Read-DotEnvValue $providerStatePath "OPENAI_API_KEY"
-if (-not $priorProxyKey -or -not $openAiKey -or -not (Test-Path -LiteralPath $flyctlPath)) {
+$openAiKey = if ($UseExistingProxy) { $null } else { Read-DotEnvValue $providerStatePath "OPENAI_API_KEY" }
+if (-not $priorProxyKey -or (-not $UseExistingProxy -and
+    (-not $openAiKey -or -not (Test-Path -LiteralPath $flyctlPath)))) {
   throw "Protected staging credentials or Fly tooling are unavailable; no hosted call was made."
 }
 
 $temporaryApp = "relic-e3-smoke-" + [guid]::NewGuid().ToString("N").Substring(0, 10)
-$temporaryProxyKey = New-RandomToken
+$temporaryProxyKey = if ($UseExistingProxy) { $null } else { New-RandomToken }
 $temporaryProxyUrl = "https://$temporaryApp.fly.dev/v1"
 $appCreated = $false
 $providerInstalled = $false
+$gatewayJwtChangedFunctions = [System.Collections.Generic.List[string]]::new()
 $smokeResult = $null
 $executionError = $null
 try {
-  Write-TemporaryProxyFiles $resolvedTempDirectory $temporaryApp $true
-  $createResult = Invoke-FlyCommand @("apps", "create", $temporaryApp, "--yes")
-  if ($createResult.ExitCode -ne 0) { throw "Fly could not create the isolated E3 proxy app." }
-  $appCreated = $true
+  if (-not $UseExistingProxy) {
+    Write-TemporaryProxyFiles $resolvedTempDirectory $temporaryApp $true
+    $createResult = Invoke-FlyCommand @("apps", "create", $temporaryApp, "--yes")
+    if ($createResult.ExitCode -ne 0) { throw "Fly could not create the isolated E3 proxy app." }
+    $appCreated = $true
 
-  $bootstrapDeploy = Invoke-FlyCommand @(
-    "deploy", $resolvedTempDirectory, "--app", $temporaryApp,
-    "--config", (Join-Path $resolvedTempDirectory "fly.toml"),
-    "--remote-only", "--ha=false", "--smoke-checks=false", "--yes"
-  )
-  if ($bootstrapDeploy.ExitCode -ne 0) { throw "Fly could not bootstrap the isolated E3 proxy machine." }
+    $bootstrapDeploy = Invoke-FlyCommand @(
+      "deploy", $resolvedTempDirectory, "--app", $temporaryApp,
+      "--config", (Join-Path $resolvedTempDirectory "fly.toml"),
+      "--remote-only", "--ha=false", "--smoke-checks=false", "--yes"
+    )
+    if ($bootstrapDeploy.ExitCode -ne 0) { throw "Fly could not bootstrap the isolated E3 proxy machine." }
 
-  $secretInput = "OPENAI_API_KEY=$openAiKey`nLITELLM_MASTER_KEY=$temporaryProxyKey`n"
-  $secretResult = Import-FlySecrets $temporaryApp $secretInput $resolvedTempDirectory
-  $secretInput = $null
-  if ($secretResult.ExitCode -ne 0) {
-    $secretOutput = $secretResult.Output | Out-String
-    $safeSecretCategory = if ($secretOutput -match "machine|deploy") {
-      "machine_state"
-    } elseif ($secretOutput -match "app|organization") {
-      "app_state"
-    } elseif ($secretOutput -match "flag|usage") {
-      "cli_contract"
-    } else {
-      "unknown"
+    $secretInput = "OPENAI_API_KEY=$openAiKey`nLITELLM_MASTER_KEY=$temporaryProxyKey`n"
+    $secretResult = Import-FlySecrets $temporaryApp $secretInput $resolvedTempDirectory
+    $secretInput = $null
+    if ($secretResult.ExitCode -ne 0) {
+      $secretOutput = $secretResult.Output | Out-String
+      $safeSecretCategory = if ($secretOutput -match "machine|deploy") {
+        "machine_state"
+      } elseif ($secretOutput -match "app|organization") {
+        "app_state"
+      } elseif ($secretOutput -match "flag|usage") {
+        "cli_contract"
+      } else {
+        "unknown"
+      }
+      $safeSecretDetail = $secretOutput `
+        -replace '(?<![A-Za-z0-9])sk-[A-Za-z0-9_-]+', '[redacted-key]' `
+        -replace '(?im)^([A-Za-z_][A-Za-z0-9_]*=).+$', '$1[redacted]' `
+        -replace '[\r\n]+', ' '
+      if ($safeSecretDetail.Length -gt 500) { $safeSecretDetail = $safeSecretDetail.Substring(0, 500) }
+      throw "Fly could not install isolated E3 proxy secrets ($safeSecretCategory): $safeSecretDetail"
     }
-    $safeSecretDetail = $secretOutput `
-      -replace '(?<![A-Za-z0-9])sk-[A-Za-z0-9_-]+', '[redacted-key]' `
-      -replace '(?im)^([A-Za-z_][A-Za-z0-9_]*=).+$', '$1[redacted]' `
-      -replace '[\r\n]+', ' '
-    if ($safeSecretDetail.Length -gt 500) { $safeSecretDetail = $safeSecretDetail.Substring(0, 500) }
-    throw "Fly could not install isolated E3 proxy secrets ($safeSecretCategory): $safeSecretDetail"
+
+    Write-TemporaryProxyFiles $resolvedTempDirectory $temporaryApp $false
+    $deployResult = Invoke-FlyCommand @(
+      "deploy", $resolvedTempDirectory, "--app", $temporaryApp,
+      "--config", (Join-Path $resolvedTempDirectory "fly.toml"),
+      "--remote-only", "--ha=false", "--yes"
+    )
+    if ($deployResult.ExitCode -ne 0) { throw "Fly could not deploy the isolated E3 proxy." }
+    Wait-ProxyHealthy ("https://$temporaryApp.fly.dev")
+
+    Set-StagingProvider $temporaryProxyUrl $temporaryProxyKey $resolvedTempDirectory
+    $providerInstalled = $true
   }
-
-  Write-TemporaryProxyFiles $resolvedTempDirectory $temporaryApp $false
-  $deployResult = Invoke-FlyCommand @(
-    "deploy", $resolvedTempDirectory, "--app", $temporaryApp,
-    "--config", (Join-Path $resolvedTempDirectory "fly.toml"),
-    "--remote-only", "--ha=false", "--yes"
-  )
-  if ($deployResult.ExitCode -ne 0) { throw "Fly could not deploy the isolated E3 proxy." }
-  Wait-ProxyHealthy ("https://$temporaryApp.fly.dev")
-
-  Set-StagingProvider $temporaryProxyUrl $temporaryProxyKey $resolvedTempDirectory
-  $providerInstalled = $true
-  Deploy-E3Functions $true
+  Disable-E3FunctionGatewayJwt $gatewayJwtChangedFunctions
 
   $priorInternal = $env:INTERNAL_TOKEN
   $priorFixture = $env:E3_FIXTURE_RUN_ID
@@ -379,7 +413,16 @@ try {
   if ($providerInstalled) {
     try {
       Set-StagingProvider $priorProxyUrl $priorProxyKey $resolvedTempDirectory
-      Deploy-E3Functions $false
+    } catch {
+      if (-not $executionError) { $executionError = $_ }
+    }
+  }
+  if ($gatewayJwtChangedFunctions.Count -gt 0) {
+    try {
+      $gatewayJwtRestoreError = Restore-E3FunctionGatewayJwt $gatewayJwtChangedFunctions
+      if ($gatewayJwtRestoreError -and -not $executionError) {
+        $executionError = $gatewayJwtRestoreError
+      }
     } catch {
       if (-not $executionError) { $executionError = $_ }
     }
@@ -423,12 +466,13 @@ if ($executionError) { throw $executionError }
   result = "E3_HOSTED_ISOLATED_SMOKE_OK"
   smoke = $smokeResult
   isolated_proxy = @{
+    route = if ($UseExistingProxy) { "explicit_existing_e2_proxy_reuse" } else { "temporary_isolated_proxy" }
     models = @("relic-balanced", "relic-embed")
-    global_budget_usd = $remainingProxyBudget
+    global_budget_usd = if ($UseExistingProxy) { $null } else { $remainingProxyBudget }
     packet_cost_ceiling_usd = $costCeiling
     budget_duration = "2h"
     maximum_concurrency = 1
-    destroyed_after_smoke = $true
+    destroyed_after_smoke = -not $UseExistingProxy
   }
   prior_proxy_restored = $true
   secrets_printed = $false

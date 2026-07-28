@@ -14,8 +14,51 @@ type GuideSubmitRequest = {
   question?: string;
 };
 
+type GuideSearchResult = {
+  source_id?: string | null;
+  source_entity_type?: string | null;
+  source_entity_id?: string | null;
+};
+
 function normalizeQuestion(value: string) {
   return value.normalize("NFKC").replace(/\r\n?/g, "\n").replace(/[\t ]+/g, " ").trim();
+}
+
+async function resolveGuideSourceIds(
+  service: ReturnType<typeof createServiceClient>,
+  results: GuideSearchResult[],
+  scope: Required<Pick<GuideSubmitRequest, "workspace_id" | "world_id" | "saga_id">>
+) {
+  const entityIds = [...new Set(results.filter((result) => typeof result.source_id !== "string")
+    .map((result) => result.source_entity_id)
+    .filter((value): value is string => typeof value === "string"))];
+  const fallbackByEntity = new Map<string, string>();
+  if (entityIds.length > 0) {
+    const { data, error } = await service
+      .from("sources")
+      .select("id,source_entity_type,source_entity_id,scope,saga_id,kind,created_at")
+      .eq("workspace_id", scope.workspace_id)
+      .eq("world_id", scope.world_id)
+      .in("source_entity_id", entityIds)
+      .neq("kind", "imported_text")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error("guide_source_resolution_failed");
+    for (const source of data ?? []) {
+      const eligibleScope = (source.scope === "saga" && source.saga_id === scope.saga_id)
+        || (source.scope === "world" && source.saga_id === null);
+      if (!eligibleScope || !source.source_entity_type || !source.source_entity_id) continue;
+      const key = `${source.source_entity_type}:${source.source_entity_id}`;
+      if (!fallbackByEntity.has(key)) fallbackByEntity.set(key, source.id);
+    }
+  }
+
+  return [...new Set(results.map((result) => {
+    if (typeof result.source_id === "string") return result.source_id;
+    if (typeof result.source_entity_type !== "string" || typeof result.source_entity_id !== "string") {
+      return null;
+    }
+    return fallbackByEntity.get(`${result.source_entity_type}:${result.source_entity_id}`) ?? null;
+  }).filter((value): value is string => typeof value === "string"))].slice(0, 20);
 }
 
 Deno.serve(async (req) => {
@@ -90,8 +133,8 @@ Deno.serve(async (req) => {
   const baseUrl = Deno.env.get("SUPABASE_URL");
   if (!internalToken || !baseUrl) return errorResponse(500, "configuration", "Relic Guide is temporarily unavailable.");
 
-  let results: Array<{ source_id?: string | null }> = [];
-  let retrievalMode = "none";
+  let results: GuideSearchResult[];
+  let retrievalMode: "hybrid" | "lexical_fallback";
   try {
     const retrievalResponse = await fetch(`${baseUrl}/functions/v1/hybrid-search`, {
       method: "POST",
@@ -102,22 +145,29 @@ Deno.serve(async (req) => {
         world_id: body.world_id,
         saga_id: body.saga_id,
         query_text: question,
+        task_profile: "answer_saga_question",
         top_k: 20,
         include_world_canon: true
       })
     });
-    if (retrievalResponse.ok) {
-      const retrieval = await retrievalResponse.json();
-      results = Array.isArray(retrieval.results) ? retrieval.results : [];
-      retrievalMode = retrieval.retrieval_mode === "lexical_fallback" ? "lexical_fallback" : "hybrid";
-    }
+    if (!retrievalResponse.ok) throw new Error("guide_retrieval_failed");
+    const retrieval = await retrievalResponse.json();
+    results = Array.isArray(retrieval.results) ? retrieval.results : [];
+    retrievalMode = retrieval.retrieval_mode === "lexical_fallback" ? "lexical_fallback" : "hybrid";
   } catch {
-    retrievalMode = "none";
+    return errorResponse(503, "retrieval_unavailable", "Relic Guide could not safely retrieve Saga evidence.");
   }
 
-  const sourceIds = [...new Set(results.map((result) => result.source_id).filter(
-    (sourceId): sourceId is string => typeof sourceId === "string"
-  ))].slice(0, 20);
+  let sourceIds: string[];
+  try {
+    sourceIds = await resolveGuideSourceIds(service, results, {
+      workspace_id: body.workspace_id,
+      world_id: body.world_id,
+      saga_id: body.saga_id
+    });
+  } catch {
+    return errorResponse(503, "retrieval_unavailable", "Relic Guide could not safely resolve Saga evidence.");
+  }
   const { data: submission, error: createError } = await service.rpc("create_guide_turn_for_worker", {
     p_workspace_id: body.workspace_id,
     p_world_id: body.world_id,
@@ -140,9 +190,16 @@ Deno.serve(async (req) => {
     headers: { authorization: `Bearer ${internalToken}`, "content-type": "application/json" },
     body: JSON.stringify({ run_id: submission.run_id })
   }).catch(() => null);
+  const runnerBody = runnerResponse
+    ? await runnerResponse.clone().json().catch(() => ({})) as Record<string, unknown>
+    : {};
+  const validationCategories = Array.isArray(runnerBody.validation_categories)
+    ? runnerBody.validation_categories.filter((value): value is string => typeof value === "string").slice(0, 5)
+    : [];
   return jsonResponse({
     ...submission,
     dispatch_status: runnerResponse?.status ?? 503,
+    ...(validationCategories.length > 0 ? { dispatch_validation_categories: validationCategories } : {}),
     quota: { severity: preflight.severity }
   }, { status: runnerResponse?.ok ? 200 : 202 });
 });

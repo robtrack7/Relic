@@ -142,6 +142,7 @@ test("ai task runner uses internal auth and provider adapter boundaries", () => 
 test("Relic Guide submission derives scope, retrieval, quota, and dispatch on the server", () => {
   const submit = read("supabase/functions/guide-submit/index.ts");
   const runner = read("supabase/functions/ai-task-runner/index.ts");
+  const hybrid = read("supabase/functions/hybrid-search/index.ts");
 
   assert.match(submit, /requireInternalAuth/, "Guide submission must be server-only");
   assert.match(submit, /createScopedClient/, "Guide permission and quota checks must use the GM identity");
@@ -155,9 +156,28 @@ test("Relic Guide submission derives scope, retrieval, quota, and dispatch on th
     submit.indexOf("preflight_ai_task") < submit.indexOf("/functions/v1/hybrid-search"),
     "quota preflight must happen before retrieval/provider work"
   );
+  const provider = read("supabase/functions/_shared/ai-provider.ts");
+  assert.match(provider, /Every block must be a flat object with a type string/);
+  assert.match(provider, /"type":"grounded_answer"/);
+  assert.match(provider, /copy its source_id character-for-character/);
+  assert.match(provider, /insufficiency_reason is required/);
+  assert.match(provider, /A valid no-answer object is/);
+  assert.match(provider, /omit insufficiency_reason entirely/);
+  assert.match(provider, /When repair is non-null/);
+  assert.match(submit, /dispatch_validation_categories/);
+  assert.match(submit, /resolveGuideSourceIds/);
+  assert.match(submit, /task_profile:\s*"answer_saga_question"/, "Guide retrieval must select its registered task profile");
+  assert.match(hybrid, /retrieve_for_task/, "Guide task grounding must use the AI retrieval surface");
+  assert.match(hybrid, /retrieve_for_task_relaxed/, "ordinary natural-language misses must have a conservative relaxed fallback");
+  assert.match(hybrid, /taskProfile !== "answer_saga_question"/, "the E3 Edge route must reject unregistered task profiles");
+  assert.match(submit, /retrieval_unavailable/, "retrieval infrastructure failures must not masquerade as empty evidence");
+  assert.match(submit, /if \(error\) throw new Error\("guide_source_resolution_failed"\)/);
+  assert.match(submit, /\.neq\("kind", "imported_text"\)/);
+  assert.match(submit, /source\.scope === "saga"/);
+  assert.match(submit, /source\.scope === "world"/);
   assert.match(submit, /create_guide_turn_for_worker/, "Guide must persist the logical submission through its scoped RPC");
   assert.match(submit, /idempotency_key/, "Guide must carry a stable logical-submission identity");
-  assert.match(submit, /sourceIds[\s\S]*slice\(0,\s*20\)/, "Guide retrieval must cap its immutable allowlist");
+  assert.match(submit, /resolveGuideSourceIds[\s\S]*slice\(0,\s*20\)/, "Guide retrieval must cap its immutable allowlist");
   assert.match(submit, /runnerResponse\?\.ok\s*\?\s*200\s*:\s*202/, "dispatch failure must preserve a recoverable queued turn");
   assert.doesNotMatch(submit, /console\.(?:log|error)/, "Guide submission must not log questions or evidence");
   assert.match(runner, /get_guide_evidence_for_worker/, "the shared runner must use frozen Guide evidence");
@@ -201,8 +221,15 @@ test("scoped clients use the SDK access-token boundary for worker RLS", () => {
   );
   assert.match(
     scopedClient,
-    /saga_id:\s*sagaId/,
-    "scoped workers should request a token bound to the job Saga"
+    /\.\.\.\(sagaId\s*\?\s*\{\s*saga_id:\s*sagaId\s*\}\s*:\s*\{\}\)/,
+    "scoped workers should bind Saga jobs while omitting null World scope"
+  );
+  assert.match(scopedClient, /sagaId\?:\s*string\s*\|\s*null/);
+  assert.match(scopedClient, /class ScopedClientError/);
+  assert.match(
+    read("supabase/functions/_shared/embedding-worker.ts"),
+    /error instanceof ScopedClientError/,
+    "scoped JWT failures must not be mislabeled as provider outages"
   );
   assert.match(
     issuer,

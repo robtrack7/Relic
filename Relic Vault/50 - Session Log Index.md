@@ -77,3 +77,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-07-21 - Embedding and Re-embedding Delivery]]
 - [[Session Logs/2026-07-22 - Hosted Provider and Observability Gate]]
 - [[Session Logs/2026-07-23 - Relic Guide Conversational Foundation]]
+- [[Session Logs/2026-07-28 - E3 Provider Contract and Hosted Cleanup]]

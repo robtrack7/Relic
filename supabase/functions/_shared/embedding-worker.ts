@@ -1,5 +1,5 @@
 import { createWorkerHandler } from "./worker.ts";
-import { createScopedClient } from "./scoped-client.ts";
+import { createScopedClient, ScopedClientError } from "./scoped-client.ts";
 import { createServiceClient } from "./service-client.ts";
 import { callEmbeddingProvider, EmbeddingProviderError } from "./embedding-provider.ts";
 import { recordProviderPipelineEvent } from "./observability.ts";
@@ -104,6 +104,26 @@ export function createEmbeddingWorkerHandler(
         }).catch(() => undefined);
         return { state: "managed", result: { outcome: completion?.status ?? "complete" } };
       } catch (error) {
+        if (error instanceof ScopedClientError) {
+          await recordProviderPipelineEvent({
+            eventName: error.category === "configuration"
+              ? "configuration_rejected" : "worker_scope_failed",
+            severity: "error", workerType: "embedding", jobId: job.id,
+            workspaceId: job.workspace_id, worldId: job.world_id, sagaId: job.saga_id,
+            idempotencyIdentifier: job.idempotency_key, attemptCount: Number(job.attempts ?? 0),
+            state: error.retryable ? "retryable_failure" : "terminal_failure",
+            errorCategory: error.category,
+            retryPath: error.retryable ? "bounded_queue_retry" : null
+          }).catch(() => undefined);
+          await failSafely(job.id, error.category, error.retryable);
+          return {
+            state: "managed",
+            result: {
+              outcome: error.retryable ? "retryable" : "terminal",
+              category: error.category,
+            },
+          };
+        }
         if (error instanceof EmbeddingProviderError) {
           await recordProviderPipelineEvent({
             eventName: error.category === "configuration" || error.category === "model_mismatch"

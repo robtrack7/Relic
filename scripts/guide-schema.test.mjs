@@ -159,6 +159,36 @@ test("Guide permits only open-record and bounded entity-draft action intents", (
   assert.deepEqual(validateTaskOutput(taskRun, output), { ok: true, output });
 });
 
+test("Guide documented open-record prompt shape validates and the legacy target shape is rejected", () => {
+  const documented = {
+    ...valid,
+    blocks: [
+      ...valid.blocks,
+      {
+        type: "action_preview",
+        action: { type: "open_record", source_id: sourceA },
+        explanation: "Open the allowlisted record."
+      }
+    ]
+  };
+  const legacy = {
+    ...valid,
+    blocks: [
+      ...valid.blocks,
+      {
+        type: "action_preview",
+        action: { type: "open_record", target_type: "character", target_id: sourceA },
+        explanation: "Open the stale target shape."
+      }
+    ]
+  };
+
+  assert.deepEqual(validateTaskOutput(taskRun, documented), { ok: true, output: documented });
+  const result = validateTaskOutput(taskRun, legacy);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /unknown field|source_id|retrieval set/i);
+});
+
 test("Guide normalizes duplicate citations by first appearance", () => {
   const result = validateTaskOutput(taskRun, {
     ...valid,

@@ -20,7 +20,8 @@
     "e2:preflight": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/e2-secure-bootstrap.ps1",
     "e2:audio-fixture": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-e2-audio-fixture.ps1",
     "e2:smoke:hosted": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/invoke-e2-hosted-smoke.ps1",
-    "e3:smoke:hosted": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/invoke-e3-hosted-smoke.ps1"
+    "e3:smoke:hosted": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/invoke-e3-hosted-smoke.ps1",
+    "e3:demo:staging": "node scripts/manage-e3-staging-demo.mjs"
   },
   "engines": {
     "node": ">=22.0.0"

@@ -55,8 +55,11 @@ The harness was stopped and replaced with an authoritative temporary environment
 - E3 remains functionally complete but environment-gated.
 - Decision Stop 4 is authorized for several synthetic calls under a hard cumulative USD $0.50 ceiling. The fixture-only harness, isolated temporary proxy, attempt/budget guards, and restoration path are implemented.
 - The zero-inference staging preflight passed scoped auth/RLS, source eligibility/exclusion, zero-provider-work, and full cleanup.
-- The provider-reaching smoke failed closed at turn one. A payload-free probe confirmed OpenAI `401 missing_scope`: the protected staging key lacks Chat Completions write permission. No valid completion, usage event, draft, or canon write was produced.
-- Install a staging key with Chat Completions write permission and configured `gpt-5.6-terra` access, then rerun the same bounded harness.
+- The isolated proxy using the restricted local key failed closed at turn one; a payload-free probe confirmed OpenAI `401 missing_scope`.
+- The user explicitly approved existing E2 proxy reuse. Payload-free alias inspection confirmed `relic-balanced`, `relic-deep`, and `relic-embed`; Terra returned real synthetic completions.
+- Diagnostics preserved strict validation while correcting flat typed-block prompting, verbatim single-citation copying, payload-free validation categories, and the real missing source-ID bridge from scoped entity search results to eligible existing source records.
+- The user reported USD $0.07 platform usage, leaving USD $0.43 under the approved ceiling. The corrected final existing-proxy rerun was explicitly approved but rejected by the current execution policy before mutation or provider work.
+- Rerun `scripts/invoke-e3-hosted-smoke.ps1 -Execute -UseExistingProxy` when execution approval is available.
 - All attempts restored the original provider, both schedules, gateway JWT verification, synthetic database state, and temporary Fly resources.
 - Do not begin E4 until the E3 hosted gate passes.
 
