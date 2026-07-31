@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-23
+last_audited: 2026-07-30
 source_file: "Sourced - Downloaded - 260518/relic-memory-retrieval-spec-v0_8.md"
 ---
 
@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-memory-retrieval-spec-v0_8.md"
 ---
 
 ## Changelog
+
+**Packet E4 Session Prep AI patch (July 2026).** Every Prep invocation freezes the exact eligible source/version/text set before provider dispatch, reusing the E3 source-context and drift treatment without using Guide conversation as evidence. `session_prep_grounding` remains current-Saga plus eligible World canon and excludes sibling Sagas, imports, drafts, GM-private fields, archived/deleted rows, and unsupported sources. All E4 generated items require at least one allowlisted citation; a legitimate empty set yields explicit insufficiency and no proposal. The Prep job reuses its frozen evidence on exact retry, so retrieval drift cannot silently alter a logical request or duplicate provider work.
 
 **Packet E3 conversational Guide patch (July 2026).** Persistent Guide history is Saga-scoped interpretation context, not retrievable canon and never citation evidence. Every factual turn performs fresh `answer_saga_question` task retrieval through `sanctum_qa_grounding`; its exact source IDs and source versions form an immutable run allowlist. If hybrid retrieval returns no rows for an ordinary natural-language question, Guide may use the scoped `retrieve_for_task_relaxed` fallback: one- and two-lexeme queries still require every normalized lexeme, longer queries require at least half, and quotes, negation, or explicit `OR` retain strict `websearch_to_tsquery` behavior. A retrieval or source-resolution error is not an empty result and fails safely as retrieval unavailable. Grounded answer paragraphs require direct allowlisted support, while creative proposals from other registered tasks are labeled non-canon rather than receiving fabricated citations. E3 keeps `top_k=20`, caps assembled evidence at 48,000 normalized characters, and preserves independent lexical fallback.
 
@@ -636,6 +638,8 @@ retrieve_for_task(
 ```
 
 No `[UNTRUSTED INPUT]` section — this task takes no untrusted input (the prior summary note is canon, GM-approved).
+
+**E4 delivery note.** The retrieval rows used by the briefing and every other Prep task are frozen into the task run before the provider call. UI source inspection reads that exact snapshot and compares it with current scoped source state. Exact logical retry never performs a second retrieval or provider call. Provider completion stores no Session fields; the frozen result remains reviewable even if later canon or Prep edits make it stale.
 
 ---
 

@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-23
+last_audited: 2026-07-30
 source_file: "Sourced - Downloaded - 260518/relic-pricing-rate-limits-v0_2.md"
 ---
 
@@ -41,6 +41,8 @@ This document locks the MVP rate-limit model and alpha pricing hypothesis. It do
 ---
 
 ## Changelog
+
+**Packet E4 Prep AI metering patch (July 2026).** `compose_prep_briefing` is standard/3 credits; `generate_session_prep` is heavy/10; scene beats, complication, NPC candidate, and Quick Stub fleshing are light/1. An accepted NPC candidate that separately invokes `draft_entity_from_prompt` preflights and meters its own standard/3-credit run. Citation inspection, edit, accept/reject/dismiss, quota denial, retrieval/provider/validation failure without usable output, manual Prep, and deterministic local delivery do not charge. Exact logical retry reuses the original run and idempotent usage event; accepting an already-generated result never calls the provider again.
 
 **Packet E3 Guide metering patch (July 2026).** `answer_saga_question` remains a one-credit light task; a confirmed `draft_entity` action independently preflights and meters the three-credit `draft_entity_from_prompt` task. Preview, citation inspection, dismissal, quota denial, validation failure, and deterministic local delivery do not create user charges. Exact logical replay reuses the stored run/result. The E3 local-provider configuration incident made four synthetic LiteLLM requests before detection; only the successful entity draft recorded three local credits, while the failed Guide result recorded zero. The local function helper now defaults to deterministic non-billable providers and strips live credentials.
 

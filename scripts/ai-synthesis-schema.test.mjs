@@ -94,6 +94,7 @@ test("propose_thread_complication validates its complete light-task registry sch
     output_mode: "ephemeral"
   };
   const valid = {
+    no_answer: false,
     complications: [{
       id: "complication-1",
       summary: "The witness changes their story",

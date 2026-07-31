@@ -31,6 +31,13 @@ const GUIDE_INSUFFICIENCY_REASONS = new Set([
   "retrieval_unavailable",
   "unsupported_source"
 ]);
+const PREP_INSUFFICIENCY_REASONS = new Set([
+  "no_relevant_evidence",
+  "evidence_conflict",
+  "evidence_stale",
+  "retrieval_unavailable",
+  "unsupported_source"
+]);
 const GUIDE_ALLOWED_TOP_LEVEL_FIELDS = new Set([
   "no_answer",
   "insufficiency_reason",
@@ -87,6 +94,16 @@ function validateOptionalUuidArray(value: unknown, path: string, errors: string[
 function validateThreadComplication(taskRun: AiTaskRun, value: Record<string, unknown>): string[] {
   const errors: string[] = [];
   const allowedSourceIds = new Set(taskRun.allowed_source_ids);
+  validatePrepAnswerState(value, errors);
+  hasOnlyFields(value, new Set([
+    "no_answer", "insufficiency_reason", "complications", "confidence_reason"
+  ]), "output", errors);
+  if (value.no_answer === true) {
+    if (!Array.isArray(value.complications) || value.complications.length !== 0) {
+      errors.push("no_answer=true requires an empty complications array");
+    }
+    return errors;
+  }
   if (!Array.isArray(value.complications) || value.complications.length < 1 || value.complications.length > 3) {
     errors.push("complications must contain one to three items");
   } else {
@@ -96,6 +113,9 @@ function validateThreadComplication(taskRun: AiTaskRun, value: Record<string, un
         errors.push(`${path} must be an object`);
         return;
       }
+      hasOnlyFields(candidate, new Set([
+        "id", "summary", "narrative", "entities_implicated", "escalation_level", "sources"
+      ]), path, errors);
       if (!isString(candidate.id)) errors.push(`${path}.id is required`);
       if (!isString(candidate.summary) || candidate.summary.length > 80) {
         errors.push(`${path}.summary must contain at most 80 characters`);
@@ -114,6 +134,216 @@ function validateThreadComplication(taskRun: AiTaskRun, value: Record<string, un
     });
   }
   validateConfidence(value.confidence_reason, "output", errors);
+  return errors;
+}
+
+function validatePrepAnswerState(value: Record<string, unknown>, errors: string[]) {
+  if (typeof value.no_answer !== "boolean") {
+    errors.push("no_answer must be boolean");
+    return;
+  }
+  validateConfidence(value.confidence_reason, "output", errors);
+  if (value.no_answer === true) {
+    if (!isString(value.insufficiency_reason)
+      || !PREP_INSUFFICIENCY_REASONS.has(value.insufficiency_reason)) {
+      errors.push("no_answer=true requires a safe insufficiency reason");
+    }
+  } else if (value.insufficiency_reason !== undefined) {
+    errors.push("insufficiency_reason is only permitted when no_answer=true");
+  }
+}
+
+function validateSafeText(value: unknown, path: string, max: number, errors: string[]) {
+  if (!isString(value) || value.length > max) {
+    errors.push(`${path} is required and must contain at most ${max} characters`);
+  } else if (EXECUTABLE_OR_MUTATION_PATTERN.test(value)) {
+    errors.push(`${path} contains executable or mutation instructions`);
+  }
+}
+
+function validatePrepBriefing(taskRun: AiTaskRun, value: Record<string, unknown>): string[] {
+  const errors: string[] = [];
+  validatePrepAnswerState(value, errors);
+  hasOnlyFields(value, new Set([
+    "no_answer", "insufficiency_reason", "body", "bullets", "sources", "confidence_reason"
+  ]), "output", errors);
+  if (value.no_answer === true) {
+    if (value.body !== "" || !Array.isArray(value.bullets) || value.bullets.length !== 0
+      || !Array.isArray(value.sources) || value.sources.length !== 0) {
+      errors.push("no_answer=true requires empty body, bullets, and sources");
+    }
+    return errors;
+  }
+  validateSafeText(value.body, "body", 3000, errors);
+  if (!Array.isArray(value.bullets) || value.bullets.length < 3 || value.bullets.length > 5) {
+    errors.push("prep briefing requires three to five bullets");
+  } else {
+    value.bullets.forEach((bullet, index) => validateSafeText(bullet, `bullets[${index}]`, 240, errors));
+  }
+  validateSourceIds(value.sources, "output", errors, new Set(taskRun.allowed_source_ids));
+  return errors;
+}
+
+const PREP_SCOPES = new Set([
+  "objective", "opening_scene", "scene_notes", "prep_checklist", "pinned_entities", "active_threads"
+]);
+
+function validateSessionSuggestions(taskRun: AiTaskRun, value: Record<string, unknown>): string[] {
+  const errors: string[] = [];
+  validatePrepAnswerState(value, errors);
+  hasOnlyFields(value, new Set([
+    "no_answer", "insufficiency_reason", "summary", "suggestions", "confidence_reason"
+  ]), "output", errors);
+  if (value.no_answer === true) {
+    if (!Array.isArray(value.suggestions) || value.suggestions.length !== 0) {
+      errors.push("no_answer=true requires an empty suggestions array");
+    }
+    return errors;
+  }
+  validateSafeText(value.summary, "summary", 1000, errors);
+  if (!Array.isArray(value.suggestions) || value.suggestions.length < 1 || value.suggestions.length > 8) {
+    errors.push("session prep suggestions must contain one to eight items");
+    return errors;
+  }
+  value.suggestions.forEach((candidate, index) => {
+    const path = `suggestions[${index}]`;
+    if (!isRecord(candidate)) {
+      errors.push(`${path} must be an object`);
+      return;
+    }
+    hasOnlyFields(candidate, new Set([
+      "id", "scope", "value", "items", "rationale", "sources", "confidence_reason"
+    ]), path, errors);
+    if (!isString(candidate.id)) errors.push(`${path}.id is required`);
+    if (!isString(candidate.scope) || !PREP_SCOPES.has(candidate.scope)) {
+      errors.push(`${path}.scope is unsupported`);
+    }
+    const textScope = new Set(["objective", "opening_scene", "scene_notes"]).has(String(candidate.scope));
+    const itemScope = new Set(["prep_checklist", "pinned_entities", "active_threads"]).has(String(candidate.scope));
+    if (textScope) validateSafeText(candidate.value, `${path}.value`, 3000, errors);
+    if (itemScope) {
+      if (!Array.isArray(candidate.items) || candidate.items.length < 1 || candidate.items.length > 12
+        || candidate.items.some((item) => !isString(item))) {
+        errors.push(`${path}.items must contain one to twelve strings`);
+      } else if ((candidate.scope === "pinned_entities" || candidate.scope === "active_threads")
+        && candidate.items.some((item) => !isUuid(item))) {
+        errors.push(`${path}.items must use UUIDs for pin or Thread suggestions`);
+      }
+    }
+    if (textScope && candidate.items !== undefined) errors.push(`${path}.items is unsupported for text scope`);
+    if (itemScope && candidate.value !== undefined) errors.push(`${path}.value is unsupported for item scope`);
+    validateSafeText(candidate.rationale, `${path}.rationale`, 500, errors);
+    validateSourceIds(candidate.sources, path, errors, new Set(taskRun.allowed_source_ids));
+    validateConfidence(candidate.confidence_reason, path, errors);
+  });
+  return errors;
+}
+
+function validateSceneBeats(taskRun: AiTaskRun, value: Record<string, unknown>): string[] {
+  const errors: string[] = [];
+  validatePrepAnswerState(value, errors);
+  hasOnlyFields(value, new Set([
+    "no_answer", "insufficiency_reason", "beats", "confidence_reason"
+  ]), "output", errors);
+  if (value.no_answer === true) {
+    if (!Array.isArray(value.beats) || value.beats.length !== 0) {
+      errors.push("no_answer=true requires an empty beats array");
+    }
+    return errors;
+  }
+  if (!Array.isArray(value.beats) || value.beats.length !== 3) {
+    errors.push("scene beats must contain exactly three items");
+    return errors;
+  }
+  value.beats.forEach((candidate, index) => {
+    const path = `beats[${index}]`;
+    if (!isRecord(candidate)) {
+      errors.push(`${path} must be an object`);
+      return;
+    }
+    hasOnlyFields(candidate, new Set([
+      "id", "summary", "narrative", "entities_involved", "thread_implication", "sources"
+    ]), path, errors);
+    if (!isString(candidate.id)) errors.push(`${path}.id is required`);
+    validateSafeText(candidate.summary, `${path}.summary`, 80, errors);
+    validateSafeText(candidate.narrative, `${path}.narrative`, 1200, errors);
+    if (!Array.isArray(candidate.entities_involved)
+      || candidate.entities_involved.some((entry) => !isString(entry))) {
+      errors.push(`${path}.entities_involved must be a string array`);
+    }
+    if (candidate.thread_implication !== undefined) {
+      validateSafeText(candidate.thread_implication, `${path}.thread_implication`, 500, errors);
+    }
+    validateSourceIds(candidate.sources, path, errors, new Set(taskRun.allowed_source_ids));
+  });
+  return errors;
+}
+
+function validateNpcCandidates(taskRun: AiTaskRun, value: Record<string, unknown>): string[] {
+  const errors: string[] = [];
+  validatePrepAnswerState(value, errors);
+  hasOnlyFields(value, new Set([
+    "no_answer", "insufficiency_reason", "candidates", "confidence_reason"
+  ]), "output", errors);
+  if (value.no_answer === true) {
+    if (!Array.isArray(value.candidates) || value.candidates.length !== 0) {
+      errors.push("no_answer=true requires an empty candidates array");
+    }
+    return errors;
+  }
+  if (!Array.isArray(value.candidates) || value.candidates.length < 1 || value.candidates.length > 3) {
+    errors.push("NPC candidates must contain one to three items");
+    return errors;
+  }
+  value.candidates.forEach((candidate, index) => {
+    const path = `candidates[${index}]`;
+    if (!isRecord(candidate)) {
+      errors.push(`${path} must be an object`);
+      return;
+    }
+    hasOnlyFields(candidate, new Set([
+      "id", "name", "summary", "role_in_scene", "relationship_hooks", "sources"
+    ]), path, errors);
+    if (!isString(candidate.id)) errors.push(`${path}.id is required`);
+    validateSafeText(candidate.name, `${path}.name`, 200, errors);
+    validateSafeText(candidate.summary, `${path}.summary`, 500, errors);
+    validateSafeText(candidate.role_in_scene, `${path}.role_in_scene`, 200, errors);
+    if (!Array.isArray(candidate.relationship_hooks) || candidate.relationship_hooks.length > 5
+      || candidate.relationship_hooks.some((entry) => !isString(entry) || entry.length > 240)) {
+      errors.push(`${path}.relationship_hooks must be a bounded string array`);
+    }
+    validateSourceIds(candidate.sources, path, errors, new Set(taskRun.allowed_source_ids));
+  });
+  return errors;
+}
+
+function validateQuickStubProposal(taskRun: AiTaskRun, value: Record<string, unknown>): string[] {
+  const errors: string[] = [];
+  validatePrepAnswerState(value, errors);
+  hasOnlyFields(value, new Set([
+    "no_answer", "insufficiency_reason", "proposal", "confidence_reason"
+  ]), "output", errors);
+  if (value.no_answer === true) {
+    if (value.proposal !== null) errors.push("no_answer=true requires a null proposal");
+    return errors;
+  }
+  if (!isRecord(value.proposal)) {
+    errors.push("proposal must be an object");
+    return errors;
+  }
+  hasOnlyFields(value.proposal, new Set([
+    "summary", "narrative", "relationships", "proposed_scope", "sources"
+  ]), "proposal", errors);
+  validateSafeText(value.proposal.summary, "proposal.summary", 500, errors);
+  validateSafeText(value.proposal.narrative, "proposal.narrative", 3000, errors);
+  if (!Array.isArray(value.proposal.relationships) || value.proposal.relationships.length > 8
+    || value.proposal.relationships.some((entry) => !isString(entry) || entry.length > 300)) {
+    errors.push("proposal.relationships must be a bounded string array");
+  }
+  if (value.proposal.proposed_scope !== "saga") {
+    errors.push("proposal.proposed_scope must be saga");
+  }
+  validateSourceIds(value.proposal.sources, "proposal", errors, new Set(taskRun.allowed_source_ids));
   return errors;
 }
 
@@ -507,15 +737,24 @@ export function validateTaskOutput(taskRun: AiTaskRun, output: unknown): Validat
   const errors: string[] = [];
   const value = base.output;
 
-  if (taskRun.output_mode === "prep_briefing") {
-    if (!isString(value.body)) errors.push("prep briefing body is required");
-    if (!Array.isArray(value.bullets) || value.bullets.length < 3 || value.bullets.length > 5) {
-      errors.push("prep briefing requires three to five bullets");
-    }
+  if (taskRun.task_name === "compose_prep_briefing") {
+    errors.push(...validatePrepBriefing(taskRun, value));
   }
 
-  if (taskRun.output_mode === "prep_suggestions") {
-    if (!Array.isArray(value.suggestions)) errors.push("session prep suggestions array is required");
+  if (taskRun.task_name === "generate_session_prep") {
+    errors.push(...validateSessionSuggestions(taskRun, value));
+  }
+
+  if (taskRun.task_name === "propose_scene_beats") {
+    errors.push(...validateSceneBeats(taskRun, value));
+  }
+
+  if (taskRun.task_name === "propose_npc_for_scene") {
+    errors.push(...validateNpcCandidates(taskRun, value));
+  }
+
+  if (taskRun.task_name === "propose_quick_stub_fleshing") {
+    errors.push(...validateQuickStubProposal(taskRun, value));
   }
 
   if (taskRun.output_mode === "draft") {

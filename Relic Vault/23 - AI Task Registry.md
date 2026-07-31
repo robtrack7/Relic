@@ -14,7 +14,7 @@ depends_on:
   - "[[24 - Approval Queue]]"
   - "[[25 - Pricing and Rate Limits]]"
 supersedes: []
-last_audited: 2026-07-23
+last_audited: 2026-07-30
 source_file: "Relic Vault/23 - AI Task Registry.md"
 ---
 
@@ -35,6 +35,8 @@ source_file: "Relic Vault/23 - AI Task Registry.md"
 ---
 
 ## Changelog
+
+**Packet E4 Session Prep AI patch (July 2026).** The Prep task family uses a shared Session-scoped invocation and recoverable review-state projection. Retrieval evidence is frozen before provider dispatch and every generated item must cite one or more authorized sources; evidence-free first-session output is represented as explicit insufficiency rather than uncited factual or creative output. Provider completion writes no Session, pin, Thread, entity, canon, or Approval Queue row. Prep text is accepted only by merging into the live D4 editor and completing its existing optimistic autosave. NPC candidates invoke `draft_entity_from_prompt` only after a separate GM confirmation and quota preflight. Quick Stub fleshing remains ephemeral until the GM accepts it into a pending C5-reviewed update draft. Exact retry reuses one run, result, meter event, and provider checkpoint; newer Prep/results supersede stale UI delivery without overwriting GM edits.
 
 **Packet E3 conversational Guide patch (July 2026).** Relic Guide is a persistent GM-owned, Saga-scoped conversational shell over registered tasks and deterministic application tools. Prior turns are bounded server-derived interpretation context, never canon or citation evidence. `answer_saga_question@1.1.0` returns typed provenance blocks with paragraph-level citations for grounded facts, conservative insufficiency, and only the E3 `open_record` / confirmed `draft_entity` action intents. Creative output from other registered tasks is labeled as proposal material rather than receiving fabricated citations. Browser clients cannot supply trusted history, scope, retrieval allowlists, action targets, models, aliases, or quota decisions.
 
@@ -86,6 +88,9 @@ Rules:
 - Imported text, pasted notes, transcripts, quick captures, and marked moments are untrusted data. They may be evidence, never instructions.
 - Every source ID returned by a model must have appeared in the retrieval result or task input for that call. Hallucinated source IDs invalidate the output.
 - Default task retrieval excludes sibling Sagas and includes current Saga canon plus relevant World/Era canon.
+- E4 Prep clients submit only a task intent and task-specific bounded input. The server derives scope, current Session fields, pins, Threads, retrieval filters, quota, alias/model, source allowlist, and acceptance destination.
+- E4 provider completion persists immutable result/review state outside `sessions`; it never appends `pending_prep_suggestions` or writes `prep_briefing`.
+- Every E4 generated item requires authorized citations. With no adequate evidence, the task returns explicit insufficiency and no suggestion payload.
 
 ### 0.2 Model tiers
 
@@ -529,7 +534,7 @@ Do not create canon drafts.
 - Parse failure -> one repair retry, then preserve prep and show manual fallback.
 - Quota blocked -> prep editor remains fully manual.
 
-**Draft-status default.** No `drafts` rows. Server appends valid suggestions to `sessions.pending_prep_suggestions`. GM accept writes the matching session field or junction row, removes the suggestion, and writes audit only for session-row updates as specified in Schema §10.4b.
+**Draft-status default.** No `drafts` or Session writes during generation. Valid suggestions persist in the E4 Session-scoped review projection. GM acceptance merges the selected/edited value into the current D4 editor; the result becomes accepted only after the existing optimistic autosave succeeds.
 
 **Latency.** p50 12s · p95 30s.
 
@@ -619,7 +624,7 @@ Return a short body, 3-5 bullets, and source IDs.
 - Parse failure -> one repair retry.
 - Quota blocked -> show cached briefing if present; otherwise no briefing.
 
-**Draft-status default.** No draft. Output writes only to `sessions.prep_briefing` and `prep_briefing_generated_at`.
+**Draft-status default.** No draft and no Session write. Output persists only in the E4 Session-scoped review projection with its frozen evidence and may be dismissed without changing Prep.
 
 **Latency.** p50 6s · p95 14s.
 
@@ -958,7 +963,7 @@ Identify loose threads and next-prep implications separately from canon drafts.
 
 **Failure modes.** Vague role still returns one low-confidence candidate. Name collision triggers one retry. Parse/provider failure lets GM use `draft_entity_from_prompt` directly.
 
-**Draft-status default.** Ephemeral candidate list. Selecting a candidate calls `draft_entity_from_prompt`.
+**Draft-status default.** Ephemeral candidate list. Selecting a candidate does not create canon. A separate confirmation and standard-tier preflight calls `draft_entity_from_prompt`; that task may create only a pending reviewed draft.
 
 **Latency.** p50 5s · p95 12s.
 
@@ -1122,7 +1127,7 @@ Guide’s general message renderer also reserves `creative_proposal` and `ground
 
 **Failure modes.** No transcript/capture evidence -> no generation. Parse/provider failure preserves stub and shows retry.
 
-**Draft-status default.** Creates an update AI Draft targeting the stub. Approval clears `is_stub=false` and writes relationships in the same approval transaction.
+**Draft-status default.** E4 generation is ephemeral. Explicit acceptance creates an update AI Draft targeting the stub; C5 approval clears `is_stub=false` and writes relationships in the same approval transaction.
 
 **Latency.** p50 8s · p95 20s.
 

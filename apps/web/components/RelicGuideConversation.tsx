@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { DraftCitationContext } from "@/lib/data";
+import { SourceContextDisclosure } from "@/components/SourceContextDisclosure";
 
 export type GuideCitation = {
   sourceId: string;
@@ -61,48 +62,6 @@ type Props = {
   onNewThread?: () => void | Promise<void>;
   onRetry?: (turnId: string) => void | Promise<void>;
 };
-
-function CitationButton({ citation, index }: { citation: GuideCitation; index: number }) {
-  const [open, setOpen] = useState(false);
-  const context = citation.context;
-  const safeLabel = context.label || "Source";
-  return (
-    <span className="guide-citation">
-      <button
-        type="button"
-        className="guide-citation-marker"
-        aria-label={`Source ${index + 1}: ${safeLabel}`}
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            setOpen((value) => !value);
-          }
-        }}
-      >
-        [{index + 1}]
-      </button>
-      {open && (
-        <span className="guide-citation-popover" role="region" aria-label={`${safeLabel} evidence`}>
-          <strong>{safeLabel}</strong>
-          {context.status === "available" ? (
-            <>
-              {context.drift_state === "edited" && <span className="guide-evidence-warning">Edited after citation</span>}
-              {context.drift_state === "deleted" && <span className="guide-evidence-warning">Deleted after citation</span>}
-              <span>{context.frozen_excerpt || "Evidence excerpt unavailable."}</span>
-              {context.current_text && context.current_text !== context.frozen_excerpt && (
-                <span>Current context: {context.current_text}</span>
-              )}
-            </>
-          ) : (
-            <span>This evidence cannot be shown safely.</span>
-          )}
-        </span>
-      )}
-    </span>
-  );
-}
 
 function ActionBlock({
   block,
@@ -259,7 +218,7 @@ export function RelicGuideConversation({
                     <p>
                       {block.text}{" "}
                       {block.citations.map((citation, citationIndex) => (
-                        <CitationButton
+                        <SourceContextDisclosure
                           citation={citation}
                           index={citationIndex}
                           key={`${citation.sourceId}-${citationIndex}`}

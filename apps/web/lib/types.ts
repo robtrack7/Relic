@@ -50,6 +50,7 @@ export type SessionPrepPin = {
   summary?: string | null;
   objectives_log?: unknown[];
   resolution_state?: "active" | "dormant" | "resolved" | "failed";
+  is_stub?: boolean;
 };
 export type SessionPrepData = {
   session: {

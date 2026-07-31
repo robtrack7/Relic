@@ -47,6 +47,7 @@ test("module 8 edge runtime function tree exists", () => {
     "supabase/functions/issue-scoped-jwt/index.ts",
     "supabase/functions/ai-task-runner/index.ts",
     "supabase/functions/guide-submit/index.ts",
+    "supabase/functions/prep-ai-submit/index.ts",
     "supabase/functions/embed-row-dispatch/index.ts",
     "supabase/functions/transcribe-session/index.ts",
     "supabase/functions/cleanup-audio/index.ts",
@@ -182,6 +183,39 @@ test("Relic Guide submission derives scope, retrieval, quota, and dispatch on th
   assert.doesNotMatch(submit, /console\.(?:log|error)/, "Guide submission must not log questions or evidence");
   assert.match(runner, /get_guide_evidence_for_worker/, "the shared runner must use frozen Guide evidence");
   assert.match(runner, /complete_guide_turn_for_worker/, "the shared runner must persist only validated Guide output");
+});
+
+test("Session Prep AI derives scope and preserves the E4 non-writing review boundary", () => {
+  const submit = read("supabase/functions/prep-ai-submit/index.ts");
+  const runner = read("supabase/functions/ai-task-runner/index.ts");
+  const hybrid = read("supabase/functions/hybrid-search/index.ts");
+  const schemas = read("supabase/functions/_shared/ai-schemas.ts");
+
+  assert.match(submit, /requireInternalAuth/, "Prep AI submission must remain server-only");
+  assert.match(submit, /get_session_prep/, "task payloads must derive from the scoped D4 read model");
+  assert.match(submit, /preflight_ai_task/, "every registered task must preflight quota");
+  assert.ok(
+    submit.indexOf("preflight_ai_task") < submit.indexOf("create_prep_ai_request_for_worker"),
+    "quota state must be known before provider dispatch"
+  );
+  assert.match(submit, /prep\.session\.updated_at !== body\.prep_version/, "stale Prep submissions must fail closed");
+  assert.match(submit, /current_session/, "the browser cannot author the trusted Session context");
+  assert.match(submit, /\.eq\("saga_id", body\.saga_id\)/, "entity and Thread choices must be current-Saga scoped");
+  assert.match(submit, /\.eq\("scope", "saga"\)/, "Quick Stub and Thread choices cannot use World mutations");
+  assert.match(submit, /create_prep_ai_request_for_worker/, "one recoverable request must precede dispatch");
+  assert.doesNotMatch(submit, /autosave_session_prep|update_session_prep|insert\([^)]*drafts/i, "generation submission cannot write Prep or canon");
+  assert.doesNotMatch(submit, /console\.(?:log|error)/, "Prep prompts and evidence cannot enter runtime logs");
+  assert.match(runner, /get_prep_ai_context_for_worker/, "the runner must recover frozen E4 context on exact retry");
+  assert.match(runner, /freeze_prep_ai_evidence_for_worker/, "retrieval evidence must freeze before provider work");
+  assert.match(runner, /complete_prep_ai_request_for_worker/, "validated output must complete outside the Session row");
+  assert.match(hybrid, /taskProfile === "propose_quick_stub_fleshing"/, "Quick Stub retrieval must be Session-bounded");
+  assert.match(hybrid, /filters\.session_id = body\.session_id/, "Quick Stub retrieval must pass the current Session filter");
+  assert.match(schemas, /validatePrepBriefing/);
+  assert.match(schemas, /validateSessionSuggestions/);
+  assert.match(schemas, /validateSceneBeats/);
+  assert.match(schemas, /validateNpcCandidates/);
+  assert.match(schemas, /validateQuickStubProposal/);
+  assert.match(schemas, /EXECUTABLE_OR_MUTATION_PATTERN/, "retrieved prompt injection cannot become executable output");
 });
 
 test("provider observability omits sensitive payloads and uses stable safe fields", () => {

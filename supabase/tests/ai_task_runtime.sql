@@ -261,8 +261,8 @@ select results_eq(
   $$ select quota_tier, ai_credits, model_tier, retrieval_profile, source_policy, output_mode
      from pg_temp.module9_contract_rows()
      where task_name = 'compose_prep_briefing' $$,
-  $$ values ('standard'::text, 3::numeric, 'relic-balanced'::text, 'session_prep_grounding'::text, 'canon_only'::text, 'prep_briefing'::text) $$,
-  'compose_prep_briefing is canon-only standard prep briefing output'
+  $$ values ('standard'::text, 3::numeric, 'relic-balanced'::text, 'session_prep_grounding'::text, 'canon_only'::text, 'ephemeral'::text) $$,
+  'compose_prep_briefing is canon-only standard ephemeral output'
 );
 
 select results_eq(
@@ -315,13 +315,13 @@ select is(
 );
 
 insert into module9_runs (task_name, run_id) values ('compose_prep_briefing', pg_temp.module9_create_run('compose_prep_briefing'));
-select ok((pg_temp.module9_record_output((select run_id from module9_runs where task_name = 'compose_prep_briefing'), '{"body":"A compact canon-only briefing.","bullets":["One","Two","Three"],"sources":["90600000-0000-0000-0000-000000000001"],"confidence_reason":"direct_gm_input"}'::jsonb) ->> 'ok')::boolean, 'prep briefing output writer succeeds');
-select is((select prep_briefing ->> 'body' from public.sessions where id = '90500000-0000-0000-0000-000000000001'), 'A compact canon-only briefing.', 'prep briefing writer updates session prep_briefing');
+select ok((pg_temp.module9_record_output((select run_id from module9_runs where task_name = 'compose_prep_briefing'), '{"no_answer":false,"body":"A compact canon-only briefing.","bullets":[{"id":"b1","value":"One","sources":["90600000-0000-0000-0000-000000000001"]}],"sources":["90600000-0000-0000-0000-000000000001"],"confidence_reason":"direct_gm_input"}'::jsonb) ->> 'ok')::boolean, 'prep briefing output writer succeeds');
+select is((select prep_briefing from public.sessions where id = '90500000-0000-0000-0000-000000000001'), null::jsonb, 'prep briefing output remains ephemeral until explicit acceptance');
 select is((select count(*) from public.drafts where workspace_id = '90100000-0000-0000-0000-000000000001'), 0::bigint, 'prep briefing writer creates no drafts');
 
 insert into module9_runs (task_name, run_id) values ('generate_session_prep', pg_temp.module9_create_run('generate_session_prep'));
-select ok((pg_temp.module9_record_output((select run_id from module9_runs where task_name = 'generate_session_prep'), '{"suggestions":[{"id":"s1","scope":"objective","payload":{"value":"Follow the relic clue.","rationale":"Grounded","sources":["90600000-0000-0000-0000-000000000001"]},"confidence_reason":"direct_gm_input"}],"summary":"One useful suggestion."}'::jsonb) ->> 'ok')::boolean, 'session prep suggestion writer succeeds');
-select is((select jsonb_array_length(pending_prep_suggestions) from public.sessions where id = '90500000-0000-0000-0000-000000000001'), 1, 'session prep writer appends pending prep suggestions');
+select ok((pg_temp.module9_record_output((select run_id from module9_runs where task_name = 'generate_session_prep'), '{"no_answer":false,"suggestions":[{"id":"s1","scope":"objective","value":"Follow the relic clue.","rationale":"Grounded","sources":["90600000-0000-0000-0000-000000000001"],"confidence_reason":"direct_gm_input"}],"summary":"One useful suggestion.","confidence_reason":"direct_gm_input"}'::jsonb) ->> 'ok')::boolean, 'session prep suggestion output writer succeeds');
+select is((select jsonb_array_length(pending_prep_suggestions) from public.sessions where id = '90500000-0000-0000-0000-000000000001'), 0, 'session prep suggestion output remains ephemeral until explicit acceptance');
 select is((select count(*) from public.drafts where workspace_id = '90100000-0000-0000-0000-000000000001'), 0::bigint, 'session prep suggestion writer creates no drafts');
 
 insert into module9_runs (task_name, run_id) values ('draft_entity_from_prompt', pg_temp.module9_create_run('draft_entity_from_prompt'));

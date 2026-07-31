@@ -25,6 +25,7 @@ export type AiTaskRun = {
   allowed_source_ids: string[];
   guide_thread_id?: string | null;
   guide_turn_id?: string | null;
+  prep_ai_request_id?: string | null;
   retrieval_context?: Array<{
     source_id: string;
     text: string;

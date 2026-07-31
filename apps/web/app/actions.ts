@@ -617,6 +617,118 @@ export async function autosaveSessionPrepAction(formData: FormData) {
   return { ok: true as const, updatedAt: result?.updated_at ?? String(prep.session.updated_at ?? ""), prep };
 }
 
+const PREP_AI_TASKS = new Set([
+  "compose_prep_briefing",
+  "generate_session_prep",
+  "propose_scene_beats",
+  "propose_thread_complication",
+  "propose_npc_for_scene",
+  "propose_quick_stub_fleshing",
+  "draft_entity_from_prompt"
+]);
+
+export async function startPrepAiAction(formData: FormData) {
+  const { user } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const taskName = value(formData, "taskName");
+  const sessionId = value(formData, "sessionId");
+  const requestId = value(formData, "requestId");
+  const prepVersion = value(formData, "prepVersion");
+  const parentRequestId = value(formData, "parentRequestId") || null;
+  if (!PREP_AI_TASKS.has(taskName) || !sessionId || !requestId || !prepVersion) {
+    return { ok: false as const, category: "invalid_request", error: "The Prep AI request is invalid." };
+  }
+  let input: Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(rawValue(formData, "input") || "{}");
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
+    input = parsed;
+  } catch {
+    return { ok: false as const, category: "invalid_request", error: "The Prep AI input is invalid." };
+  }
+  const internalToken = process.env.INTERNAL_TOKEN;
+  if (!internalToken) {
+    return { ok: false as const, category: "provider_unavailable", error: "Prep AI is unavailable. Manual Prep remains fully editable." };
+  }
+  try {
+    const response = await fetch(`${getSupabaseUrl()}/functions/v1/prep-ai-submit`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${internalToken}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        gm_user_id: user.id,
+        workspace_id: params.workspaceId,
+        world_id: params.worldId,
+        saga_id: params.sagaId,
+        session_id: sessionId,
+        request_id: requestId,
+        idempotency_key: requestId,
+        task_name: taskName,
+        prep_version: prepVersion,
+        parent_request_id: parentRequestId,
+        input
+      }),
+      cache: "no-store"
+    });
+    const payload = await response.json().catch(() => ({})) as Record<string, unknown>;
+    revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/prep`);
+    return {
+      ok: response.ok,
+      category: response.status === 429 ? "quota_blocked"
+        : response.status === 409 ? "prep_version_conflict"
+        : response.ok ? String(payload.status ?? "complete") : "provider_unavailable",
+      error: typeof payload.message === "string"
+        ? payload.message
+        : response.ok ? "" : "Prep AI could not finish. Manual Prep remains available."
+    };
+  } catch {
+    return { ok: false as const, category: "provider_unavailable", error: "Prep AI could not connect. Manual Prep remains available." };
+  }
+}
+
+export async function setPrepAiReviewStateAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const sessionId = value(formData, "sessionId");
+  const requestId = value(formData, "requestId");
+  const reviewState = value(formData, "reviewState");
+  if (!new Set(["accepted", "rejected", "dismissed"]).has(reviewState)) {
+    return { ok: false as const, conflict: false, error: "Unsupported review state." };
+  }
+  let editedPayload: Record<string, unknown> | null = null;
+  try {
+    const raw = rawValue(formData, "editedPayload");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
+      editedPayload = parsed;
+    }
+  } catch {
+    return { ok: false as const, conflict: false, error: "The reviewed result is invalid." };
+  }
+  const { data, error } = await supabase.rpc("set_prep_ai_review_state", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId,
+    request_id: requestId,
+    review_state: reviewState,
+    edited_payload: editedPayload,
+    accepted_prep_version: value(formData, "acceptedPrepVersion") || null
+  });
+  if (error) {
+    return {
+      ok: false as const,
+      conflict: error.code === "40001",
+      error: error.code === "40001"
+        ? "Prep or proposal changed. The result remains pending for review."
+        : error.message
+    };
+  }
+  revalidatePath(`${sagaPath(params)}/sessions/${sessionId}/prep`);
+  revalidatePath(`${sagaPath(params)}/approval`);
+  return { ok: true as const, result: data as Record<string, unknown> };
+}
+
 export async function mutateSessionPrepAction(formData: FormData) {
   const { supabase } = await requireActionUser();
   const params = paramsFromForm(formData); const sessionId = value(formData, "sessionId");

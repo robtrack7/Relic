@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-23
+last_audited: 2026-07-30
 source_file: "Relic Vault/02 - Source Map.md"
 ---
 
@@ -20,14 +20,14 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[11 - Product Basepoint]] | Product north star, scope, naming, exclusions | Primary |
 | [[12 - MVP PRD]] | P0 requirements and acceptance framing | Primary |
 | [[13 - Design System]] | v0.4 web UI tokens, typography, palette, app shell, Loom carriage, component feel; wrapper for [[14 - Design System Source.html]] | Primary design |
-| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, hierarchy/Saga lifecycle and staged delete cascade, Stage evidence markers, exactly-once write receipts, conflict outcomes, manual Session evidence provenance, source-aware synthesis batch identity, draft-scoped citation context, C5 approval receipts/commit invariants, D3 optimistic Thread/objective projections, D4 scheduled/ordered/recoverable Prep contracts, and D5 immutable Import Inbox provenance/lifecycle | Implementation |
-| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, hierarchy navigation/lifecycle RPCs, persistent Guide conversation/runtime boundaries, reserved-prefix-safe scoped JWT signing, real Storage-before-database Saga cleanup, Stage packet/audio/write recovery, recoverable optimistic web Prep autosave, provider-backed transcription/retry, manual evidence intake, provider-independent Import Inbox transport/retention and deferred docx extraction boundary, atomic synthesis output persistence, citation context/drift reads, approval read/edit/rebase/commit boundaries, hosted provider configuration, safe telemetry, and completed E2 synthetic staging delivery/scheduler/restart gate | Implementation |
-| [[22 - Memory and Retrieval]] | Embedding eligibility/text/version identity, deterministic and hosted delivery, transcript re-embedding, Guide immutable evidence snapshots and non-canon conversation context, hybrid retrieval with lexical fallback, task profiles, and context assembly | Implementation |
-| [[23 - AI Task Registry]] | Standalone MVP AI task contracts, Guide typed provenance/citation/action contract, task routing, prompt versions, validation, source-aware synthesis artifacts, and draft/canon behavior | Implementation |
+| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, hierarchy/Saga lifecycle and staged delete cascade, Stage evidence markers, exactly-once write receipts, conflict outcomes, manual Session evidence provenance, source-aware synthesis batch identity, draft-scoped citation context, C5 approval receipts/commit invariants, D3 optimistic Thread/objective projections, D4 scheduled/ordered/recoverable Prep contracts, E4 non-canon Prep request/evidence/review projections, and D5 immutable Import Inbox provenance/lifecycle | Implementation |
+| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, hierarchy navigation/lifecycle RPCs, persistent Guide and Session Prep AI runtime boundaries, reserved-prefix-safe scoped JWT signing, real Storage-before-database Saga cleanup, Stage packet/audio/write recovery, recoverable optimistic web Prep autosave, provider-backed transcription/retry, manual evidence intake, provider-independent Import Inbox transport/retention and deferred docx extraction boundary, atomic synthesis output persistence, citation context/drift reads, approval read/edit/rebase/commit boundaries, hosted provider configuration, safe telemetry, and completed E2 synthetic staging delivery/scheduler/restart gate | Implementation |
+| [[22 - Memory and Retrieval]] | Embedding eligibility/text/version identity, deterministic and hosted delivery, Guide and Prep immutable evidence snapshots, non-canon conversation context, hybrid retrieval with lexical fallback, task profiles, and context assembly | Implementation |
+| [[23 - AI Task Registry]] | Standalone MVP AI task contracts, Guide and Prep typed provenance/citation/review contracts, task routing, prompt versions, validation, source-aware synthesis artifacts, and draft/canon behavior | Implementation |
 | [[24 - Approval Queue]] | Approval UX, field diffs, source citation/context, safe drift/conflict states, explicit one/selected/all-compatible actions, and canon/audit commit behavior | Implementation |
 | [[25 - Pricing and Rate Limits]] | Caps, metering, quota preflight, hard stops | Implementation |
 | [[30 - Sanctum UX Flow]] | Sanctum IA, dashboard, shared inline/full Prep parity, D3 Thread/objective/Failed grouping and read-only evidence timeline, D5 paste/text/Markdown Import Inbox, Relic Guide, post-session transcript review/retry/manual evidence and citation navigation, settings | UX |
-| [[31 - Session Prep Flow]] | Recoverable autosaving Session prep workspace, scheduling, actions, ordered pins, and latest-write Ready for Stage handoff | UX |
+| [[31 - Session Prep Flow]] | Recoverable autosaving Session prep workspace, cited ephemeral AI assists, explicit acceptance/review routing, scheduling, actions, ordered pins, and latest-write Ready for Stage handoff | UX |
 | [[32 - Stage UX Flow]] | Live-session Stage behavior and latest-persisted Prep packet consumption | UX |
 | [[33 - First Run UX Flow]] | First-run, new saga, GM profile, Session 1 handoff | UX |
 | [[34 - UI Implementation Spec]] | Routes, shells, three-dropdown hierarchy switching, Saga lifecycle settings, components, build order | UI implementation |

@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-21
+last_audited: 2026-07-30
 source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 ---
 
@@ -25,6 +25,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 ---
 
 ## Changelog
+
+**Packet E4 Session Prep AI patch (July 2026).** Adds private Session-scoped Prep AI request and immutable evidence snapshot rows correlated to one `ai_task_run`. These rows are recoverable operational/review state, not canon or Session Prep fields. Provider completion cannot update `sessions`, pins, Threads, entities, drafts, or canon. Explicit Prep-text acceptance records the exact newer D4 autosave version; explicit NPC/Quick Stub review may create only a pending C5 draft. Idempotency keys bind task, input, Session, and Prep version, while stale completion and changed-key reuse fail closed.
 
 **Library lifecycle patch (July 2026).** Resolves the per-record hard-delete boundary: an individual Character, Place, Faction, Artifact, Thread, or Note may be permanently deleted only after it is archived, the GM completes two confirmations, and a transaction-time dependency check proves it has no relationships, accepted/suggested mentions or backlinks, note attachments, Session pins, Thread activations, or pending draft targets. Intrinsic source/audit provenance remains as a tombstone and derived embeddings are removed. Referenced archived records remain restorable and may only disappear through the owning Saga deletion cascade.
 

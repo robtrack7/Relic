@@ -60,6 +60,28 @@ export type DraftCitationContext = {
   drift_state: "exact" | "edited" | "deleted" | "not_applicable" | "unavailable";
 };
 
+export type PrepAiRequest = {
+  id: string;
+  task_name: string;
+  status: "queued" | "running" | "complete" | "quota_blocked" | "provider_unavailable"
+    | "retrieval_unavailable" | "validation_failed" | "failed" | "dead_letter";
+  review_state: "pending" | "accepted" | "rejected" | "dismissed";
+  prep_version_at_submit: string;
+  retrieval_mode?: "hybrid" | "lexical_fallback" | null;
+  result_payload?: Record<string, unknown> | null;
+  edited_payload?: Record<string, unknown> | null;
+  failure_category?: string | null;
+  quota?: { severity?: string; message?: string; reset_at?: string | null } | null;
+  acceptance_destination?: "prep_autosave" | "approval_queue" | null;
+  accepted_draft_id?: string | null;
+  accepted_prep_version?: string | null;
+  parent_request_id?: string | null;
+  retry_input: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  sources: Array<{ source_id: string; context: DraftCitationContext }>;
+};
+
 type DraftRow = {
   id: string;
   entity_type: EntityType;
@@ -300,7 +322,8 @@ function optionPin(entity: EntitySummary, order_index: number): SessionPrepPin {
     order_index,
     summary: entity.summary,
     objectives_log: entity.objectives_log,
-    resolution_state: entity.resolution_state
+    resolution_state: entity.resolution_state,
+    is_stub: entity.is_stub
   };
 }
 
@@ -313,6 +336,18 @@ export async function getSessionPrep(params: IdParams, sessionId: string): Promi
   if (error) throw new Error(error.message);
   const raw = data as Omit<SessionPrepData, "options">;
   return { ...raw, options: { entities: options.entities.map(optionPin), threads: options.threads.map(optionPin) } };
+}
+
+export async function getSessionPrepAi(params: IdParams, sessionId: string): Promise<PrepAiRequest[]> {
+  const { supabase } = await requireSagaContext(params);
+  const { data, error } = await supabase.rpc("get_session_prep_ai", {
+    workspace_id: params.workspaceId,
+    world_id: params.worldId,
+    saga_id: params.sagaId,
+    session_id: sessionId
+  });
+  if (error) throw new Error(error.message);
+  return (Array.isArray(data) ? data : []) as PrepAiRequest[];
 }
 
 export async function getStagePacket(params: IdParams, sessionId: string): Promise<StagePacket> {

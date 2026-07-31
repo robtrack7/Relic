@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-23
+last_audited: 2026-07-30
 source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md"
 ---
 
@@ -25,6 +25,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 ---
 
 ## Changelog
+
+**Packet E4 Session Prep AI patch (July 2026).** Adds one internal Prep AI request/result/evidence boundary correlated to the existing `ai_task_runs` lease, provider checkpoint, retry, and idempotent usage ledger. The browser submits an allowlisted task intent; server code derives current Prep, retrieval, scope, quota, and acceptance destination. Generation completion updates only the recoverable request/result state. Session text, pins, and Threads cross the existing D4 optimistic autosave boundary only after explicit acceptance; NPC/Quick Stub canon changes become pending C5 drafts only after a separate confirmation. Exact idempotency-key reuse with changed input fails closed, concurrent dispatch cannot duplicate provider work or charges, and completion against an older Prep version cannot overwrite current GM edits.
 
 **Packet E3 conversational Guide patch (July 2026).** The shared AI runtime gains Saga-scoped Guide thread/turn correlation, turn-level idempotency and supersession, immutable retrieval source/version snapshots, typed response provenance, and server-owned reviewed action intents. Conversation is bounded untrusted interpretation context and never citation evidence. Existing E2 leases, retry/repair, aliases, quota/metering, safe observability, and zero-direct-canon boundaries remain authoritative.
 

@@ -10,6 +10,7 @@ vi.mock("next/link", () => ({ default: ({ href, children, ...props }: { href: st
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
 vi.mock("@/app/actions", () => ({
   autosaveSessionPrepAction: vi.fn(), mutateSessionPrepAction: vi.fn(), readyForStageAction: vi.fn(),
+  startPrepAiAction: vi.fn(), setPrepAiReviewStateAction: vi.fn(),
 }));
 
 const params = { workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a" };

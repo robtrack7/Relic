@@ -11,6 +11,7 @@ type SearchRequest = {
   saga_id?: string;
   query_text?: string;
   task_profile?: string;
+  session_id?: string;
   top_k?: number;
   include_world_canon?: boolean;
 };
@@ -39,7 +40,17 @@ Deno.serve(async (req) => {
   if (!body.gm_user_id || !body.workspace_id || !body.world_id || !body.saga_id || !query || query.length > 2_000) {
     return jsonResponse({ error: "invalid_request" }, { status: 400 });
   }
-  if (taskProfile && taskProfile !== "answer_saga_question") {
+  const allowedTaskProfiles = new Set([
+    "answer_saga_question",
+    "compose_prep_briefing",
+    "generate_session_prep",
+    "propose_scene_beats",
+    "propose_thread_complication",
+    "propose_npc_for_scene",
+    "propose_quick_stub_fleshing",
+    "draft_entity_from_prompt"
+  ]);
+  if (taskProfile && !allowedTaskProfiles.has(taskProfile)) {
     return jsonResponse({ error: "invalid_task_profile" }, { status: 400 });
   }
 
@@ -48,7 +59,11 @@ Deno.serve(async (req) => {
   const scoped = await createScopedClient(body.gm_user_id, "hybrid_search", body.saga_id);
 
   const taskRetrieval = async (queryEmbedding?: number[]) => {
-    const filters = queryEmbedding ? { query_embedding: JSON.stringify(queryEmbedding) } : {};
+    const filters: Record<string, string> = {};
+    if (queryEmbedding) filters.query_embedding = JSON.stringify(queryEmbedding);
+    if (taskProfile === "propose_quick_stub_fleshing" && body.session_id) {
+      filters.session_id = body.session_id;
+    }
     const strict = await scoped.rpc("retrieve_for_task", {
       workspace_id: body.workspace_id,
       world_id: body.world_id,
@@ -62,6 +77,7 @@ Deno.serve(async (req) => {
     if (strict.error || (strict.data?.length ?? 0) > 0) {
       return { ...strict, relaxed: false };
     }
+    if (taskProfile !== "answer_saga_question") return { ...strict, relaxed: false };
     const relaxed = await scoped.rpc("retrieve_for_task_relaxed", {
       workspace_id: body.workspace_id,
       world_id: body.world_id,

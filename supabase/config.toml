@@ -33,5 +33,8 @@ enabled = false
 [functions.guide-submit]
 verify_jwt = false
 
+[functions.prep-ai-submit]
+verify_jwt = false
+
 [functions.embed-row-dispatch]
 verify_jwt = false

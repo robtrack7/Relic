@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-21
+last_audited: 2026-07-30
 source_file: "Sourced - Downloaded - 260518/relic-session-prep-flow-v0_2.md"
 ---
 
@@ -21,6 +21,8 @@ source_file: "Sourced - Downloaded - 260518/relic-session-prep-flow-v0_2.md"
 *Priority 7 technical closeout revision. Last updated May 2026.*
 
 **Prep parity implementation patch (July 2026).** Home and full Prepare use the same manual editor and scoped persistence contract. An 800ms/blur autosave keeps an owner/Workspace/World/Saga/Session local draft until the exact server version succeeds, surfaces saving/saved/offline/failed/conflict/retry states, and never silently overwrites a stale row. Planned and Ready Sessions are editable; started/live/ending/ended and otherwise locked Sessions are read-only.
+
+**Packet E4 Session Prep AI patch (July 2026).** Prep AI uses one recoverable, GM-owned, Session-scoped invocation/result boundary with frozen source snapshots and exact logical retry. Provider completion may persist only job/result/review metadata; it never updates `sessions`, pins, Threads, entities, canon, or `pending_prep_suggestions`. Every result shows its sources or explicit insufficiency. An accepted text/pin/Thread suggestion is first merged into the current local D4 editor and reaches the Session only after the existing optimistic autosave succeeds. An accepted NPC candidate or Quick Stub fleshing result routes to a pending C5-reviewed draft; it does not create or update canon inline. Reject, dismiss, provider/retrieval failure, quota denial, refresh, and restart preserve both manual Prep and unresolved suggestion state.
 
 **Source of truth inputs:** `[[11 - Product Basepoint]]`, `[[12 - MVP PRD]]`, `[[20 - Entity and Canon Schema]]`, `[[23 - AI Task Registry]]`, `[[22 - Memory and Retrieval]]`, `[[21 - Tech Architecture]]`, `[[32 - Stage UX Flow]]`, `[[34 - UI Implementation Spec]]`, `[[25 - Pricing and Rate Limits]]`, `[[13 - Design System]]`.
 
@@ -158,13 +160,15 @@ All AI assists are explicit GM actions. No assist auto-runs during live play.
 | Assist                      | Registry task                 | Retrieval profile        | Output state          | Commit behavior                      |
 | --------------------------- | ----------------------------- | ------------------------ | --------------------- | ------------------------------------ |
 | Generate prep checklist     | `generate_session_prep`       | `session_prep_grounding` | Ephemeral proposal    | GM inserts selected items.           |
-| Compose briefing            | `compose_prep_briefing`       | `session_prep_grounding` | Read-only cached briefing | Cached on session; GM may copy manually. |
+| Compose briefing            | `compose_prep_briefing`       | `session_prep_grounding` | Recoverable read-only result | Stored outside the Session; GM may dismiss or copy manually. |
 | Suggest scene beats         | `propose_scene_beats`         | `session_prep_grounding` | Ephemeral cards       | GM inserts selected beats.           |
 | Suggest thread complication | `propose_thread_complication` | `sanctum_grounding` | Ephemeral cards       | GM inserts or discards.              |
-| Suggest NPC for scene       | `propose_npc_for_scene`       | `session_prep_grounding` | Candidate cards       | Selected candidate routes through `draft_entity_from_prompt`. |
-| Flesh quick stub            | `propose_quick_stub_fleshing` | `post_session_synthesis` | Draft update proposal | Routes through draft/approval path.  |
+| Suggest NPC for scene       | `propose_npc_for_scene`       | `session_prep_grounding` | Candidate cards       | Selected candidate separately preflights `draft_entity_from_prompt` and creates only a pending reviewed draft. |
+| Flesh quick stub            | `propose_quick_stub_fleshing` | `post_session_synthesis` | Ephemeral update proposal | Explicit acceptance creates a pending update draft for the Approval Queue. |
 
 AI output must show source context and uncertainty. Prep assists may be discarded without audit because they are not canon until inserted/saved by the GM.
+
+E4 generation results are immutable provider outputs. Edit-before-accept is stored as review metadata, not written back into the provider result. Accepting a Session-field suggestion uses the live editor value and current optimistic version, so a result generated against older Prep can never overwrite newer GM edits. The result becomes `accepted` only after the D4 autosave confirms the exact merged version. A failed or stale save leaves the result pending and the local editor draft recoverable.
 
 **Post-session implication handoff (C5).** Approval of a C3 next-prep implication appends a source-linked pending `scene_notes` suggestion only to the exact next Session while it remains `planned`. Approval does not directly alter the briefing, objective, scene notes, pins, active Threads, or checklist. The GM still accepts or dismisses the pending suggestion through the normal Session Prep path, and all related entity/Thread IDs must resolve inside the same Saga.
 

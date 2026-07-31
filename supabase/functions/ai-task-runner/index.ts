@@ -55,6 +55,65 @@ async function retrieveContext(
     taskRun.retrieval_context = evidence as AiTaskRun["retrieval_context"];
     return evidence;
   }
+  if (taskRun.prep_ai_request_id) {
+    const { data: frozenState, error: frozenError } = await service.rpc(
+      "get_prep_ai_context_for_worker",
+      { p_run_id: taskRun.id }
+    );
+    if (frozenError) throw new Error(`retrieval failed: ${frozenError.message}`);
+    const frozenEvidence = Array.isArray(frozenState?.evidence) ? frozenState.evidence : [];
+    if (frozenState?.retrieval_mode && frozenState.retrieval_mode !== "none") {
+      taskRun.allowed_source_ids = frozenEvidence
+        .map((entry: Record<string, unknown>) => entry.source_id)
+        .filter((value: unknown): value is string => typeof value === "string");
+      taskRun.retrieval_context = frozenEvidence as AiTaskRun["retrieval_context"];
+      return frozenEvidence;
+    }
+
+    const internalToken = Deno.env.get("INTERNAL_TOKEN");
+    const baseUrl = Deno.env.get("SUPABASE_URL");
+    if (!internalToken || !baseUrl) throw new Error("retrieval failed: configuration");
+    const topK = taskRun.task_name === "generate_session_prep" ? 20
+      : taskRun.task_name === "propose_thread_complication" ? 12 : 15;
+    const queryText = typeof taskRun.input_payload?.query_text === "string"
+      ? taskRun.input_payload.query_text : taskRun.task_name.replaceAll("_", " ");
+    const response = await fetch(`${baseUrl}/functions/v1/hybrid-search`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${internalToken}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        gm_user_id: taskRun.gm_id,
+        workspace_id: taskRun.workspace_id,
+        world_id: taskRun.world_id,
+        saga_id: taskRun.saga_id,
+        query_text: queryText,
+        task_profile: taskRun.task_name,
+        session_id: taskRun.task_name === "propose_quick_stub_fleshing"
+          ? taskRun.session_id : undefined,
+        top_k: topK,
+        include_world_canon: true
+      })
+    });
+    if (!response.ok) throw new Error("retrieval failed: task retrieval unavailable");
+    const retrieval = await response.json() as Record<string, unknown>;
+    const results = Array.isArray(retrieval.results) ? retrieval.results : [];
+    const sourceIds = [...new Set(results.map((entry) => (
+      typeof entry === "object" && entry !== null
+        ? (entry as Record<string, unknown>).source_id : null
+    )).filter((value): value is string => typeof value === "string"))];
+    const retrievalMode = retrieval.retrieval_mode === "lexical_fallback"
+      ? "lexical_fallback" : "hybrid";
+    const { data: frozen, error: freezeError } = await service.rpc(
+      "freeze_prep_ai_evidence_for_worker",
+      { p_run_id: taskRun.id, p_source_ids: sourceIds, p_retrieval_mode: retrievalMode }
+    );
+    if (freezeError) throw new Error(`retrieval failed: ${freezeError.message}`);
+    const evidence = Array.isArray(frozen) ? frozen : [];
+    taskRun.allowed_source_ids = evidence
+      .map((entry: Record<string, unknown>) => entry.source_id)
+      .filter((value: unknown): value is string => typeof value === "string");
+    taskRun.retrieval_context = evidence as AiTaskRun["retrieval_context"];
+    return evidence;
+  }
 
   const scoped = await createScopedClient(taskRun.gm_id, "ai_task_runner", taskRun.saga_id);
   const queryText = typeof taskRun.input_payload?.question === "string"
@@ -211,6 +270,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
         p_failure_category: null
       });
     }
+    if (taskRun.prep_ai_request_id) {
+      await service.rpc("set_prep_ai_request_state_for_worker", {
+        p_run_id: taskRun.id,
+        p_status: "running",
+        p_failure_category: null
+      });
+    }
 
     await recordProviderPipelineEvent({
       eventName: "worker_claimed", workerType: `ai_task:${taskRun.task_name}`,
@@ -283,6 +349,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!validated.ok) {
       const safeValidationCategories = validationCategories(validated.errors);
       const failure = await failRun(service, runId, workerId, "validation_failed", false, repairAttempts);
+      if (taskRun.prep_ai_request_id) {
+        await service.rpc("set_prep_ai_request_state_for_worker", {
+          p_run_id: taskRun.id,
+          p_status: "validation_failed",
+          p_failure_category: "validation_failed"
+        }).catch(() => undefined);
+      }
       await recordFailedUsage(taskRun, "validation_failed").catch(() => undefined);
       await recordProviderPipelineEvent({
         eventName: "ai_task_validation_failed", severity: "warn", workerType: `ai_task:${taskRun.task_name}`,
@@ -349,6 +422,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
       if (guideError) throw new Error(guideError.message);
     }
+    if (taskRun.prep_ai_request_id) {
+      const { error: prepError } = await service.rpc("complete_prep_ai_request_for_worker", {
+        p_run_id: runId,
+        p_output: validated.output
+      });
+      if (prepError) throw new Error(prepError.message);
+    }
 
     const outputSize = typeof providerResult.output === "string"
       ? providerResult.output.length : JSON.stringify(providerResult.output).length;
@@ -389,6 +469,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
         await service.rpc("set_guide_turn_state_for_worker", {
           p_run_id: taskRun.id,
           p_status: guideState,
+          p_failure_category: category
+        }).catch(() => undefined);
+      }
+      if (taskRun.prep_ai_request_id) {
+        const prepState = failure?.status === "dead_letter" ? "dead_letter"
+          : category === "retrieval_failed" ? "retrieval_unavailable"
+          : category === "provider_unavailable" || category === "timeout" ? "provider_unavailable"
+          : "failed";
+        await service.rpc("set_prep_ai_request_state_for_worker", {
+          p_run_id: taskRun.id,
+          p_status: prepState,
           p_failure_category: category
         }).catch(() => undefined);
       }

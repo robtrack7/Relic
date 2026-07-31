@@ -37,11 +37,11 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 
 | Priority | Complete | Partial | Missing | Blocked | Needs verification |
 | -------- | --------:| -------:| -------:| -------:| ------------------:|
-| P0       | 10       | 5       | 5       | 2       | 0                  |
+| P0       | 11       | 5       | 4       | 2       | 0                  |
 | P1       | 1        | 4       | 2       | 0       | 1                  |
-| P2       | 0        | 2       | 1       | 0       | 1                  |
+| P2       | 0        | 3       | 0       | 0       | 1                  |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup, D2's complete six-type Library lifecycle with explicit relationship/mention acceptance, D3's scoped Thread/objective lifecycle plus derived read-only timeline, D4's recoverable autosaving Prep parity, D5's raw paste/text/Markdown Import Inbox boundary, E1's content-versioned embedding/re-embedding delivery with scoped hybrid retrieval and lexical fallback, and E2's real hosted transcription, embedding, light/deep AI, scheduling, metering, recovery, isolation, and safe observability proof. The immediate lane is Packet E3 Relic Guide; `.docx` remains a named D5 format gap.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup, D2's complete six-type Library lifecycle with explicit relationship/mention acceptance, D3's scoped Thread/objective lifecycle plus derived read-only timeline, D4's recoverable autosaving Prep parity, D5's raw paste/text/Markdown Import Inbox boundary, E1's content-versioned embedding/re-embedding delivery with scoped hybrid retrieval and lexical fallback, E2's real hosted provider delivery and observability proof, E3's sourced conversational Guide, and E4's recoverable cited Session Prep AI review flow. The immediate lane is Packet E5 AI-assisted Saga creation; `.docx` remains a named D5 format gap.
 
 ## 3. Quality-gate system
 
@@ -267,12 +267,16 @@ Stop rules:
 - **Complete (2026-07-28):** Decision Stop 4 passed. The authorized existing-proxy smoke completed three Guide turns and one separately confirmed draft: one paragraph-cited grounded answer, one labeled creative proposal with action preview, conservative `no_answer`, exact replay with no additional provider or usage work, 1-credit Guide and 3-credit draft metering, authenticated citation context, sibling-Saga/import exclusion, payload-free telemetry, zero canon writes, and zero synthetic residue. Both dispatch schedules and every function gateway-JWT setting were restored. The removable staging demo retains eight current vectors for manual testing; its World-scope worker path now omits a null `saga_id` when requesting a scoped JWT.
 - **Done when:** factual blocks cannot render without authorized paragraph citations, creative blocks cannot masquerade as canon, conversation cannot cross Saga scope, and every action follows its risk-appropriate GM review boundary.
 
-#### Packet E4 — Session Prep AI
+#### Packet E4 — Session Prep AI — complete 2026-07-30
 
-- Wire canon-only prep briefing, session suggestions, scene beats, complications, NPC candidates, and inline Quick Stub review.
-- Register the completed Prep task family as Guide tools without bypassing the dedicated Prepare workflow or its working-state confirmation path.
-- Keep ephemeral suggestions out of canon and preserve manual prep.
-- **Done when:** each task validates sources/quota and accepts only through the specified working-state path.
+- Add one recoverable Session-scoped invocation/job-state boundary over the E2 runner for canon-only briefing, session suggestions, scene beats, complications, NPC candidates, and Quick Stub review.
+- Freeze the current-Saga plus eligible World source/version allowlist before dispatch. Every generated item must carry valid citations; insufficient evidence produces no suggestion and reuses E3 `no_answer` treatment.
+- Keep provider results outside `sessions`, pins, Threads, entities, drafts, and canon. Preserve D4 manual Prep, local recovery, and optimistic concurrency through quota, retrieval, provider, validation, network, refresh, and restart failure.
+- Accept Session text/pin/Thread suggestions only by merging them into the live editor and completing the existing D4 autosave. A stale save leaves the result pending and the GM draft preserved.
+- Route an accepted NPC candidate through a separately preflighted `draft_entity_from_prompt` run and route accepted Quick Stub fleshing into a pending C5 update draft. Neither path creates or changes canon before explicit Approval Queue commit.
+- Add deterministic fixtures, strict per-task schemas/citations, prompt-injection cases, exact retry/metering proof, zero-write assertions, authenticated four-viewport/restart coverage, and a separately authorized hosted gate.
+- **Complete (2026-07-30):** all six Prep tasks run through one Session-scoped recoverable request/evidence/result projection over the E2 worker. Current-Saga and eligible-World evidence is frozen before provider delivery; every usable item validates citations and insufficiency remains non-writing. D4 autosave is the only accepted Prep-text write, stale saves keep the result pending, NPC/Quick Stub confirmations create only C5-reviewed drafts, and reject/dismiss/failure/quota paths preserve complete manual Prep. Clean replay, 845 pgTAP assertions, 138 web tests, 76 script/runtime tests, repository verification, deterministic retrieval evaluation, authenticated full workflow, fresh-server recovery, and four responsive viewport checks pass. No E4 hosted call was made; prior E2/E3 authorization was not reused.
+- **Done when:** all six task surfaces show frozen sources or explicit insufficiency, retries cannot duplicate provider work/charges, accepted Prep changes persist exactly once through D4, rejected/dismissed output has zero effects, Quick Stub changes use C5, and manual Prep remains complete without AI.
 
 #### Packet E5 — AI-assisted Saga creation
 
@@ -416,4 +420,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate next gate: **stop after E3**. Decision Stop 4 and the complete paid hosted Guide gate passed on 2026-07-28. Do not begin E4 in this work session; E4 requires a separate explicit start. D5 imported sources remain excluded unless a later explicit GM enrollment contract is added.
+Immediate next packet: **E5 — AI-assisted Saga creation**. E4 is complete locally with deterministic provider, authenticated browser, restart, responsive, and zero-automatic-write proof. No hosted E4 call was authorized or made; any later hosted smoke requires a fresh environment/model/fixture/attempt/cost/cleanup/rollback gate. D5 imported sources remain excluded unless a later explicit GM enrollment contract is added.

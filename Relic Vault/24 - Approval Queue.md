@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-21
+last_audited: 2026-07-30
 source_file: "Sourced - Downloaded - 260518/relic-approval-queue-spec-v0_5.md"
 ---
 
@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-approval-queue-spec-v0_5.md"
 ## 0. Scope
 
 The Approval Queue is the MVP trust surface. AI, import, and post-session outputs remain proposals until the GM approves, edits-and-approves, rejects, merges, or archives them. No canon mutation happens without explicit GM action.
+
+**Packet E4 boundary (July 2026).** Session Prep generation itself creates no draft. A GM-confirmed NPC candidate may invoke the separately metered entity-draft task, and a GM-confirmed Quick Stub proposal may create one source-linked update draft targeting the existing stub. Both enter the ordinary pending queue and remain non-canon until the existing C5 review and commit transaction succeeds; generation, preview, edit, reject, dismiss, retry, quota denial, or provider failure cannot create or alter canon.
 
 ## 1. Data source
 
