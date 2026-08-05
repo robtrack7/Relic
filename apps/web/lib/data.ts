@@ -620,10 +620,20 @@ export async function getUsageSummary(workspaceId: string) {
 export type SagaWorkshop = {
   id: string; workspace_id: string; world_id?: string | null; saga_id?: string | null; committed_session_id?: string | null;
   state: "in_progress" | "committed" | "abandoned";
+  phase: "planning" | "conversation" | "drafting" | "review" | "committed";
   generation_status: string; failure_category?: string | null; review_version: number;
+  conversation_version: number; conversation_step: number;
+  gm_message_count: number; total_message_count: number; gm_input_chars: number;
   draft_payload: Record<string, unknown>; conversation: Array<Record<string, unknown>>;
+  interview_plan: Record<string, unknown>; emerging_outline: Record<string, unknown>;
+  current_question?: Record<string, unknown> | null; can_draft: boolean;
+  saga_name?: string | null; world_name?: string | null; game_system?: string | null;
   quota?: Record<string, unknown>; updated_at: string;
   sources: Array<{ source_id: string; kind: string; title: string; excerpt: string }>;
+  regeneration_requests: Array<{
+    id: string; section_kind: string; target_temp_id?: string | null; base_review_version: number;
+    status: string; output_payload?: Record<string, unknown> | null; failure_category?: string | null; created_at: string;
+  }>;
 };
 
 export async function getSagaWorkshop(workshopId: string): Promise<SagaWorkshop | null> {

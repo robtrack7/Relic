@@ -243,6 +243,65 @@ button {
   overflow-wrap: anywhere;
 }
 
+.loom-workshop-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.loom-conversation,
+.loom-outline {
+  width: 100%;
+}
+
+.loom-message-list {
+  display: grid;
+  gap: 12px;
+  margin: 18px 0;
+  max-height: 58vh;
+  overflow: auto;
+}
+
+.loom-message {
+  border: 1px solid var(--stone-300);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  white-space: pre-wrap;
+}
+
+.loom-message.gm {
+  border-color: var(--verdigris);
+  margin-left: clamp(0px, 8vw, 64px);
+}
+
+.loom-message p,
+.loom-outline-item p {
+  margin-bottom: 0;
+}
+
+.loom-outline-item {
+  border-top: 1px solid var(--stone-300);
+  padding: 14px 0;
+}
+
+.loom-outline-item > span {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+}
+
+.loom-workshop-actions {
+  display: grid;
+  gap: 12px;
+}
+
+@media (max-width: 760px) {
+  .loom-workshop-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .auth-page,
 .public-page {
   min-height: 100vh;

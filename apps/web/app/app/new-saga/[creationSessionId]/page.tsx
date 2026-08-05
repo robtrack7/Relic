@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { SagaWorkshopReview } from "@/components/SagaWorkshopReview";
+import { SagaWorkshopConversation } from "@/components/SagaWorkshopConversation";
 import { getSagaWorkshop } from "@/lib/data";
 
 export default async function ResumeSagaCreationPage({
@@ -16,7 +17,9 @@ export default async function ResumeSagaCreationPage({
 
   return (
     <main className="auth-shell">
-      <SagaWorkshopReview workshop={workshop} error={query.error} />
+      {workshop.phase === "review" || workshop.phase === "committed" || workshop.state === "committed"
+        ? <SagaWorkshopReview workshop={workshop} error={query.error} />
+        : <SagaWorkshopConversation workshop={workshop} error={query.error} />}
     </main>
   );
 }

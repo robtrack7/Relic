@@ -28,6 +28,11 @@ const WORKSHOP_RELATIONSHIP_KINDS = new Set([
   "member-of", "located-at", "owns", "allied-with", "opposed-to", "related-to"
 ]);
 const WORKSHOP_TEMP_ID = /^[a-z][a-z0-9-]{1,48}$/;
+const WORKSHOP_TAG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const WORKSHOP_OUTLINE_FIELDS = new Set([
+  "premise", "tone", "central_conflict", "starting_place", "first_session_hook",
+  "characters", "factions", "threads", "gm_secrets"
+]);
 const GUIDE_INSUFFICIENCY_REASONS = new Set([
   "no_relevant_evidence",
   "evidence_conflict",
@@ -165,73 +170,249 @@ function validateSafeText(value: unknown, path: string, max: number, errors: str
   }
 }
 
+function validateWorkshopPlan(value: Record<string, unknown>): string[] {
+  const errors: string[] = [];
+  hasOnlyFields(value, new Set([
+    "summary", "detected_elements", "contradiction_flags", "questions", "confidence_reason"
+  ]), "output", errors);
+  validateSafeText(value.summary, "summary", 3000, errors);
+  if (!isRecord(value.detected_elements)) {
+    errors.push("detected_elements must be an object");
+  } else {
+    hasOnlyFields(value.detected_elements, WORKSHOP_OUTLINE_FIELDS, "detected_elements", errors);
+    for (const [field, candidate] of Object.entries(value.detected_elements)) {
+      if (["characters", "factions", "threads", "gm_secrets"].includes(field)) {
+        if (!Array.isArray(candidate) || candidate.length > 12
+          || candidate.some((entry) => !isString(entry) || entry.length > 500)) {
+          errors.push(`detected_elements.${field} must be a bounded string array`);
+        }
+      } else if (!isString(candidate) || candidate.length > 2000) {
+        errors.push(`detected_elements.${field} must be bounded text`);
+      }
+    }
+  }
+  if (!Array.isArray(value.contradiction_flags) || value.contradiction_flags.length > 5) {
+    errors.push("contradiction_flags must contain at most five items");
+  } else value.contradiction_flags.forEach((flag, index) => {
+    const path = `contradiction_flags[${index}]`;
+    if (!isRecord(flag)) return errors.push(`${path} must be an object`);
+    hasOnlyFields(flag, new Set(["field", "description"]), path, errors);
+    if (!isString(flag.field) || !WORKSHOP_OUTLINE_FIELDS.has(flag.field)) errors.push(`${path}.field is invalid`);
+    validateSafeText(flag.description, `${path}.description`, 500, errors);
+  });
+  const ids = new Set<string>();
+  if (!Array.isArray(value.questions) || value.questions.length < 3 || value.questions.length > 5) {
+    errors.push("questions must contain three to five items");
+  } else value.questions.forEach((question, index) => {
+    const path = `questions[${index}]`;
+    if (!isRecord(question)) return errors.push(`${path} must be an object`);
+    hasOnlyFields(question, new Set(["id", "prompt", "rationale", "outline_field"]), path, errors);
+    if (!isString(question.id) || !WORKSHOP_TEMP_ID.test(question.id) || ids.has(question.id)) {
+      errors.push(`${path}.id must be a unique stable identifier`);
+    } else ids.add(question.id);
+    validateSafeText(question.prompt, `${path}.prompt`, 500, errors);
+    validateSafeText(question.rationale, `${path}.rationale`, 500, errors);
+    if (!isString(question.outline_field) || !WORKSHOP_OUTLINE_FIELDS.has(question.outline_field)) {
+      errors.push(`${path}.outline_field is invalid`);
+    }
+  });
+  validateConfidence(value.confidence_reason, "output", errors);
+  return errors;
+}
+
+function validateWorkshopSection(taskRun: AiTaskRun, value: Record<string, unknown>): string[] {
+  const errors: string[] = [];
+  const allowed = new Set(taskRun.allowed_source_ids);
+  const expectedKind = String(taskRun.input_payload?.section_kind ?? "");
+  const expectedTarget = taskRun.input_payload?.target_temp_id;
+  hasOnlyFields(value, new Set(["section_kind", "target_temp_id", "replacement", "confidence_reason"]), "output", errors);
+  if (!new Set(["saga", "world_updates", "entity", "relationships", "gm_secrets", "session_1_prep"]).has(String(value.section_kind))
+    || value.section_kind !== expectedKind) errors.push("section_kind must match the requested section");
+  if (expectedKind === "entity") {
+    if (!isString(value.target_temp_id) || value.target_temp_id !== expectedTarget) errors.push("target_temp_id must match the requested entity");
+  } else if (value.target_temp_id !== undefined) errors.push("target_temp_id is only permitted for entity regeneration");
+  const replacement = value.replacement;
+  if (expectedKind === "saga") {
+    if (!isRecord(replacement)) errors.push("replacement must be a Saga object");
+    else {
+      hasOnlyFields(replacement, new Set(["name", "premise", "tone", "central_conflict", "first_session_hook", "game_system"]), "replacement", errors);
+      validateSafeText(replacement.name, "replacement.name", 120, errors);
+      validateSafeText(replacement.premise, "replacement.premise", 3000, errors);
+      validateSafeText(replacement.tone, "replacement.tone", 500, errors);
+      validateSafeText(replacement.central_conflict, "replacement.central_conflict", 1500, errors);
+      validateSafeText(replacement.first_session_hook, "replacement.first_session_hook", 1500, errors);
+      if (replacement.game_system !== null && replacement.game_system !== undefined) validateSafeText(replacement.game_system, "replacement.game_system", 120, errors);
+    }
+  } else if (expectedKind === "world_updates") {
+    if (!isRecord(replacement)) errors.push("replacement must be a World update object");
+    else {
+      hasOnlyFields(replacement, new Set(["summary", "world_ai_context"]), "replacement", errors);
+      if (replacement.summary !== undefined) validateSafeText(replacement.summary, "replacement.summary", 2000, errors);
+      if (replacement.world_ai_context !== undefined) validateSafeText(replacement.world_ai_context, "replacement.world_ai_context", 5000, errors);
+    }
+  } else if (expectedKind === "entity") {
+    if (!isRecord(replacement)) errors.push("replacement must be an entity object");
+    else {
+      hasOnlyFields(replacement, new Set(["temp_id", "entity_type", "name", "summary", "narrative", "gm_notes", "status", "tags", "is_stub", "proposed_scope", "sources"]), "replacement", errors);
+      if (replacement.temp_id !== expectedTarget || !isString(replacement.temp_id)) errors.push("replacement.temp_id must preserve the entity target");
+      if (!isString(replacement.entity_type) || !GUIDE_ENTITY_TYPES.has(replacement.entity_type)) errors.push("replacement.entity_type is invalid");
+      validateSafeText(replacement.name, "replacement.name", 200, errors);
+      validateSafeText(replacement.summary, "replacement.summary", 500, errors);
+      validateSafeText(replacement.narrative, "replacement.narrative", 5000, errors);
+      if (replacement.gm_notes !== undefined && replacement.gm_notes !== "") validateSafeText(replacement.gm_notes, "replacement.gm_notes", 2000, errors);
+      if (replacement.status !== undefined) validateSafeText(replacement.status, "replacement.status", 80, errors);
+      if (!Array.isArray(replacement.tags) || replacement.tags.length > 12 || replacement.tags.some((tag) => !isString(tag) || !WORKSHOP_TAG.test(tag))) errors.push("replacement.tags are invalid");
+      if (typeof replacement.is_stub !== "boolean") errors.push("replacement.is_stub must be boolean");
+      if (replacement.proposed_scope !== "saga") errors.push("replacement.proposed_scope must remain saga");
+      validateSourceIds(replacement.sources, "replacement", errors, allowed);
+    }
+  } else if (expectedKind === "relationships") {
+    if (!Array.isArray(replacement) || replacement.length > 20) errors.push("replacement must be a bounded relationship array");
+    else replacement.forEach((entry, index) => {
+      const path = `replacement[${index}]`;
+      if (!isRecord(entry)) return errors.push(`${path} must be an object`);
+      hasOnlyFields(entry, new Set(["source_temp_id", "target_temp_id", "kind", "notes", "sources"]), path, errors);
+      if (!isString(entry.source_temp_id) || !WORKSHOP_TEMP_ID.test(entry.source_temp_id)) errors.push(`${path}.source_temp_id is invalid`);
+      if (!isString(entry.target_temp_id) || !WORKSHOP_TEMP_ID.test(entry.target_temp_id)) errors.push(`${path}.target_temp_id is invalid`);
+      if (!isString(entry.kind) || !WORKSHOP_RELATIONSHIP_KINDS.has(entry.kind)) errors.push(`${path}.kind is invalid`);
+      if (entry.notes !== undefined) validateSafeText(entry.notes, `${path}.notes`, 500, errors);
+      validateSourceIds(entry.sources, path, errors, allowed);
+    });
+  } else if (expectedKind === "gm_secrets") {
+    if (!Array.isArray(replacement) || replacement.length < 1 || replacement.length > 5) errors.push("replacement must contain one to five GM secrets");
+    else replacement.forEach((entry, index) => {
+      const path = `replacement[${index}]`;
+      if (!isRecord(entry)) return errors.push(`${path} must be an object`);
+      hasOnlyFields(entry, new Set(["text", "sources"]), path, errors);
+      validateSafeText(entry.text, `${path}.text`, 1000, errors);
+      validateSourceIds(entry.sources, path, errors, allowed);
+    });
+  } else if (expectedKind === "session_1_prep") {
+    if (!isRecord(replacement)) errors.push("replacement must be a Session 1 prep object");
+    else {
+      hasOnlyFields(replacement, new Set(["objective", "opening_scene", "scene_notes", "prep_checklist", "pinned_temp_ids", "active_thread_temp_ids"]), "replacement", errors);
+      validateSafeText(replacement.objective, "replacement.objective", 1000, errors);
+      validateSafeText(replacement.opening_scene, "replacement.opening_scene", 3000, errors);
+      validateSafeText(replacement.scene_notes, "replacement.scene_notes", 5000, errors);
+      if (!Array.isArray(replacement.prep_checklist) || replacement.prep_checklist.length < 3 || replacement.prep_checklist.length > 5) errors.push("replacement.prep_checklist requires three to five items");
+      else replacement.prep_checklist.forEach((entry, index) => {
+        const path = `replacement.prep_checklist[${index}]`;
+        if (!isRecord(entry)) return errors.push(`${path} must be an object`);
+        hasOnlyFields(entry, new Set(["text", "sources"]), path, errors);
+        validateSafeText(entry.text, `${path}.text`, 300, errors);
+        validateSourceIds(entry.sources, path, errors, allowed);
+      });
+      for (const field of ["pinned_temp_ids", "active_thread_temp_ids"] as const) {
+        if (!Array.isArray(replacement[field]) || replacement[field].some((id) => !isString(id) || !WORKSHOP_TEMP_ID.test(id))) errors.push(`replacement.${field} is invalid`);
+      }
+    }
+  }
+  validateConfidence(value.confidence_reason, "output", errors);
+  return errors;
+}
+
 function validateWorkshopScaffold(taskRun: AiTaskRun, value: Record<string, unknown>): string[] {
   const errors: string[] = [];
   const allowed = new Set(taskRun.allowed_source_ids);
   hasOnlyFields(value, new Set([
-    "saga", "entities", "relationships", "session_1_prep", "duplicate_warnings", "confidence_reason"
+    "saga", "world_updates", "gm_secrets", "entities", "relationships", "session_1_prep",
+    "duplicate_warnings", "confidence_reason"
   ]), "output", errors);
   if (!isRecord(value.saga)) errors.push("saga must be an object");
   else {
-    hasOnlyFields(value.saga, new Set(["name", "premise", "game_system"]), "saga", errors);
+    hasOnlyFields(value.saga, new Set([
+      "name", "premise", "tone", "central_conflict", "first_session_hook", "game_system"
+    ]), "saga", errors);
     validateSafeText(value.saga.name, "saga.name", 120, errors);
     validateSafeText(value.saga.premise, "saga.premise", 3000, errors);
+    validateSafeText(value.saga.tone, "saga.tone", 500, errors);
+    validateSafeText(value.saga.central_conflict, "saga.central_conflict", 1500, errors);
+    validateSafeText(value.saga.first_session_hook, "saga.first_session_hook", 1500, errors);
     if (value.saga.game_system !== null && value.saga.game_system !== undefined) {
       validateSafeText(value.saga.game_system, "saga.game_system", 120, errors);
     }
   }
+  if (value.world_updates !== undefined) {
+    if (!isRecord(value.world_updates)) errors.push("world_updates must be an object");
+    else {
+      hasOnlyFields(value.world_updates, new Set(["summary", "world_ai_context"]), "world_updates", errors);
+      if (value.world_updates.summary !== undefined) validateSafeText(value.world_updates.summary, "world_updates.summary", 2000, errors);
+      if (value.world_updates.world_ai_context !== undefined) validateSafeText(value.world_updates.world_ai_context, "world_updates.world_ai_context", 5000, errors);
+    }
+  }
+  if (!Array.isArray(value.gm_secrets) || value.gm_secrets.length < 1 || value.gm_secrets.length > 5) {
+    errors.push("gm_secrets must contain one to five items");
+  } else value.gm_secrets.forEach((secret, index) => {
+    const path = `gm_secrets[${index}]`;
+    if (!isRecord(secret)) return errors.push(`${path} must be an object`);
+    hasOnlyFields(secret, new Set(["text", "sources"]), path, errors);
+    validateSafeText(secret.text, `${path}.text`, 1000, errors);
+    validateSourceIds(secret.sources, path, errors, allowed);
+  });
   const ids = new Set<string>();
   const types = new Map<string, string>();
-  if (!Array.isArray(value.entities) || value.entities.length < 4 || value.entities.length > 12) {
-    errors.push("entities must contain four to twelve items");
+  if (!Array.isArray(value.entities) || value.entities.length < 6 || value.entities.length > 14) {
+    errors.push("entities must contain six to fourteen items");
   } else value.entities.forEach((entry, index) => {
     const path = `entities[${index}]`;
     if (!isRecord(entry)) return errors.push(`${path} must be an object`);
     hasOnlyFields(entry, new Set([
-      "temp_id", "entity_type", "name", "summary", "narrative", "gm_notes", "is_stub", "sources"
+      "temp_id", "entity_type", "name", "summary", "narrative", "gm_notes", "status", "tags",
+      "is_stub", "proposed_scope", "sources"
     ]), path, errors);
     if (!isString(entry.temp_id) || !WORKSHOP_TEMP_ID.test(entry.temp_id)) errors.push(`${path}.temp_id is invalid`);
     else if (ids.has(entry.temp_id)) errors.push(`${path}.temp_id must be unique`);
     else { ids.add(entry.temp_id); types.set(entry.temp_id, String(entry.entity_type)); }
     if (!isString(entry.entity_type) || !GUIDE_ENTITY_TYPES.has(entry.entity_type)) errors.push(`${path}.entity_type is invalid`);
     validateSafeText(entry.name, `${path}.name`, 200, errors);
-    validateSafeText(entry.summary, `${path}.summary`, 1000, errors);
+    validateSafeText(entry.summary, `${path}.summary`, 500, errors);
     validateSafeText(entry.narrative, `${path}.narrative`, 5000, errors);
     if (entry.gm_notes !== undefined && entry.gm_notes !== "") validateSafeText(entry.gm_notes, `${path}.gm_notes`, 2000, errors);
+    if (entry.status !== undefined) validateSafeText(entry.status, `${path}.status`, 80, errors);
+    if (!Array.isArray(entry.tags) || entry.tags.length > 12
+      || entry.tags.some((tag) => !isString(tag) || tag.length > 50 || !WORKSHOP_TAG.test(tag))) {
+      errors.push(`${path}.tags must be lowercase hyphenated strings`);
+    }
     if (typeof entry.is_stub !== "boolean") errors.push(`${path}.is_stub must be boolean`);
+    if (entry.proposed_scope !== "saga") errors.push(`${path}.proposed_scope must be saga`);
     validateSourceIds(entry.sources, path, errors, allowed);
   });
-  if (Array.isArray(value.entities) && !value.entities.some((entry) => isRecord(entry) && entry.entity_type === "thread")) {
-    errors.push("entities must include at least one Thread");
+  if (Array.isArray(value.entities)) {
+    const counts = Object.fromEntries([...GUIDE_ENTITY_TYPES].map((type) => [type, 0])) as Record<string, number>;
+    value.entities.forEach((entry) => { if (isRecord(entry) && typeof entry.entity_type === "string") counts[entry.entity_type] = (counts[entry.entity_type] ?? 0) + 1; });
+    if (counts.place !== 1) errors.push("entities must include exactly one starting Place");
+    if (counts.character < 3 || counts.character > 6) errors.push("entities must include three to six Characters");
+    if (counts.faction < 1 || counts.faction > 3) errors.push("entities must include one to three Factions");
+    if (counts.thread < 1 || counts.thread > 3) errors.push("entities must include one to three Threads");
   }
   if (!Array.isArray(value.relationships) || value.relationships.length > 20) errors.push("relationships must be a bounded array");
   else value.relationships.forEach((entry, index) => {
     const path = `relationships[${index}]`;
     if (!isRecord(entry)) return errors.push(`${path} must be an object`);
-    hasOnlyFields(entry, new Set(["from_temp_id", "to_temp_id", "kind", "summary", "sources"]), path, errors);
-    if (!isString(entry.from_temp_id) || !ids.has(entry.from_temp_id)) errors.push(`${path}.from_temp_id is unknown`);
-    if (!isString(entry.to_temp_id) || !ids.has(entry.to_temp_id)) errors.push(`${path}.to_temp_id is unknown`);
+    hasOnlyFields(entry, new Set(["source_temp_id", "target_temp_id", "kind", "notes", "sources"]), path, errors);
+    if (!isString(entry.source_temp_id) || !ids.has(entry.source_temp_id)) errors.push(`${path}.source_temp_id is unknown`);
+    if (!isString(entry.target_temp_id) || !ids.has(entry.target_temp_id)) errors.push(`${path}.target_temp_id is unknown`);
     if (!isString(entry.kind) || !WORKSHOP_RELATIONSHIP_KINDS.has(entry.kind)) errors.push(`${path}.kind is invalid`);
-    if (entry.summary !== undefined) validateSafeText(entry.summary, `${path}.summary`, 500, errors);
+    if (entry.notes !== undefined) validateSafeText(entry.notes, `${path}.notes`, 500, errors);
     validateSourceIds(entry.sources, path, errors, allowed);
   });
   if (!isRecord(value.session_1_prep)) errors.push("session_1_prep must be an object");
   else {
     const prep = value.session_1_prep;
     hasOnlyFields(prep, new Set([
-      "objective", "opening_scene", "scene_notes", "checklist", "pinned_entity_temp_ids", "active_thread_temp_ids"
+      "objective", "opening_scene", "scene_notes", "prep_checklist", "pinned_temp_ids", "active_thread_temp_ids"
     ]), "session_1_prep", errors);
     validateSafeText(prep.objective, "session_1_prep.objective", 1000, errors);
     validateSafeText(prep.opening_scene, "session_1_prep.opening_scene", 3000, errors);
     validateSafeText(prep.scene_notes, "session_1_prep.scene_notes", 5000, errors);
-    if (!Array.isArray(prep.checklist) || prep.checklist.length < 3 || prep.checklist.length > 5) errors.push("session_1_prep.checklist requires three to five items");
-    else prep.checklist.forEach((item, index) => {
-      if (!isRecord(item)) return errors.push(`session_1_prep.checklist[${index}] must be an object`);
-      hasOnlyFields(item, new Set(["text", "sources"]), `session_1_prep.checklist[${index}]`, errors);
-      validateSafeText(item.text, `session_1_prep.checklist[${index}].text`, 300, errors);
-      validateSourceIds(item.sources, `session_1_prep.checklist[${index}]`, errors, allowed);
+    if (!Array.isArray(prep.prep_checklist) || prep.prep_checklist.length < 3 || prep.prep_checklist.length > 5) errors.push("session_1_prep.prep_checklist requires three to five items");
+    else prep.prep_checklist.forEach((item, index) => {
+      if (!isRecord(item)) return errors.push(`session_1_prep.prep_checklist[${index}] must be an object`);
+      hasOnlyFields(item, new Set(["text", "sources"]), `session_1_prep.prep_checklist[${index}]`, errors);
+      validateSafeText(item.text, `session_1_prep.prep_checklist[${index}].text`, 300, errors);
+      validateSourceIds(item.sources, `session_1_prep.prep_checklist[${index}]`, errors, allowed);
     });
-    for (const field of ["pinned_entity_temp_ids", "active_thread_temp_ids"] as const) {
+    for (const field of ["pinned_temp_ids", "active_thread_temp_ids"] as const) {
       if (!Array.isArray(prep[field]) || prep[field].some((id) => !isString(id) || !ids.has(id))) errors.push(`session_1_prep.${field} contains an unknown temp id`);
     }
     if (Array.isArray(prep.active_thread_temp_ids) && prep.active_thread_temp_ids.some((id) => types.get(String(id)) !== "thread")) errors.push("active_thread_temp_ids may reference Threads only");
@@ -240,10 +421,10 @@ function validateWorkshopScaffold(taskRun: AiTaskRun, value: Record<string, unkn
   else value.duplicate_warnings.forEach((warning, index) => {
     const path = `duplicate_warnings[${index}]`;
     if (!isRecord(warning)) return errors.push(`${path} must be an object`);
-    hasOnlyFields(warning, new Set(["candidate_temp_id", "possible_match", "reason", "sources"]), path, errors);
-    if (!isString(warning.candidate_temp_id) || !ids.has(warning.candidate_temp_id)) errors.push(`${path}.candidate_temp_id is unknown`);
-    validateSafeText(warning.possible_match, `${path}.possible_match`, 200, errors);
+    hasOnlyFields(warning, new Set(["name", "reason", "target_entity_id", "sources"]), path, errors);
+    validateSafeText(warning.name, `${path}.name`, 200, errors);
     validateSafeText(warning.reason, `${path}.reason`, 500, errors);
+    if (warning.target_entity_id !== undefined && !isUuid(warning.target_entity_id)) errors.push(`${path}.target_entity_id must be a UUID`);
     validateSourceIds(warning.sources, path, errors, allowed);
   });
   validateConfidence(value.confidence_reason, "output", errors);
@@ -850,8 +1031,16 @@ export function validateTaskOutput(taskRun: AiTaskRun, output: unknown): Validat
   const errors: string[] = [];
   const value = base.output;
 
+  if (taskRun.task_name === "plan_saga_workshop") {
+    errors.push(...validateWorkshopPlan(value));
+  }
+
   if (taskRun.task_name === "scaffold_saga") {
     errors.push(...validateWorkshopScaffold(taskRun, value));
+  }
+
+  if (taskRun.task_name === "regenerate_saga_scaffold_section") {
+    errors.push(...validateWorkshopSection(taskRun, value));
   }
 
   if (taskRun.task_name === "draft_entity_from_prompt") {

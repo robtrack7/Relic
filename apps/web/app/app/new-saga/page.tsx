@@ -1,4 +1,5 @@
 import { createBlankSagaAction, createSagaWorkshopAction } from "@/app/actions";
+import { ResumeSagaWorkshopCard, type ResumableSagaWorkshop } from "@/components/ResumeSagaWorkshopCard";
 import { requireUser } from "@/lib/data";
 
 export default async function NewSagaPage({ searchParams }: { searchParams: Promise<{ error?: string; workspaceId?: string; worldId?: string; lifecycleNotice?: string }> }) {
@@ -11,6 +12,7 @@ export default async function NewSagaPage({ searchParams }: { searchParams: Prom
   const { data: bootstrap, error: bootstrapError } = await supabase.rpc("get_bootstrap_context");
   if (bootstrapError) throw new Error(bootstrapError.message);
   const savedProfile = ((bootstrap as { gm_profile?: Record<string, unknown> | null } | null)?.gm_profile ?? null);
+  const resumableWorkshop = ((bootstrap as { resumable_workshop_session?: ResumableSagaWorkshop | null } | null)?.resumable_workshop_session ?? null);
   const hasSavedProfile = Boolean(savedProfile);
   const experienceLevel = String(savedProfile?.experience_level ?? "returning");
   const improvComfort = String(savedProfile?.improv_comfort ?? "mixed");
@@ -27,6 +29,7 @@ export default async function NewSagaPage({ searchParams }: { searchParams: Prom
         <p className="muted">Let the Loom assemble a complete, cited draft in the background, or begin manually. Nothing becomes canon until you review and commit it.</p>
         {params.error ? <p className="danger-note">{params.error}</p> : null}
         {params.lifecycleNotice === "delete_pending" ? <p className="notice">Saga deletion is underway. Create another Saga when you are ready.</p> : null}
+        {resumableWorkshop ? <ResumeSagaWorkshopCard workshop={resumableWorkshop} /> : null}
         <form className="form-stack">
           <input type="hidden" name="targetWorkspaceId" value={targetWorkspaceId} />
           <input type="hidden" name="workshopId" value={crypto.randomUUID()} />

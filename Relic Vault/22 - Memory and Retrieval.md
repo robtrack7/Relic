@@ -45,6 +45,8 @@ Vectors remain a durable retrieval index for eligible canon, approved summaries,
 
 **v0.9 (May 2026).** Aligns with standalone AI Task Registry v1.0. Makes `sanctum_grounding` and `sanctum_qa_grounding` explicit task profiles, adds a task-to-profile mapping, and keeps `compose_prep_briefing` hard canon-only.
 
+**Packet E5.2 workshop retrieval patch (August 2026).** Adds the previously runtime-only `workshop_grounding` profile to active canon. `plan_saga_workshop`, `scaffold_saga`, and `regenerate_saga_scaffold_section` all consume the same frozen GM-input plus eligible-World evidence boundary before a Saga exists; conversation history may guide interpretation but only frozen GM input and allowlisted World sources are citable evidence.
+
 **v0.8 (May 2026).** Priority 7 closeout. Confirms all AI Task Registry v0.8 retrieval profiles exist, adds `sanctum_qa_grounding`, clarifies Approval Queue search is a direct `drafts` query rather than `search_for_ui`, and reaffirms scope filters for Workspace/World/Saga with sibling-Saga exclusion.
 
 
@@ -380,6 +382,7 @@ Registered in code alongside the AI Task Registry. Initial set:
 
 | Profile | top_k | Defaults |
 |---|---|---|
+| `workshop_grounding` | Up to 11 frozen items | One immutable normalized `workshop_input` source plus at most ten eligible `scope='world'` canon sources from the selected World. No Saga is required. Browser-supplied scope or source IDs are ignored. Consumers: `plan_saga_workshop`, `scaffold_saga`, and `regenerate_saga_scaffold_section`. |
 | `session_prep_grounding` | 20 default; 15 for briefing/NPC/beat/quick-stub overrides | `canon_only=true`, include `note_type=summary`, recency tie-break. Consumers: `generate_session_prep`, `compose_prep_briefing`, `propose_scene_beats`, `propose_npc_for_scene`, and `draft_entity_from_prompt` when invoked from session prep AI Quick Stub. |
 | `sanctum_grounding` | 12 default | Alias profile for non-prep Sanctum AI assists that need canon neighbors, recent summaries, and related entities. Consumers: `draft_entity_from_prompt` default path and `propose_thread_complication`. |
 | `sanctum_qa_grounding` | 20 | `canon_only=true`, hybrid retrieval, include approved lore and summary notes, exclude `gm_note` and `quick_capture` by default. Consumer: `answer_saga_question`. |
@@ -395,7 +398,9 @@ Adding a profile = adding a registry entry. No retrieval-layer code change.
 
 | Registry task | Retrieval profile |
 |---|---|
-| `scaffold_saga` | `none` for new World/Saga; `session_prep_grounding` when adding scaffold to existing canon |
+| `plan_saga_workshop` | `workshop_grounding` over initial frozen input plus eligible World canon |
+| `scaffold_saga` | `workshop_grounding` over the final frozen GM conversation plus eligible World canon |
+| `regenerate_saga_scaffold_section` | `workshop_grounding` plus the server-selected current review section; unrelated sections are not output targets |
 | `draft_entity_from_prompt` | `sanctum_grounding` default; `session_prep_grounding` for prep quick-stub path |
 | `generate_session_prep` | `session_prep_grounding` |
 | `compose_prep_briefing` | `session_prep_grounding` with hard `canon_only=true`, `top_k=15`, `note_types=['summary']` |

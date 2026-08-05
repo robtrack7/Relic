@@ -222,12 +222,14 @@ select has_function('public', 'preflight_ai_task', array['uuid','uuid','uuid','u
 select has_function('internal', 'validate_ai_source_ids', array['uuid[]','jsonb'], 'AI source validator exists');
 select has_function('internal', 'record_ai_task_output', array['uuid','jsonb','uuid[]'], 'AI output writer exists');
 
-select is((select count(*) from pg_temp.module9_contract_rows()), 10::bigint, 'registry includes all ten MVP AI tasks');
+select is((select count(*) from pg_temp.module9_contract_rows()), 12::bigint, 'registry includes all twelve MVP AI tasks');
 
 select set_eq(
   $$ select task_name from pg_temp.module9_contract_rows() $$,
   $$ values
+    ('plan_saga_workshop'),
     ('scaffold_saga'),
+    ('regenerate_saga_scaffold_section'),
     ('draft_entity_from_prompt'),
     ('generate_session_prep'),
     ('compose_prep_briefing'),
@@ -237,16 +239,17 @@ select set_eq(
     ('propose_npc_for_scene'),
     ('answer_saga_question'),
     ('propose_quick_stub_fleshing') $$,
-  'registry task names match AI Task Registry v1.0'
+  'registry task names match the active AI Task Registry'
 );
 
 select ok(not exists (
   select 1
   from pg_temp.module9_contract_rows()
   where (
-       task_name in ('answer_saga_question', 'scaffold_saga', 'draft_entity_from_prompt')
+       task_name in ('answer_saga_question', 'draft_entity_from_prompt')
        and prompt_version <> task_name || '@1.1.0'
      )
+     or (task_name = 'scaffold_saga' and prompt_version <> 'scaffold_saga@1.2.0')
      or (
        task_name not in ('answer_saga_question', 'scaffold_saga', 'draft_entity_from_prompt')
        and prompt_version !~ ('^' || task_name || '@1\.0\.0$')
@@ -255,7 +258,7 @@ select ok(not exists (
      or model_tier not in ('relic-fast', 'relic-balanced', 'relic-deep')
      or retrieval_profile not in ('none', 'workshop_grounding', 'session_prep_grounding', 'sanctum_grounding', 'sanctum_qa_grounding', 'post_session_synthesis')
      or source_policy not in ('canon_only', 'canon_plus_untrusted_input', 'untrusted_input_only', 'none')
-     or output_mode not in ('workshop_draft_payload', 'draft', 'prep_suggestions', 'prep_briefing', 'draft_batch', 'ephemeral')
+     or output_mode not in ('workshop_interview_plan', 'workshop_draft_payload', 'workshop_section_draft', 'draft', 'prep_suggestions', 'prep_briefing', 'draft_batch', 'ephemeral')
      or active is not true
 ), 'every registry task has a valid prompt/version/quota/model/retrieval/source/output contract');
 

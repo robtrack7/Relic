@@ -266,6 +266,94 @@ export async function saveSagaWorkshopAction(formData: FormData) {
   return { ok: true, reviewVersion: Number(data?.review_version ?? expectedVersion + 1) };
 }
 
+export async function answerSagaWorkshopAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const workshopId = value(formData, "workshopId");
+  const { data, error } = await supabase.rpc("answer_saga_workshop_question", {
+    p_workshop_id: workshopId,
+    p_expected_conversation_version: Number(value(formData, "conversationVersion")),
+    p_answer: rawValue(formData, "answer"),
+    p_idempotency_key: value(formData, "idempotencyKey")
+  });
+  if (error) return { ok: false, category: error.code === "40001" ? "stale" : "answer_failed", message: error.message };
+  revalidatePath(`/app/new-saga/${workshopId}`);
+  return { ok: true, conversationVersion: Number(data?.conversation_version), replayed: Boolean(data?.replayed) };
+}
+
+export async function draftSagaWorkshopAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const workshopId = value(formData, "workshopId");
+  const { data, error } = await supabase.rpc("dispatch_saga_workshop_draft", {
+    p_workshop_id: workshopId,
+    p_expected_conversation_version: Number(value(formData, "conversationVersion")),
+    p_idempotency_key: value(formData, "idempotencyKey")
+  });
+  if (error) return { ok: false, category: error.code === "40001" ? "stale" : "draft_failed", message: error.message };
+  const result = data as { run_id?: string | null; allowed?: boolean; message?: string } | null;
+  if (result?.run_id && process.env.INTERNAL_TOKEN) {
+    after(async () => {
+      await fetch(`${getSupabaseUrl()}/functions/v1/ai-task-runner`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${process.env.INTERNAL_TOKEN}`, "content-type": "application/json" },
+        body: JSON.stringify({ run_id: result.run_id }),
+        cache: "no-store"
+      }).catch(() => undefined);
+    });
+  }
+  revalidatePath(`/app/new-saga/${workshopId}`);
+  return { ok: Boolean(result?.allowed), queued: Boolean(result?.run_id), message: result?.message ?? null };
+}
+
+export async function requestSagaWorkshopRegenerationAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const workshopId = value(formData, "workshopId");
+  const targetTempId = value(formData, "targetTempId") || null;
+  const { data, error } = await supabase.rpc("request_saga_workshop_regeneration", {
+    p_workshop_id: workshopId,
+    p_expected_version: Number(value(formData, "expectedVersion")),
+    p_section_kind: value(formData, "sectionKind"),
+    p_target_temp_id: targetTempId,
+    p_idempotency_key: value(formData, "idempotencyKey")
+  });
+  if (error) return { ok: false, category: error.code === "40001" ? "stale" : "request_failed", message: error.message };
+  const result = data as { request_id?: string; run_id?: string | null; allowed?: boolean; message?: string } | null;
+  if (result?.run_id && process.env.INTERNAL_TOKEN) {
+    after(async () => {
+      await fetch(`${getSupabaseUrl()}/functions/v1/ai-task-runner`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${process.env.INTERNAL_TOKEN}`, "content-type": "application/json" },
+        body: JSON.stringify({ run_id: result.run_id }),
+        cache: "no-store"
+      }).catch(() => undefined);
+    });
+  }
+  revalidatePath(`/app/new-saga/${workshopId}`);
+  return { ok: Boolean(result?.allowed), requestId: result?.request_id, queued: Boolean(result?.run_id), message: result?.message ?? null };
+}
+
+export async function reviewSagaWorkshopRegenerationAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const workshopId = value(formData, "workshopId");
+  const { data, error } = await supabase.rpc("review_saga_workshop_regeneration", {
+    p_workshop_id: workshopId,
+    p_request_id: value(formData, "requestId"),
+    p_expected_version: Number(value(formData, "expectedVersion")),
+    p_action: value(formData, "reviewAction"),
+    p_review_key: value(formData, "reviewKey")
+  });
+  if (error) return { ok: false, category: error.code === "40001" ? "stale" : "review_failed", message: error.message };
+  revalidatePath(`/app/new-saga/${workshopId}`);
+  return { ok: true, reviewVersion: Number(data?.review_version), action: String(data?.action ?? "") };
+}
+
+export async function abandonSagaWorkshopAction(workshopId: string) {
+  const { supabase } = await requireActionUser();
+  const { error } = await supabase.rpc("abandon_saga_workshop", { p_workshop_id: workshopId });
+  if (error) return { ok: false, message: error.message };
+  revalidatePath("/app/new-saga");
+  return { ok: true };
+}
+
 export async function commitSagaWorkshopAction(formData: FormData) {
   const { supabase } = await requireActionUser();
   const workshopId = value(formData, "workshopId");

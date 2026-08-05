@@ -81,3 +81,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-07-30 - Packet E4 Session Prep AI]]
 - [[Session Logs/2026-07-31 - Packet E5 Loom Live Gate]]
 - [[Session Logs/2026-08-04 - Phase E Loom Plan and E5.1 Profile Correctness]]
+- [[Session Logs/2026-08-04 - E5.2 Conversational Loom Workshop]]

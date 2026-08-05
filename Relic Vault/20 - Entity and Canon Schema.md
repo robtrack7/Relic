@@ -26,6 +26,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 
 ## Changelog
 
+**Packet E5.2 conversational workshop patch (August 2026).** `workshop_sessions` now carries a server-owned phase, one bounded interview plan, an emerging outline, message counters, and the current task run. A private idempotency-receipt table serializes each GM turn and draft dispatch. The initial planning run may read the starting workshop input; the deep scaffold run freezes the complete normalized GM conversation before dispatch. Neither run may create canon. `sagas.creation_context` stores reviewed tone, conflict, first hook, GM secrets, and any existing-World update proposal; it is GM-private setup context and is excluded from embeddings and ordinary player-facing projections.
+
 **Packet E5 agentic Saga workshop patch (July 2026).** `workshop_sessions` becomes the recoverable GM-owned working boundary for Build with AI and Bring your notes. A correlated `scaffold_saga` run may persist immutable input/eligible-World evidence, generation state, and a mutable review payload, but cannot create a World, Saga, entity, relationship, Session, source, draft, audit row, or canon before explicit `Commit saga`. Commit locks the workshop/version, creates the selected hierarchy and Saga-scoped records transactionally, materializes the frozen workshop inputs as `workshop_input` sources, creates approved synthetic drafts/audit provenance, and attaches the workshop to the new Saga. Exact commit replay returns the same receipt; generation/retry/review never commits automatically.
 
 **Packet E4 Session Prep AI patch (July 2026).** Adds private Session-scoped Prep AI request and immutable evidence snapshot rows correlated to one `ai_task_run`. These rows are recoverable operational/review state, not canon or Session Prep fields. Provider completion cannot update `sessions`, pins, Threads, entities, drafts, or canon. Explicit Prep-text acceptance records the exact newer D4 autosave version; explicit NPC/Quick Stub review may create only a pending C5 draft. Idempotency keys bind task, input, Session, and Prep version, while stale completion and changed-key reuse fail closed.
@@ -263,6 +265,7 @@ Playable campaign/storyline inside a World.
 | `starts_at_index` | bigint | V1-ready machine chronology start |
 | `display_start_date` | text | Lore-facing start date string |
 | `gm_profile_override` | jsonb | Null = use user default. Same shape as `gm_profiles`. |
+| `creation_context` | jsonb not null default `'{}'` | Reviewed private setup: `tone`, `central_conflict`, `first_session_hook`, `gm_secrets`, and optional `world_update_proposal`. Excluded from embeddings, ordinary search, and player-facing projections. |
 | `audio_retention` | text default `'delete_after_transcription'` | or `'retain'` |
 | `transcript_retention` | text default `'retain'` | or `'delete_after_synthesis'` |
 | `entity_count_cache` | int default 0 | Maintained by trigger. 500 soft / 1000 hard warning thresholds. Saga-scoped count. |
@@ -1087,6 +1090,13 @@ create table workshop_sessions (
   path                    workshop_path not null,
   gm_profile_snapshot     jsonb not null,
   conversation            jsonb default '[]',   -- [{role, content, timestamp}]
+  interview_plan          jsonb default '{}',   -- one validated 3-5-question plan
+  emerging_outline        jsonb default '{}',   -- deterministic answer-to-field projection
+  workshop_phase          text default 'planning', -- planning | conversation | drafting | review | committed
+  conversation_step       int default 0,
+  gm_message_count        int default 0,
+  total_message_count     int default 0,
+  ai_task_run_id          uuid,
   draft_payload           jsonb default '{}',   -- accumulating entities
   state                   workshop_state default 'in_progress',
   created_at              timestamptz default now(),
@@ -1096,7 +1106,11 @@ create index on workshop_sessions (user_id, state);
 create index on workshop_sessions (workspace_id, world_id, saga_id) where saga_id is not null;
 ```
 
-**Commit flow:** The review screen IS the approval moment. On commit, entities are INSERTed directly into entity tables with `created_by='gm_via_ai_approval'`, synthetic `sources` rows (`kind='workshop_input'`), and synthetic `drafts` (immediately resolved as `approved`) for the audit trail. No second queue.
+`internal.workshop_turn_receipts` stores `(workshop_id, user_id, idempotency_key, action, input_hash, result)` with one unique receipt per user/workshop key. It is not Data API-visible. Turn RPCs lock only the owning workshop row, validate expected phase/version and all message budgets, write the conversation/outline change plus receipt atomically, and keep transactions short. Exact replay returns the first result; changed-input key reuse fails closed.
+
+The planning and deep-scaffold runs are separate `ai_task_runs`; `workshop_sessions.ai_task_run_id` points to the current run. A workshop therefore has a non-unique run-history index rather than a one-run uniqueness constraint. The complete normalized GM conversation becomes immutable `workshop_input` evidence at the deep-draft dispatch boundary. Later review edits do not rewrite evidence.
+
+**Commit flow:** The review screen IS the approval moment. On commit, entities are INSERTed directly into entity tables with `created_by='gm_via_ai_approval'`, synthetic `sources` rows (`kind='workshop_input'`), and synthetic `drafts` (immediately resolved as `approved`) for the audit trail. Reviewed tone/conflict/hook/secrets are written to `sagas.creation_context`, never embedded. A newly created World may initialize its reviewed summary/context from the scaffold; for an existing World, the same fields remain only as `creation_context.world_update_proposal` and do not mutate shared World canon. No second queue.
 
 ---
 

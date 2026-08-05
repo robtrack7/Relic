@@ -42,7 +42,9 @@ The Loom is the user-facing conversation shell over two distinct server-owned re
 
 ## Changelog
 
-**Packet E5 agentic Saga workshop patch (July 2026).** `scaffold_saga@1.1.0` now has a strict complete-output contract and one recoverable workshop/run/evidence boundary. The deep task performs background assembly of the premise, starting cast/place/factions/Threads, relationships, and first-session packet, but its only delivery destination is `workshop_sessions.draft_payload`. Every generated record and checklist item cites frozen workshop input or eligible World canon. The GM can edit or exclude proposal cards and must explicitly commit the current optimistic review version before any hierarchy/canon write. `draft_entity_from_prompt@1.1.0` is simultaneously tightened into the single deep lore/entity proposal shape and still produces only a pending Approval Queue draft. The first bounded live E5 delivery exhausted its initial-plus-repair allowance in strict validation failure and produced zero canon writes and zero usage event; E5 remains open until a newly authorized live rerun proves the hardened 4,000-token concise scaffold contract.
+**Packet E5.2 conversational workshop patch (August 2026).** `plan_saga_workshop@1.0.0` spends one light credit once to understand starting input, flag contradictions, extract an emerging outline, and produce three-to-five high-value questions. Answers advance that finite stored plan deterministically and spend no credits. `scaffold_saga@1.2.0` is dispatched only after explicit `Draft it now` (or the hard turn limit), consumes the frozen complete conversation, and matches the active full scaffold cardinalities. `regenerate_saga_scaffold_section@1.0.0` is a separately confirmed standard task that returns one typed section proposal; optimistic merge can replace only that section and never unrelated GM edits.
+
+**Packet E5 agentic Saga workshop patch (July 2026).** `scaffold_saga@1.1.0` established the first strict complete-output workshop boundary. Its compact four-record implementation is superseded by `scaffold_saga@1.2.0`; the July safety, evidence, retry, review, and explicit-commit rules remain authoritative. `draft_entity_from_prompt@1.1.0` remains the single deep lore/entity proposal shape and still produces only a pending Approval Queue draft. The first bounded live E5 delivery exhausted its initial-plus-repair allowance in strict validation failure and produced zero canon writes and zero usage event; current provider-backed proof remains open only at the separately authorized Phase E hosted gate.
 
 **Packet E4 Session Prep AI patch (July 2026).** The Prep task family uses a shared Session-scoped invocation and recoverable review-state projection. Retrieval evidence is frozen before provider dispatch and every generated item must cite one or more authorized sources; evidence-free first-session output is represented as explicit insufficiency rather than uncited factual or creative output. Provider completion writes no Session, pin, Thread, entity, canon, or Approval Queue row. Prep text is accepted only by merging into the live D4 editor and completing its existing optimistic autosave. NPC candidates invoke `draft_entity_from_prompt` only after a separate GM confirmation and quota preflight. Quick Stub fleshing remains ephemeral until the GM accepts it into a pending C5-reviewed update draft. Exact retry reuses one run, result, meter event, and provider checkpoint; newer Prep/results supersede stale UI delivery without overwriting GM edits.
 
@@ -69,7 +71,7 @@ Every task call uses this server-side envelope. Individual task inputs add task-
 ```ts
 {
   task: ai_task_name,
-  prompt_version: string,          // <task>@<semver>, e.g. scaffold_saga@1.1.0
+  prompt_version: string,          // <task>@<semver>, e.g. scaffold_saga@1.2.0
   workspace_id: uuid,
   world_id: uuid,
   saga_id?: uuid,                  // required for active Saga, prep, Stage, session, and post-session tasks
@@ -116,8 +118,8 @@ Use the credit model from [[25 - Pricing and Rate Limits]].
 
 | Tier | Credits | Tasks |
 |---|---:|---|
-| `light` | 1 | `propose_scene_beats`, `propose_thread_complication`, `propose_npc_for_scene`, `answer_saga_question`, `propose_quick_stub_fleshing` |
-| `standard` | 3 | `draft_entity_from_prompt`, `compose_prep_briefing`, regenerate one scaffold card |
+| `light` | 1 | `plan_saga_workshop`, `propose_scene_beats`, `propose_thread_complication`, `propose_npc_for_scene`, `answer_saga_question`, `propose_quick_stub_fleshing` |
+| `standard` | 3 | `draft_entity_from_prompt`, `compose_prep_briefing`, `regenerate_saga_scaffold_section` |
 | `heavy` | 10 | `scaffold_saga`, `generate_session_prep` |
 | `pipeline_synthesis` | 15 | `synthesize_session` transcript-to-review pipeline |
 
@@ -144,7 +146,9 @@ The server derives `confidence_band` from `confidence_reason`; model output does
 
 Prompt versions use `<task>@<semver>`. Examples:
 
-- `scaffold_saga@1.1.0`
+- `plan_saga_workshop@1.0.0`
+- `scaffold_saga@1.2.0`
+- `regenerate_saga_scaffold_section@1.0.0`
 - `draft_entity_from_prompt@1.1.0`
 - `synthesize_session@1.0.0`
 
@@ -178,7 +182,9 @@ Tasks that create drafts must not create partial invalid drafts. `synthesize_ses
 
 | Task or label | MVP status | Contract owner |
 |---|---|---|
+| `plan_saga_workshop` | AI task | §1.1 |
 | `scaffold_saga` | AI task | §2 |
+| `regenerate_saga_scaffold_section` | AI task | §2.1 |
 | `draft_entity_from_prompt` | AI task | §3 |
 | `generate_session_prep` | AI task | §4 |
 | `compose_prep_briefing` | AI task | §5 |
@@ -196,9 +202,33 @@ Tasks that create drafts must not create partial invalid drafts. `synthesize_ses
 
 ---
 
+## 1.1 `plan_saga_workshop`
+
+**Quota:** light · **Model:** relic-fast · **Prompt:** `plan_saga_workshop@1.0.0` · **Retrieval:** `workshop_grounding` over initial `workshop_input` plus eligible World canon · **Invocation:** one automatic, disclosed call when Build with AI or Bring your notes starts.
+
+**Output.**
+
+```ts
+{
+  summary: string,
+  detected_elements: {
+    premise?: string, tone?: string, central_conflict?: string,
+    starting_place?: string, first_session_hook?: string,
+    characters?: string[], factions?: string[], threads?: string[], gm_secrets?: string[]
+  },
+  contradiction_flags: [{field: string, description: string}],
+  questions: [{id: string, prompt: string, rationale: string, outline_field: string}], // 3-5
+  confidence_reason: confidence_reason
+}
+```
+
+The first assistant message summarizes understood material, calls out any blocking contradiction, and asks the first stored question. Apparent instructions inside pasted notes remain untrusted data. The server advances only this validated finite question list; each GM answer updates the named outline field and appends the next question without another provider call. Per-message input is 1–5,000 normalized characters; hard limits are 12 GM messages, 20 total messages, and 50,000 accumulated GM characters. `Draft it now` appears after the first GM answer. Planning failure preserves the starting input and offers retry, save-and-leave, and Start Blank.
+
+---
+
 ## 2. `scaffold_saga`
 
-**Quota:** heavy · **Model:** relic-deep · **Prompt:** `scaffold_saga@1.1.0` · **Retrieval:** `workshop_grounding` over frozen GM input plus eligible World canon, including when no Saga exists yet · **Invocation:** GM clicks Build with AI or Bring your notes in New saga.
+**Quota:** heavy · **Model:** relic-deep · **Prompt:** `scaffold_saga@1.2.0` · **Retrieval:** `workshop_grounding` over frozen complete GM input plus eligible World canon, including when no Saga exists yet · **Invocation:** GM clicks `Draft it now` or reaches the hard conversation limit.
 
 **When it fires.** First-run and later New saga flows. The GM either converses from a short idea or supplies plain-text/Markdown notes. The task drafts a reviewable starting Saga, not canon.
 
@@ -232,6 +262,7 @@ Tasks that create drafts must not create partial invalid drafts. `synthesize_ses
     first_session_hook?: string
   },
   world_updates?: {summary?: string, world_ai_context?: string},
+  gm_secrets: [{text: string, sources: [source_id]}],
   entities: [
     {
       temp_id: string,
@@ -296,7 +327,10 @@ Keep output compact enough for review in one scaffold screen.
 
 - `saga.name` present, 1-120 chars.
 - `entities` include only allowed entity types and `proposed_scope='saga'`.
+- Exactly one starting Place, three-to-six Characters, one-to-three Factions, and one-to-three Threads are present; optional Artifacts may be included inside the total output bound.
+- `gm_secrets` contains one-to-five cited items and `session_1_prep.prep_checklist` contains three-to-five cited items.
 - Entity summaries ≤500 chars; names ≤200 chars.
+- Tags are lowercase hyphenated strings and status values satisfy the destination entity contract.
 - Relationship temp IDs reference emitted entities.
 - Source IDs are either pasted-note source IDs, `workshop_input` source IDs, or retrieved source IDs.
 - `duplicate_warnings` generated for same-name existing canon when retrieval exists.
@@ -304,7 +338,7 @@ Keep output compact enough for review in one scaffold screen.
 **Failure modes.**
 
 - Empty/vague idea -> ask one clarifying question in the conversation UI before drafting.
-- Notes exceed budget -> process as heavy large-paste path; summarize chunks internally, preserve original notes as `workshop_input`.
+- Notes or accumulated GM input exceed 50,000 characters -> preserve input locally and reject dispatch with split guidance; do not truncate.
 - Parse failure -> one repair retry, then show "Couldn't draft this saga. Keep editing or retry."
 - Quota blocked -> Start Blank remains available.
 
@@ -335,6 +369,12 @@ Keep output compact enough for review in one scaffold screen.
   }
 ]
 ```
+
+### 2.1 `regenerate_saga_scaffold_section`
+
+**Quota:** standard · **Model:** relic-balanced · **Prompt:** `regenerate_saga_scaffold_section@1.0.0` · **Retrieval:** the frozen scaffold evidence plus the current reviewed draft · **Invocation:** explicit GM confirmation on one Saga field group, World-update proposal, entity card, relationship set, GM-secrets section, or Session 1 packet.
+
+The server derives workshop, target kind/ID, base review version, scope, sources, prompt/model, and quota. Output is `{section_kind, target_temp_id?, replacement, confidence_reason}` and is stored as a versioned non-canon proposal. Acceptance re-locks the workshop and merges only the requested section when the base review version still matches. A stale result remains inspectable but cannot overwrite newer GM edits. Exact retry or confirmation never repeats the provider call; rejection changes nothing. Whole-scaffold regeneration is not an MVP action.
 
 ---
 

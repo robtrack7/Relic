@@ -141,12 +141,18 @@ Complete the profile and trust boundary before another live scaffold attempt.
 
 ### E5.2 - Conversational Workshop and Scaffold Parity
 
+**Approved implementation contract (2026-08-04):** start with one `relic-fast`/1-credit planning task that summarizes notes, flags contradictions, extracts an outline, and creates three-to-five targeted questions. Persist each answer and advance that finite plan deterministically, with no per-message provider call. `Draft it now` separately confirms and dispatches one `relic-deep`/10-credit full scaffold from the frozen conversation. Targeted regeneration is an optional `relic-balanced`/3-credit versioned section proposal. The normal path is therefore 11 credits, disclosed in two steps.
+
 - Implement the bounded 3-5-question creation conversation, hard message limits, `Draft it now`, `Save and leave`, and emerging outline.
 - Make Bring Your Notes summarize understood material and ask for clarification when contradictions block a coherent scaffold.
 - Reconcile the compact live-safe core scaffold with the richer active requirements through staged section expansion.
 - Add per-item/per-section regenerate without replacing unrelated reviewed cards.
 - Route active creation/resume through The Loom while preserving the workspace-only pre-Saga boundary.
 - Run one newly authorized live scaffold and one separately confirmed deep-entity proof only after all deterministic gates pass.
+
+Implementation order inside E5.2: canonical task/schema/pricing patch; conversational state and private turn receipts; planning-task runtime and deterministic turn advancement; deep-draft dispatch and complete scaffold parity; conversation/review UI and resume; targeted regeneration with stale-version protection; focused/full migration, pgTAP, script, web, TypeScript, build, and authenticated browser proof. Provider-backed smoke remains separately authorized and is not implied by deterministic completion.
+
+**Complete at the deterministic gate (2026-08-04):** the approved two-call 1+10-credit conversation/scaffold path, free stored answer turns, optional 3-credit targeted regeneration, resume/discard, full active scaffold schema, private creation context, existing-World proposal isolation, explicit commit/audit, and post-commit entity/Session embedding enrollment are implemented. Clean migration replay, 916 pgTAP assertions, 83 script/runtime tests, 142 web tests, TypeScript, production build, and the authenticated deterministic browser journey pass. The immediate packet is E6. No paid provider call was made; hosted validation remains behind the separately authorized Phase E gate.
 
 ### E6 - Loom Action Kernel
 

@@ -234,7 +234,7 @@ The conversation is short, bounded, and always skippable.
 
 | Rule | MVP behavior |
 |---|---|
-| AI task | `scaffold_saga` internal task. |
+| AI tasks | One light `plan_saga_workshop` call, deterministic stored interview turns, then separately confirmed `scaffold_saga`. |
 | Storage | Append mesVerdigriss to `workshop_sessions.conversation`. |
 | Minimum required inputs | Saga name plus either premise or notes. |
 | Fixed question count | None. |
@@ -322,6 +322,8 @@ Do not auto-truncate. Do not silently ignore overflow.
 ## 7. Scaffold review
 
 Build with AI and Bring your notes converge on the same review screen.
+
+The cost boundary is visible: starting the AI workshop is 1 credit; `Draft it now` is a separate 10-credit confirmation; each optional targeted regeneration is 3 credits. Sending answers, saving/leaving, editing, excluding, restoring, inspecting sources, and committing an existing reviewed draft make no provider call.
 
 ### Required scaffold output
 
