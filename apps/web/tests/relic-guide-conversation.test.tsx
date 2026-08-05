@@ -54,7 +54,7 @@ describe("RelicGuideConversation", () => {
 
     expect(screen.getByText(/does not have enough reliable saga evidence/i)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /edit question/i }));
-    expect((screen.getByLabelText("Ask Relic Guide") as HTMLTextAreaElement).value).toBe("Who rules the moon?");
+    expect((screen.getByLabelText("Ask The Loom") as HTMLTextAreaElement).value).toBe("Who rules the moon?");
     expect(screen.getByRole("link", { name: /search manually/i }).getAttribute("href")).toContain("/search");
   });
 
@@ -107,8 +107,14 @@ describe("RelicGuideConversation", () => {
         blocks: [{
           type: "action_preview",
           actionId: "action",
-          action: { type: "draft_entity", entityType: "character", intent: "Draft the gate captain." },
-          explanation: "Creates a pending character draft for review."
+          intentVersion: 1,
+          action: { name: "draft_entity", version: "1.0.0", entityType: "character", intent: "Draft the gate captain." },
+          explanation: "Creates a pending character draft for review.",
+          authorityTier: "non_canon_generation",
+          confirmationPolicy: "explicit",
+          costCredits: 3,
+          effectSummary: "Create one non-canon pending entity draft for later review.",
+          manualFallback: "Create the record manually."
         }]
       }] }}
       onSubmit={vi.fn()}
@@ -117,11 +123,11 @@ describe("RelicGuideConversation", () => {
     />);
 
     fireEvent.click(screen.getByRole("button", { name: /review draft action/i }));
-    expect(screen.getByText(/will use the entity drafting task/i)).toBeTruthy();
+    expect(screen.getByText(/spend exactly 3 AI credits/i)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /confirm and draft/i }));
-    expect(onConfirmAction).toHaveBeenCalledWith("action");
+    expect(onConfirmAction).toHaveBeenCalledWith("action", 1);
 
     fireEvent.click(screen.getByRole("button", { name: /dismiss action/i }));
-    expect(onDismissAction).toHaveBeenCalledWith("action");
+    expect(onDismissAction).toHaveBeenCalledWith("action", 1);
   });
 });

@@ -3,34 +3,46 @@ import { expect, test } from "@playwright/test";
 
 const supabaseUrl = process.env.SUPABASE_URL ?? process.env.API_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SERVICE_ROLE_KEY;
+const persistenceOnly = process.env.RELIC_E6_PERSISTENCE_ONLY === "1";
+const fixture = {
+  gmId: "e6900000-0000-4000-8000-000000000001",
+  workspaceId: "e6910000-0000-4000-8000-000000000001",
+  worldId: "e6920000-0000-4000-8000-000000000001",
+  sagaId: "e6930000-0000-4000-8000-000000000001",
+  siblingSagaId: "e6930000-0000-4000-8000-000000000002",
+  characterId: "e6940000-0000-4000-8000-000000000001",
+  sourceId: "e6960000-0000-4000-8000-000000000001",
+  siblingCharacterId: "e6940000-0000-4000-8000-000000000002",
+  siblingSourceId: "e6960000-0000-4000-8000-000000000002",
+  email: "e6-loom-persistence@example.test",
+  password: "password"
+};
 
 test.skip(
   process.env.RELIC_E2E_AUTH !== "1" || !supabaseUrl || !serviceRoleKey,
   "Requires local Supabase auth and service-role fixture setup."
 );
 
-test("E3 Guide recovers cited answers, insufficiency, evidence, and reviewed actions at every viewport", async ({ page }) => {
+test("E6 Loom recovers cited answers and executes a priced typed action at every viewport", async ({ page }) => {
+  test.skip(persistenceOnly, "Persistence-only rerun preserves the first process's fixture.");
   test.setTimeout(120_000);
   const admin = createClient(supabaseUrl!, serviceRoleKey!, { auth: { persistSession: false, autoRefreshToken: false } });
-  const nonce = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
-  const email = `e3-guide-${nonce}@example.test`;
-  const password = "password";
-  const user = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+  const {
+    gmId, workspaceId, worldId, sagaId, siblingSagaId, characterId, sourceId,
+    siblingCharacterId, siblingSourceId, email, password
+  } = fixture;
+  await admin.from("workspaces").delete().eq("id", workspaceId);
+  const existingUsers = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const existingUser = existingUsers.data.users.find((candidate) => candidate.email === email);
+  if (existingUser) await admin.auth.admin.deleteUser(existingUser.id);
+  await admin.auth.admin.deleteUser(gmId);
+  const user = await admin.auth.admin.createUser({ id: gmId, email, password, email_confirm: true });
   expect(user.error).toBeNull();
-  const gmId = user.data.user!.id;
-  const workspaceId = crypto.randomUUID();
-  const worldId = crypto.randomUUID();
-  const sagaId = crypto.randomUUID();
-  const siblingSagaId = crypto.randomUUID();
-  const characterId = crypto.randomUUID();
-  const sourceId = crypto.randomUUID();
-  const siblingCharacterId = crypto.randomUUID();
-  const siblingSourceId = crypto.randomUUID();
 
   expect((await admin.from("workspaces").insert({
     id: workspaceId,
     owner_gm_id: gmId,
-    name: `Guide Workspace ${nonce}`,
+    name: "Loom Persistence Workspace",
     usage_limits: {
       plan: "test", ai_credits_monthly: 100, transcription_seconds_monthly: 3600,
       storage_bytes: 1000000, worlds_active: 5, sagas_active: 5,
@@ -95,7 +107,11 @@ test("E3 Guide recovers cited answers, insufficiency, evidence, and reviewed act
         },
         {
           type: "action_preview",
-          action: { type: "draft_entity", entity_type: "character", intent: "Draft the gate lieutenant." },
+          action: {
+            name: "draft_entity",
+            version: "1.0.0",
+            arguments: { entity_type: "character", intent: "Draft the gate lieutenant." }
+          },
           explanation: "Create a non-canon character draft for GM review."
         }
       ],
@@ -143,7 +159,7 @@ test("E3 Guide recovers cited answers, insufficiency, evidence, and reviewed act
   await expect(page.getByText(sourceId)).toHaveCount(0);
 
   await page.getByRole("button", { name: "Review draft action" }).click();
-  await expect(page.getByText(/result remains a pending draft/i)).toBeVisible();
+  await expect(page.getByText(/spend exactly 3 AI credits/i)).toBeVisible();
   expect((await admin.from("drafts").select("id", { count: "exact", head: true }).eq("saga_id", sagaId)).count).toBe(0);
   await page.getByRole("button", { name: "Confirm and draft" }).click();
   await expect(page.getByText(/Drafting is in progress|pending for your review|sent to the Approval Queue path/i))
@@ -173,9 +189,23 @@ test("E3 Guide recovers cited answers, insufficiency, evidence, and reviewed act
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(guideUrl);
   await page.locator("#guide-question").fill("Who currently guards the eastern road?");
-  await page.getByRole("button", { name: "Ask Guide" }).click();
+  await page.getByRole("button", { name: "Ask The Loom" }).click();
   const submittedTurn = page.locator(".guide-turn").filter({ hasText: "Who currently guards the eastern road?" });
   await expect(submittedTurn.locator(".guide-answer-block, .guide-no-answer")).toBeVisible({ timeout: 20_000 });
   await page.reload();
   await expect(page.locator(".guide-question p", { hasText: "Who currently guards the eastern road?" })).toBeVisible();
+});
+
+test("E6 Loom thread and action outcome survive a fresh application process", async ({ page }) => {
+  test.skip(!persistenceOnly, "Run after the primary E6 proof with a freshly started app process.");
+  await page.goto("/auth/sign-in");
+  await page.getByLabel("Email").fill(fixture.email);
+  await page.getByLabel("Password").fill(fixture.password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/app(?:\/|$)/, { timeout: 15_000 });
+  await page.goto(`/app/w/${fixture.workspaceId}/world/${fixture.worldId}/saga/${fixture.sagaId}/guide`);
+  await expect(page.getByText("The Loom", { exact: true }).first()).toBeVisible();
+  await expect(page.locator(".guide-question p", { hasText: "Who protects the eastern road?" })).toBeVisible();
+  await expect(page.locator(".guide-question p", { hasText: "What song opens the moon vault?" })).toBeVisible();
+  await expect(page.getByText(/accepted and sent to the Approval Queue path/i)).toBeVisible();
 });

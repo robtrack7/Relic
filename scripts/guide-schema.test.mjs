@@ -14,7 +14,7 @@ const taskRun = {
   session_id: null,
   gm_id: "e3000000-0000-0000-0000-000000000001",
   task_name: "answer_saga_question",
-  prompt_version: "answer_saga_question@1.1.0",
+  prompt_version: "answer_saga_question@1.2.0",
   quota_tier: "light",
   ai_credits: 1,
   model_tier: "relic-balanced",
@@ -22,11 +22,17 @@ const taskRun = {
   retrieval_profile: "sanctum_qa_grounding",
   source_policy: "canon_only",
   output_mode: "ephemeral",
-  input_payload: { question: "What protects the eastern road?" },
+  input_payload: {
+    question: "What protects the eastern road?",
+    action_manifest: [
+      { name: "open_record", version: "1.0.0" },
+      { name: "draft_entity", version: "1.0.0" }
+    ]
+  },
   allowed_source_ids: [sourceA, sourceB],
   retrieval_context: [
-    { source_id: sourceA, text: "The Iron Gate is sealed and protects the eastern road." },
-    { source_id: sourceB, text: "Captain Mara commands the Iron Gate watch." }
+    { source_id: sourceA, text: "The Iron Gate is sealed and protects the eastern road.", source_entity_type: "place", source_entity_id: "e3060000-0000-0000-0000-000000000011" },
+    { source_id: sourceB, text: "Captain Mara commands the Iron Gate watch.", source_entity_type: "character", source_entity_id: "e3060000-0000-0000-0000-000000000012" }
   ]
 };
 
@@ -146,12 +152,12 @@ test("Guide permits only open-record and bounded entity-draft action intents", (
       ...valid.blocks,
       {
         type: "action_preview",
-        action: { type: "open_record", source_id: sourceA },
+        action: { name: "open_record", version: "1.0.0", arguments: { source_id: sourceA } },
         explanation: "Open the cited Iron Gate record."
       },
       {
         type: "action_preview",
-        action: { type: "draft_entity", entity_type: "character", intent: "Draft the gate captain." },
+        action: { name: "draft_entity", version: "1.0.0", arguments: { entity_type: "character", intent: "Draft the gate captain." } },
         explanation: "Creates a pending character draft after confirmation."
       }
     ]
@@ -159,14 +165,14 @@ test("Guide permits only open-record and bounded entity-draft action intents", (
   assert.deepEqual(validateTaskOutput(taskRun, output), { ok: true, output });
 });
 
-test("Guide documented open-record prompt shape validates and the legacy target shape is rejected", () => {
+test("Guide registered open-record prompt shape validates and the legacy shape is rejected", () => {
   const documented = {
     ...valid,
     blocks: [
       ...valid.blocks,
       {
         type: "action_preview",
-        action: { type: "open_record", source_id: sourceA },
+        action: { name: "open_record", version: "1.0.0", arguments: { source_id: sourceA } },
         explanation: "Open the allowlisted record."
       }
     ]
@@ -186,7 +192,29 @@ test("Guide documented open-record prompt shape validates and the legacy target 
   assert.deepEqual(validateTaskOutput(taskRun, documented), { ok: true, output: documented });
   const result = validateTaskOutput(taskRun, legacy);
   assert.equal(result.ok, false);
-  assert.match(result.errors.join("\n"), /unknown field|source_id|retrieval set/i);
+  assert.match(result.errors.join("\n"), /allowed|registered|name|version/i);
+});
+
+test("Guide rejects unknown action versions, extra arguments, and non-entity navigation evidence", () => {
+  const unknownVersion = validateTaskOutput(taskRun, {
+    ...valid,
+    blocks: [{ type: "action_preview", action: { name: "open_record", version: "9.0.0", arguments: { source_id: sourceA } }, explanation: "Open it." }]
+  });
+  const extraArgument = validateTaskOutput(taskRun, {
+    ...valid,
+    blocks: [{ type: "action_preview", action: { name: "draft_entity", version: "1.0.0", arguments: { entity_type: "character", intent: "Draft it.", auto_commit: true } }, explanation: "Draft it." }]
+  });
+  const nonEntity = validateTaskOutput({
+    ...taskRun,
+    retrieval_context: [{ source_id: sourceA, text: "A note about the gate.", source_entity_type: "note", source_entity_id: "e3060000-0000-0000-0000-000000000013" }]
+  }, {
+    ...valid,
+    blocks: [{ type: "action_preview", action: { name: "open_record", version: "1.0.0", arguments: { source_id: sourceA } }, explanation: "Open it." }]
+  });
+  assert.equal(unknownVersion.ok, false);
+  assert.equal(extraArgument.ok, false);
+  assert.equal(nonEntity.ok, false);
+  assert.match(`${unknownVersion.errors.join("\n")}\n${extraArgument.errors.join("\n")}\n${nonEntity.errors.join("\n")}`, /manifest|not allowed|entity record/i);
 });
 
 test("Guide normalizes duplicate citations by first appearance", () => {
@@ -212,7 +240,7 @@ test("Guide rejects citations whose evidence is obviously unrelated or contradic
   });
   const contradiction = validateTaskOutput({
     ...taskRun,
-    retrieval_context: [{ source_id: sourceA, text: "The Iron Gate is open, not sealed." }]
+    retrieval_context: [{ source_id: sourceA, text: "The Iron Gate is open, not sealed.", source_entity_type: "place", source_entity_id: "e3060000-0000-0000-0000-000000000011" }]
   }, {
     ...valid,
     blocks: [{

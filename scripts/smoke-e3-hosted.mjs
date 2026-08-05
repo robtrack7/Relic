@@ -364,7 +364,7 @@ from internal.ai_task_runs where id='${response.body.run_id}';
 
 async function acceptDraftAction() {
   const action = oneRow(`
-select id,state
+select id,state,intent_version
 from public.guide_action_intents
 where workspace_id='${IDs.workspace}' and turn_id='${IDs.turns[1]}' and action_type='draft_entity';
   `, "draft_action_preflight");
@@ -373,15 +373,14 @@ where workspace_id='${IDs.workspace}' and turn_id='${IDs.turns[1]}' and action_t
   if (Number(before.ai_attempts) + 2 > configuredAiAttempts) {
     fail("The E3 AI-attempt guard stopped the confirmed draft.");
   }
-  const accepted = await rpc("set_guide_action_state", {
-    p_workspace_id: IDs.workspace,
-    p_world_id: IDs.world,
-    p_saga_id: IDs.saga,
+  const accepted = await rpc("review_loom_action", {
     p_action_id: action.id,
-    p_state: "accepted",
+    p_expected_intent_version: Number(action.intent_version),
+    p_decision: "confirmed",
+    p_idempotency_key: crypto.randomUUID(),
   });
   if (accepted.body?.state !== "processing" || !accepted.body?.run_id) {
-    fail("The hosted Guide draft action was not accepted into its registered task.");
+    fail("The hosted Loom draft action was not accepted into its registered task.");
   }
   await invokeInternal("ai-task-runner", { run_id: accepted.body.run_id }, [200, 202, 422, 500, 503]);
   const run = oneRow(`

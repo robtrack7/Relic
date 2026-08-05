@@ -37,7 +37,7 @@ values
 ('e3060000-0000-0000-0000-000000000005','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000002','saga','existing_entity','character','e3040000-0000-0000-0000-000000000004','Forbidden sibling Amber evidence.')
 on conflict(id) do nothing;
 
-select is((select prompt_version from internal.ai_task_contracts() where task_name='answer_saga_question'),'answer_saga_question@1.1.0','Guide task contract is versioned');
+select is((select prompt_version from internal.ai_task_contracts() where task_name='answer_saga_question'),'answer_saga_question@1.2.0','Loom task contract is versioned');
 select has_table('public','guide_threads','Guide threads exist');
 select has_table('public','guide_turns','Guide turns exist');
 select has_table('internal','guide_evidence_snapshots','Guide evidence snapshot is internal');
@@ -52,7 +52,7 @@ select lives_ok($$
 $$,'Worker creates a normalized scoped Guide turn');
 select is((select question from public.guide_turns where id='e3100000-0000-0000-0000-000000000001'),'What protects the eastern road?','Question is normalized');
 select is((select count(*)::int from internal.guide_evidence_snapshots where turn_id='e3100000-0000-0000-0000-000000000001'),1,'Sibling-Saga evidence is excluded');
-select is((select prompt_version from internal.ai_task_runs where guide_turn_id='e3100000-0000-0000-0000-000000000001'),'answer_saga_question@1.1.0','Turn invokes registered task');
+select is((select prompt_version from internal.ai_task_runs where guide_turn_id='e3100000-0000-0000-0000-000000000001'),'answer_saga_question@1.2.0','Turn invokes registered task');
 select is((select allowed_source_ids from internal.ai_task_runs where guide_turn_id='e3100000-0000-0000-0000-000000000001'),array['e3060000-0000-0000-0000-000000000001']::uuid[],'Run freezes its source allowlist');
 
 set local role authenticated;
@@ -199,7 +199,7 @@ $$,'23505','Guide idempotency key was already used for another question','Change
 
 select lives_ok(format($f$
   select public.complete_guide_turn_for_worker(%L,
-  '{"no_answer":false,"blocks":[{"type":"grounded_answer","text":"The Iron Gate protects the road.","citations":[{"source_id":"e3060000-0000-0000-0000-000000000001"}]},{"type":"action_preview","action":{"type":"draft_entity","entity_type":"character","intent":"Draft the gate lieutenant."},"explanation":"Creates a pending reviewed draft."}],"confidence_reason":"single_clear_segment"}')
+  '{"no_answer":false,"blocks":[{"type":"grounded_answer","text":"The Iron Gate protects the road.","citations":[{"source_id":"e3060000-0000-0000-0000-000000000001"}]},{"type":"action_preview","action":{"name":"draft_entity","version":"1.0.0","arguments":{"entity_type":"character","intent":"Draft the gate lieutenant."}},"explanation":"Creates a pending reviewed draft."}],"confidence_reason":"single_clear_segment"}')
 $f$,(select ai_task_run_id from public.guide_turns where id='e3100000-0000-0000-0000-000000000001')),'Worker completes the Guide turn');
 select is((select status from public.guide_turns where id='e3100000-0000-0000-0000-000000000001'),'complete','Completed response is recoverable');
 select is((select count(*)::int from public.guide_action_intents where saga_id='e3030000-0000-0000-0000-000000000001'),1,'Validated action intent is stored separately');
@@ -220,10 +220,7 @@ select ok(
 );
 select ok(public.get_guide_thread('e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000001',null) is not null,'Owner recovers the active Guide thread');
 select is(
-  (public.set_guide_action_state(
-    'e3010000-0000-0000-0000-000000000001',
-    'e3020000-0000-0000-0000-000000000001',
-    'e3030000-0000-0000-0000-000000000001',
+  (public.review_loom_action(
     (
       public.get_guide_thread(
         'e3010000-0000-0000-0000-000000000001',
@@ -232,7 +229,9 @@ select is(
         null
       )->'turns'->0->'actions'->0->>'id'
     )::uuid,
-    'accepted'
+    1,
+    'confirmed',
+    'e3120000-0000-0000-0000-000000000001'
   )->>'state'),
   'processing',
   'Confirmed entity action enters its separately metered task path'
@@ -249,7 +248,7 @@ select is(
 );
 reset role;
 select is(
-  (select task_name from internal.ai_task_runs where saga_id='e3030000-0000-0000-0000-000000000001' and task_name='draft_entity_from_prompt' and input_payload ? 'guide_action_id' limit 1),
+  (select task_name from internal.ai_task_runs where saga_id='e3030000-0000-0000-0000-000000000001' and task_name='draft_entity_from_prompt' and input_payload ? 'loom_action_id' limit 1),
   'draft_entity_from_prompt',
   'Confirmed action invokes the registered entity drafting task'
 );

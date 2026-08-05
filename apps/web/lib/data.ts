@@ -572,29 +572,42 @@ export async function getGuideThread(params: IdParams, threadId?: string | null)
       if (block.type === "action_preview") {
         const stored = actions.get(blockIndex);
         if (!stored) return [];
-        if (stored.type === "open_record") {
-          const context = contextBySource.get(String(stored.source_id ?? ""));
-          const href = context?.source_entity_type && context.source_entity_id
-            ? `${sagaPath(params)}/entities/${context.source_entity_type}/${context.source_entity_id}`
+        const argumentsValue = typeof stored.arguments === "object" && stored.arguments !== null
+          ? stored.arguments as Record<string, unknown> : {};
+        const cost = typeof stored.cost === "object" && stored.cost !== null
+          ? stored.cost as Record<string, unknown> : {};
+        const common = {
+          actionId: String(stored.id),
+          intentVersion: Number(stored.intent_version ?? 1),
+          explanation: String(stored.explanation ?? block.explanation ?? ""),
+          authorityTier: String(stored.authority_tier ?? "read_navigation") as "read_navigation" | "non_canon_generation",
+          confirmationPolicy: String(stored.confirmation_policy ?? "none") as "none" | "explicit",
+          costCredits: Number(cost.ai_credits ?? 0),
+          effectSummary: String(stored.effect_summary ?? ""),
+          manualFallback: String(stored.manual_fallback ?? ""),
+          availabilityState: String(stored.availability_state ?? "available"),
+          state: String(stored.state ?? "pending") as Extract<GuideBlock, { type: "action_preview" }>["state"]
+        };
+        if (stored.name === "open_record") {
+          const href = stored.target_type && stored.target_id
+            ? `${sagaPath(params)}/entities/${stored.target_type}/${stored.target_id}`
             : `${sagaPath(params)}/search?q=${encodeURIComponent(turn.question)}`;
           return [{
             type: "action_preview",
-            actionId: String(stored.id),
-            action: { type: "open_record", href },
-            explanation: String(stored.explanation ?? block.explanation ?? ""),
-            state: String(stored.state ?? "pending") as Extract<GuideBlock, { type: "action_preview" }>["state"]
+            ...common,
+            action: { name: "open_record", version: "1.0.0", href }
           }];
         }
+        if (stored.name !== "draft_entity") return [];
         return [{
           type: "action_preview",
-          actionId: String(stored.id),
+          ...common,
           action: {
-            type: "draft_entity",
-            entityType: String(stored.entity_type) as "character",
-            intent: String(stored.intent ?? "")
-          },
-          explanation: String(stored.explanation ?? block.explanation ?? ""),
-          state: String(stored.state ?? "pending") as Extract<GuideBlock, { type: "action_preview" }>["state"]
+            name: "draft_entity",
+            version: "1.0.0",
+            entityType: String(argumentsValue.entity_type) as "character",
+            intent: String(argumentsValue.intent ?? "")
+          }
         }];
       }
       return [];

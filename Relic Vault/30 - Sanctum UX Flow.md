@@ -30,6 +30,8 @@ source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 
 ## Changelog
 
+**Packet E6 Loom action-card patch (August 2026).** Current UI copy uses **The Loom** while `/guide` and `guide_*` may remain compatibility identifiers. Each action card shows the registered action/effect, authority tier, current target or bounded input, confirmation requirement, and exact credit cost. `Open record` remains immediate navigation after server authorization. `Draft entity` first opens a review state that explicitly says `3 credits` and `non-canon pending draft`; confirmation, dismissal, processing, success, quota block, stale conflict, and safe failure survive refresh. The browser sends only the action ID, expected intent version, decision, and idempotency key.
+
 **Packet E3 conversational Guide patch (July 2026).** Relic Guide now uses persistent GM-owned, Saga-scoped threads that survive navigation, refresh, and app restart. Bounded prior turns support follow-up interpretation but never become canon or citation evidence. Responses distinguish grounded factual paragraphs, creative/proposal material from registered creation tasks, guidance, action previews, and insufficiency. E3 enables only open-record and confirmed entity-draft actions.
 
 **Session Prep parity patch (July 2026).** The planned/ready Home workspace and full Prepare route share one functional editor: visible recoverable autosave, scheduling, prior-session context, ordered pin recovery, state-valid actions, and latest-write Ready transition. Multiple future Sessions remain selectable and distinguishable. Started/live/ending/ended Prep is read-only, and manual Prep makes no provider call or automatic canon mutation.

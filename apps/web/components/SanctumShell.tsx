@@ -94,7 +94,7 @@ export function SanctumShell({
             <span className="kbd-hint">⌘K</span>
           </form>
 
-          <Link className="icon-btn" href={`${root}/guide`} aria-label="Relic Guide">
+          <Link className="icon-btn" href={`${root}/guide`} aria-label="The Loom">
             <RelicIcon name="spark" size={16} />
           </Link>
 
@@ -162,11 +162,11 @@ export function SanctumShell({
           <div className="main-inner">{children}</div>
         </main>
 
-        {/* Relic Guide sidecar */}
-        <aside className="loom-carriage exp" aria-label="Relic Guide">
+        {/* The Loom sidecar */}
+        <aside className="loom-carriage exp" aria-label="The Loom">
           <div className="loom-head">
             <span className="loom-title">
-              <RelicIcon name="spark" size={12} /> Relic Guide
+              <RelicIcon name="spark" size={12} /> The Loom
             </span>
             <div className="loom-mode-tabs">
               <button type="button" className={`loom-tab${loomMode === "ask" ? " active" : ""}`}>Ask</button>
@@ -175,7 +175,7 @@ export function SanctumShell({
           </div>
           <div className="loom-body">
             <div className="loom-draft-card">
-              <div className="loom-draft-label">Relic Guide</div>
+              <div className="loom-draft-label">The Loom</div>
               <div className="loom-draft-text">
                 {loomMode === "prep"
                   ? "Review continuity, draft scenes, and prepare changes. Canon still waits for GM approval."
@@ -190,7 +190,7 @@ export function SanctumShell({
           </div>
           <div className="loom-foot">
             <form className="loom-composer" action={`${root}/guide`}>
-              <label className="sr-only" htmlFor="loom-prompt">Ask Relic Guide</label>
+              <label className="sr-only" htmlFor="loom-prompt">Ask The Loom</label>
               <textarea
                 id="loom-prompt"
                 name="q"

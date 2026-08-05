@@ -196,7 +196,7 @@ begin
       select 1
       from internal.ai_task_runs
       where id = $1
-        and prompt_version = ''answer_saga_question@1.1.0''
+        and prompt_version = ''answer_saga_question@1.2.0''
         and model_tier = ''relic-balanced''
         and resolved_model = ''test-model''
         and workspace_id = ''90100000-0000-0000-0000-000000000001''
@@ -246,9 +246,10 @@ select ok(not exists (
   select 1
   from pg_temp.module9_contract_rows()
   where (
-       task_name in ('answer_saga_question', 'draft_entity_from_prompt')
-       and prompt_version <> task_name || '@1.1.0'
+       task_name = 'answer_saga_question'
+       and prompt_version <> 'answer_saga_question@1.2.0'
      )
+     or (task_name = 'draft_entity_from_prompt' and prompt_version <> 'draft_entity_from_prompt@1.1.0')
      or (task_name = 'scaffold_saga' and prompt_version <> 'scaffold_saga@1.2.0')
      or (
        task_name not in ('answer_saga_question', 'scaffold_saga', 'draft_entity_from_prompt')

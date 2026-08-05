@@ -22,6 +22,8 @@ source_file: "Sourced - Downloaded - 260518/relic-pricing-rate-limits-v0_2.md"
 
 Opening The Loom, navigating, exact/structured reads, previews, confirmations, deterministic action execution, review edits, Approval Queue commits, archive confirmation, and delete confirmation do not consume AI credits. A conversational reasoning turn is one light credit only when it actually dispatches a provider task. Any generation subtask is separately disclosed, quota-preflighted, and metered under its registered task; an action plan cannot hide or combine charges. Exact action/navigation turns do not create query embeddings, and semantic retrieval runs only when cheaper deterministic retrieval is insufficient. Deterministic local tests are non-billable; every paid smoke keeps an independent disclosed attempt and dollar ceiling.
 
+**Packet E6 action-kernel metering patch (August 2026).** Registry lookup, action materialization, availability checks, navigation, review, dismissal, confirmation, conflict detection, and receipt replay are deterministic and cost zero credits. The initial `open_record@1.0.0` action is free. `draft_entity@1.0.0` must display its downstream `draft_entity_from_prompt` standard/3-credit cost before confirmation, perform quota preflight only after confirmation, and reuse one receipt/run on exact replay. Unknown, stale, denied, dismissed, quota-blocked, or replay-mismatched intents dispatch no provider work and charge nothing.
+
 *Created: May 18, 2026. Updated: May 18, 2026.*  
 *Purpose: define enforceable alpha/MVP usage limits for AI, transcription, storage, imports, exports, and Workspace/World/Saga scale before coding begins.*
 

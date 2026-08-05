@@ -112,13 +112,38 @@ function testOutputFor(
           confidence_reason: "source_unavailable"
         };
       }
+      const blocks: Record<string, unknown>[] = [{
+        type: "grounded_answer",
+        text: evidenceText,
+        citations: [{ source_id: allowedSourceIds[0] }]
+      }];
+      const question = typeof inputPayload.question === "string"
+        ? inputPayload.question.toLocaleLowerCase().normalize("NFKC") : "";
+      const manifest = Array.isArray(inputPayload.action_manifest) ? inputPayload.action_manifest : [];
+      const hasContract = (name: string, version: string) => manifest.some((entry) =>
+        typeof entry === "object" && entry !== null
+        && (entry as Record<string, unknown>).name === name
+        && (entry as Record<string, unknown>).version === version);
+      if (question.includes("open") && hasContract("open_record", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: { name: "open_record", version: "1.0.0", arguments: { source_id: source } },
+          explanation: "Open the current cited record."
+        });
+      } else if (question.includes("draft") && hasContract("draft_entity", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: {
+            name: "draft_entity",
+            version: "1.0.0",
+            arguments: { entity_type: "character", intent: "Draft one non-canon character proposal from the cited evidence." }
+          },
+          explanation: "Prepare a non-canon character draft after explicit confirmation."
+        });
+      }
       return {
         no_answer: false,
-        blocks: [{
-          type: "grounded_answer",
-          text: evidenceText,
-          citations: [{ source_id: allowedSourceIds[0] }]
-        }],
+        blocks,
         confidence_reason: "single_clear_segment"
       };
     }
@@ -426,7 +451,8 @@ export async function callAiProvider(
               "For answer_saga_question, return exactly {no_answer,blocks,confidence_reason} plus insufficiency_reason exactly when no_answer is true.",
               "For answer_saga_question, when retrieval_context directly answers the question, no_answer must be false and the answer must use a grounded_answer block with at least one exact source_id citation from that supporting evidence.",
               "Every block must be a flat object with a type string; never nest content under a block-type key.",
-              'Valid shapes are {"type":"grounded_answer","text":"...","citations":[{"source_id":"..."}]}, {"type":"grounded_proposal","text":"...","citations":[{"source_id":"..."}]}, {"type":"creative_proposal","text":"..."}, {"type":"guidance","text":"..."}, {"type":"action_preview","action":{"type":"open_record","source_id":"<allowlisted UUID>"},"explanation":"..."}, and {"type":"action_preview","action":{"type":"draft_entity","entity_type":"character","intent":"Draft a bounded non-canon character proposal."},"explanation":"..."}.',
+              'Valid content shapes are {"type":"grounded_answer","text":"...","citations":[{"source_id":"..."}]}, {"type":"grounded_proposal","text":"...","citations":[{"source_id":"..."}]}, {"type":"creative_proposal","text":"..."}, and {"type":"guidance","text":"..."}.',
+              'For an action preview, use exactly {"type":"action_preview","action":{"name":"<manifest name>","version":"<manifest version>","arguments":{...}},"explanation":"..."}. Use only a contract supplied in input.action_manifest, obey its argument schema exactly, never add handler or RPC names, and never claim the action has executed.',
               "Cite every grounded paragraph only from source_id values in the supplied retrieval context; creative proposals are explicitly non-canon and have no citations.",
               "Prefer exactly one strongest citation per grounded block and copy its source_id character-for-character; never reconstruct, shorten, combine, or retype an identifier from memory.",
               'When no_answer is true, insufficiency_reason is required and must be one of "no_relevant_evidence", "conflicting_evidence", "stale_evidence", "retrieval_unavailable", or "unsupported_request"; return guidance blocks only and prefer no_answer when support is insufficient.',

@@ -86,26 +86,37 @@ export async function submitGuideQuestionAction(formData: FormData) {
   }
 }
 
-export async function setGuideActionStateAction(formData: FormData) {
+export async function reviewLoomActionAction(formData: FormData) {
   const { supabase } = await requireActionUser();
-  const params = paramsFromForm(formData);
   const actionId = value(formData, "actionId");
-  const state = value(formData, "state");
-  if (!actionId || !["accepted", "dismissed"].includes(state)) {
+  const expectedIntentVersion = Number(value(formData, "expectedIntentVersion"));
+  const decision = value(formData, "decision");
+  const idempotencyKey = value(formData, "idempotencyKey");
+  if (!actionId || !Number.isInteger(expectedIntentVersion) || expectedIntentVersion < 1
+    || !["confirmed", "dismissed"].includes(decision) || !idempotencyKey) {
     return { ok: false, category: "invalid_action" };
   }
-  const { data, error } = await supabase.rpc("set_guide_action_state", {
-    p_workspace_id: params.workspaceId,
-    p_world_id: params.worldId,
-    p_saga_id: params.sagaId,
+  const { data, error } = await supabase.rpc("review_loom_action", {
     p_action_id: actionId,
-    p_state: state
+    p_expected_intent_version: expectedIntentVersion,
+    p_decision: decision,
+    p_idempotency_key: idempotencyKey
   });
-  if (error) return { ok: false, category: "action_conflict" };
-  if (data?.allowed === false) {
-    return { ok: false, category: "quota_blocked", state: data?.state };
+  if (error) {
+    return {
+      ok: false,
+      category: ["40001", "23505", "23514"].includes(error.code) ? "action_conflict" : "action_unavailable"
+    };
   }
-  if (state === "accepted" && data?.run_id && process.env.INTERNAL_TOKEN) {
+  if (data?.allowed === false) {
+    return {
+      ok: false,
+      category: data?.category === "quota_blocked" ? "quota_blocked" : "action_conflict",
+      state: data?.state,
+      intentVersion: data?.intent_version
+    };
+  }
+  if (decision === "confirmed" && data?.run_id && process.env.INTERNAL_TOKEN) {
     await fetch(`${getSupabaseUrl()}/functions/v1/ai-task-runner`, {
       method: "POST",
       headers: { authorization: `Bearer ${process.env.INTERNAL_TOKEN}`, "content-type": "application/json" },
@@ -113,8 +124,14 @@ export async function setGuideActionStateAction(formData: FormData) {
       cache: "no-store"
     }).catch(() => undefined);
   }
-  revalidatePath(`${sagaPath(params)}/guide`);
-  return { ok: true, state: data?.state, runId: data?.run_id };
+  revalidatePath("/app", "layout");
+  return {
+    ok: true,
+    state: data?.state,
+    intentVersion: data?.intent_version,
+    runId: data?.run_id,
+    replayed: data?.replayed === true
+  };
 }
 
 export async function newGuideThreadAction(formData: FormData) {

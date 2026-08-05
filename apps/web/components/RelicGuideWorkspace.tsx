@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   newGuideThreadAction,
-  setGuideActionStateAction,
+  reviewLoomActionAction,
   submitGuideQuestionAction
 } from "@/app/actions";
 import {
@@ -35,6 +35,7 @@ export function RelicGuideWorkspace({
   const router = useRouter();
   const [thread, setThread] = useState(initialThread);
   const submissions = useRef(new Map<string, { question: string; idempotencyKey: string; threadId: string }>());
+  const actionReviews = useRef(new Map<string, string>());
 
   useEffect(() => {
     setThread(initialThread);
@@ -92,11 +93,16 @@ export function RelicGuideWorkspace({
     await dispatch(turnId, submission.question, submission.idempotencyKey, submission.threadId);
   }
 
-  async function changeAction(actionId: string, state: "accepted" | "dismissed") {
-    const form = scopedForm(params);
+  async function changeAction(actionId: string, expectedIntentVersion: number, decision: "confirmed" | "dismissed") {
+    const reviewIdentity = `${actionId}:${expectedIntentVersion}:${decision}`;
+    const idempotencyKey = actionReviews.current.get(reviewIdentity) ?? crypto.randomUUID();
+    actionReviews.current.set(reviewIdentity, idempotencyKey);
+    const form = new FormData();
     form.set("actionId", actionId);
-    form.set("state", state);
-    const result = await setGuideActionStateAction(form);
+    form.set("expectedIntentVersion", String(expectedIntentVersion));
+    form.set("decision", decision);
+    form.set("idempotencyKey", idempotencyKey);
+    const result = await reviewLoomActionAction(form);
     setThread((current) => ({
       ...current,
       turns: current.turns.map((turn) => ({
@@ -104,8 +110,9 @@ export function RelicGuideWorkspace({
         blocks: turn.blocks.map((block) => block.type === "action_preview" && block.actionId === actionId
           ? {
               ...block,
+              intentVersion: result.intentVersion ?? block.intentVersion,
               state: result.ok
-                ? (state === "accepted" ? "processing" : "dismissed")
+                ? (result.state ?? (decision === "confirmed" ? "processing" : "dismissed"))
                 : (result.category === "quota_blocked" ? "quota_blocked" : "conflict")
             }
           : block)
@@ -129,8 +136,8 @@ export function RelicGuideWorkspace({
       thread={thread}
       initialQuestion={initialQuestion}
       onSubmit={submit}
-      onConfirmAction={(actionId) => changeAction(actionId, "accepted")}
-      onDismissAction={(actionId) => changeAction(actionId, "dismissed")}
+      onConfirmAction={(actionId, intentVersion) => changeAction(actionId, intentVersion, "confirmed")}
+      onDismissAction={(actionId, intentVersion) => changeAction(actionId, intentVersion, "dismissed")}
       onNewThread={newThread}
       onRetry={retry}
     />

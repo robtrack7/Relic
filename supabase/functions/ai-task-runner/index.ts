@@ -57,7 +57,7 @@ async function retrieveContext(
     return evidence;
   }
   if (taskRun.retrieval_profile === "none" || !taskRun.gm_id || !taskRun.saga_id) return [];
-  if (taskRun.guide_turn_id) {
+  if (taskRun.guide_turn_id || typeof taskRun.input_payload?.loom_action_id === "string") {
     const { data, error } = await service.rpc("get_guide_evidence_for_worker", { p_run_id: taskRun.id });
     if (error) throw new Error(`retrieval failed: ${error.message}`);
     const evidence = Array.isArray(data) ? data : [];

@@ -32,6 +32,8 @@ export type AiTaskRun = {
     text: string;
     source_version?: string | null;
     source_kind?: string | null;
+    source_entity_type?: string | null;
+    source_entity_id?: string | null;
     title?: string | null;
   }>;
   output_payload?: Record<string, unknown> | null;

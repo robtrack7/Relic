@@ -698,6 +698,62 @@ function validateGuideSupport(
   }
 }
 
+function registeredLoomAction(
+  taskRun: AiTaskRun,
+  name: string,
+  version: string
+) {
+  const manifest = taskRun.input_payload?.action_manifest;
+  if (!Array.isArray(manifest)) return false;
+  return manifest.some((entry) => isRecord(entry)
+    && entry.name === name
+    && entry.version === version);
+}
+
+function validateLoomAction(
+  taskRun: AiTaskRun,
+  action: Record<string, unknown>,
+  path: string,
+  errors: string[]
+) {
+  hasOnlyFields(action, new Set(["name", "version", "arguments"]), path, errors);
+  if (!isString(action.name) || !isString(action.version) || !isRecord(action.arguments)) {
+    errors.push(`${path} must contain registered name, version, and arguments`);
+    return;
+  }
+  if (!registeredLoomAction(taskRun, action.name, action.version)) {
+    errors.push(`${path} name and version are not in the server action manifest`);
+    return;
+  }
+  const args = action.arguments;
+  if (action.name === "open_record" && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(["source_id"]), `${path}.arguments`, errors);
+    if (!isUuid(args.source_id) || !taskRun.allowed_source_ids.includes(args.source_id)) {
+      errors.push(`${path}.arguments.source_id must belong to the allowed retrieval set`);
+      return;
+    }
+    const evidence = taskRun.retrieval_context?.find((entry) => entry.source_id === args.source_id);
+    if (!evidence || !isString(evidence.source_entity_type)
+      || !GUIDE_ENTITY_TYPES.has(evidence.source_entity_type)
+      || !isUuid(evidence.source_entity_id)) {
+      errors.push(`${path}.arguments.source_id must identify a current supported entity record`);
+    }
+    return;
+  }
+  if (action.name === "draft_entity" && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(["entity_type", "intent"]), `${path}.arguments`, errors);
+    if (!isString(args.entity_type) || !GUIDE_ENTITY_TYPES.has(args.entity_type)) {
+      errors.push(`${path}.arguments.entity_type is unsupported`);
+    }
+    if (!isString(args.intent) || args.intent.length > 500
+      || EXECUTABLE_OR_MUTATION_PATTERN.test(args.intent)) {
+      errors.push(`${path}.arguments.intent is required, bounded, and non-executable`);
+    }
+    return;
+  }
+  errors.push(`${path} action contract is unsupported by this runtime`);
+}
+
 function validateGuideOutput(taskRun: AiTaskRun, value: Record<string, unknown>): {
   errors: string[];
   output: Record<string, unknown>;
@@ -843,27 +899,11 @@ function validateGuideOutput(taskRun: AiTaskRun, value: Record<string, unknown>)
       } else {
         totalTextLength += candidate.explanation.length;
       }
-      if (!isRecord(candidate.action) || !isString(candidate.action.type)) {
+      if (!isRecord(candidate.action)) {
         errors.push(`${path}.action must be an allowlisted action object`);
         return;
       }
-      if (candidate.action.type === "open_record") {
-        hasOnlyFields(candidate.action, new Set(["type", "source_id"]), `${path}.action`, errors);
-        if (!isUuid(candidate.action.source_id) || !allowedSourceIds.has(candidate.action.source_id)) {
-          errors.push(`${path}.action.source_id must belong to the allowed retrieval set`);
-        }
-      } else if (candidate.action.type === "draft_entity") {
-        hasOnlyFields(candidate.action, new Set(["type", "entity_type", "intent"]), `${path}.action`, errors);
-        if (!isString(candidate.action.entity_type) || !GUIDE_ENTITY_TYPES.has(candidate.action.entity_type)) {
-          errors.push(`${path}.action.entity_type is unsupported`);
-        }
-        if (!isString(candidate.action.intent) || candidate.action.intent.length > 500
-          || EXECUTABLE_OR_MUTATION_PATTERN.test(candidate.action.intent)) {
-          errors.push(`${path}.action.intent is required, bounded, and non-executable`);
-        }
-      } else {
-        errors.push(`${path}.action.type is unsupported`);
-      }
+      validateLoomAction(taskRun, candidate.action, `${path}.action`, errors);
       return;
     }
 

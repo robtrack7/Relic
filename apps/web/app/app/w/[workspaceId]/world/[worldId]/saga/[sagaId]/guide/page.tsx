@@ -24,8 +24,8 @@ export default async function GuidePage({
     <SanctumShell params={ids} workspace={workspace} world={world} saga={saga} active="guide">
       <div className="page-head">
         <div>
-          <div className="page-eyebrow"><RelicIcon name="spark" size={12} /> Relic Guide</div>
-          <div className="page-title">Your Saga’s continuity companion</div>
+          <div className="page-eyebrow"><RelicIcon name="spark" size={12} /> The Loom</div>
+          <div className="page-title">Your Saga’s conversational operating layer</div>
           <div className="page-sub">
             Ask about current canon, explore clearly labeled proposals, or review a suggested action before Relic does anything.
           </div>

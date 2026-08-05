@@ -42,6 +42,8 @@ The Loom is the user-facing conversation shell over two distinct server-owned re
 
 ## Changelog
 
+**Packet E6 Loom action-kernel patch (August 2026).** `answer_saga_question@1.2.0` replaces hard-coded E3 action shapes with a compact server-supplied manifest. An action preview contains only registered `name`, semantic `version`, and schema-valid `arguments`; both Edge validation and database materialization enforce the same active registry. E6 activates only `open_record@1.0.0` and `draft_entity@1.0.0`. Confirmation never repeats the answer task: `draft_entity` separately preflights and dispatches the existing 3-credit `draft_entity_from_prompt@1.1.0` task, while navigation/dismissal/review/receipt replay remain deterministic and free.
+
 **Packet E5.2 conversational workshop patch (August 2026).** `plan_saga_workshop@1.0.0` spends one light credit once to understand starting input, flag contradictions, extract an emerging outline, and produce three-to-five high-value questions. Answers advance that finite stored plan deterministically and spend no credits. `scaffold_saga@1.2.0` is dispatched only after explicit `Draft it now` (or the hard turn limit), consumes the frozen complete conversation, and matches the active full scaffold cardinalities. `regenerate_saga_scaffold_section@1.0.0` is a separately confirmed standard task that returns one typed section proposal; optimistic merge can replace only that section and never unrelated GM edits.
 
 **Packet E5 agentic Saga workshop patch (July 2026).** `scaffold_saga@1.1.0` established the first strict complete-output workshop boundary. Its compact four-record implementation is superseded by `scaffold_saga@1.2.0`; the July safety, evidence, retry, review, and explicit-commit rules remain authoritative. `draft_entity_from_prompt@1.1.0` remains the single deep lore/entity proposal shape and still produces only a pending Approval Queue draft. The first bounded live E5 delivery exhausted its initial-plus-repair allowance in strict validation failure and produced zero canon writes and zero usage event; current provider-backed proof remains open only at the separately authorized Phase E hosted gate.
@@ -1025,9 +1027,9 @@ Identify loose threads and next-prep implications separately from canon drafts.
 
 ## 10. `answer_saga_question`
 
-**Quota:** light · **Model:** relic-balanced · **Prompt:** `answer_saga_question@1.1.0` · **Retrieval:** `sanctum_qa_grounding` · **Invocation:** GM submits a factual or continuity question in Relic Guide.
+**Quota:** light · **Model:** relic-balanced · **Prompt:** `answer_saga_question@1.2.0` · **Retrieval:** `sanctum_qa_grounding` · **Invocation:** GM submits a factual, continuity, or supported navigation/draft request in The Loom.
 
-**Conversation contract.** Relic Guide threads persist per GM and Saga across refresh, navigation, app restart, and later web/mobile handoff. A turn may receive at most eight server-selected prior turns and 6,000 normalized characters of conversation context. The browser cannot submit trusted history. Conversation helps resolve references such as “her brother” but is untrusted interpretation context: it is never retrieval evidence, cannot be cited, and cannot make a claim canon. Starting a new thread, clearing, or archiving changes conversation state only.
+**Conversation contract.** Loom threads persist per GM and Saga across refresh, navigation, app restart, and later web/mobile handoff. A turn may receive at most eight server-selected prior turns and 6,000 normalized characters of conversation context. The browser cannot submit trusted history. Conversation helps resolve references such as “her brother” but is untrusted interpretation context: it is never retrieval evidence, cannot be cited, and cannot make a claim canon. Starting a new thread, clearing, or archiving changes conversation state only.
 
 **Question normalization.** Normalize Unicode to NFKC, normalize line endings, trim outer whitespace, collapse horizontal whitespace without destroying paragraphs, reject control/executable payloads, and require 1–2,000 characters after normalization. Scope, profile, aliases, models, quota, target allowlists, retrieval results, and conversation context are server-derived.
 
@@ -1039,9 +1041,21 @@ Identify loose threads and next-prep implications separately from canon drafts.
   guide_thread_id: uuid,
   guide_turn_id: uuid,
   conversation_context: [
-    {role: 'gm' | 'guide', text: string, turn_id: uuid}
+    {role: 'gm' | 'loom', text: string, turn_id: uuid}
   ],
-  gm_profile: {experience_level}
+  gm_profile: {experience_level},
+  action_manifest: [
+    {
+      name: 'open_record' | 'draft_entity',
+      version: '1.0.0',
+      description: string,
+      arguments: provider_safe_json_schema,
+      authority_tier: 'read_navigation' | 'non_canon_generation',
+      confirmation_policy: 'none' | 'explicit',
+      ai_credits: 0 | 3,
+      effect_summary: string
+    }
+  ]
 }
 ```
 
@@ -1071,12 +1085,16 @@ The stored AI run envelope supplies Workspace, World, Saga, GM, task, prompt, qu
     | {
         type: 'action_preview',
         action: {
-          type: 'open_record',
-          source_id: uuid
+          name: 'open_record',
+          version: '1.0.0',
+          arguments: {source_id: uuid}
         } | {
-          type: 'draft_entity',
-          entity_type: 'character' | 'place' | 'faction' | 'artifact' | 'thread',
-          intent: string
+          name: 'draft_entity',
+          version: '1.0.0',
+          arguments: {
+            entity_type: 'character' | 'place' | 'faction' | 'artifact' | 'thread',
+            intent: string
+          }
         },
         explanation: string
       }
@@ -1085,7 +1103,7 @@ The stored AI run envelope supplies Workspace, World, Saga, GM, task, prompt, qu
 }
 ```
 
-Guide’s general message renderer also reserves `creative_proposal` and `grounded_proposal` blocks for other registered tasks. `creative_proposal` is visibly new non-canon material and requires no citation. `grounded_proposal` cites the canon constraints it uses while still marking every new detail as proposed. `answer_saga_question` itself does not use creative blocks to evade insufficiency.
+The Loom's general message renderer also reserves `creative_proposal` and `grounded_proposal` blocks for other registered tasks. `creative_proposal` is visibly new non-canon material and requires no citation. `grounded_proposal` cites the canon constraints it uses while still marking every new detail as proposed. `answer_saga_question` itself does not use creative blocks to evade insufficiency.
 
 **Retrieval.** `sanctum_qa_grounding`, `top_k=20`, `canon_only=true`, hybrid BM25/vector, current Saga primary plus eligible World canon, including approved lore/summary records and current visible transcript windows. It excludes `gm_note`, noisy Quick Captures, pending/rejected drafts, raw Import Inbox material, archived/deleted/hidden records, sibling Sagas, and other tenants. Context is capped at 48,000 normalized characters; each evidence item is capped at 6,000 and delimited as untrusted evidence. The exact source/version allowlist used for prompt assembly is immutable for that run.
 
@@ -1101,7 +1119,7 @@ Guide’s general message renderer also reserves `creative_proposal` and `ground
 - Maximum four answer paragraphs, 1,500 characters each, and 6,000 characters across all displayed blocks.
 - Duplicate citations normalize by first appearance. One schema repair is permitted; failed repair renders no partial provider text.
 
-**Action behavior.** `open_record` resolves only through a cited source already in the run allowlist and performs navigation only. `draft_entity` is a stored intent, not a mutation payload. The GM must confirm it; acceptance revalidates the originating run/turn/Saga and then invokes the registered `draft_entity_from_prompt` task through its own quota, idempotency, source, validation, and Approval Queue path. E3 does not enable relationship, objective, Prep, Stage, rulebook, dice, image, or Saga-creation actions.
+**Action behavior.** E6 permits only manifest-registered `{name, version, arguments}` actions. Edge validation and database materialization independently reject unknown versions/fields, outside-evidence IDs, unsupported targets, and executable intent text. `open_record@1.0.0` resolves one current supported entity from cited evidence and performs free navigation only. `draft_entity@1.0.0` freezes authority, exact 3-credit cost, effect, evidence versions, and optimistic intent version. The GM must confirm it through the derived-scope review RPC; current evidence is rechecked before one idempotent `draft_entity_from_prompt` dispatch reuses the immutable Loom evidence and may create only a pending reviewed draft. E6 does not yet enable relationship, objective, Prep, Stage, rulebook, dice, image, archive/delete, or general Saga-creation actions.
 
 **Failure modes.** Empty retrieval produces `no_answer`. Query-embedding/provider failure preserves lexical retrieval; total retrieval failure produces safe insufficiency. Hallucinated or unrelated citations receive one bounded repair, then fail closed. Provider/network/quota/dead-letter/permission failure preserves the question and action state. A superseded turn cannot replace the visible newer result.
 

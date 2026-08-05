@@ -18,14 +18,22 @@ export type GuideBlock =
   | {
       type: "action_preview";
       actionId: string;
+      intentVersion: number;
       action:
-        | { type: "open_record"; href: string }
+        | { name: "open_record"; version: "1.0.0"; href: string }
         | {
-            type: "draft_entity";
+            name: "draft_entity";
+            version: "1.0.0";
             entityType: "character" | "place" | "faction" | "artifact" | "thread";
             intent: string;
           };
       explanation: string;
+      authorityTier: "read_navigation" | "non_canon_generation";
+      confirmationPolicy: "none" | "explicit";
+      costCredits: number;
+      effectSummary: string;
+      manualFallback: string;
+      availabilityState?: string;
       state?: "pending" | "processing" | "accepted" | "dismissed" | "quota_blocked" | "conflict" | "failed";
     };
 
@@ -57,8 +65,8 @@ type Props = {
   thread: GuideThread;
   initialQuestion?: string;
   onSubmit: (question: string) => void | Promise<void>;
-  onConfirmAction?: (actionId: string) => void | Promise<void>;
-  onDismissAction?: (actionId: string) => void | Promise<void>;
+  onConfirmAction?: (actionId: string, intentVersion: number) => void | Promise<void>;
+  onDismissAction?: (actionId: string, intentVersion: number) => void | Promise<void>;
   onNewThread?: () => void | Promise<void>;
   onRetry?: (turnId: string) => void | Promise<void>;
 };
@@ -69,15 +77,16 @@ function ActionBlock({
   onDismiss
 }: {
   block: Extract<GuideBlock, { type: "action_preview" }>;
-  onConfirm?: (actionId: string) => void | Promise<void>;
-  onDismiss?: (actionId: string) => void | Promise<void>;
+  onConfirm?: (actionId: string, intentVersion: number) => void | Promise<void>;
+  onDismiss?: (actionId: string, intentVersion: number) => void | Promise<void>;
 }) {
   const [reviewing, setReviewing] = useState(false);
-  if (block.action.type === "open_record") {
+  if (block.action.name === "open_record") {
     return (
       <section className="guide-action-card" aria-label="Suggested action">
-        <div className="guide-block-label">Suggested action</div>
+        <div className="guide-block-label">Suggested action · Free · Read only</div>
         <p>{block.explanation}</p>
+        <p className="guide-action-meta">{block.effectSummary}</p>
         <Link href={block.action.href} className="btn btn-secondary btn-sm">Open record</Link>
       </section>
     );
@@ -94,37 +103,39 @@ function ActionBlock({
             : "Relic could not safely complete this action.";
     return (
       <section className="guide-action-card" aria-label="Draft action status">
-        <div className="guide-block-label">Draft action</div>
+        <div className="guide-block-label">Draft action · {block.costCredits} AI credits · Not canon</div>
         <p>{copy}</p>
+        {block.state === "conflict" && <p>{block.manualFallback}</p>}
       </section>
     );
   }
   return (
     <section className="guide-action-card" aria-label="Reviewed draft action">
-      <div className="guide-block-label">Review before acting</div>
+      <div className="guide-block-label">Review before acting · {block.costCredits} AI credits · Not canon</div>
       <p>{block.explanation}</p>
+      <p className="guide-action-meta">{block.effectSummary}</p>
       {!reviewing ? (
         <div className="guide-action-buttons">
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setReviewing(true)}>
             Review draft action
           </button>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => onDismiss?.(block.actionId)}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => onDismiss?.(block.actionId, block.intentVersion)}>
             Dismiss action
           </button>
         </div>
       ) : (
         <div className="guide-action-confirm">
           <p>
-            This will use the entity drafting task and its quota. The result remains a pending draft until you review it.
+            This will spend exactly {block.costCredits} AI credits. It creates one non-canon pending entity draft; nothing becomes canon until you approve it through the review path.
           </p>
           <div className="guide-action-buttons">
-            <button type="button" className="btn btn-primary btn-sm" onClick={() => onConfirm?.(block.actionId)}>
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => onConfirm?.(block.actionId, block.intentVersion)}>
               Confirm and draft
             </button>
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReviewing(false)}>
               Keep reviewing
             </button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => onDismiss?.(block.actionId)}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => onDismiss?.(block.actionId, block.intentVersion)}>
               Dismiss action
             </button>
           </div>
@@ -135,13 +146,13 @@ function ActionBlock({
 }
 
 function statusCopy(status: GuideTurn["status"]) {
-  if (status === "queued") return "Question queued. Relic Guide will answer when it is ready.";
-  if (status === "running") return "Relic Guide is reviewing authorized Saga evidence.";
+  if (status === "queued") return "Question queued. The Loom will answer when it is ready.";
+  if (status === "running") return "The Loom is reviewing authorized Saga evidence.";
   if (status === "quota_blocked") return "Your current usage limit blocks this AI answer. Your question is preserved.";
-  if (status === "provider_unavailable") return "Relic Guide is temporarily unavailable. Your question is preserved.";
+  if (status === "provider_unavailable") return "The Loom is temporarily unavailable. Your question is preserved.";
   if (status === "retrieval_fallback") return "Semantic retrieval is unavailable. Relic is using lexical evidence.";
   if (status === "dead_letter") return "Relic could not complete this answer after safe retries.";
-  if (status === "failed") return "Relic Guide could not finish this answer. Your question is preserved.";
+  if (status === "failed") return "The Loom could not finish this answer. Your question is preserved.";
   return "";
 }
 
@@ -163,7 +174,7 @@ export function RelicGuideConversation({
   const chronologicalTurns = useMemo(() => thread.turns, [thread.turns]);
 
   return (
-    <section className="guide-conversation" aria-label="Relic Guide conversation">
+    <section className="guide-conversation" aria-label="The Loom conversation">
       <div className="guide-thread-toolbar">
         <span className="guide-thread-scope">This conversation belongs to the active Saga.</span>
         {onNewThread && (
@@ -187,7 +198,7 @@ export function RelicGuideConversation({
                 <div className="guide-state-actions">
                   {onRetry && ["quota_blocked", "provider_unavailable", "failed", "dead_letter"].includes(turn.status) && (
                     <button type="button" className="btn btn-secondary btn-sm" onClick={() => onRetry(turn.id)}>
-                      Retry Guide
+                      Retry The Loom
                     </button>
                   )}
                   <Link href={`${sagaRoot}/search?q=${encodeURIComponent(turn.question)}`}>Search manually</Link>
@@ -260,7 +271,7 @@ export function RelicGuideConversation({
           if (normalized && !busy) void onSubmit(normalized);
         }}
       >
-        <label htmlFor="guide-question">Ask Relic Guide</label>
+        <label htmlFor="guide-question">Ask The Loom</label>
         <textarea
           id="guide-question"
           value={question}
@@ -278,7 +289,7 @@ export function RelicGuideConversation({
         <div className="guide-composer-footer">
           <span>{question.length}/2000 · Enter to send · Shift+Enter for a new line</span>
           <button type="submit" className="btn btn-primary" disabled={busy || !question.trim()}>
-            Ask Guide
+            Ask The Loom
           </button>
         </div>
       </form>

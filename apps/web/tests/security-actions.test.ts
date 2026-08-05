@@ -13,7 +13,7 @@ import {
   recordSessionConsentAction,
   requestSagaExportAction,
   submitGuideQuestionAction,
-  setGuideActionStateAction,
+  reviewLoomActionAction,
   newGuideThreadAction,
   renameSagaAction,
   deleteSagaAction,
@@ -117,7 +117,7 @@ describe("security-hardened server actions", () => {
     expect(supabase.from).not.toHaveBeenCalled();
   });
 
-  it("routes Guide thread creation and reviewed action decisions through scoped RPCs", async () => {
+  it("routes Loom thread creation and derives reviewed-action scope on the server", async () => {
     const supabase = authenticatedSupabase();
     supabase.rpc
       .mockResolvedValueOnce({ data: "thread-b", error: null })
@@ -127,9 +127,10 @@ describe("security-hardened server actions", () => {
     const created = await newGuideThreadAction(form({
       workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a"
     }));
-    const dismissed = await setGuideActionStateAction(form({
+    const dismissed = await reviewLoomActionAction(form({
       workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a",
-      actionId: "action-a", state: "dismissed", targetId: "forged-target"
+      actionId: "action-a", expectedIntentVersion: "4", decision: "dismissed",
+      idempotencyKey: "receipt-key-a", targetId: "forged-target"
     }));
 
     expect(created).toEqual({ ok: true, threadId: "thread-b" });
@@ -137,9 +138,11 @@ describe("security-hardened server actions", () => {
     expect(supabase.rpc.mock.calls[0]).toEqual(["new_guide_thread", {
       p_workspace_id: "workspace-a", p_world_id: "world-a", p_saga_id: "saga-a"
     }]);
-    expect(supabase.rpc.mock.calls[1]).toEqual(["set_guide_action_state", {
-      p_workspace_id: "workspace-a", p_world_id: "world-a", p_saga_id: "saga-a",
-      p_action_id: "action-a", p_state: "dismissed"
+    expect(supabase.rpc.mock.calls[1]).toEqual(["review_loom_action", {
+      p_action_id: "action-a",
+      p_expected_intent_version: 4,
+      p_decision: "dismissed",
+      p_idempotency_key: "receipt-key-a"
     }]);
     expect(supabase.from).not.toHaveBeenCalled();
   });
