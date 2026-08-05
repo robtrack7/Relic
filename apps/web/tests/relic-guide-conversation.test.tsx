@@ -76,6 +76,7 @@ describe("RelicGuideConversation", () => {
       onSubmit={vi.fn()}
     />);
     expect(screen.getByText(/usage limit/i)).toBeTruthy();
+    expect(screen.getByRole("link", { name: /review usage and reset/i }).getAttribute("href")).toBe(`${root}/settings?from=loom#usage`);
     expect(document.body.textContent).not.toMatch(/litellm|postgres|stack trace|uuid/i);
   });
 

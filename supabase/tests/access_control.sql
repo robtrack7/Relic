@@ -2,7 +2,7 @@ create extension if not exists pgtap with schema extensions;
 
 begin;
 
-select plan(7);
+select plan(9);
 
 create temp table module1_callable_functions (
   function_name text primary key,
@@ -90,6 +90,10 @@ values
   ('get_pending_drafts', true, 'Scoped approval queue read RPC.'),
   ('get_pending_drafts_for_session', true, 'Scoped session review queue read RPC.'),
   ('get_workspace_usage_summary', true, 'Scoped usage summary read RPC.'),
+  ('get_settings_control_plane', true, 'Scoped Settings, usage, retention recovery, and recent-change projection.'),
+  ('update_gm_profile_settings', true, 'Workspace-authorized GM default profile settings writer.'),
+  ('update_saga_operational_settings', true, 'Scoped Saga system and GM profile override settings writer.'),
+  ('update_saga_retention_settings', true, 'Scoped, explicitly confirmed future retention settings writer.'),
   ('check_quota_preflight', true, 'Scoped quota preflight RPC.'),
   ('preflight_ai_task', true, 'Scoped AI task registry and quota preflight RPC.'),
   ('get_guide_thread', true, 'Scoped persistent Loom conversation read RPC.'),
@@ -103,6 +107,7 @@ values
   ('request_saga_export', true, 'Scoped Saga export request RPC.'),
   ('get_saga_export_status', true, 'Scoped Saga export status RPC.'),
   ('get_saga_export_download', true, 'Scoped Saga export download RPC.'),
+  ('get_notification_delivery_summary', true, 'Workspace-authorized content-safe notification delivery summary.'),
   ('update_notification_preferences', true, 'Scoped GM notification preference RPC.'),
   ('register_push_device', true, 'Scoped push device registration RPC.'),
   ('record_usage_event', true, 'Scoped idempotent usage event writer RPC.'),
@@ -239,9 +244,18 @@ values
   ('request_saga_export', 'Saga export request RPC.'),
   ('get_saga_export_status', 'Saga export status RPC.'),
   ('get_saga_export_download', 'Saga export download RPC.'),
+  ('get_saga_export_payload_for_worker', 'Worker-only scope-checked curated export projection.'),
+  ('get_notification_delivery_summary', 'Workspace-authorized content-safe notification delivery summary.'),
+  ('prepare_notification_delivery_for_worker', 'Worker-only preference and content-safe delivery projection.'),
+  ('complete_notification_delivery_for_worker', 'Worker-only idempotent provider delivery completion.'),
+  ('skip_notification_delivery_for_worker', 'Worker-only deterministic delivery suppression completion.'),
   ('update_notification_preferences', 'Notification preference update RPC.'),
   ('register_push_device', 'Push device registration RPC.'),
   ('get_workspace_usage_summary', 'Usage summary read RPC.'),
+  ('get_settings_control_plane', 'Scoped Settings and recovery read model.'),
+  ('update_gm_profile_settings', 'Workspace-authorized GM default profile settings writer.'),
+  ('update_saga_operational_settings', 'Scoped Saga system and profile override writer.'),
+  ('update_saga_retention_settings', 'Scoped confirmed future retention writer.'),
   ('record_usage_event', 'Usage event writer RPC.'),
   ('get_ai_task_run_for_worker', 'Worker-only AI task run reader wrapper.'),
   ('record_ai_task_output_for_worker', 'Worker-only AI task output writer wrapper.'),
@@ -255,9 +269,13 @@ values
   ('reset_stalled_ai_task_runs_for_worker', 'Worker-only stalled AI task lease watchdog.'),
   ('prune_provider_pipeline_events_for_worker', 'Worker-only safe provider event retention maintenance.'),
   ('complete_export_job_for_worker', 'Worker-only export completion wrapper.'),
+  ('claim_export_job_for_worker', 'Worker-only export claim wrapper.'),
   ('dispatch_notification_for_worker', 'Worker-only notification dispatch wrapper.'),
+  ('claim_notification_job_for_worker', 'Worker-only notification claim wrapper.'),
   ('complete_cleanup_job_for_worker', 'Worker-only cleanup completion wrapper.'),
   ('claim_cleanup_job_for_worker', 'Worker-only cleanup claim wrapper.'),
+  ('claim_audio_cleanup_job_for_worker', 'Worker-only audio cleanup claim wrapper.'),
+  ('claim_saga_cleanup_job_for_worker', 'Worker-only Saga and expired-export cleanup claim wrapper.'),
   ('claim_transcription_job_for_worker', 'Worker-only transcription claim wrapper.'),
   ('complete_transcription_job_for_worker', 'Worker-only transcription result wrapper.'),
   ('claim_embedding_job_for_worker', 'Worker-only embedding job claim wrapper.'),
@@ -348,6 +366,15 @@ select throws_like(
 );
 reset role;
 
+set local role authenticated;
+select throws_like(
+  $$ insert into storage.objects (bucket_id, name)
+     values ('exports', '10000000-0000-0000-0000-000000000001/20000000-0000-0000-0000-000000000001/30000000-0000-0000-0000-000000000001/forged.zip') $$,
+  '%row-level security%',
+  'authenticated browsers cannot forge export archive objects'
+);
+reset role;
+
 with public_security_definers as (
   select p.oid, p.proname, p.proconfig
   from pg_proc p
@@ -367,6 +394,19 @@ select is(
   ),
   0::bigint,
   'every public security-definer function has an explicit search_path'
+);
+
+select is(
+  (
+    select count(*)
+    from pg_proc p
+    join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='public'
+      and p.proname=any(array['saga_belongs_to_world','saga_row_allowed','scoped_row_allowed','storage_path_segment','user_is_workspace_member','user_owns_saga','user_owns_workspace','user_owns_world','uuid7','world_belongs_to_workspace'])
+      and not exists(select 1 from unnest(coalesce(p.proconfig,array[]::text[])) config(value) where config.value like 'search_path=%')
+  ),
+  0::bigint,
+  'foundational invoker helpers also pin search_path'
 );
 
 with public_security_definers as (

@@ -28,6 +28,9 @@ export default async function ExportPage({
   const downloadAvailable = Boolean(download?.available);
   const failureReason = String(status?.failure_reason ?? "");
   const downloadUrl = String(download?.download_url ?? "");
+  const archiveBytes = Number(status?.archive_bytes ?? 0);
+  const archiveSha256 = String(status?.archive_sha256 ?? "");
+  const expiresAt = String(status?.expires_at ?? "");
 
   return (
     <SanctumShell params={ids} workspace={workspace} world={world} saga={saga} active="export">
@@ -111,15 +114,23 @@ export default async function ExportPage({
                   </div>
                 )}
                 {downloadAvailable && (
-                  <a className="btn btn-secondary btn-sm" href={downloadUrl}>
-                    Download export <RelicIcon name="arrowRight" size={12} />
-                  </a>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <p style={{ fontSize: 12, color: "var(--stone-500)", margin: 0 }}>
+                      {archiveBytes > 0 ? `${Math.max(1, Math.round(archiveBytes / 1024))} KB` : "Archive ready"}
+                      {archiveSha256 ? ` · SHA-256 ${archiveSha256.slice(0, 12)}…` : ""}
+                      {expiresAt ? ` · Expires ${new Date(expiresAt).toLocaleString()}` : ""}
+                    </p>
+                    <a className="btn btn-secondary btn-sm" href={downloadUrl}>
+                      Download private export <RelicIcon name="arrowRight" size={12} />
+                    </a>
+                  </div>
                 )}
                 {!downloadAvailable && state !== "failed" && (
                   <p style={{ fontSize: 12, color: "var(--stone-500)", margin: 0 }}>
                     The archive is not ready yet. Refresh this page after the export worker finishes.
                   </p>
                 )}
+                {!downloadAvailable && state !== "failed" && <a className="btn btn-ghost btn-sm" href={`?exportId=${query.exportId}`}>Refresh status</a>}
               </div>
             )}
           </div>

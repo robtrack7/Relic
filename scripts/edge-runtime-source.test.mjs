@@ -63,6 +63,18 @@ test("module 8 edge runtime function tree exists", () => {
   }
 });
 
+test("Phase F2 export worker builds a private deterministic archive instead of a placeholder URL", () => {
+  const worker = read("supabase/functions/export-saga/index.ts");
+  const builder = read("supabase/functions/_shared/export-builder.ts");
+  const webData = read("apps/web/lib/data.ts");
+  assert.match(worker, /get_saga_export_payload_for_worker|buildSagaExport/, "export worker should use the curated worker projection");
+  assert.match(builder, /storage\.from\("exports"\)\.upload/, "export worker should upload bytes to the private exports bucket");
+  assert.match(builder, /zipStore/, "export worker should build a real ZIP archive");
+  assert.match(builder, /SHA-256/, "export worker should record content integrity");
+  assert.doesNotMatch(builder, /EXPORT_DOWNLOAD_BASE_URL|local\.relic\.invalid/, "export worker must not manufacture a public-style placeholder URL");
+  assert.match(webData, /createSignedUrl\(target\.storage_path, 3600/, "authorized server reads should mint a fresh one-hour signed URL");
+});
+
 test("transcription worker uses scoped audio, provider, result, and usage boundaries", () => {
   const worker = read("supabase/functions/transcribe-session/index.ts");
   const provider = read("supabase/functions/_shared/transcription-provider.ts");
@@ -339,12 +351,33 @@ test("worker dispatchers use the shared runtime wrapper", () => {
 test("Saga cleanup removes real Storage objects before database finalization", () => {
   const cleanup = read("supabase/functions/_shared/storage-cleanup.ts");
   const worker = read("supabase/functions/cleanup-saga/index.ts");
+  const audioWorker = read("supabase/functions/cleanup-audio/index.ts");
 
   assert.match(cleanup, /\.schema\(["']storage["']\)/, "cleanup should discover stored objects under the scoped prefix");
   assert.match(cleanup, /\.remove\(/, "cleanup should permanently remove discovered objects through the Storage API");
   assert.match(cleanup, /1000/, "cleanup should honor the Storage API removal batch limit");
   assert.doesNotMatch(cleanup, /reports deterministic counts/i, "cleanup must not return invented deletion counts");
   assert.match(worker, /createServiceClient\(\)/, "Saga cleanup should use the server-only service client");
-  assert.match(worker, /claim_cleanup_job_for_worker/, "Saga cleanup should claim through the service-role-only public wrapper");
+  assert.match(worker, /claim_saga_cleanup_job_for_worker/, "Saga/export cleanup should claim only its supported job kinds");
+  assert.match(audioWorker, /claim_audio_cleanup_job_for_worker/, "audio cleanup should claim only audio jobs");
   assert.match(worker, /complete_cleanup_job_for_worker/, "database finalization should happen only after Storage cleanup succeeds");
+});
+
+test("Phase F workers claim through exposed boundaries and notifications remain content-safe", () => {
+  const exportWorker = read("supabase/functions/export-saga/index.ts");
+  const notificationWorker = read("supabase/functions/send-notification/index.ts");
+  const provider = read("supabase/functions/_shared/notification-provider.ts");
+
+  assert.match(exportWorker, /claim_export_job_for_worker/, "export worker should use its service-only public claim wrapper");
+  assert.match(notificationWorker, /claim_notification_job_for_worker/, "notification worker should use its service-only public claim wrapper");
+  assert.match(notificationWorker, /dispatchNotification/, "notification jobs should cross the provider adapter");
+  assert.match(provider, /prepare_notification_delivery_for_worker/, "preferences and safe content should be projected at send time");
+  assert.match(provider, /complete_notification_delivery_for_worker/, "accepted provider delivery should complete idempotently");
+  assert.match(provider, /skip_notification_delivery_for_worker/, "disabled delivery should be recorded deterministically");
+  assert.match(provider, /NOTIFICATION_PROVIDER_MODE/, "notification provider mode should be explicit");
+  assert.match(provider, /RELIC_ENV/, "deterministic notification mode should be environment-gated");
+  assert.match(provider, /RESEND_API_KEY/, "live email should use server-only provider credentials");
+  assert.match(provider, /AbortController/, "live email calls should have a bounded timeout");
+  assert.doesNotMatch(provider, /console\.(?:log|error)/, "notification delivery must not log destination or content");
+  assert.doesNotMatch(provider, /\b(?:question|prompt|transcript|story_text|response_payload)\b/i, "provider input should not carry story or Loom content fields");
 });

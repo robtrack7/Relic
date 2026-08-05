@@ -70,12 +70,17 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `get_session_active_threads(...)` | Read scoped active threads. |
 | `get_pending_drafts(...)` | Read scoped pending drafts. |
 | `get_workspace_usage_summary(...)` | Read scoped usage summary. |
+| `get_settings_control_plane(...)` | Read scoped Saga settings, GM preferences, effective Workspace usage, recoverable-job counts, and safe recent-change metadata. |
+| `update_gm_profile_settings(...)` | Update the authenticated GM's default profile after Workspace authorization and optimistic/idempotent checks. |
+| `update_saga_operational_settings(...)` | Update scoped Saga system text and validated GM profile override. |
+| `update_saga_retention_settings(...)` | Update future-only Saga retention behavior with explicit destructive confirmation. |
 | `check_quota_preflight(...)` | Check quota before metered work. |
 | `preflight_ai_task(...)` | Check Registry v1.0 task contract and quota before starting AI work. |
 | `request_saga_export(...)` | Request a scoped Saga export after export quota preflight. |
 | `get_saga_export_status(...)` | Read scoped export job state without exposing internal Storage paths. |
 | `get_saga_export_download(...)` | Read scoped completed export download readiness. |
 | `update_notification_preferences(...)` | Update the authenticated GM's notification preferences. |
+| `get_notification_delivery_summary(...)` | Read only content-safe delivery state and deep links for an authorized Workspace/Saga. |
 | `register_push_device(...)` | Register or refresh an authenticated GM push device token. |
 | `record_usage_event(...)` | Record an idempotent usage event and update monthly rollups. |
 | `search_for_ui(...)` | Run scoped lexical UI search. |
@@ -108,6 +113,7 @@ These public-schema helpers are `security definer` because they are called by sc
 - `write_manual_canon_audit(...)`
 - `materialize_embedding_job_for_test(...)`
 - AI worker wrappers: `get_ai_task_run_for_worker(...)`, `claim_ai_task_run_for_worker(...)`, `checkpoint_ai_task_provider_output_for_worker(...)`, `record_ai_task_output_for_worker(...)`, `fail_ai_task_run_for_worker(...)`, `replay_ai_task_run_for_worker(...)`, `reset_stalled_ai_task_runs_for_worker(...)`, and `set_ai_task_usage_for_worker(...)`
+- `get_saga_export_payload_for_worker(...)` (service-only curated Saga/export projection; excludes runtime secrets, prompts, provider payloads, telemetry, and embeddings)
 - validation trigger helpers for session pins, active threads, notes, relationships, mentions, sources, and draft sources
 - private `internal.library_*` lookup/dependency helpers plus the exact-mention trigger; none are browser-callable
 
@@ -125,7 +131,7 @@ Export and notification operations use scoped browser RPCs for request/status/pr
 
 Hierarchy reads return only owner-accessible Workspace/World/Saga choices and an authorized landing target for each switchable branch. `rename_saga(...)` and `delete_saga(...)` revalidate the exact hierarchy server-side. Deletion requires an exact typed Saga name, rejects `in_progress` and `ended_pending_undo` Sessions, soft-hides the Saga, and enqueues one idempotent Storage cleanup job. Only a successful worker Storage pass may call cleanup completion; that completion hard-deletes the Saga and its cascaded database rows while preserving sibling Sagas.
 
-Worker-only wrappers for operations are `complete_export_job_for_worker(...)`, `dispatch_notification_for_worker(...)`, `claim_cleanup_job_for_worker(...)`, and `complete_cleanup_job_for_worker(...)`; they are not granted to browser roles.
+Worker-only wrappers for operations are `claim_export_job_for_worker(...)`, `complete_export_job_for_worker(...)`, `claim_notification_job_for_worker(...)`, `dispatch_notification_for_worker(...)`, `prepare_notification_delivery_for_worker(...)`, `complete_notification_delivery_for_worker(...)`, `skip_notification_delivery_for_worker(...)`, `claim_audio_cleanup_job_for_worker(...)`, `claim_saga_cleanup_job_for_worker(...)`, and `complete_cleanup_job_for_worker(...)`; they are not granted to browser roles. Export and notification claims use exposed service-only wrappers rather than unreachable internal-schema RPC names. Notification preparation rechecks preferences at send time and projects only destination, safe labels, and an authorized deep link. Cleanup claims are job-kind-specific so an audio dispatcher cannot consume Saga/export cleanup and vice versa.
 
 Provider observability uses three service-role-only wrappers: `record_provider_pipeline_event_for_worker(...)` accepts fixed safe fields plus a flat metadata allowlist, while `get_provider_operations_summary_for_worker(...)` and `get_provider_operational_alerts_for_worker(...)` expose aggregate worker, queue, cron, metering, and alert state. All three have fixed `search_path`, reject browser execution, and never accept raw prompts, transcripts, imported content, source excerpts, provider responses, signed URLs, credentials, or embedding vectors.
 

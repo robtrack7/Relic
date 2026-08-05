@@ -459,6 +459,93 @@ export async function renameSagaAction(formData: FormData) {
   redirect(`${sagaPath(params)}/settings?lifecycleNotice=renamed`);
 }
 
+function settingsRedirect(params: ReturnType<typeof paramsFromForm>, notice?: string, error?: string) {
+  const query = notice ? `settingsNotice=${encodeURIComponent(notice)}` : `settingsError=${encodeURIComponent(error ?? "Settings could not be saved.")}`;
+  redirect(`${sagaPath(params)}/settings?${query}`);
+}
+
+export async function updateGmProfileSettingsAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const { error } = await supabase.rpc("update_gm_profile_settings", {
+    p_workspace_id: params.workspaceId,
+    p_profile: {
+      experience_level: value(formData, "experienceLevel"),
+      improv_comfort: value(formData, "improvComfort"),
+      prep_style: value(formData, "prepStyle")
+    },
+    p_default_game_system: value(formData, "defaultGameSystem") || null,
+    p_expected_updated_at: value(formData, "expectedUpdatedAt") || null,
+    p_idempotency_key: value(formData, "idempotencyKey")
+  });
+  if (error) settingsRedirect(params, undefined, error.message);
+  settingsRedirect(params, "GM profile saved.");
+}
+
+export async function updateSagaOperationalSettingsAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const useOverride = value(formData, "profileMode") === "override";
+  const { error } = await supabase.rpc("update_saga_operational_settings", {
+    p_workspace_id: params.workspaceId,
+    p_world_id: params.worldId,
+    p_saga_id: params.sagaId,
+    p_game_system: value(formData, "gameSystem") || null,
+    p_profile_override: useOverride ? {
+      experience_level: value(formData, "experienceLevel"),
+      improv_comfort: value(formData, "improvComfort"),
+      prep_style: value(formData, "prepStyle")
+    } : null,
+    p_expected_updated_at: value(formData, "expectedUpdatedAt") || null,
+    p_idempotency_key: value(formData, "idempotencyKey")
+  });
+  if (error) settingsRedirect(params, undefined, error.message);
+  settingsRedirect(params, "Saga settings saved.");
+}
+
+export async function updateSagaRetentionSettingsAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const { error } = await supabase.rpc("update_saga_retention_settings", {
+    p_workspace_id: params.workspaceId,
+    p_world_id: params.worldId,
+    p_saga_id: params.sagaId,
+    p_audio_retention: value(formData, "audioRetention"),
+    p_transcript_retention: value(formData, "transcriptRetention"),
+    p_confirm_destructive: formData.get("confirmRetention") === "true",
+    p_expected_updated_at: value(formData, "expectedUpdatedAt") || null,
+    p_idempotency_key: value(formData, "idempotencyKey")
+  });
+  if (error) settingsRedirect(params, undefined, error.message);
+  settingsRedirect(params, "Retention settings saved for future cleanup.");
+}
+
+export async function updateNotificationPreferencesAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const checked = (name: string) => formData.get(name) === "true";
+  const { error } = await supabase.rpc("update_notification_preferences", {
+    p_preferences: {
+      paused: checked("notificationsPaused"),
+      email: {
+        pipeline_ready: checked("emailPipelineReady"),
+        pipeline_failed: checked("emailPipelineFailed"),
+        pipeline_stale_30d: checked("emailPipelineStale30"),
+        pipeline_stale_90d: checked("emailPipelineStale90"),
+        quota_warn_90: checked("emailQuotaWarn90"),
+        quota_blocked: checked("emailQuotaBlocked"),
+        loom_task_ready: checked("emailLoomReady"),
+        loom_task_failed: checked("emailLoomFailed"),
+        loom_task_stale: checked("emailLoomStale")
+      }
+    },
+    p_workspace_id: params.workspaceId,
+    p_idempotency_key: value(formData, "idempotencyKey")
+  });
+  if (error) settingsRedirect(params, undefined, error.message);
+  settingsRedirect(params, "Notification preferences saved.");
+}
+
 export async function deleteSagaAction(formData: FormData) {
   const { supabase } = await requireActionUser();
   const params = paramsFromForm(formData);

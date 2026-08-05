@@ -636,6 +636,7 @@ export function RelicGuideConversation({
                       Retry The Loom
                     </button>
                   )}
+                  {turn.status === "quota_blocked" && <Link href={`${sagaRoot}/settings?from=loom#usage`}>Review usage and reset</Link>}
                   <Link href={`${sagaRoot}/search?q=${encodeURIComponent(turn.question)}`}>Search manually</Link>
                 </div>
               </div>

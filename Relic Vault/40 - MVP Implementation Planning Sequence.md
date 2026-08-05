@@ -15,9 +15,9 @@ source_file: "Relic Vault/40 - MVP Implementation Planning Sequence.md"
 
 # MVP Implementation Planning Sequence
 
-## August 2026 Phase E revision
+## August 2026 Phase F revision
 
-Phase E is now the universal Loom operating-layer lane defined in [[59 - Phase E Loom Operating Layer Plan]]. E5.1-E8 are complete at the deterministic gate. The immediate packet is **E9 Workflow Tools**, followed by E10 destructive safeguards and the Phase F gate. Do not begin Phase F while any E10 gate is red.
+Phases E and F are complete at their documented gates. [[74 - Phase F Trust Data and Operations Plan]] now records the delivered Loom trust/control-plane boundary. The immediate packet is **G1 Loading, errors, permissions, and accessibility**, followed by full regression/performance and the explicit mobile release decision.
 
 This note is the Codex planning router after the AI Task Registry v1.0 standalone rewrite. It does not replace the active specs; it orders implementation planning so Codex does not plan AI wiring before the shared foundations are stable.
 
@@ -51,7 +51,7 @@ Do not code directly from this router. Use it to select the correct detailed pla
 
 ## Current immediate packet
 
-The current packet pointer lives in root `PLAN.md`. D5 paste/text/Markdown intake is complete with `.docx` explicitly deferred behind the trusted extraction boundary; E1-E8 are complete at their documented delivery gates. The immediate packet is E9 Workflow Tools. This sequencing note must not retain an older packet as current truth.
+The current packet pointer lives in root `PLAN.md`. D5 paste/text/Markdown intake and Phases E-F are complete at their documented delivery gates. The immediate packet is G1 Loading, errors, permissions, and accessibility. This sequencing note must not retain an older packet as current truth.
 
 ## Phase 1 Complete
 

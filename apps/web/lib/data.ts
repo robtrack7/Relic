@@ -922,6 +922,50 @@ export async function getUsageSummary(workspaceId: string) {
   return data;
 }
 
+export type SettingsControlPlane = {
+  workspace_id: string;
+  world_id: string;
+  saga_id: string;
+  saga: {
+    game_system?: string | null;
+    gm_profile_override?: Record<string, unknown> | null;
+    audio_retention: "delete_after_transcription" | "retain";
+    transcript_retention: "retain" | "delete_after_synthesis";
+    updated_at: string;
+  };
+  gm_profile: {
+    experience_level: string;
+    improv_comfort: string;
+    prep_style: string;
+    default_game_system?: string | null;
+    notification_preferences: Record<string, unknown>;
+    updated_at: string;
+  };
+  usage: unknown;
+  recovery: { failed_transcriptions?: number; retained_audio_chunks?: number; failed_exports?: number };
+  recent_changes: Array<{ action: string; changed_at: string }>;
+};
+
+export async function getSettingsControlPlane(params: IdParams): Promise<SettingsControlPlane> {
+  const { supabase } = await requireSagaContext(params);
+  const { data, error } = await supabase.rpc("get_settings_control_plane", {
+    p_workspace_id: params.workspaceId,
+    p_world_id: params.worldId,
+    p_saga_id: params.sagaId
+  });
+  if (error) throw new Error(error.message);
+  return data as SettingsControlPlane;
+}
+
+export type NotificationDeliverySummary = { id: string; kind: string; state: string; reason_code?: string; deep_link?: string; created_at: string; sent_at?: string };
+
+export async function getNotificationDeliverySummary(params: IdParams): Promise<NotificationDeliverySummary[]> {
+  const { supabase } = await requireSagaContext(params);
+  const { data, error } = await supabase.rpc("get_notification_delivery_summary", { p_workspace_id: params.workspaceId, p_saga_id: params.sagaId });
+  if (error) throw new Error(error.message);
+  return Array.isArray(data) ? data as NotificationDeliverySummary[] : [];
+}
+
 export type SagaWorkshop = {
   id: string; workspace_id: string; world_id?: string | null; saga_id?: string | null; committed_session_id?: string | null;
   state: "in_progress" | "committed" | "abandoned";
@@ -969,7 +1013,7 @@ export async function getExportDownload(params: IdParams, exportId?: string | nu
   if (!exportId) {
     return null;
   }
-  const { supabase } = await requireSagaContext(params);
+  const { supabase, saga } = await requireSagaContext(params);
   const { data, error } = await supabase.rpc("get_saga_export_download", {
     p_workspace_id: params.workspaceId,
     p_world_id: params.worldId,
@@ -979,7 +1023,18 @@ export async function getExportDownload(params: IdParams, exportId?: string | nu
   if (error) {
     throw new Error(error.message);
   }
-  return data as Record<string, unknown> | null;
+  const target = data as Record<string, unknown> | null;
+  if (!target?.available || typeof target.storage_path !== "string") return target;
+  const expectedPrefix = `${params.workspaceId}/${params.worldId}/${params.sagaId}/`;
+  if (!target.storage_path.startsWith(expectedPrefix) || !target.storage_path.endsWith(`/${exportId}.zip`)) {
+    throw new Error("Export download target is invalid.");
+  }
+  const filename = `${String(saga.name ?? "relic-saga").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "relic-saga"}-export.zip`;
+  const { data: signed, error: signError } = await supabase.storage.from("exports").createSignedUrl(target.storage_path, 3600, { download: filename });
+  if (signError) throw new Error("The private export download could not be signed.");
+  const safeTarget = { ...target };
+  delete safeTarget.storage_path;
+  return { ...safeTarget, download_url: signed.signedUrl };
 }
 
 export function normalizeEntityRow(row: Record<string, unknown>, type: EntityType): EntitySummary {

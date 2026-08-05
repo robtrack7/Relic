@@ -295,26 +295,33 @@ The detailed contracts, dependencies, exclusions, verification matrix, and decis
 
 ### Phase F — Trust, data, and operations
 
+The detailed trust/control-plane contracts, dependencies, exclusions, and verification matrix live in `Relic Vault/74 - Phase F Trust Data and Operations Plan.md`. Settings stays deterministic and provider-free; Loom-originated quota recovery preserves the exact conversation/manual path; export includes selected user-owned Loom history without private runtime payloads; notifications deep-link to recovery without copying private content.
+
 #### Packet F1 — Settings, retention, and quota recovery
 
-- Add scoped profile/system/retention/preferences forms and 70/90/100% quota states.
-- Ensure retention changes affect cleanup behavior and blocked AI keeps manual paths open.
-- **Done when:** every setting validates at the correct scope and an audit/recovery path exists.
+- Add scoped profile/system/retention/preferences forms and 70/90/100% effective-quota states.
+- Ensure retention changes affect future cleanup only, failed audio stays recoverable, and blocked Loom/provider work preserves the same turn plus exact manual-return path.
+- Keep Settings provider-free: the Loom may explain and navigate, but it cannot choose or mutate settings.
+- **Complete (2026-08-05):** scoped GM/Saga/retention/preference RPCs, effective usage and recovery projections, future-only transcript cleanup, exact Loom quota return links, idempotent receipts, and the complete Settings surface pass focused database/web and authenticated four-viewport proof.
+- **Done when:** every setting validates at the correct scope, forged/unknown input has zero effects, and retention/quota/preference audit and recovery paths pass database and four-viewport tests.
 
 #### Packet F2 — Real export
 
-- Build scoped JSON + Markdown archives, upload ZIPs, create expiring signed downloads, and clean expired files.
-- Test include/exclude audit options and sibling-data denial.
+- Build scoped deterministic JSON + Markdown archives from a worker-only projection, upload ZIPs privately, create fresh expiring signed downloads, and clean expired objects.
+- Include selected Saga Loom conversations/action receipts/citations with audit history when requested; always exclude prompts, provider payloads, internal telemetry, embeddings, tokens, and secrets.
+- Test include/exclude options, real ZIP inspection, unsafe-key absence, exact retry/metering, and sibling-data denial.
+- **Complete (2026-08-05):** the worker-only curated projection builds a deterministic JSON/Markdown ZIP, uploads it privately, returns only freshly signed authorized downloads, meters once after archive proof, and uses kind-specific expiry cleanup. A real downloaded archive opened with five entries, exact byte/hash proof, Loom/audit inclusion, unsafe-key exclusion, and sibling-Saga denial.
 - **Done when:** a downloaded archive is opened and its contents match the selected scope/options.
 
 #### Packet F3 — Notification delivery
 
-- Implement email delivery/preferences and deduped deep links for ready/failed/stale events.
+- Implement email delivery/preferences and deduped private-content-free deep links for ready/failed/stale, quota-threshold, and recoverable async Loom events.
 - Add mobile push only in the mobile branch below.
-- Suppress notifications during live/undo.
+- Suppress notifications during live/undo, read preferences at send time, and expose sanitized retry/dead-letter state.
+- **Complete (2026-08-05):** safe allowlisted queue payloads, 70/90/100 quota receipts, delayed Loom ready/failed/stale events, deep links, live-session suppression, preference-at-send checks, service-only claim/prepare/complete/skip boundaries, deterministic local delivery, and the live Resend adapter pass focused and integrated proof. No external email was sent because no dedicated email provider configuration was supplied.
 - **Done when:** enabled channels deliver once, disabled channels do not, and failures are retryable/visible.
 
-**Milestone F gate:** clean reset, settings/retention mutation, real export inspection, and notification delivery/retry smoke with safe logs.
+**Milestone F gate: complete 2026-08-05.** Clean replay and all 40 database files / 1,149 pgTAP assertions pass; 105 script/runtime tests, 153 web tests, TypeScript, production build, repository verification, and database lint pass with no Phase F warning. Real private ZIP and deterministic notification smokes pass, Settings/export authenticated browser proof passes at four viewports, and Phase F made no OpenAI call. Phase G is open; the immediate packet is **G1 — Loading, errors, permissions, and accessibility**.
 
 ### Phase G — Release quality and platform gate
 
@@ -427,4 +434,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate delivery packet: **F1 — Settings, retention, and quota recovery**. Phase E is closed with the authorized six-task provider proof, full cleanup, and successful-repair accounting projection. D5 imported sources remain excluded unless a later explicit GM enrollment contract is added. The temporary testing key was restored out of local provider state and should be revoked because it was transmitted through chat.
+Immediate delivery packet: **G1 — Loading, errors, permissions, and accessibility**. Phases E and F are closed at their documented gates. D5 imported sources remain excluded unless a later explicit GM enrollment contract is added. The user-authorized temporary testing credential remains installed only in ignored, access-restricted local provider state for later phases and is governed by the `$4` provider-cost stop; it must never enter source control, logs, reports, or browser state.

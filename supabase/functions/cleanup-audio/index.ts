@@ -4,7 +4,7 @@ import { cleanupStoragePaths } from "../_shared/storage-cleanup.ts";
 
 Deno.serve(createWorkerHandler({
   queueName: "cleanup_jobs",
-  claimRpc: "claim_cleanup_job_for_worker",
+  claimRpc: "claim_audio_cleanup_job_for_worker",
   jobTable: "cleanup_jobs",
   workerPurpose: "cleanup_audio",
   async handleJob(job) {

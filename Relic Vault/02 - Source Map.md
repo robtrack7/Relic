@@ -51,6 +51,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[57 - Backend Module 9 AI Task Router and Runtime Plan]] | Completed Registry runtime record plus E2 explicit aliases/models, bounded provider calls, hosted light/deep proof, guarded replay, and payload-free telemetry | Planning |
 | [[58 - Backend Module 10 Notifications Export Operations Plan]] | Detailed implementation plan for notifications, exports, stale pipeline scans, cleanup workers, and operational loops | Planning |
 | [[59 - Phase E Loom Operating Layer Plan]] | Revised Phase E work order for profile-correct Saga creation, conversational workshops, typed Loom actions, adaptive retrieval, workflow tools, destructive-action safeguards, cost controls, and the bounded hosted-smoke/Phase F gate | Planning |
+| [[74 - Phase F Trust Data and Operations Plan]] | Delivered Phase F trust/control-plane contract and evidence for scoped settings, retention-aware Loom recovery, real user-owned exports, private notifications, and the Phase G gate | Planning |
 | [[50 - Session Log Index]] | Session closeout trail and implementation continuity logs | Operations |
 
 ## Design Specification Sources

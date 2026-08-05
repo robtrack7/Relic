@@ -9,7 +9,7 @@ depends_on:
   - "[[21 - Tech Architecture]]"
   - "[[41 - Foundation Implementation Plan]]"
 supersedes: []
-last_audited: 2026-07-23
+last_audited: 2026-08-05
 source_file: "Relic Vault/45 - Security Findings Register.md"
 ---
 
@@ -41,8 +41,11 @@ Status values: `live`, `fixed`, `deferred`, `accepted-risk`.
 | SEC-E2-007 | high | fixed | call guard | The restart harness made a 41st inference attempt after the authorized 40-call ceiling by invoking generic idle embedding dispatch, which claimed a different queued synthetic job. | Removed repeat-mode idle dispatch, cleaned all synthetic residue, hard-disabled the runner at 41 previous/0 additional/40 limit, and retained the incident in closeout evidence. It was not an exact-retry duplicate and remained below `$1`/`$5`. | Hosted closeout log, smoke-runner call guard, and script safety tests. |
 | SEC-E3-001 | high | fixed | local provider isolation | The initial E3 local Edge harness inherited live provider values from `supabase/.env.local` despite process-level deterministic overrides, producing four synthetic LiteLLM requests before detection. | Stopped the harness, audited safe telemetry, and changed `serve-functions-local.mjs` to build an authoritative temporary environment that defaults AI/embedding/transcription to deterministic modes and omits every live provider endpoint/key. Live local mode now requires explicit opt-in. | Edge source tests plus the repeated authenticated E3 browser proof: providers are `deterministic-test` / `deterministic-development-test`, billable flags are false, repair count is zero, and no LiteLLM event exists after clean reset. |
 | SEC-E3-002 | high | fixed | Guide authorization | Browser-provided source IDs, models, aliases, history, quota decisions, and mutation targets could create BOLA or prompt-boundary risk if trusted. | Browser actions send only scope identifiers, logical turn identity, and question; scoped preflight validates the GM, worker RPCs revalidate hierarchy, source allowlists are server-generated/frozen, public tables are select-only under owner RLS, and action acceptance revalidates scope and task quota. | `relic_guide_e3.sql`, `security-actions.test.ts`, and `edge-runtime-source.test.mjs`. |
+| SEC-F-001 | medium | fixed | function search path | Hosted advisors identified ten foundational invoker helpers without fixed `search_path` settings. | Added an additive migration that pins each fully qualified helper body to an empty `search_path`. | `supabase/tests/access_control.sql`, clean replay, database lint, and migration `20260805195751_phase_f_advisor_search_path_hardening.sql`. |
+| SEC-G-001 | medium | live | authentication configuration | Hosted Supabase Auth leaked-password protection is disabled. | Enable compromised-password checks during G1/G2 release configuration and verify sign-up/sign-in recovery before private-alpha release. | [Supabase password security guidance](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) plus a post-change advisor read. |
 
 ## Open Follow-Ups
 
 - Add targeted pgtap fixtures for each relationship/source trigger, beyond the current session-pinned sibling-Saga regression.
 - Revisit the accepted public-schema `security definer` RPC placement before production hardening or multi-tenant collaboration work.
+- Enable hosted leaked-password protection and rerun security advisors during Phase G.

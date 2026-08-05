@@ -27,7 +27,9 @@ import {
   saveSessionEvidenceAction,
   setImportSourceStateAction,
   updateTranscriptAction,
-  updateEntityAction
+  updateEntityAction,
+  updateNotificationPreferencesAction,
+  updateSagaRetentionSettingsAction
 } from "@/app/actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -265,6 +267,36 @@ describe("security-hardened server actions", () => {
     }]);
     expect(supabase.rpc.mock.calls[1]).toEqual(["delete_saga", {
       workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", confirmation_name: "Renamed Saga"
+    }]);
+  });
+
+  it("saves retention and notification controls through scoped, idempotent RPCs", async () => {
+    const supabase = authenticatedSupabase();
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    await expect(updateSagaRetentionSettingsAction(form({
+      workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a",
+      audioRetention: "delete_after_transcription", transcriptRetention: "retain",
+      confirmRetention: "true", expectedUpdatedAt: "2026-08-05T12:00:00Z", idempotencyKey: "settings-retention-1"
+    }))).rejects.toThrow(/settingsNotice=Retention%20settings%20saved%20for%20future%20cleanup/);
+
+    await expect(updateNotificationPreferencesAction(form({
+      workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a",
+      notificationsPaused: "false", emailPipelineReady: "true", emailPipelineFailed: "true",
+      emailPipelineStale30: "true", emailPipelineStale90: "false", idempotencyKey: "settings-notifications-1"
+    }))).rejects.toThrow(/settingsNotice=Notification%20preferences%20saved/);
+
+    expect(supabase.rpc.mock.calls[0]).toEqual(["update_saga_retention_settings", {
+      p_workspace_id: "workspace-a", p_world_id: "world-a", p_saga_id: "saga-a",
+      p_audio_retention: "delete_after_transcription", p_transcript_retention: "retain",
+      p_confirm_destructive: true, p_expected_updated_at: "2026-08-05T12:00:00Z", p_idempotency_key: "settings-retention-1"
+    }]);
+    expect(supabase.rpc.mock.calls[1]).toEqual(["update_notification_preferences", {
+      p_preferences: { paused: false, email: {
+        pipeline_ready: true, pipeline_failed: true, pipeline_stale_30d: true, pipeline_stale_90d: false,
+        quota_warn_90: false, quota_blocked: false, loom_task_ready: false, loom_task_failed: false, loom_task_stale: false
+      } },
+      p_workspace_id: "workspace-a", p_idempotency_key: "settings-notifications-1"
     }]);
   });
 

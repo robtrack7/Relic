@@ -75,6 +75,7 @@ All active source documents needed for the vault pass are present and linked.
 - [[45 - Security Findings Register]]
 - [[46 - Backend Audit and Module Plan]]
 - [[59 - Phase E Loom Operating Layer Plan]]
+- [[74 - Phase F Trust Data and Operations Plan]]
 - [[47 - Backend Module 0 Baseline Plan]]
 - [[48 - Backend Module 1 Access Control Plan]]
 - [[49 - Backend Module 2 Canon Write Path Plan]]
