@@ -254,6 +254,27 @@ Checkpoint B:
 
 Phase E cannot close until E5.1-E10 pass a clean migration replay, full relevant suites, production build, combined Loom workflow, retrieval evaluation, safe telemetry scan, and the separately authorized hosted task-family gate.
 
+## Hosted Task-Family Gate Contract
+
+The final Phase E provider gate uses the existing `relic-staging` project and a synthetic, non-sensitive fixture. Its default command is a local manifest-only preflight: it reads no protected state, makes no network request, changes no schedule or function setting, and makes zero provider calls. Execution requires all three of an explicit `-Execute` switch, the exact staging project reference, and the phrase `PHASE_E_HOSTED_SMOKE_APPROVED`; conversational agreement or a previous packet's authorization is not sufficient.
+
+The allowlist is exactly six current logical task contracts:
+
+| Task | Prompt | Alias / resolved model | Credits |
+|---|---|---|---:|
+| Workshop interview plan | `plan_saga_workshop@1.0.0` | `relic-fast` / `gpt-5.6-luna` | 1 |
+| Complete Saga scaffold | `scaffold_saga@1.2.0` | `relic-deep` / `gpt-5.6-sol` | 10 |
+| One Saga-section regeneration | `regenerate_saga_scaffold_section@1.0.0` | `relic-balanced` / `gpt-5.6-terra` | 3 |
+| Grounded Loom answer with a bounded plan | `answer_saga_question@1.6.0` | `relic-balanced` / `gpt-5.6-terra` | 1 |
+| Full Session Prep proposal | `generate_session_prep@1.0.0` | `relic-deep` / `gpt-5.6-sol` | 10 |
+| One substantial entity proposal | `draft_entity_from_prompt@1.1.0` | `relic-balanced` / `gpt-5.6-terra` | 3 |
+
+The gate therefore represents 28 product credits. Each logical task permits its normal initial completion plus at most one schema-repair completion; the global provider-completion ceiling is 12. No generic retry, provider continuation, query embedding, transcription, synthesis, action confirmation, canon commit, archive, restore, or delete execution is allowed. A temporary isolated LiteLLM proxy exposes only the three declared aliases, runs at concurrency one, disables prompt/raw-payload logging, and enforces `max_budget: 0.99` over a two-hour window. The wrapper additionally stops when the task ledger's observed provider-cost estimate exceeds the $1.00 packet ceiling.
+
+The fixture contains one GM-owned Workspace/World/Saga, one planned Session, current source-backed canon, and a sibling-Saga isolation sentinel. Runs are inserted only from the active server task registry and use the frozen source allowlist. Five outputs persist only to their task ledger because no owning workflow record is attached; `draft_entity_from_prompt` must create exactly one source-linked pending Approval Queue draft through its active output writer. Passing evidence requires six complete runs, exact prompt/alias/resolved-model/credit matches, one metering event per run, no outside source IDs, no query-embedding event, zero canon audit/action execution, exactly that one non-canon draft, exact replay without provider or usage work, payload-free telemetry, and no remaining fixture rows.
+
+Before execution the harness requires idle staging AI/embedding queues, pauses their generic schedules, installs the isolated proxy configuration, and temporarily deploys only the task runner with gateway JWT verification disabled for the protected internal-token call. Its `finally` path restores the prior provider secrets, original gateway-JWT behavior, and both schedules; destroys the temporary proxy; removes protected temporary files; deletes every synthetic fixture row; and fails closed if cleanup or restoration cannot be proven. The exact execution command and this complete envelope must be presented for fresh user authorization immediately before the hosted call.
+
 ## Explicit Deferrals
 
 - Autonomous canon editing or unattended provider loops.

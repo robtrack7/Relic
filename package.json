@@ -21,6 +21,7 @@
     "e2:audio-fixture": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-e2-audio-fixture.ps1",
     "e2:smoke:hosted": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/invoke-e2-hosted-smoke.ps1",
     "e3:smoke:hosted": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/invoke-e3-hosted-smoke.ps1",
+    "phase-e:smoke:hosted": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/invoke-phase-e-hosted-smoke.ps1",
     "e3:demo:staging": "node scripts/manage-e3-staging-demo.mjs"
   },
   "engines": {
