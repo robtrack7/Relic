@@ -15,7 +15,7 @@ source_file: "Relic Vault/Session Logs/2026-08-04 - Phase E Hosted Gate Harness.
 
 - Added the final Phase E hosted task-family harness without making a staging mutation or provider call.
 - Locked the gate to six active contracts: workshop planning, full scaffold, one section regeneration, a grounded bounded-plan Loom answer, full Session Prep, and one entity proposal.
-- Fixed the full envelope at 28 product credits, six initial completions plus at most one repair each, twelve total provider completions, a `$1.00` packet stop, and a temporary one-concurrency LiteLLM proxy with a `$0.99` two-hour global budget.
+- Fixed the model/provider envelope at 28 product credits, six initial completions plus at most one repair each, twelve total provider completions, a `$1.00` provider stop, and a temporary one-concurrency LiteLLM proxy with a `$0.99` two-hour global budget. Temporary Fly build/machine usage is separately billable and not hard-capped; guaranteed app destruction minimizes it.
 - Made preflight manifest-only and zero-network. Hosted execution additionally requires the exact staging project and fresh `PHASE_E_HOSTED_SMOKE_APPROVED` phrase.
 - Paused and verified idle AI/embedding queues before installing the temporary provider. The wrapper owns restoration so generic dispatch cannot resume against the temporary proxy.
 - Preserved the active output semantics: five task-family outputs remain ledger-only in this fixture and the entity task creates exactly one source-linked pending Approval Queue draft; canon/action/archive/restore/delete effects remain zero.

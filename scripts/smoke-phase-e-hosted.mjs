@@ -77,8 +77,9 @@ function manifest() {
     product_credits: PRODUCT_CREDITS,
     maximum_provider_completions: MAX_PROVIDER_COMPLETIONS,
     maximum_repairs_per_task: 1,
-    packet_cost_ceiling_usd: COST_CEILING_USD,
+    provider_cost_ceiling_usd: COST_CEILING_USD,
     isolated_proxy_budget_usd: 0.99,
+    temporary_proxy_infrastructure_cost_hard_capped: false,
     tasks: TASKS.map(({ task, prompt, alias, model, credits }) => ({ task, prompt, alias, model, credits })),
     forbidden: ["query_embedding", "transcription", "synthesis", "canon_commit", "archive", "restore", "hard_delete", "saga_delete", "action_confirmation"],
     cleanup: ["synthetic_rows", "provider_secrets", "gateway_jwt", "dispatch_schedules", "temporary_proxy", "temporary_files"]

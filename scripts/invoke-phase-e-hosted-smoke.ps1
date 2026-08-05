@@ -386,7 +386,8 @@ if ($executionError) { throw $executionError }
   isolated_proxy = @{
     models = @("relic-fast", "relic-balanced", "relic-deep")
     global_budget_usd = $proxyBudget
-    packet_cost_ceiling_usd = $costCeiling
+    provider_cost_ceiling_usd = $costCeiling
+    infrastructure_cost_hard_capped = $false
     budget_duration = "2h"
     maximum_concurrency = 1
     destroyed_after_smoke = $true

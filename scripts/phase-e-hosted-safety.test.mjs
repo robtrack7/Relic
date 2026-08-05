@@ -21,8 +21,9 @@ test("Phase E preflight is manifest-only and reports zero hosted work", () => {
   assert.equal(output.task_count, 6);
   assert.equal(output.product_credits, 28);
   assert.equal(output.maximum_provider_completions, 12);
-  assert.equal(output.packet_cost_ceiling_usd, 1);
+  assert.equal(output.provider_cost_ceiling_usd, 1);
   assert.equal(output.isolated_proxy_budget_usd, 0.99);
+  assert.equal(output.temporary_proxy_infrastructure_cost_hard_capped, false);
 });
 
 test("Phase E local fixture validation is a distinct zero-provider mode", () => {
