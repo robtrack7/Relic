@@ -4,6 +4,7 @@ import { parseModelJson, validateTaskOutput } from "../supabase/functions/_share
 
 const sourceA = "e3060000-0000-0000-0000-000000000001";
 const sourceB = "e3060000-0000-0000-0000-000000000002";
+const sourceC = "e3060000-0000-0000-0000-000000000003";
 const sourceOutside = "e3060000-0000-0000-0000-000000000099";
 
 const taskRun = {
@@ -14,7 +15,7 @@ const taskRun = {
   session_id: null,
   gm_id: "e3000000-0000-0000-0000-000000000001",
   task_name: "answer_saga_question",
-  prompt_version: "answer_saga_question@1.3.0",
+  prompt_version: "answer_saga_question@1.4.0",
   quota_tier: "light",
   ai_credits: 1,
   model_tier: "relic-balanced",
@@ -30,13 +31,20 @@ const taskRun = {
       { name: "show_source", version: "1.0.0" },
       { name: "explain_provenance", version: "1.0.0" },
       { name: "navigate_surface", version: "1.0.0" },
-      { name: "draft_entity", version: "1.0.0" }
+      { name: "draft_entity", version: "1.0.0" },
+      { name: "propose_record_create", version: "1.0.0" },
+      { name: "propose_record_update", version: "1.0.0" },
+      { name: "add_relationship", version: "1.0.0" },
+      { name: "remove_relationship", version: "1.0.0" },
+      { name: "set_thread_state", version: "1.0.0" },
+      { name: "mutate_thread_objective", version: "1.0.0" }
     ]
   },
-  allowed_source_ids: [sourceA, sourceB],
+  allowed_source_ids: [sourceA, sourceB, sourceC],
   retrieval_context: [
     { source_id: sourceA, text: "The Iron Gate is sealed and protects the eastern road.", source_entity_type: "place", source_entity_id: "e3060000-0000-0000-0000-000000000011" },
-    { source_id: sourceB, text: "Captain Mara commands the Iron Gate watch.", source_entity_type: "character", source_entity_id: "e3060000-0000-0000-0000-000000000012" }
+    { source_id: sourceB, text: "Captain Mara commands the Iron Gate watch.", source_entity_type: "character", source_entity_id: "e3060000-0000-0000-0000-000000000012" },
+    { source_id: sourceC, text: "The Broken Seal Thread has one open objective: find the opener.", source_entity_type: "thread", source_entity_id: "e3060000-0000-0000-0000-000000000013" }
   ]
 };
 
@@ -187,6 +195,83 @@ test("Guide permits the registered read tools and bounded entity-draft action in
     ]
   };
   assert.deepEqual(validateTaskOutput(taskRun, output), { ok: true, output });
+});
+
+test("Loom accepts all six E8 source-bound knowledge proposal actions", () => {
+  const output = {
+    ...valid,
+    blocks: [
+      ...valid.blocks,
+      {
+        type: "action_preview",
+        action: {
+          name: "propose_record_create", version: "1.0.0",
+          arguments: { entity_type: "note", payload: { title: "Gate Ledger", body: "A reviewed lore note.", note_type: "lore" }, source_ids: [sourceA] }
+        },
+        explanation: "Prepare a Note proposal for Review."
+      },
+      {
+        type: "action_preview",
+        action: {
+          name: "propose_record_update", version: "1.0.0",
+          arguments: { source_id: sourceB, changes: { summary: "Captain of the eastern watch." }, source_ids: [sourceA] }
+        },
+        explanation: "Prepare a field-level update for Review."
+      },
+      {
+        type: "action_preview",
+        action: { name: "add_relationship", version: "1.0.0", arguments: { from_source_id: sourceB, to_source_id: sourceA, kind: "located-at" } },
+        explanation: "Review the exact relationship edge."
+      },
+      {
+        type: "action_preview",
+        action: { name: "remove_relationship", version: "1.0.0", arguments: { from_source_id: sourceB, to_source_id: sourceA, kind: "related-to" } },
+        explanation: "Review the exact relationship removal."
+      },
+      {
+        type: "action_preview",
+        action: { name: "set_thread_state", version: "1.0.0", arguments: { source_id: sourceC, state: "resolved", resolution_details: "The seal was restored." } },
+        explanation: "Review the Thread state change."
+      },
+      {
+        type: "action_preview",
+        action: { name: "mutate_thread_objective", version: "1.0.0", arguments: { source_id: sourceC, operation: "complete", objective_text: "Find the opener" } },
+        explanation: "Review the objective completion."
+      }
+    ]
+  };
+  assert.deepEqual(validateTaskOutput(taskRun, output), { ok: true, output });
+});
+
+test("Loom rejects malformed or outside-evidence E8 mutation arguments", () => {
+  const outside = validateTaskOutput(taskRun, {
+    ...valid,
+    blocks: [{
+      type: "action_preview",
+      action: { name: "propose_record_update", version: "1.0.0", arguments: { source_id: sourceOutside, changes: { summary: "Forged" } } },
+      explanation: "Do not accept a forged target."
+    }]
+  });
+  const unknownField = validateTaskOutput(taskRun, {
+    ...valid,
+    blocks: [{
+      type: "action_preview",
+      action: { name: "propose_record_create", version: "1.0.0", arguments: { entity_type: "character", payload: { name: "Bad", auto_publish: true }, source_ids: [] } },
+      explanation: "Do not accept unknown fields."
+    }]
+  });
+  const incompleteResolution = validateTaskOutput(taskRun, {
+    ...valid,
+    blocks: [{
+      type: "action_preview",
+      action: { name: "set_thread_state", version: "1.0.0", arguments: { source_id: sourceC, state: "resolved" } },
+      explanation: "A resolved Thread needs details."
+    }]
+  });
+  assert.equal(outside.ok, false);
+  assert.equal(unknownField.ok, false);
+  assert.equal(incompleteResolution.ok, false);
+  assert.match(`${outside.errors.join("\n")}\n${unknownField.errors.join("\n")}\n${incompleteResolution.errors.join("\n")}`, /allowed|unknown|resolution/i);
 });
 
 test("Guide registered open-record prompt shape validates and the legacy shape is rejected", () => {

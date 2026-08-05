@@ -95,7 +95,7 @@ select is((select item->>'drift_state' from c4_context, jsonb_array_elements(val
 select is((select item->>'status' from c4_context, jsonb_array_elements(value) item where item->>'source_kind' = 'gm_manual_summary'), 'available', 'GM summary evidence is readable');
 select is((select item->>'start_seconds' from c4_context, jsonb_array_elements(value) item where item->>'source_kind' = 'gm_manual_summary'), null, 'GM summary evidence exposes no timestamp');
 select is((select item->>'status' from c4_context, jsonb_array_elements(value) item where item->>'frozen_excerpt' = 'Broken transcript evidence.'), 'broken', 'missing transcript relation returns a safe broken state');
-select is((select item->>'status' from c4_context, jsonb_array_elements(value) item where item->>'source_kind' = 'existing_entity'), 'unsupported', 'unsupported source kinds fail closed');
+select is((select item->>'status' from c4_context, jsonb_array_elements(value) item where item->>'source_kind' = 'existing_entity'), 'available', 'current canon entity evidence is readable');
 
 reset role;
 update public.transcripts

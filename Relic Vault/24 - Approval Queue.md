@@ -22,6 +22,8 @@ source_file: "Sourced - Downloaded - 260518/relic-approval-queue-spec-v0_5.md"
 
 Loom-originated proposals do not create a second approval mechanism. Any canon-impacting action that is not covered by an existing documented inline approval path enters this Approval Queue with its originating conversation, turn, registered action, arguments, task/run and prompt versions, frozen evidence citations, GM edits, and target version. Approval still performs the only canon commit and audit write. A Loom conversation or action plan is context, never evidence and never canon.
 
+**Packet E8 contract.** Confirming `propose_record_create` or `propose_record_update` creates exactly one ordinary pending Saga draft. The queue shows the same field diff, source context, edit, conflict, rejection, merge, and approval controls as every other draft; there is no Loom-only Approve shortcut. The originating GM instruction is stored as a bounded source, and eligible World evidence remains inspectable when linked to the current Saga draft. A later approval writes one canon/audit effect and enrolls the changed record once in the existing current-identity embedding lifecycle. Rejecting the draft, dismissing the Loom intent, encountering a conflict, or editing the preview enqueues no embedding.
+
 *Created: May 18, 2026. Updated: July 21, 2026.*
 *Purpose: active implementation contract for review, diff, source citation, approval, rejection, merge, archive, and canon commit behavior.*
 

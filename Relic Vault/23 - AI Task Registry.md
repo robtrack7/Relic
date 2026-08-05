@@ -42,6 +42,8 @@ The Loom is the user-facing conversation shell over two distinct server-owned re
 
 ## Changelog
 
+**Packet E8 knowledge-proposal patch (August 2026).** `answer_saga_question@1.4.0` adds `propose_record_create@1.0.0`, `propose_record_update@1.0.0`, `add_relationship@1.0.0`, `remove_relationship@1.0.0`, `set_thread_state@1.0.0`, and `mutate_thread_objective@1.0.0`. Their bounded payloads are generated inside the already disclosed one-credit Loom answer; confirmation is deterministic and adds no second model charge. Create/update confirmation produces one pending Approval Queue draft, not canon. Relationship and Thread actions require a second explicit effect review, current evidence/target versions, and the existing scoped mutation path. Create/update is Saga-only; World-canon mutation, archive/delete, Session/Prep workflow, and multi-action plans remain disabled until their owning packets.
+
 **Packet E7 adaptive-read patch (August 2026).** `answer_saga_question@1.3.0` consumes the server's selected `exact`, `structured`, `lexical`, or `hybrid` frozen evidence path and the expanded read-only action manifest. The active read registry adds `list_records@1.0.0`, `show_source@1.0.0`, `explain_provenance@1.0.0`, and `navigate_surface@1.0.0`; `open_record@1.0.0` now resolves Library records, Threads, and Sessions to their owning routes and may include a one-hop structured snapshot. Recognized deterministic read commands are completed before task routing and therefore do not invoke `answer_saga_question`, consume credits, or create query embeddings. Ambiguity, missing provenance, stale targets, sibling scope, and unsupported destinations fail safely with no effects.
 
 **Packet E6 Loom action-kernel patch (August 2026).** `answer_saga_question@1.2.0` replaces hard-coded E3 action shapes with a compact server-supplied manifest. An action preview contains only registered `name`, semantic `version`, and schema-valid `arguments`; both Edge validation and database materialization enforce the same active registry. E6 activates only `open_record@1.0.0` and `draft_entity@1.0.0`. Confirmation never repeats the answer task: `draft_entity` separately preflights and dispatches the existing 3-credit `draft_entity_from_prompt@1.1.0` task, while navigation/dismissal/review/receipt replay remain deterministic and free.
@@ -1029,7 +1031,7 @@ Identify loose threads and next-prep implications separately from canon drafts.
 
 ## 10. `answer_saga_question`
 
-**Quota:** light · **Model:** relic-balanced · **Prompt:** `answer_saga_question@1.3.0` · **Retrieval:** server-selected exact/structured/lexical/hybrid `sanctum_qa_grounding` · **Invocation:** GM submits a factual, continuity, or supported draft request that was not completed as a deterministic read in The Loom.
+**Quota:** light · **Model:** relic-balanced · **Prompt:** `answer_saga_question@1.4.0` · **Retrieval:** server-selected exact/structured/lexical/hybrid `sanctum_qa_grounding` · **Invocation:** GM submits a factual, continuity, or supported draft/action request that was not completed as a deterministic read in The Loom.
 
 **Conversation contract.** Loom threads persist per GM and Saga across refresh, navigation, app restart, and later web/mobile handoff. A turn may receive at most eight server-selected prior turns and 6,000 normalized characters of conversation context. The browser cannot submit trusted history. Conversation helps resolve references such as “her brother” but is untrusted interpretation context: it is never retrieval evidence, cannot be cited, and cannot make a claim canon. Starting a new thread, clearing, or archiving changes conversation state only.
 
@@ -1048,11 +1050,14 @@ Identify loose threads and next-prep implications separately from canon drafts.
   gm_profile: {experience_level},
   action_manifest: [
     {
-      name: 'open_record' | 'list_records' | 'show_source' | 'explain_provenance' | 'navigate_surface' | 'draft_entity',
+      name:
+        | 'open_record' | 'list_records' | 'show_source' | 'explain_provenance' | 'navigate_surface'
+        | 'draft_entity' | 'propose_record_create' | 'propose_record_update'
+        | 'add_relationship' | 'remove_relationship' | 'set_thread_state' | 'mutate_thread_objective',
       version: '1.0.0',
       description: string,
       arguments: provider_safe_json_schema,
-      authority_tier: 'read_navigation' | 'non_canon_generation',
+      authority_tier: 'read_navigation' | 'non_canon_generation' | 'canon_mutation',
       confirmation_policy: 'none' | 'explicit',
       ai_credits: 0 | 3,
       effect_summary: string
@@ -1087,16 +1092,12 @@ The stored AI run envelope supplies Workspace, World, Saga, GM, task, prompt, qu
     | {
         type: 'action_preview',
         action: {
-          name: 'open_record',
+          name:
+            | 'open_record' | 'list_records' | 'show_source' | 'explain_provenance' | 'navigate_surface'
+            | 'draft_entity' | 'propose_record_create' | 'propose_record_update'
+            | 'add_relationship' | 'remove_relationship' | 'set_thread_state' | 'mutate_thread_objective',
           version: '1.0.0',
-          arguments: {source_id: uuid}
-        } | {
-          name: 'draft_entity',
-          version: '1.0.0',
-          arguments: {
-            entity_type: 'character' | 'place' | 'faction' | 'artifact' | 'thread',
-            intent: string
-          }
+          arguments: registered_provider_safe_arguments
         },
         explanation: string
       }
@@ -1123,11 +1124,13 @@ E7 selects the cheapest sufficient path before this task is created. An exact ta
 - Maximum four answer paragraphs, 1,500 characters each, and 6,000 characters across all displayed blocks.
 - Duplicate citations normalize by first appearance. One schema repair is permitted; failed repair renders no partial provider text.
 
-**Action behavior.** Only manifest-registered `{name, version, arguments}` actions are accepted. Edge validation and database materialization independently reject unknown versions/fields, outside-evidence IDs, unsupported targets, and executable intent text. `open_record@1.0.0` resolves one current Library record, Thread, or Session and routes it through the owning product surface. `list_records@1.0.0` returns at most twenty current records of one registered type. `show_source@1.0.0` displays one allowlisted source; `explain_provenance@1.0.0` displays its bounded audit/source chain; `navigate_surface@1.0.0` accepts only the registered Saga-relative destinations. These read actions are deterministic and free. `draft_entity@1.0.0` retains the E6 explicit-confirmation, exact 3-credit, immutable-evidence, and pending-draft boundary. E7 does not enable relationship/objective mutation, Prep/Stage workflow mutation, rulebook, dice, image, archive/delete, or general Saga-creation actions.
+**Action behavior.** Only manifest-registered `{name, version, arguments}` actions are accepted. Edge validation and database materialization independently reject unknown versions/fields, outside-evidence IDs, unsupported targets, and executable intent text. `open_record@1.0.0` resolves one current Library record, Thread, or Session and routes it through the owning product surface. `list_records@1.0.0` returns at most twenty current records of one registered type. `show_source@1.0.0` displays one allowlisted source; `explain_provenance@1.0.0` displays its bounded audit/source chain; `navigate_surface@1.0.0` accepts only registered Saga-relative destinations. These read actions are deterministic and free. `draft_entity@1.0.0` retains the E6 explicit-confirmation, exact 3-credit, immutable-evidence, and pending-draft boundary.
+
+E8 record actions use strict field allowlists for Character, Place, Faction, Artifact, Thread, and Note. Create accepts `{entity_type, payload, source_ids}`; update accepts one current mutable-record `source_id`, bounded `changes`, and optional supporting `source_ids`. Confirmation is free and creates one pending Saga Approval Queue draft with current-turn evidence; it does not publish canon. Relationship endpoints, Thread targets, and update targets must resolve from current-turn source IDs. `add_relationship`/`remove_relationship`, `set_thread_state`, and `mutate_thread_objective` require a second explicit effect review and current target/evidence versions, then use existing scoped writers. E8 does not enable World-canon record mutation, cross-Saga mutation, Prep/Stage workflow mutation, rulebook, dice, image, archive/delete, or multi-action plans.
 
 **Failure modes.** Empty retrieval produces `no_answer`. Query-embedding/provider failure preserves lexical retrieval; total retrieval failure produces safe insufficiency. Hallucinated or unrelated citations receive one bounded repair, then fail closed. Provider/network/quota/dead-letter/permission failure preserves the question and action state. A superseded turn cannot replace the visible newer result.
 
-**Draft-status default.** Read-only answer and stored action intents. No answer, preview, dismissal, retry, clear, or archive action writes drafts, canon, audit, embeddings, Notes, entities, Threads, Sessions, or Approval Queue records. Only a separately confirmed `draft_entity` dispatch may create a normal reviewed draft through its owning task.
+**Draft-status default.** Read-only answer and stored action intents. No answer, preview, dismissal, retry, clear, or conversation archive writes drafts or canon. A separately confirmed `draft_entity` dispatch may create its normal reviewed draft through the owning task. A confirmed E8 record proposal creates exactly one pending Approval Queue draft and zero canon/embedding effects; only later Queue approval commits the record and enqueues its current content identity. Confirmed relationship/Thread actions use the documented inline GM-direct audit path and never create a model-authored canon write.
 
 **Latency.** p50 8s · p95 18s.
 
@@ -1244,7 +1247,7 @@ E7 selects the cheapest sufficient path before this task is created. An exact ta
 | 12 | Source IDs in AI output are validated against retrieval/task input. |
 | 13 | One repair retry is allowed for schema failure. |
 | 14 | Stage live play runs no background AI. |
-| 15 | Relic Guide threads persist per GM and Saga; bounded history aids interpretation but is never canon or citation evidence. |
+| 15 | Loom threads persist per GM and Saga; bounded history aids interpretation but is never canon or citation evidence. |
 | 16 | Grounded factual paragraphs require citations. Creative proposal material is visibly non-canon and never receives fabricated citations. |
 | 17 | Guide operates through registered tasks and deterministic tools. E3 enables only `open_record` and confirmed `draft_entity`. |
 

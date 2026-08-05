@@ -582,7 +582,7 @@ export async function getGuideThread(params: IdParams, threadId?: string | null)
           actionId: String(stored.id),
           intentVersion: Number(stored.intent_version ?? 1),
           explanation: String(stored.explanation ?? block.explanation ?? ""),
-          authorityTier: String(stored.authority_tier ?? "read_navigation") as "read_navigation" | "non_canon_generation",
+          authorityTier: String(stored.authority_tier ?? "read_navigation") as "read_navigation" | "non_canon_generation" | "canon_mutation",
           confirmationPolicy: String(stored.confirmation_policy ?? "none") as "none" | "explicit",
           costCredits: Number(cost.ai_credits ?? 0),
           effectSummary: String(stored.effect_summary ?? ""),
@@ -705,6 +705,84 @@ export async function getGuideThread(params: IdParams, threadId?: string | null)
             type: "action_preview",
             ...common,
             action: { name: "navigate_surface", version: "1.0.0", destination, href }
+          }];
+        }
+        if (stored.name === "propose_record_create" || stored.name === "propose_record_update") {
+          const fields = Array.isArray(resultValue.fields) ? resultValue.fields.flatMap((entry) => {
+            if (typeof entry !== "object" || entry === null) return [];
+            const value = entry as Record<string, unknown>;
+            if (!value.field) return [];
+            return [{
+              field: String(value.field),
+              label: String(value.label ?? value.field),
+              oldValue: value.old,
+              newValue: value.new
+            }];
+          }) : [];
+          const draftId = String(stored.draft_id ?? resultValue.draft_id ?? "") || undefined;
+          return [{
+            type: "action_preview",
+            ...common,
+            action: {
+              name: stored.name,
+              version: "1.0.0",
+              recordType: String(resultValue.record_type ?? stored.target_type ?? argumentsValue.entity_type ?? "record"),
+              recordName: resultValue.record_name ? String(resultValue.record_name) : undefined,
+              fields,
+              reviewHref: `${sagaPath(params)}/review${draftId ? `?draft=${encodeURIComponent(draftId)}` : ""}`,
+              draftId
+            }
+          }];
+        }
+        if (stored.name === "add_relationship" || stored.name === "remove_relationship") {
+          const fromValue = typeof resultValue.from === "object" && resultValue.from !== null
+            ? resultValue.from as Record<string, unknown> : {};
+          const toValue = typeof resultValue.to === "object" && resultValue.to !== null
+            ? resultValue.to as Record<string, unknown> : {};
+          return [{
+            type: "action_preview",
+            ...common,
+            action: {
+              name: stored.name,
+              version: "1.0.0",
+              operation: stored.name === "add_relationship" ? "add" : "remove",
+              kind: String(resultValue.kind ?? argumentsValue.kind ?? "related-to"),
+              fromName: String(fromValue.name ?? "Current record"),
+              toName: String(toValue.name ?? "Current record"),
+              alreadyPresent: resultValue.already_present === true
+            }
+          }];
+        }
+        if (stored.name === "set_thread_state") {
+          const targetId = String(stored.target_id ?? resultValue.record_id ?? "");
+          return [{
+            type: "action_preview",
+            ...common,
+            action: {
+              name: "set_thread_state",
+              version: "1.0.0",
+              recordName: String(resultValue.record_name ?? "Current Thread"),
+              fromState: String(resultValue.from_state ?? "current"),
+              toState: String(resultValue.to_state ?? argumentsValue.state ?? "current"),
+              resolutionDetails: resultValue.resolution_details ? String(resultValue.resolution_details) : undefined,
+              href: targetId ? recordPath(sagaPath(params), "thread", targetId, String(resultValue.to_state ?? "")) : `${sagaPath(params)}/threads`
+            }
+          }];
+        }
+        if (stored.name === "mutate_thread_objective") {
+          const targetId = String(stored.target_id ?? resultValue.record_id ?? "");
+          return [{
+            type: "action_preview",
+            ...common,
+            action: {
+              name: "mutate_thread_objective",
+              version: "1.0.0",
+              recordName: String(resultValue.record_name ?? "Current Thread"),
+              operation: String(resultValue.operation ?? argumentsValue.operation ?? "update"),
+              objectiveText: String(resultValue.objective_text ?? argumentsValue.objective_text ?? argumentsValue.new_text ?? "Objective"),
+              newText: resultValue.new_text ? String(resultValue.new_text) : undefined,
+              href: targetId ? recordPath(sagaPath(params), "thread", targetId) : `${sagaPath(params)}/threads`
+            }
           }];
         }
         if (stored.name !== "draft_entity") return [];

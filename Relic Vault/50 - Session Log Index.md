@@ -84,3 +84,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-08-04 - E5.2 Conversational Loom Workshop]]
 - [[Session Logs/2026-08-04 - Packet E6 Loom Action Kernel]]
 - [[Session Logs/2026-08-04 - Packet E7 Adaptive Loom Reads]]
+- [[Session Logs/2026-08-04 - Packet E8 Knowledge Creation and Canon Proposals]]

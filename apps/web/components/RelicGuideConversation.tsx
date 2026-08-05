@@ -27,6 +27,13 @@ export type LoomReadSnapshot = {
   provenance?: Array<{ operation: string; actorKind?: string; createdAt?: string; sourceCount?: number }>;
 };
 
+export type LoomFieldDiff = {
+  field: string;
+  label: string;
+  oldValue: unknown;
+  newValue: unknown;
+};
+
 export type GuideBlock =
   | { type: "grounded_answer"; text: string; citations: GuideCitation[] }
   | { type: "creative_proposal"; text: string }
@@ -42,14 +49,50 @@ export type GuideBlock =
         | { name: "show_source"; version: "1.0.0"; result: LoomReadSnapshot }
         | { name: "explain_provenance"; version: "1.0.0"; result: LoomReadSnapshot }
         | { name: "navigate_surface"; version: "1.0.0"; destination: string; href: string }
-        | {
-            name: "draft_entity";
+         | {
+             name: "draft_entity";
             version: "1.0.0";
             entityType: "character" | "place" | "faction" | "artifact" | "thread";
-            intent: string;
+             intent: string;
+          }
+        | {
+            name: "propose_record_create" | "propose_record_update";
+            version: "1.0.0";
+            recordType: string;
+            recordName?: string;
+            fields: LoomFieldDiff[];
+            reviewHref: string;
+            draftId?: string;
+          }
+        | {
+            name: "add_relationship" | "remove_relationship";
+            version: "1.0.0";
+            operation: "add" | "remove";
+            kind: string;
+            fromName: string;
+            toName: string;
+            alreadyPresent?: boolean;
+          }
+        | {
+            name: "set_thread_state";
+            version: "1.0.0";
+            recordName: string;
+            fromState: string;
+            toState: string;
+            resolutionDetails?: string;
+            href: string;
+          }
+        | {
+            name: "mutate_thread_objective";
+            version: "1.0.0";
+            recordName: string;
+            operation: string;
+            objectiveText: string;
+            newText?: string;
+            href: string;
           };
       explanation: string;
-      authorityTier: "read_navigation" | "non_canon_generation";
+      authorityTier: "read_navigation" | "non_canon_generation" | "canon_mutation";
       confirmationPolicy: "none" | "explicit";
       costCredits: number;
       effectSummary: string;
@@ -92,6 +135,63 @@ type Props = {
   onRetry?: (turnId: string) => void | Promise<void>;
 };
 
+type GuideAction = Extract<GuideBlock, { type: "action_preview" }>["action"];
+type KnowledgeAction = Extract<GuideAction, {
+  name: "propose_record_create" | "propose_record_update" | "add_relationship" | "remove_relationship"
+    | "set_thread_state" | "mutate_thread_objective";
+}>;
+
+function diffValue(value: unknown) {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "string") return value;
+  if (typeof value === "boolean" || typeof value === "number") return String(value);
+  return JSON.stringify(value);
+}
+
+function KnowledgeActionDetails({ action }: { action: KnowledgeAction }) {
+  if (action.name === "propose_record_create" || action.name === "propose_record_update") {
+    return (
+      <div className="guide-read-result">
+        <strong>{action.recordName ?? `${action.recordType} proposal`}</strong>
+        <ul className="guide-read-list">{action.fields.map((field) => (
+          <li key={field.field}>
+            <span className="guide-block-label">{field.label}</span>
+            {action.name === "propose_record_update" && <p>Current: {diffValue(field.oldValue)}</p>}
+            <p>Proposed: {diffValue(field.newValue)}</p>
+          </li>
+        ))}</ul>
+      </div>
+    );
+  }
+  if (action.name === "add_relationship" || action.name === "remove_relationship") {
+    return (
+      <div className="guide-read-result">
+        <p><strong>{action.fromName}</strong> · {action.kind} · <strong>{action.toName}</strong></p>
+        {action.alreadyPresent && <p>This exact relationship is already present; confirmation will not duplicate it.</p>}
+      </div>
+    );
+  }
+  if (action.name === "set_thread_state") {
+    return (
+      <div className="guide-read-result">
+        <strong>{action.recordName}</strong>
+        <p>{action.fromState} → {action.toState}</p>
+        {action.resolutionDetails && <p>{action.resolutionDetails}</p>}
+      </div>
+    );
+  }
+  if ("objectiveText" in action) {
+    return (
+      <div className="guide-read-result">
+        <strong>{action.recordName}</strong>
+        <p>{action.operation}: {action.objectiveText}</p>
+        {action.newText && action.newText !== action.objectiveText && <p>New text: {action.newText}</p>}
+      </div>
+    );
+  }
+  return null;
+}
+
 function ActionBlock({
   block,
   onConfirm,
@@ -102,6 +202,65 @@ function ActionBlock({
   onDismiss?: (actionId: string, intentVersion: number) => void | Promise<void>;
 }) {
   const [reviewing, setReviewing] = useState(false);
+  if (block.action.name === "propose_record_create" || block.action.name === "propose_record_update"
+    || block.action.name === "add_relationship" || block.action.name === "remove_relationship"
+    || block.action.name === "set_thread_state" || block.action.name === "mutate_thread_objective") {
+    const action = block.action;
+    const isProposal = action.name === "propose_record_create" || action.name === "propose_record_update";
+    if (block.state && block.state !== "pending") {
+      const copy = block.state === "accepted"
+        ? isProposal ? "One pending proposal was created. Canon is unchanged until Review approval." : "The reviewed canon change was applied."
+        : block.state === "dismissed" ? "This suggested action was dismissed with no product change."
+          : block.state === "conflict" ? "The target or evidence changed. Refresh before deciding whether to try again."
+            : "Relic could not safely complete this action.";
+      return (
+        <section className="guide-action-card" aria-label="Knowledge action status">
+          <div className="guide-block-label">
+            {isProposal ? "Proposal" : "Canon action"} · 0 additional credits · {isProposal ? "Not canon" : "Explicitly reviewed"}
+          </div>
+          <p>{copy}</p>
+          <KnowledgeActionDetails action={action} />
+          {block.state === "accepted" && isProposal && <Link href={action.reviewHref} className="btn btn-secondary btn-sm">Open Review</Link>}
+          {block.state === "accepted" && (action.name === "set_thread_state" || action.name === "mutate_thread_objective")
+            && <Link href={action.href} className="btn btn-secondary btn-sm">Open Thread</Link>}
+          {block.state === "conflict" && <p>{block.manualFallback}</p>}
+        </section>
+      );
+    }
+    return (
+      <section className="guide-action-card" aria-label={isProposal ? "Record proposal review" : "Canon change review"}>
+        <div className="guide-block-label">
+          Review before acting · 0 additional credits · {isProposal ? "Not canon" : "Canon change"}
+        </div>
+        <p>{block.explanation}</p>
+        <KnowledgeActionDetails action={action} />
+        <p className="guide-action-meta">{block.effectSummary}</p>
+        {!reviewing ? (
+          <div className="guide-action-buttons">
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setReviewing(true)}>
+              {isProposal ? "Review proposal action" : "Review canon change"}
+            </button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => onDismiss?.(block.actionId, block.intentVersion)}>
+              Dismiss action
+            </button>
+          </div>
+        ) : (
+          <div className="guide-action-confirm">
+            <p>{isProposal
+              ? "This creates one pending Review item. It does not approve or publish the proposed fields."
+              : "This applies the displayed effect through Relic's existing scoped, version-checked canon path."}</p>
+            <div className="guide-action-buttons">
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => onConfirm?.(block.actionId, block.intentVersion)}>
+                {isProposal ? "Send to Review" : "Confirm canon change"}
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReviewing(false)}>Keep reviewing</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => onDismiss?.(block.actionId, block.intentVersion)}>Dismiss action</button>
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  }
   if (block.action.name !== "draft_entity") {
     const action = block.action;
     const result = "result" in action ? action.result : undefined;

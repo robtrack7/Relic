@@ -26,6 +26,8 @@ Vectors remain a durable retrieval index for eligible canon, approved summaries,
 
 **Packet E7 delivery contract.** The planner emits exactly one primary strategy: `deterministic_read`, `exact`, `structured`, `lexical`, or `hybrid`. Deterministic reads are recognized bounded commands and complete without an AI task run. `exact` resolves one current visible record by stable ID, Session number, or normalized full name; duplicate names return an ambiguity result rather than choosing. `structured` reads current record fields, directed relationships, Thread objectives, Session state, and provenance through existing scoped tables/RPC invariants. `lexical` is the independent FTS path. `hybrid` is the only strategy that may request a query embedding. Missing or stale vectors never suppress an exact, structured, or lexical result.
 
+**Packet E8 mutation-retrieval contract.** A provider may propose an update only against a source in the current turn's immutable evidence set. The server resolves that source back to the current Saga-scoped record, freezes both evidence and target versions, and rejects ambiguous, World-scoped, sibling-Saga, archived, or unsupported targets. Note sources normalize through `note_id`; current Thread evidence includes its stable objective entries so the provider can name an objective while the server still resolves and validates the exact live ID. Confirming a record proposal creates no embedding. Only a later successful Approval Queue record commit updates the row and enters the existing content-hash/debounce embedding lifecycle; relationship-only changes do not manufacture text embeddings.
+
 Target expansion is capped at one relationship hop and eight neighboring records, with at most twenty total frozen provider evidence items. This is neighborhood assembly, not V1 multi-hop graph traversal. A deterministic UI read may display a current versioned row even when historical provenance is absent; it must label provenance as unavailable. Any row text sent to a provider still requires a current authorized `sources.id` and immutable source version. No read creates a source, draft, audit row, canon write, usage event, or embedding job merely to make itself citeable.
 
 **Version:** v1.0
@@ -144,7 +146,7 @@ A buildable specification for Relic's retrieval layer. Five concrete things:
 | `relationships.notes` | ✗ | Too short |
 | `dice_rolls`, `audio_chunks` | ✗ | N/A |
 | `workshop_sessions.conversation` | ✗ until committed | Committed entities embed normally |
-| Relic Guide threads/turns | ✗ | Persistent interpretation context; never canon or citation evidence |
+| Loom threads/turns (`guide_*` compatibility storage) | ✗ | Persistent interpretation context; never canon or citation evidence |
 
 ### 3.2 When embeddings regenerate
 
@@ -660,7 +662,7 @@ No `[UNTRUSTED INPUT]` section — this task takes no untrusted input (the prior
 
 ---
 
-### 8.6 Conversational Relic Guide
+### 8.6 Conversational Loom
 
 Each Guide turn retrieves afresh from the normalized current question. Up to eight server-selected prior turns and 6,000 normalized characters may be supplied separately to resolve conversational references, but history never enters the source allowlist and cannot support a factual claim.
 

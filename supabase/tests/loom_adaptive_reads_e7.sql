@@ -38,7 +38,7 @@ insert into public.sources(id,workspace_id,world_id,saga_id,scope,kind,source_en
 ('e7090000-0000-4000-8000-000000000004','e7010000-0000-4000-8000-000000000001','e7020000-0000-4000-8000-000000000001','e7030000-0000-4000-8000-000000000001','saga','existing_entity','session','e7070000-0000-4000-8000-000000000001','Reach the Iron Gate during the first watch.')
 on conflict(id) do nothing;
 
-select is((select count(*) from internal.loom_action_contracts()),6::bigint,'E7 registers six bounded Loom action contracts');
+select is((select count(*) from internal.loom_action_contracts() where action_name in ('open_record','list_records','show_source','explain_provenance','navigate_surface','draft_entity')),6::bigint,'E7 six-action baseline remains registered after later expansion');
 select is((select sum(ai_credits) from internal.loom_action_contracts() where authority_tier='read_navigation'),0::numeric,'Every read and navigation action is free');
 select ok((public.plan_loom_retrieval_for_worker('e7010000-0000-4000-8000-000000000001','e7020000-0000-4000-8000-000000000001','e7030000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','list active threads')->>'strategy')='deterministic_read','Structured lists bypass the provider');
 select is(public.plan_loom_retrieval_for_worker('e7010000-0000-4000-8000-000000000001','e7020000-0000-4000-8000-000000000001','e7030000-0000-4000-8000-000000000001','e7000000-0000-4000-8000-000000000001','open Broken Seal')->'action'->>'name','open_record','Exact opens produce a typed open action');

@@ -24,6 +24,8 @@ Use **The Loom** for all visible AI naming. Existing `RelicGuide*` component nam
 
 Packet E7 extends `LoomActionCard` with display-safe `open_record`, `list_records`, `show_source`, `explain_provenance`, and `navigate_surface` result projections. Read cards are keyboard-operable links/disclosures, label themselves `Free · Read only`, cap lists at twenty and graph neighbors at eight, and never expose scores, handlers, RPC names, private GM fields, or source IDs as raw UI copy. One shared route helper maps Library records, Threads, and Sessions to their actual route hierarchy so search, relationship links, and Loom navigation cannot manufacture `/entities/thread/...` or `/entities/session/...` URLs.
 
+Packet E8 adds reusable field-diff, relationship-effect, Thread-state, and objective-effect bodies to `LoomActionCard`. Proposal cards show target/type, changed fields, the ordinary Review destination, and `0 additional credits`; they never present the first confirmation as canon approval. Inline canon cards show both affected records or Thread, current-to-proposed state, explicit confirmation, receipt state, and a record/manual fallback link. The browser continues to submit only action ID, expected intent version, decision, and idempotency key; it never forwards trusted payload, target, scope, RPC, or version fields during confirmation.
+
 *Created: May 18, 2026. Updated: May 18, 2026.*  
 *Purpose: give vibe-coding agents a buildable first-pass UI map without requiring them to re-read every product document.*
 
@@ -95,7 +97,7 @@ Use IDs in routes for MVP. Slugs may be added later for readability but must not
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/sessions/:sessionId/stage` | Stage web | Web Stage surface reached from Prepare/session context | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/sessions/:sessionId/review` | Sanctum | Transcript, summary, proposed updates | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/review` | Sanctum | Approval Queue | P0 |
-| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/guide` | Sanctum | Relic Guide fallback page reached from sidecar/context | P0 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/guide` | Sanctum | The Loom fallback page reached from sidecar/context; route name is compatibility-only | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/search` | Sanctum | Full search page, command-palette fallback | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/imports` | Sanctum | Raw paste/text/Markdown intake and source review | P1 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/settings` | Sanctum | Saga settings: name, system, profile override, retention | P0 |
@@ -136,20 +138,20 @@ Mobile is built after the web app and preserves both Sanctum and Stage. It may o
 
 ### 2.1 Sanctum desktop shell
 
-**Use for:** the web implementation of the Sanctum: saga home, Threads, Library, Prepare, Sessions, Review, Export, Settings, Search, and Relic Guide.
+**Use for:** the web implementation of the Sanctum: saga home, Threads, Library, Prepare, Sessions, Review, Export, Settings, Search, and The Loom.
 
 - Parchment background.
 - Left navigation rail, 220–260px.
-- Top context bar: three separate Workspace / World / Saga dropdowns, Search, Relic Guide toggle, `+ Create`, current session pill, Review badge, usage chip when near quota, account menu. The dropdowns render as one context path but retain independent labels and controls.
+- Top context bar: three separate Workspace / World / Saga dropdowns, Search, The Loom toggle, `+ Create`, current session pill, Review badge, usage chip when near quota, account menu. The dropdowns render as one context path but retain independent labels and controls.
 - Main content column, max readable width 960–1120px unless list/detail layout requires more.
 - Optional right inspector for source/provenance, relationships, draft warnings, quota warnings.
 - Cream cards on Parchment. Literary, modern, relaxing. Amber marks consequential action. Verdigris marks confirmed/ready. Rust marks destructive/blocked.
 
-Default left rail order: **Home · Threads · Library · Prepare · Sessions · Review**. Export and Settings sit low in the rail. Stage is reached from Prepare, session state, Home next-action cards, notifications/deep links, app resume, and `Return to Stage`; it is not a default rail item. Relic Guide is invoked through the sidecar/sheet, fallback page, or contextual action; it is not a rail item.
+Default left rail order: **Home · Threads · Library · Prepare · Sessions · Review**. Export and Settings sit low in the rail. Stage is reached from Prepare, session state, Home next-action cards, notifications/deep links, app resume, and `Return to Stage`; it is not a default rail item. The Loom is invoked through the sidecar/sheet, fallback page, or contextual action; it is not a rail item.
 
 ### 2.2 Sanctum mobile shell
 
-**Use for:** mobile support after web: Library review, prep read/edit, approval, settings, Search, and Relic Guide.
+**Use for:** mobile support after web: Library review, prep read/edit, approval, settings, Search, and The Loom.
 
 - Single column.
 - Top context switcher compressed into a sheet.
@@ -359,7 +361,7 @@ Build as the loop dashboard, not a generic project homepage.
 - Threads carry-forward card.
 - Recent Library records.
 - Pending Review card.
-- Relic Guide entry point from the persistent sidecar/handle or contextual card.
+- The Loom entry point from the persistent sidecar/handle or contextual card.
 - Usage chip only when near quota or in settings.
 
 ### 5.4 Threads
@@ -379,13 +381,13 @@ Build as the loop dashboard, not a generic project homepage.
 ### 5.6 Sessions and prep
 
 - Session list with status chips: planned, ready, started, in_progress, ended_pending_undo, ended.
-- Prepare workspace: objective, opening scene, scene notes, active threads, pinned entities, prep briefing, Relic Guide, Ready for Stage.
+- Prepare workspace: objective, opening scene, scene notes, active threads, pinned entities, prep briefing, The Loom, Ready for Stage.
 - Read-only lock when session is `in_progress` or `ended_pending_undo`.
 
 ### 5.7 Stage
 
 - Current session screen.
-- Agenda, pinned cards, search, Relic Guide, quick capture, quick stub, recording consent, chunked recording state, Mark Moment, dice, End Session, undo.
+- Agenda, pinned cards, search, The Loom, quick capture, quick stub, recording consent, chunked recording state, Mark Moment, dice, End Session, undo.
 - Offline cache state and pending sync state.
 
 ### 5.8 Review and Approval Queue
@@ -398,10 +400,10 @@ Build as the loop dashboard, not a generic project homepage.
 - Broken, unavailable, deleted, permission-denied, and unsupported evidence must render safe non-identifying fallback copy. Citation inspection is read-only and must remain usable without horizontal overflow at 1440×900, 1024×768, 768×1024, and 390×844.
 - Signed audio context is deferred until a short-lived, retention-aware browser signing boundary exists; never expose private object paths or widen Storage policy for this component.
 
-### 5.9 Relic Guide
+### 5.9 The Loom
 
 - GM-invoked only.
-- Reached from the persistent Relic Guide sidecar/sheet, contextual action, or fallback page; not the primary left rail.
+- Reached from the persistent Loom sidecar/sheet, contextual action, or fallback page; not the primary left rail.
 - Shows a bounded persistent thread rather than a search-result wrapper. New thread, clear, archive, retry, and edit/resubmit preserve explicit state without writing canon.
 - Renders grounded answer paragraphs, creative/grounded proposal blocks, guidance, action previews, and insufficiency with distinct accessible semantics.
 - Grounded paragraphs remain hidden unless all citations validate and resolve to authorized C4 source context. Citation disclosures are keyboard/touch operable and return focus to their marker.
@@ -575,8 +577,8 @@ Required components:
 5. **Sanctum home** — Plan Session 1, Threads carry-forward, recent Library records, pending Review, live Return to Stage state.
 6. **Library/detail** — CRUD, autosave, state chips, source/provenance placeholders.
 7. **Threads** — list, detail, read-only timeline.
-8. **Prepare** — objective/opening/notes, pinned entities, Relic Guide, Ready for Stage.
-9. **Web Stage surface** — ready/in-progress packet, pinned cards, search, Relic Guide, capture, dice, and End Session in web.
+8. **Prepare** — objective/opening/notes, pinned entities, The Loom, Ready for Stage.
+9. **Web Stage surface** — ready/in-progress packet, pinned cards, search, The Loom, capture, dice, and End Session in web.
 10. **Mobile app** — after web loop stability, adapt Sanctum and Stage with cached packet, sheets, search/capture, dice, and approval flows.
 11. **Recording** — consent, local chunks, upload state, Mark Moment.
 12. **Post-session pipeline UI** — transcript/review status and failure states.

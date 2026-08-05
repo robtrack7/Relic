@@ -124,7 +124,77 @@ function testOutputFor(
         typeof entry === "object" && entry !== null
         && (entry as Record<string, unknown>).name === name
         && (entry as Record<string, unknown>).version === version);
-      if ((question.includes("provenance") || question.includes("why do we know"))
+      const evidenceType = typeof firstEvidence.source_entity_type === "string"
+        ? firstEvidence.source_entity_type : "character";
+      if (question.includes("propose create") && hasContract("propose_record_create", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: {
+            name: "propose_record_create",
+            version: "1.0.0",
+            arguments: {
+              entity_type: "character",
+              payload: {
+                name: "Ashen Cartographer",
+                summary: "A mapmaker tracking roads erased from living memory.",
+                narrative: "The Ashen Cartographer records routes that vanish after each moonrise and offers their findings as a reviewed Saga proposal.",
+                gm_notes: "Confirm their first connection during Approval Queue review."
+              },
+              source_ids: [source]
+            }
+          },
+          explanation: "Prepare one non-canon Character proposal for ordinary Review."
+        });
+      } else if (question.includes("propose update") && hasContract("propose_record_update", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: {
+            name: "propose_record_update",
+            version: "1.0.0",
+            arguments: {
+              source_id: source,
+              changes: evidenceType === "note"
+                ? { body: "A reviewed Loom update grounded in the selected note." }
+                : { summary: "A reviewed Loom update grounded in current Saga evidence." },
+              source_ids: [source]
+            }
+          },
+          explanation: "Prepare one field-level update for ordinary Approval Queue review."
+        });
+      } else if (question.includes("resolve thread") && evidenceType === "thread"
+        && hasContract("set_thread_state", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: {
+            name: "set_thread_state",
+            version: "1.0.0",
+            arguments: { source_id: source, state: "resolved", resolution_details: "The GM confirmed the outcome in The Loom." }
+          },
+          explanation: "Review the exact Thread state change before applying it."
+        });
+      } else if (question.includes("add objective") && evidenceType === "thread"
+        && hasContract("mutate_thread_objective", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: {
+            name: "mutate_thread_objective",
+            version: "1.0.0",
+            arguments: { source_id: source, operation: "create", new_text: "Trace the road erased from the western map." }
+          },
+          explanation: "Review one new Thread objective before applying it."
+        });
+      } else if (allowedSourceIds.length > 1 && question.includes("add relationship")
+        && hasContract("add_relationship", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: {
+            name: "add_relationship",
+            version: "1.0.0",
+            arguments: { from_source_id: allowedSourceIds[0], to_source_id: allowedSourceIds[1], kind: "related-to" }
+          },
+          explanation: "Review the two endpoints and relationship kind before applying it."
+        });
+      } else if ((question.includes("provenance") || question.includes("why do we know"))
         && hasContract("explain_provenance", "1.0.0")) {
         blocks.push({
           type: "action_preview",

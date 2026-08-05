@@ -46,7 +46,7 @@ grant select on e6_action_ids to authenticated;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e6000000-0000-0000-0000-000000000001',true);
 select set_config('request.jwt.claim.role','authenticated',true);
-select is(jsonb_array_length(public.get_loom_action_availability('e6010000-0000-0000-0000-000000000001','e6020000-0000-0000-0000-000000000001','e6030000-0000-0000-0000-000000000001')),6,'Owner sees safe action availability metadata');
+select is(jsonb_array_length(public.get_loom_action_availability('e6010000-0000-0000-0000-000000000001','e6020000-0000-0000-0000-000000000001','e6030000-0000-0000-0000-000000000001')),12,'Owner sees safe action availability metadata after E8 registry expansion');
 select is((public.review_loom_action((select action_id from e6_action_ids where turn_id='e6100000-0000-0000-0000-000000000001'),1,'confirmed','e6120000-0000-0000-0000-000000000001')->>'state'),'processing','Explicit current-version confirmation dispatches the registered draft task');
 select is((public.review_loom_action((select action_id from e6_action_ids where turn_id='e6100000-0000-0000-0000-000000000001'),1,'confirmed','e6120000-0000-0000-0000-000000000001')->>'replayed'),'true','Exact retry returns the private receipt');
 select throws_ok($$select public.review_loom_action((select action_id from e6_action_ids where turn_id='e6100000-0000-0000-0000-000000000001'),1,'dismissed','e6120000-0000-0000-0000-000000000001')$$,'23505','Loom action idempotency key was reused with different input','Changed input cannot reuse a receipt key');

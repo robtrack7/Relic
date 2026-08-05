@@ -186,4 +186,65 @@ describe("RelicGuideConversation", () => {
     fireEvent.click(screen.getByRole("button", { name: /dismiss action/i }));
     expect(onDismissAction).toHaveBeenCalledWith("action", 1);
   });
+
+  it("keeps record proposals non-canon and sends them to Review at zero additional credits", () => {
+    const onConfirmAction = vi.fn();
+    render(<RelicGuideConversation
+      sagaRoot={root}
+      thread={{ id: "thread", state: "active", turns: [{
+        id: "turn", question: "Update Mara.", status: "complete", noAnswer: false,
+        blocks: [{
+          type: "action_preview", actionId: "proposal", intentVersion: 2,
+          action: {
+            name: "propose_record_update", version: "1.0.0", recordType: "character", recordName: "Mara",
+            fields: [{ field: "summary", label: "Summary", oldValue: "Gate scout", newValue: "Eastern road warden" }],
+            reviewHref: `${root}/review`
+          },
+          explanation: "Prepare a pending character update.", authorityTier: "non_canon_generation",
+          confirmationPolicy: "explicit", costCredits: 0,
+          effectSummary: "Create one pending Review item.", manualFallback: "Open Mara and edit manually."
+        }]
+      }] }}
+      onSubmit={vi.fn()}
+      onConfirmAction={onConfirmAction}
+    />);
+
+    expect(screen.getByText(/0 additional credits · not canon/i)).toBeTruthy();
+    expect(screen.getByText("Current: Gate scout")).toBeTruthy();
+    expect(screen.getByText("Proposed: Eastern road warden")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /review proposal action/i }));
+    expect(screen.getByText(/does not approve or publish/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /send to review/i }));
+    expect(onConfirmAction).toHaveBeenCalledWith("proposal", 2);
+  });
+
+  it("requires explicit confirmation before applying a zero-credit scoped canon mutation", () => {
+    const onConfirmAction = vi.fn();
+    render(<RelicGuideConversation
+      sagaRoot={root}
+      thread={{ id: "thread", state: "active", turns: [{
+        id: "turn", question: "Resolve the Broken Seal.", status: "complete", noAnswer: false,
+        blocks: [{
+          type: "action_preview", actionId: "thread-state", intentVersion: 1,
+          action: {
+            name: "set_thread_state", version: "1.0.0", recordName: "Broken Seal",
+            fromState: "active", toState: "resolved", resolutionDetails: "The gate was resealed.",
+            href: `${root}/threads/thread-1`
+          },
+          explanation: "Resolve the current Thread.", authorityTier: "canon_mutation",
+          confirmationPolicy: "explicit", costCredits: 0,
+          effectSummary: "Set Broken Seal to resolved.", manualFallback: "Open the Thread manually."
+        }]
+      }] }}
+      onSubmit={vi.fn()}
+      onConfirmAction={onConfirmAction}
+    />);
+
+    expect(screen.getByText(/0 additional credits · canon change/i)).toBeTruthy();
+    expect(screen.getByText("active → resolved")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /review canon change/i }));
+    expect(screen.getByText(/version-checked canon path/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /confirm canon change/i }));
+    expect(onConfirmAction).toHaveBeenCalledWith("thread-state", 1);
+  });
 });

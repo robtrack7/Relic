@@ -25,6 +25,10 @@ const CONFIDENCE_REASONS = new Set([
 const SYNTHESIS_ENTITY_TYPES = new Set(["character", "place", "faction", "artifact", "thread"]);
 const GUIDE_ENTITY_TYPES = new Set(["character", "place", "faction", "artifact", "thread"]);
 const GUIDE_READ_TYPES = new Set(["character", "place", "faction", "artifact", "thread", "session"]);
+const LOOM_RECORD_TYPES = new Set(["character", "place", "faction", "artifact", "thread", "note"]);
+const LOOM_RELATIONSHIP_TYPES = new Set(["character", "place", "faction", "artifact", "thread"]);
+const LOOM_THREAD_STATES = new Set(["active", "loose", "dormant", "resolved", "failed"]);
+const LOOM_OBJECTIVE_OPERATIONS = new Set(["create", "edit", "complete", "reopen", "move"]);
 const GUIDE_NAVIGATION_DESTINATIONS = new Set(["home", "library", "threads", "sessions", "review", "search"]);
 const WORKSHOP_RELATIONSHIP_KINDS = new Set([
   "member-of", "located-at", "owns", "allied-with", "opposed-to", "related-to"
@@ -712,6 +716,68 @@ function registeredLoomAction(
     && entry.version === version);
 }
 
+function validateOptionalLoomSources(
+  value: unknown,
+  path: string,
+  taskRun: AiTaskRun,
+  errors: string[],
+  required = false
+) {
+  if (!Array.isArray(value) || value.length > 8 || (required && value.length === 0)) {
+    errors.push(`${path} must be an array of at most eight allowed source UUIDs`);
+    return;
+  }
+  for (const sourceId of value) {
+    if (!isUuid(sourceId) || !taskRun.allowed_source_ids.includes(sourceId)) {
+      errors.push(`${path} references a source outside the allowed retrieval set`);
+    }
+  }
+}
+
+function validateLoomRecordPayload(
+  entityType: string,
+  payload: unknown,
+  changeKind: "create" | "update",
+  path: string,
+  errors: string[]
+) {
+  if (!LOOM_RECORD_TYPES.has(entityType) || !isRecord(payload) || Object.keys(payload).length === 0
+    || JSON.stringify(payload).length > 30000) {
+    errors.push(`${path} must be one bounded registered record payload`);
+    return;
+  }
+  const allowed = entityType === "note"
+    ? new Set(["title", "body", "note_type"])
+    : entityType === "thread"
+      ? new Set(["name", "summary", "narrative", "gm_notes", "objective", "resolution_state", "is_loose_thread"])
+      : new Set(["name", "summary", "narrative", "gm_notes"]);
+  hasOnlyFields(payload, allowed, path, errors);
+  const label = entityType === "note" ? "title" : "name";
+  if (changeKind === "create" && (!isString(payload[label]) || String(payload[label]).length > 200)) {
+    errors.push(`${path}.${label} is required and must contain at most 200 characters`);
+  }
+  for (const [field, candidate] of Object.entries(payload)) {
+    if (field === "is_loose_thread") {
+      if (typeof candidate !== "boolean") errors.push(`${path}.${field} must be boolean`);
+      continue;
+    }
+    if (typeof candidate !== "string") {
+      errors.push(`${path}.${field} must be text`);
+      continue;
+    }
+    const max = ["name", "title"].includes(field) ? 200 : field === "summary" ? 2000 : 12000;
+    if (candidate.length > max) errors.push(`${path}.${field} exceeds ${max} characters`);
+  }
+  if (entityType === "thread" && payload.resolution_state !== undefined
+    && !new Set(["active", "dormant", "resolved", "failed"]).has(String(payload.resolution_state))) {
+    errors.push(`${path}.resolution_state is invalid`);
+  }
+  if (entityType === "note" && payload.note_type !== undefined
+    && !new Set(["lore", "quick_capture", "summary"]).has(String(payload.note_type))) {
+    errors.push(`${path}.note_type is invalid`);
+  }
+}
+
 function validateLoomAction(
   taskRun: AiTaskRun,
   action: Record<string, unknown>,
@@ -783,6 +849,89 @@ function validateLoomAction(
     if (!isString(args.intent) || args.intent.length > 500
       || EXECUTABLE_OR_MUTATION_PATTERN.test(args.intent)) {
       errors.push(`${path}.arguments.intent is required, bounded, and non-executable`);
+    }
+    return;
+  }
+  if (action.name === "propose_record_create" && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(["entity_type", "payload", "source_ids"]), `${path}.arguments`, errors);
+    if (!isString(args.entity_type) || !LOOM_RECORD_TYPES.has(args.entity_type)) {
+      errors.push(`${path}.arguments.entity_type is unsupported`);
+      return;
+    }
+    validateLoomRecordPayload(args.entity_type, args.payload, "create", `${path}.arguments.payload`, errors);
+    validateOptionalLoomSources(args.source_ids, `${path}.arguments.source_ids`, taskRun, errors);
+    return;
+  }
+  if (action.name === "propose_record_update" && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(["source_id", "changes", "source_ids"]), `${path}.arguments`, errors);
+    if (!isUuid(args.source_id) || !taskRun.allowed_source_ids.includes(args.source_id)) {
+      errors.push(`${path}.arguments.source_id must belong to the allowed retrieval set`);
+      return;
+    }
+    const evidence = taskRun.retrieval_context?.find((entry) => entry.source_id === args.source_id);
+    if (!evidence || !isString(evidence.source_entity_type) || !LOOM_RECORD_TYPES.has(evidence.source_entity_type)
+      || !isUuid(evidence.source_entity_id)) {
+      errors.push(`${path}.arguments.source_id must identify a current mutable record`);
+      return;
+    }
+    validateLoomRecordPayload(evidence.source_entity_type, args.changes, "update", `${path}.arguments.changes`, errors);
+    if (args.source_ids !== undefined) validateOptionalLoomSources(args.source_ids, `${path}.arguments.source_ids`, taskRun, errors);
+    return;
+  }
+  if ((action.name === "add_relationship" || action.name === "remove_relationship")
+    && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(action.name === "add_relationship"
+      ? ["from_source_id", "to_source_id", "kind", "notes"]
+      : ["from_source_id", "to_source_id", "kind"]), `${path}.arguments`, errors);
+    for (const field of ["from_source_id", "to_source_id"] as const) {
+      const sourceId = args[field];
+      const evidence = taskRun.retrieval_context?.find((entry) => entry.source_id === sourceId);
+      if (!isUuid(sourceId) || !taskRun.allowed_source_ids.includes(sourceId)
+        || !evidence || !isString(evidence.source_entity_type)
+        || !LOOM_RELATIONSHIP_TYPES.has(evidence.source_entity_type) || !isUuid(evidence.source_entity_id)) {
+        errors.push(`${path}.arguments.${field} must identify an allowed relationship endpoint`);
+      }
+    }
+    if (args.from_source_id === args.to_source_id) errors.push(`${path}.arguments endpoints must differ`);
+    if (!isString(args.kind) || !WORKSHOP_RELATIONSHIP_KINDS.has(args.kind)) errors.push(`${path}.arguments.kind is invalid`);
+    if (args.notes !== undefined && (typeof args.notes !== "string" || args.notes.length > 1000)) {
+      errors.push(`${path}.arguments.notes is invalid`);
+    }
+    return;
+  }
+  if (action.name === "set_thread_state" && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(["source_id", "state", "resolution_details"]), `${path}.arguments`, errors);
+    const evidence = taskRun.retrieval_context?.find((entry) => entry.source_id === args.source_id);
+    if (!isUuid(args.source_id) || !taskRun.allowed_source_ids.includes(args.source_id)
+      || evidence?.source_entity_type !== "thread" || !isUuid(evidence.source_entity_id)) {
+      errors.push(`${path}.arguments.source_id must identify an allowed Thread`);
+    }
+    if (!isString(args.state) || !LOOM_THREAD_STATES.has(args.state)) errors.push(`${path}.arguments.state is invalid`);
+    if (["resolved", "failed"].includes(String(args.state)) && !isString(args.resolution_details)) {
+      errors.push(`${path}.arguments.resolution_details is required for this state`);
+    } else if (args.resolution_details !== undefined
+      && (typeof args.resolution_details !== "string" || args.resolution_details.length > 4000)) {
+      errors.push(`${path}.arguments.resolution_details is invalid`);
+    }
+    return;
+  }
+  if (action.name === "mutate_thread_objective" && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(["source_id", "operation", "objective_text", "new_text", "target_index"]), `${path}.arguments`, errors);
+    const evidence = taskRun.retrieval_context?.find((entry) => entry.source_id === args.source_id);
+    if (!isUuid(args.source_id) || !taskRun.allowed_source_ids.includes(args.source_id)
+      || evidence?.source_entity_type !== "thread" || !isUuid(evidence.source_entity_id)) {
+      errors.push(`${path}.arguments.source_id must identify an allowed Thread`);
+    }
+    if (!isString(args.operation) || !LOOM_OBJECTIVE_OPERATIONS.has(args.operation)) {
+      errors.push(`${path}.arguments.operation is invalid`);
+      return;
+    }
+    if (args.operation !== "create" && !isString(args.objective_text)) errors.push(`${path}.arguments.objective_text is required`);
+    if (["create", "edit"].includes(args.operation) && !isString(args.new_text)) errors.push(`${path}.arguments.new_text is required`);
+    if (typeof args.objective_text === "string" && args.objective_text.length > 1000) errors.push(`${path}.arguments.objective_text is too long`);
+    if (typeof args.new_text === "string" && args.new_text.length > 1000) errors.push(`${path}.arguments.new_text is too long`);
+    if (args.operation === "move" && (!Number.isInteger(args.target_index) || Number(args.target_index) < 0 || Number(args.target_index) > 100)) {
+      errors.push(`${path}.arguments.target_index is invalid`);
     }
     return;
   }

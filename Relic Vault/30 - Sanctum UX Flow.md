@@ -12,7 +12,7 @@ source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 ---
 
 > [!info] How to use this spec
-> Owns: Sanctum IA, dashboard, embedded session prep, Threads, Relic Guide, Review, and settings UX.
+> Owns: Sanctum IA, dashboard, embedded session prep, Threads, The Loom, Review, and settings UX.
 > Does not own: Historical rationale and superseded naming unless explicitly retained as an internal identifier.
 > Read next: [[00 - Start Here]]
 > Implementation-critical note: Treat this as coding input only after reading the authority order in [[00 - Start Here]].
@@ -23,6 +23,8 @@ source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 **The Loom** is the universal user-facing AI surface and supersedes the **Relic Guide** label throughout current UI copy. It remains an always-available sidecar/sheet with the existing fallback route as a compatibility URL. Contextual AI buttons, create actions, Prep assists, review actions, and Stage assistance open The Loom with a prefilled intent and current server-derived scope. Read answers may render immediately; every mutation renders a typed action card with target, effect, authority tier, cost, and required confirmation. Multi-step work renders a bounded plan whose steps can be inspected, stopped, retried, or approved individually. The Loom never hides canon, archive, or delete confirmation.
 
 Packet E7 read cards execute immediately when the server recognizes an exact bounded request. They show `Free · Read only`, the current target version/state, the correct owning route, and a bounded record/source/provenance or one-hop relationship snapshot. Duplicate names render an ambiguity choice; missing provenance is stated plainly. Library records route to Library, Threads to Thread detail, Sessions to Prep/Stage/Review according to lifecycle, and top-level navigation stays inside the active Saga. A semantic question continues through the ordinary queued/running answer state and discloses its one-credit task behavior; a deterministic read never flashes a quota-blocked or provider-loading state.
+
+Packet E8 action cards separate two review moments. A record-create/update card previews the exact field diff and says `0 additional credits · Not canon`; confirmation sends one proposal to Review, where canon still requires ordinary Approval Queue approval. Relationship and Thread cards preview endpoints or the exact state/objective effect, say `0 additional credits · Canon change`, and require a second inline confirmation before the existing scoped mutation runs. Accepted cards link to the pending Review item or affected record, while stale/conflicting cards preserve the proposed effect and manual fallback. World-canon, archive/delete, workflows, and multi-action execution remain unavailable from these cards.
 
 **Source of truth:** [[11 - Product Basepoint]] · [[12 - MVP PRD]] · [[20 - Entity and Canon Schema]] · [[24 - Approval Queue]] · [[22 - Memory and Retrieval]] · [[23 - AI Task Registry]] · [[21 - Tech Architecture]] · [[31 - Session Prep Flow]] · [[13 - Design System]]
 **Status:** Active Sanctum UX specification. Replaces v0.1. Sister doc to Stage UX Flow v0.6.
@@ -54,7 +56,7 @@ Packet E7 read cards execute immediately when the server recognizes an exact bou
 
 4. **§4 Threads surface added (new).** Thread library with list view (by resolution state) and Timeline view (read-only, derived from `objectives_log` + `canon_audit`). Thread detail page gains `Propose a complication` AI button (Registry v1.0 §8). Both views ship in MVP.
 
-5. **§6.3 Creative AI tasks added.** Session prep editor adds `Brainstorm scene beats` button (Registry v1.0 §7) and `Draft an NPC for this scene` button (Registry v1.0 §9). Entity creation adds `propose_npc_for_scene` as an entry point. Relic Guide uses the `answer_saga_question` contract for cited answers and can prepare GM-reviewed create/edit actions. Stub entity detail page gains `Flesh out from session evidence` button (Registry v1.0 §11).
+5. **§6.3 Creative AI tasks added.** Session prep editor adds `Brainstorm scene beats` button (Registry v1.0 §7) and `Draft an NPC for this scene` button (Registry v1.0 §9). Entity creation adds `propose_npc_for_scene` as an entry point. The Loom uses the `answer_saga_question` contract for cited answers and can prepare GM-reviewed create/edit actions. Stub entity detail page gains `Flesh out from session evidence` button (Registry v1.0 §11).
 
 6. **§2.4 Saga creation flow updated.** Saga Creation references updated to "New saga" flow with help-level choice. No-AI path removed. Resumable saga-creation session wording updated.
 
@@ -77,7 +79,7 @@ The section order:
 7. Entity creation (manual, AI-drafted, creative)
 8. Notes (lore, gm_note, summary)
 9. Approval Queue surface
-10. Search & Relic Guide
+10. Search & The Loom
 11. Imports
 12. Sessions index & post-session review entry
 13. Saga settings
@@ -101,7 +103,7 @@ The Sanctum is the home base for the active World and Saga. Session prep lives h
 3. **Reach in two clicks.** Global search from any screen. Every active-Saga entity reachable in ≤2 clicks from the dashboard; relevant World canon is one filter away.
 4. **Autosave with visible state.** No Save button. The GM types, the database settles, and owner/scoped local input survives refresh, navigation, failure, conflict, and app restart until the exact version saves.
 
-**v0.2 addition — AI invocation rule:** AI is GM-controlled. Relic Guide is always available as a collapsible sidecar/sheet, and many explicit AI buttons exist. None push themselves or mutate canon autonomously. This applies equally to scene beat brainstorming, NPC drafting, session summarization, Guide answers, and Guide create/edit actions.
+**v0.2 addition — AI invocation rule:** AI is GM-controlled. The Loom is always available as a collapsible sidecar/sheet, and many explicit AI buttons exist. None push themselves or mutate canon autonomously. This applies equally to scene beat brainstorming, NPC drafting, session summarization, Loom answers, and Loom create/edit actions.
 
 ---
 
@@ -131,7 +133,7 @@ The Sanctum is the home base for the active World and Saga. Session prep lives h
 
 ### 2.2 Top-level navigation (web)
 
-**Navigation patch: align with [[72 - Navigation Design Spec]]. Threads remain first-class, Notes are absorbed into Library, Search belongs in the top bar, Relic Guide is always available as a collapsible sidecar/sheet, Prepare replaces Stage in the left rail, and Stage is entered only from prep/live-session context.**
+**Navigation patch: align with [[72 - Navigation Design Spec]]. Threads remain first-class, Notes are absorbed into Library, Search belongs in the top bar, The Loom is always available as a collapsible sidecar/sheet, Prepare replaces Stage in the left rail, and Stage is entered only from prep/live-session context.**
 
 ```
 Relic   [Workspace / World / Saga ▾]   [Search]   [Guide]   [+ Create]   [Session 15]   [Review 8]   [Usage]   [GM]
@@ -158,7 +160,7 @@ Settings
 | **Export** | Export lifecycle | Low-rail utility. |
 | **Settings** | Saga/World/Workspace settings | Low-rail utility. |
 
-**Search/Guide:** Search is a top-bar affordance. Relic Guide is always available as a collapsible sidecar/sheet and can answer with citations, draft, create, and edit through GM-reviewed actions. It is not a left-rail item.
+**Search/Loom:** Search is a top-bar affordance. The Loom is always available as a collapsible sidecar/sheet and can answer with citations, draft, create, and edit through GM-reviewed actions. It is not a left-rail item.
 
 **Stage access:** Stage is not a default rail item. It is reached through Prepare after `Ready for Stage`, current session pill, Home next-action cards, notifications/deep links, app/crash resume, and the top-right `Return to Stage` affordance while a session is live.
 
@@ -182,7 +184,7 @@ Copy adapts: `Session 15 · Prepping` (planned/started), `Session 15 · Ready` (
 - Inside Sanctum on mobile: a scrollable top tab strip or section links: `Home · Search · Guide · Threads · Library · Prepare · Sessions · Review`.
 - Session prep is reached from the Sanctum home (the inline prep workspace) or from `Sessions` → tap session row → Open prep.
 
-`SNC-FR-1` (updated) — Mobile Sanctum supports: state-aware dashboard (including inline session prep workspace), thread library (list view), thread detail, Library browse/filter/search, Library detail edit (single-pane), note view/edit, approval queue review (one-pane per AQ-FR-13), Search, Relic Guide sheet, session index, World/Saga switcher. Mobile defers: thread timeline view (web-preferred, accessible but not optimized), two-pane diff, saga export, transcript segment editor, advanced import workflows.
+`SNC-FR-1` (updated) — Mobile Sanctum supports: state-aware dashboard (including inline session prep workspace), thread library (list view), thread detail, Library browse/filter/search, Library detail edit (single-pane), note view/edit, approval queue review (one-pane per AQ-FR-13), Search, The Loom sheet, session index, World/Saga switcher. Mobile defers: thread timeline view (web-preferred, accessible but not optimized), two-pane diff, saga export, transcript segment editor, advanced import workflows.
 
 ### 2.4 World/Saga switcher
 
@@ -251,7 +253,7 @@ This is the "session prep workspace" work — surfaced directly on the Sanctum h
 │ │ [AI: Draft this session]  [Brainstorm beats]  [Draft an NPC]     │  │
 │ └──────────────────────────────────────────────────────────────────┘  │
 │                                                                       │
-│ ┌── Pinned entities (4) ───────────────── [ + Add · Relic Guide ]  ┐  │
+│ ┌── Pinned entities (4) ───────────────── [ + Add · The Loom ]     ┐  │
 │ │ ▣ Seraphine Valdrus  ▣ The Pale Broker  ▣ Bren Holst (stub)      │  │
 │ │ ▣ The Iron Deed                                                  │  │
 │ └──────────────────────────────────────────────────────────────────┘  │
@@ -579,15 +581,15 @@ Unchanged from v0.1 §8. No changes to queue IA, item anatomy, per-group commit,
 
 ---
 
-## 10. Search & Relic Guide
+## 10. Search & The Loom
 
 ### 10.1 – 10.3 Search
 
 Unchanged from v0.1 §9.1–9.3. Search bar persistent, Literal default, Hybrid opt-in, <500ms p50.
 
-### 10.4 Relic Guide — RAG-backed Q&A and actions
+### 10.4 The Loom — sourced conversation and typed actions
 
-Relic Guide uses the same Workspace/World/Saga retrieval boundary as Memory Spec v0.9: current Saga canon first, relevant World/Era canon second, no sibling Sagas by default.
+The Loom uses the same Workspace/World/Saga retrieval boundary as Memory Spec v0.9: current Saga canon first, relevant World/Era canon second, no sibling Sagas by default.
 
 Guide is conversational rather than a sequence of unrelated search forms. Each GM-owned thread belongs to exactly one Saga, persists across navigation/refresh/app restart, and can be started anew, cleared, or archived without changing canon. Web and later mobile resume the same thread. The backend selects a bounded prior-turn context; the browser never supplies trusted history. Every factual follow-up retrieves current evidence again, and conversation itself is never citable.
 
@@ -596,7 +598,7 @@ Guide messages visibly separate grounded factual paragraphs with inline citation
 The E3 action subset is intentionally narrow: open an already authorized cited record, or confirm an entity-draft intent that then invokes `draft_entity_from_prompt` and routes through normal review. Prep, Stage, dice, rulebook, image, relationship, objective, and Saga-creation tools remain disabled until their owning packet registers them.
 
 
-**v0.2 update: `answer_saga_question` task is registered (Registry v1.0 §10).** Relic Guide uses this task for cited answers and can prepare GM-reviewed actions that either apply inline to working state or route to Approval Queue for canon-impacting changes. The v0.1 note about the missing task ("This spec assumes one will be added in a Registry revision") is resolved by the registry task contract.
+**v0.2 update: `answer_saga_question` task is registered (Registry v1.0 §10).** The Loom uses this task for cited answers and can prepare GM-reviewed actions that either apply inline to working state or route to Approval Queue for canon-impacting changes. The v0.1 note about the missing task ("This spec assumes one will be added in a Registry revision") is resolved by the registry task contract.
 
 Updated internal references:
 
@@ -716,7 +718,7 @@ The v0.1 §15.2 Thread Timeline is **no longer a V1 placeholder** — it has bee
 | Prep briefing | `compose_prep_briefing` | Auto-runs on prep workspace load (streaming) | light |
 | Mention chip on save | exact-name mention detection | Transactional after the debounced/blur entity save; accepted or dismissed explicitly | infrastructure |
 | Search bar (Hybrid) | `search_for_ui` | On query, hybrid mode | infrastructure |
-| Relic Guide answer | `answer_saga_question` | GM submits question | light |
+| The Loom answer | `answer_saga_question` | GM submits question | light |
 | Approval Queue | None — review only | — | — |
 
 All tasks except `compose_prep_briefing` (auto-running reading aid) are GM-invoked. No task fires unsolicited during or outside prep.
