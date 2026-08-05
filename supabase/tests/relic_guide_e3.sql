@@ -37,7 +37,7 @@ values
 ('e3060000-0000-0000-0000-000000000005','e3010000-0000-0000-0000-000000000001','e3020000-0000-0000-0000-000000000001','e3030000-0000-0000-0000-000000000002','saga','existing_entity','character','e3040000-0000-0000-0000-000000000004','Forbidden sibling Amber evidence.')
 on conflict(id) do nothing;
 
-select is((select prompt_version from internal.ai_task_contracts() where task_name='answer_saga_question'),'answer_saga_question@1.5.0','Loom task contract is versioned');
+select is((select prompt_version from internal.ai_task_contracts() where task_name='answer_saga_question'),'answer_saga_question@1.6.0','Loom task contract is versioned');
 select has_table('public','guide_threads','Guide threads exist');
 select has_table('public','guide_turns','Guide turns exist');
 select has_table('internal','guide_evidence_snapshots','Guide evidence snapshot is internal');
@@ -52,7 +52,7 @@ select lives_ok($$
 $$,'Worker creates a normalized scoped Guide turn');
 select is((select question from public.guide_turns where id='e3100000-0000-0000-0000-000000000001'),'What protects the eastern road?','Question is normalized');
 select is((select count(*)::int from internal.guide_evidence_snapshots where turn_id='e3100000-0000-0000-0000-000000000001'),1,'Sibling-Saga evidence is excluded');
-select is((select prompt_version from internal.ai_task_runs where guide_turn_id='e3100000-0000-0000-0000-000000000001'),'answer_saga_question@1.5.0','Turn invokes registered task');
+select is((select prompt_version from internal.ai_task_runs where guide_turn_id='e3100000-0000-0000-0000-000000000001'),'answer_saga_question@1.6.0','Turn invokes registered task');
 select is((select allowed_source_ids from internal.ai_task_runs where guide_turn_id='e3100000-0000-0000-0000-000000000001'),array['e3060000-0000-0000-0000-000000000001']::uuid[],'Run freezes its source allowlist');
 
 set local role authenticated;

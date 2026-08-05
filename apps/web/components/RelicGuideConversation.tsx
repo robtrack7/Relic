@@ -124,15 +124,29 @@ export type GuideBlock =
             sessionName: string;
             transcriptionState?: string;
             href: string;
+          }
+        | {
+            name: "archive_record" | "restore_record" | "prepare_hard_delete";
+            version: "1.0.0";
+            recordType: string;
+            recordId: string;
+            recordName: string;
+            fromState: string;
+            toState: string;
+            blockers?: Record<string, number>;
+            href: string;
           };
       explanation: string;
-      authorityTier: "read_navigation" | "non_canon_generation" | "canon_mutation";
+      authorityTier: "read_navigation" | "non_canon_generation" | "reversible_working_state" | "canon_mutation" | "archive_restore" | "hard_delete";
       confirmationPolicy: "none" | "explicit";
       costCredits: number;
       effectSummary: string;
       manualFallback: string;
       availabilityState?: string;
-      state?: "pending" | "processing" | "accepted" | "dismissed" | "quota_blocked" | "conflict" | "failed";
+      planStep?: number;
+      planSize?: number;
+      planDependsOn?: number[];
+      state?: "pending" | "processing" | "accepted" | "dismissed" | "quota_blocked" | "conflict" | "failed" | "blocked";
     };
 
 export type GuideTurn = {
@@ -236,6 +250,72 @@ function ActionBlock({
   onDismiss?: (actionId: string, intentVersion: number) => void | Promise<void>;
 }) {
   const [reviewing, setReviewing] = useState(false);
+  const planMeta = block.planStep && block.planSize ? (
+    <div className="guide-plan-meta" aria-label={`Plan step ${block.planStep} of ${block.planSize}`}>
+      <strong>Plan step {block.planStep} of {block.planSize}</strong>
+      <span>{block.planDependsOn?.length ? `Depends on ${block.planDependsOn.map((step) => `step ${step}`).join(", ")}` : "No earlier dependency"}</span>
+    </div>
+  ) : null;
+  const waitingForPlan = Boolean(block.planStep && block.planSize)
+    && (!block.state || block.state === "pending")
+    && block.availabilityState !== "available";
+  if (block.action.name === "archive_record" || block.action.name === "restore_record" || block.action.name === "prepare_hard_delete") {
+    const action = block.action;
+    const isDeletePrep = action.name === "prepare_hard_delete";
+    const blockerEntries = Object.entries(action.blockers ?? {}).filter(([, count]) => count > 0);
+    if (block.state && block.state !== "pending") {
+      const copy = block.state === "accepted"
+        ? isDeletePrep ? "The protected record panel is ready. The Loom did not delete anything."
+          : action.name === "archive_record" ? "The record was archived through its existing reversible lifecycle path."
+            : "The archived record was restored to canon."
+        : block.state === "dismissed" ? "This lifecycle action was dismissed with no product change."
+          : block.state === "blocked" ? "Plan stopped before this step. It made no product change."
+            : "The record changed, so Relic stopped before applying this lifecycle action.";
+      return (
+        <section className="guide-action-card" aria-label="Lifecycle action status">
+          {planMeta}
+          <div className="guide-block-label">Lifecycle · 0 credits · {isDeletePrep ? "Protected handoff" : "Explicitly reviewed"}</div>
+          <p>{copy}</p>
+          <div className="guide-read-result"><strong>{action.recordName}</strong><p>{action.fromState} → {action.toState}</p></div>
+          {block.state === "accepted" && <Link href={action.href} className="btn btn-secondary btn-sm">
+            {isDeletePrep ? "Open protected delete panel" : "Open record"}
+          </Link>}
+          {(block.state === "conflict" || block.state === "failed" || block.state === "blocked") && <p>{block.manualFallback}</p>}
+        </section>
+      );
+    }
+    return (
+      <section className="guide-action-card" aria-label="Lifecycle action review">
+        {planMeta}
+        <div className="guide-block-label">Review before acting · 0 credits · {isDeletePrep ? "No deletion" : "Reversible lifecycle"}</div>
+        <p>{block.explanation}</p>
+        <div className="guide-read-result">
+          <strong>{action.recordName}</strong><p>{action.recordType} · {action.fromState} → {action.toState}</p>
+          {isDeletePrep && blockerEntries.length > 0 && <p>{blockerEntries.reduce((sum, [, count]) => sum + count, 0)} current references must be removed before permanent deletion.</p>}
+        </div>
+        <p className="guide-action-meta">{block.effectSummary}</p>
+        {waitingForPlan ? <p role="status">Waiting for the earlier plan step. Only the next eligible step can be confirmed.</p> : !reviewing ? (
+          <div className="guide-action-buttons">
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setReviewing(true)}>Review lifecycle action</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => onDismiss?.(block.actionId, block.intentVersion)}>Dismiss action</button>
+          </div>
+        ) : (
+          <div className="guide-action-confirm">
+            <p>{isDeletePrep
+              ? "This only opens the existing record panel. Permanent deletion still requires the irreversible checkbox, exact current name, and final confirmation there."
+              : "This applies the displayed lifecycle effect through Relic's existing scoped, version-checked writer."}</p>
+            <div className="guide-action-buttons">
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => onConfirm?.(block.actionId, block.intentVersion)}>
+                {isDeletePrep ? "Prepare protected delete panel" : action.name === "archive_record" ? "Confirm archive" : "Confirm restore"}
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReviewing(false)}>Keep reviewing</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => onDismiss?.(block.actionId, block.intentVersion)}>Dismiss action</button>
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  }
   if (block.action.name === "create_session" || block.action.name === "open_session_workflow"
     || block.action.name === "start_prep_task" || block.action.name === "retry_session_transcription") {
     const action = block.action;
@@ -264,23 +344,26 @@ function ActionBlock({
         ? isPrepTask ? "The task was dispatched once. Its generated output remains pending review in Prep."
           : action.name === "create_session" ? "The planned Session was created." : "The failed transcription was reset to pending."
         : block.state === "dismissed" ? "This workflow action was dismissed with no product change."
-          : block.state === "quota_blocked" ? "The task was not dispatched because the Workspace quota blocked it."
-            : block.state === "conflict" ? "The Session changed. Refresh before trying this workflow action again."
-              : "Relic could not safely complete this workflow action.";
+          : block.state === "blocked" ? "Plan stopped before this workflow step. It made no product change."
+            : block.state === "quota_blocked" ? "The task was not dispatched because the Workspace quota blocked it."
+              : block.state === "conflict" ? "The Session changed. Refresh before trying this workflow action again."
+                : "Relic could not safely complete this workflow action.";
       return (
         <section className="guide-action-card" aria-label="Workflow action status">
+          {planMeta}
           <div className="guide-block-label">
             Workflow · {block.costCredits ? `${block.costCredits} credits` : "0 credits"} · {isPrepTask ? "Pending review" : "Explicitly reviewed"}
           </div>
           <p>{copy}</p>
           <strong>{subject}</strong>
           {action.href && <p><Link href={action.href} className="btn btn-secondary btn-sm">{isPrepTask ? "Review in Prep" : "Open workflow"}</Link></p>}
-          {(block.state === "conflict" || block.state === "failed" || block.state === "quota_blocked") && <p>{block.manualFallback}</p>}
+          {(block.state === "conflict" || block.state === "failed" || block.state === "quota_blocked" || block.state === "blocked") && <p>{block.manualFallback}</p>}
         </section>
       );
     }
     return (
       <section className="guide-action-card" aria-label="Workflow action review">
+        {planMeta}
         <div className="guide-block-label">
           Review before acting · {block.costCredits ? `${block.costCredits} credits` : "0 credits"} · {isPrepTask ? "Generated output stays pending" : "Reversible workflow state"}
         </div>
@@ -292,7 +375,7 @@ function ActionBlock({
           {isPrepTask && <p>{action.taskLabel}</p>}
         </div>
         <p className="guide-action-meta">{block.effectSummary}</p>
-        {!reviewing ? (
+        {waitingForPlan ? <p role="status">Waiting for the earlier plan step. Only the next eligible step can be confirmed.</p> : !reviewing ? (
           <div className="guide-action-buttons">
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setReviewing(true)}>Review workflow action</button>
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => onDismiss?.(block.actionId, block.intentVersion)}>Dismiss action</button>
@@ -323,10 +406,12 @@ function ActionBlock({
       const copy = block.state === "accepted"
         ? isProposal ? "One pending proposal was created. Canon is unchanged until Review approval." : "The reviewed canon change was applied."
         : block.state === "dismissed" ? "This suggested action was dismissed with no product change."
-          : block.state === "conflict" ? "The target or evidence changed. Refresh before deciding whether to try again."
-            : "Relic could not safely complete this action.";
+          : block.state === "blocked" ? "Plan stopped before this action. It made no product change."
+            : block.state === "conflict" ? "The target or evidence changed. Refresh before deciding whether to try again."
+              : "Relic could not safely complete this action.";
       return (
         <section className="guide-action-card" aria-label="Knowledge action status">
+          {planMeta}
           <div className="guide-block-label">
             {isProposal ? "Proposal" : "Canon action"} · 0 additional credits · {isProposal ? "Not canon" : "Explicitly reviewed"}
           </div>
@@ -335,19 +420,20 @@ function ActionBlock({
           {block.state === "accepted" && isProposal && <Link href={action.reviewHref} className="btn btn-secondary btn-sm">Open Review</Link>}
           {block.state === "accepted" && (action.name === "set_thread_state" || action.name === "mutate_thread_objective")
             && <Link href={action.href} className="btn btn-secondary btn-sm">Open Thread</Link>}
-          {block.state === "conflict" && <p>{block.manualFallback}</p>}
+          {(block.state === "conflict" || block.state === "blocked") && <p>{block.manualFallback}</p>}
         </section>
       );
     }
     return (
       <section className="guide-action-card" aria-label={isProposal ? "Record proposal review" : "Canon change review"}>
+        {planMeta}
         <div className="guide-block-label">
           Review before acting · 0 additional credits · {isProposal ? "Not canon" : "Canon change"}
         </div>
         <p>{block.explanation}</p>
         <KnowledgeActionDetails action={action} />
         <p className="guide-action-meta">{block.effectSummary}</p>
-        {!reviewing ? (
+        {waitingForPlan ? <p role="status">Waiting for the earlier plan step. Only the next eligible step can be confirmed.</p> : !reviewing ? (
           <div className="guide-action-buttons">
             <button type="button" className="btn btn-secondary btn-sm" onClick={() => setReviewing(true)}>
               {isProposal ? "Review proposal action" : "Review canon change"}

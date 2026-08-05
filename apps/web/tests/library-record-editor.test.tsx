@@ -85,4 +85,23 @@ describe("LibraryRecordEditor", () => {
     expect(screen.queryByRole("button", { name: "Delete permanently" })).toBeNull();
     expect(hardDeleteEntityAction).not.toHaveBeenCalled();
   });
+
+  it("opens the existing protected delete panel from a reviewed Loom handoff", () => {
+    const archived = fixture({
+      record: { ...fixture().record, canon_state: "archived" },
+      can_hard_delete: true,
+    });
+    render(<LibraryRecordEditor params={params} initialDetail={archived} initialDeleteOpen />);
+
+    expect(screen.getByText(/I understand this cannot be undone/i)).toBeTruthy();
+    expect(screen.getByText(/Type “Mara Vale”/i)).toBeTruthy();
+    const deleteButton = screen.getByRole("button", { name: "Delete permanently" });
+    expect(deleteButton.hasAttribute("disabled")).toBe(true);
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.change(screen.getByRole("textbox", { name: /Type “Mara Vale”/i }), { target: { value: "Wrong" } });
+    expect(deleteButton.hasAttribute("disabled")).toBe(true);
+    fireEvent.change(screen.getByRole("textbox", { name: /Type “Mara Vale”/i }), { target: { value: "Mara Vale" } });
+    expect(deleteButton.hasAttribute("disabled")).toBe(false);
+    expect(hardDeleteEntityAction).not.toHaveBeenCalled();
+  });
 });

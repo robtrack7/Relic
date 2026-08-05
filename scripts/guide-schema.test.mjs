@@ -16,7 +16,7 @@ const taskRun = {
   session_id: null,
   gm_id: "e3000000-0000-0000-0000-000000000001",
   task_name: "answer_saga_question",
-  prompt_version: "answer_saga_question@1.5.0",
+  prompt_version: "answer_saga_question@1.6.0",
   quota_tier: "light",
   ai_credits: 1,
   model_tier: "relic-balanced",
@@ -42,7 +42,10 @@ const taskRun = {
       { name: "create_session", version: "1.0.0" },
       { name: "open_session_workflow", version: "1.0.0" },
       { name: "start_prep_task", version: "1.0.0" },
-      { name: "retry_session_transcription", version: "1.0.0" }
+      { name: "retry_session_transcription", version: "1.0.0" },
+      { name: "archive_record", version: "1.0.0" },
+      { name: "restore_record", version: "1.0.0" },
+      { name: "prepare_hard_delete", version: "1.0.0" }
     ]
   },
   allowed_source_ids: [sourceA, sourceB, sourceC, sourceD],
@@ -200,7 +203,10 @@ test("Guide permits the registered read tools and bounded entity-draft action in
       }
     ]
   };
-  assert.deepEqual(validateTaskOutput(taskRun, output), { ok: true, output });
+  for (const actionBlock of output.blocks.slice(1)) {
+    const single = { ...valid, blocks: [...valid.blocks, actionBlock] };
+    assert.deepEqual(validateTaskOutput(taskRun, single), { ok: true, output: single });
+  }
 });
 
 test("Loom accepts all six E8 source-bound knowledge proposal actions", () => {
@@ -246,7 +252,10 @@ test("Loom accepts all six E8 source-bound knowledge proposal actions", () => {
       }
     ]
   };
-  assert.deepEqual(validateTaskOutput(taskRun, output), { ok: true, output });
+  for (const actionBlock of output.blocks.slice(1)) {
+    const single = { ...valid, blocks: [...valid.blocks, actionBlock] };
+    assert.deepEqual(validateTaskOutput(taskRun, single), { ok: true, output: single });
+  }
 });
 
 test("Loom rejects malformed or outside-evidence E8 mutation arguments", () => {
@@ -307,7 +316,10 @@ test("Loom accepts the E9 Session and Prep workflow action shapes", () => {
       }
     ]
   };
-  assert.deepEqual(validateTaskOutput(taskRun, output), { ok: true, output });
+  for (const actionBlock of output.blocks.slice(1)) {
+    const single = { ...valid, blocks: [...valid.blocks, actionBlock] };
+    assert.deepEqual(validateTaskOutput(taskRun, single), { ok: true, output: single });
+  }
 });
 
 test("Loom rejects forged E9 workflow targets and task-specific argument smuggling", () => {
@@ -330,6 +342,84 @@ test("Loom rejects forged E9 workflow targets and task-specific argument smuggli
   assert.equal(rawTarget.ok, false);
   assert.equal(hiddenRole.ok, false);
   assert.match(`${rawTarget.errors.join("\n")}\n${hiddenRole.errors.join("\n")}`, /not allowed|session_source_id|role_description/i);
+});
+
+test("Loom accepts source-bound E10 lifecycle previews but never a raw delete target", () => {
+  for (const name of ["archive_record", "restore_record", "prepare_hard_delete"]) {
+    const output = {
+      ...valid,
+      blocks: [...valid.blocks, {
+        type: "action_preview",
+        action: { name, version: "1.0.0", arguments: { record_source_id: sourceA } },
+        explanation: "Review the exact protected lifecycle effect."
+      }]
+    };
+    assert.deepEqual(validateTaskOutput(taskRun, output), { ok: true, output });
+  }
+  const rawDelete = validateTaskOutput(taskRun, {
+    ...valid,
+    blocks: [{
+      type: "action_preview",
+      action: { name: "prepare_hard_delete", version: "1.0.0", arguments: { record_id: sourceA, confirmation_name: "Iron Gate" } },
+      explanation: "Do not accept delete authority from provider output."
+    }]
+  });
+  assert.equal(rawDelete.ok, false);
+  assert.match(rawDelete.errors.join("\n"), /record_source_id|not allowed/i);
+});
+
+test("Loom accepts a two-step bounded plan with explicit earlier dependencies", () => {
+  const output = {
+    ...valid,
+    blocks: [
+      ...valid.blocks,
+      {
+        type: "action_preview",
+        action: {
+          name: "propose_record_create", version: "1.0.0",
+          arguments: { entity_type: "character", payload: { name: "Ashen Cartographer" }, source_ids: [sourceA] }
+        },
+        explanation: "Prepare one proposal.",
+        plan: { step: 1, depends_on: [] }
+      },
+      {
+        type: "action_preview",
+        action: { name: "create_session", version: "1.0.0", arguments: { name: "Roads Remembered" } },
+        explanation: "Create one planned Session after the proposal.",
+        plan: { step: 2, depends_on: [1] }
+      }
+    ]
+  };
+  assert.deepEqual(validateTaskOutput(taskRun, output), { ok: true, output });
+});
+
+test("Loom rejects unbounded, forward-dependent, and ineligible plans", () => {
+  const step = (name, index, depends_on = []) => ({
+    type: "action_preview",
+    action: name === "start_prep_task"
+      ? { name, version: "1.0.0", arguments: { session_source_id: sourceD, task_name: "generate_session_prep" } }
+      : { name, version: "1.0.0", arguments: { name: `Session ${index}` } },
+    explanation: "Review one step.",
+    plan: { step: index, depends_on }
+  });
+  const missingPlan = validateTaskOutput(taskRun, {
+    ...valid,
+    blocks: [step("create_session", 1), { ...step("create_session", 2, [1]), plan: undefined }]
+  });
+  const forwardDependency = validateTaskOutput(taskRun, {
+    ...valid,
+    blocks: [step("create_session", 1, [2]), step("create_session", 2, [1])]
+  });
+  const paidStep = validateTaskOutput(taskRun, {
+    ...valid,
+    blocks: [step("create_session", 1), step("start_prep_task", 2, [1])]
+  });
+  const tooMany = validateTaskOutput(taskRun, {
+    ...valid,
+    blocks: Array.from({ length: 6 }, (_, index) => step("create_session", index + 1, index ? [index] : []))
+  });
+  for (const result of [missingPlan, forwardDependency, paidStep, tooMany]) assert.equal(result.ok, false);
+  assert.match([missingPlan, forwardDependency, paidStep, tooMany].flatMap((result) => result.errors).join("\n"), /plan|earlier|eligible|five/i);
 });
 
 test("Guide registered open-record prompt shape validates and the legacy shape is rejected", () => {

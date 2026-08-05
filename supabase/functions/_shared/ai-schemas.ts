@@ -36,6 +36,11 @@ const LOOM_PREP_TASKS = new Set([
 const LOOM_PREP_REGENERATE_SCOPES = new Set([
   "all", "objective", "opening_scene", "scene_notes", "pinned_entities", "active_threads", "prep_checklist"
 ]);
+const LOOM_PLAN_ACTIONS = new Set([
+  "propose_record_create", "propose_record_update", "add_relationship", "remove_relationship",
+  "set_thread_state", "mutate_thread_objective", "create_session", "retry_session_transcription",
+  "archive_record", "restore_record"
+]);
 const GUIDE_NAVIGATION_DESTINATIONS = new Set(["home", "library", "threads", "sessions", "review", "search"]);
 const WORKSHOP_RELATIONSHIP_KINDS = new Set([
   "member-of", "located-at", "owns", "allied-with", "opposed-to", "related-to"
@@ -1013,6 +1018,17 @@ function validateLoomAction(
     }
     return;
   }
+  if ((action.name === "archive_record" || action.name === "restore_record" || action.name === "prepare_hard_delete")
+    && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(["record_source_id"]), `${path}.arguments`, errors);
+    const evidence = taskRun.retrieval_context?.find((entry) => entry.source_id === args.record_source_id);
+    if (!isUuid(args.record_source_id) || !taskRun.allowed_source_ids.includes(args.record_source_id)
+      || !evidence || !isString(evidence.source_entity_type)
+      || !LOOM_RECORD_TYPES.has(evidence.source_entity_type) || !isUuid(evidence.source_entity_id)) {
+      errors.push(`${path}.arguments.record_source_id must identify an allowed Library record`);
+    }
+    return;
+  }
   errors.push(`${path} action contract is unsupported by this runtime`);
 }
 
@@ -1038,6 +1054,7 @@ function validateGuideOutput(taskRun: AiTaskRun, value: Record<string, unknown>)
   let groundedCount = 0;
   let substantiveCount = 0;
   let totalTextLength = 0;
+  const actionBlocks: Array<Record<string, unknown>> = [];
   normalized.blocks.forEach((candidate, index) => {
     const path = `blocks[${index}]`;
     if (!isRecord(candidate) || !isString(candidate.type)) {
@@ -1155,7 +1172,7 @@ function validateGuideOutput(taskRun: AiTaskRun, value: Record<string, unknown>)
     }
 
     if (candidate.type === "action_preview") {
-      hasOnlyFields(candidate, new Set(["type", "action", "explanation"]), path, errors);
+      hasOnlyFields(candidate, new Set(["type", "action", "explanation", "plan"]), path, errors);
       if (!isString(candidate.explanation) || candidate.explanation.length > 500) {
         errors.push(`${path}.explanation is required and must be bounded`);
       } else {
@@ -1165,12 +1182,48 @@ function validateGuideOutput(taskRun: AiTaskRun, value: Record<string, unknown>)
         errors.push(`${path}.action must be an allowlisted action object`);
         return;
       }
+      actionBlocks.push(candidate);
       validateLoomAction(taskRun, candidate.action, `${path}.action`, errors);
       return;
     }
 
     errors.push(`${path}.type is unsupported for answer_saga_question`);
   });
+
+  if (actionBlocks.length > 5) errors.push("Loom plans may contain at most five actions");
+  if (actionBlocks.length === 1 && actionBlocks[0].plan !== undefined) {
+    errors.push("A single Loom action cannot carry plan metadata");
+  }
+  if (actionBlocks.length > 1) {
+    actionBlocks.forEach((block, index) => {
+      const path = `action_plan[${index}]`;
+      const action = isRecord(block.action) ? block.action : {};
+      if (!isString(action.name) || !LOOM_PLAN_ACTIONS.has(action.name)) {
+        errors.push(`${path} action is not eligible for a bounded plan`);
+      }
+      if (!isRecord(block.plan)) {
+        errors.push(`${path}.plan is required for every multi-action step`);
+        return;
+      }
+      hasOnlyFields(block.plan, new Set(["step", "depends_on"]), `${path}.plan`, errors);
+      const step = block.plan.step;
+      if (!Number.isInteger(step) || step !== index + 1) {
+        errors.push(`${path}.plan.step must be contiguous and match display order`);
+      }
+      if (!Array.isArray(block.plan.depends_on)) {
+        errors.push(`${path}.plan.depends_on must be an explicit array`);
+        return;
+      }
+      const seen = new Set<number>();
+      for (const dependency of block.plan.depends_on) {
+        if (!Number.isInteger(dependency) || Number(dependency) < 1 || Number(dependency) >= index + 1
+          || seen.has(Number(dependency))) {
+          errors.push(`${path}.plan.depends_on may contain unique earlier step numbers only`);
+        }
+        seen.add(Number(dependency));
+      }
+    });
+  }
 
   if (totalTextLength > 6000) errors.push("Guide output text must contain at most 6,000 characters");
   if (normalized.no_answer === false && (substantiveCount < 1 || substantiveCount > 4)) {

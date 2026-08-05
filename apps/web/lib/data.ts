@@ -582,12 +582,15 @@ export async function getGuideThread(params: IdParams, threadId?: string | null)
           actionId: String(stored.id),
           intentVersion: Number(stored.intent_version ?? 1),
           explanation: String(stored.explanation ?? block.explanation ?? ""),
-          authorityTier: String(stored.authority_tier ?? "read_navigation") as "read_navigation" | "non_canon_generation" | "canon_mutation",
+          authorityTier: String(stored.authority_tier ?? "read_navigation") as Extract<GuideBlock, { type: "action_preview" }>["authorityTier"],
           confirmationPolicy: String(stored.confirmation_policy ?? "none") as "none" | "explicit",
           costCredits: Number(cost.ai_credits ?? 0),
           effectSummary: String(stored.effect_summary ?? ""),
           manualFallback: String(stored.manual_fallback ?? ""),
           availabilityState: String(stored.availability_state ?? "available"),
+          planStep: stored.plan_step ? Number(stored.plan_step) : undefined,
+          planSize: stored.plan_size ? Number(stored.plan_size) : undefined,
+          planDependsOn: Array.isArray(stored.plan_depends_on) ? stored.plan_depends_on.map(Number) : undefined,
           state: String(stored.state ?? "pending") as Extract<GuideBlock, { type: "action_preview" }>["state"]
         };
         if (stored.name === "open_record") {
@@ -780,6 +783,32 @@ export async function getGuideThread(params: IdParams, threadId?: string | null)
               sessionName: String(resultValue.session_name ?? "Current Session"),
               transcriptionState: resultValue.transcription_state ? String(resultValue.transcription_state) : undefined,
               href: sessionId ? `${sagaPath(params)}/sessions/${sessionId}/review` : `${sagaPath(params)}/sessions`
+            }
+          }];
+        }
+        if (stored.name === "archive_record" || stored.name === "restore_record" || stored.name === "prepare_hard_delete") {
+          const recordType = String(resultValue.record_type ?? stored.target_type ?? "record");
+          const recordId = String(resultValue.record_id ?? stored.target_id ?? "");
+          const blockersValue = typeof resultValue.blockers === "object" && resultValue.blockers !== null
+            ? resultValue.blockers as Record<string, unknown> : {};
+          const blockers = Object.fromEntries(Object.entries(blockersValue)
+            .filter(([key, value]) => key !== "total" && Number(value) > 0)
+            .map(([key, value]) => [key, Number(value)]));
+          const href = recordId ? `${recordPath(sagaPath(params), recordType, recordId, "archived")}${stored.name === "prepare_hard_delete" ? "?prepareDelete=1" : ""}`
+            : `${sagaPath(params)}/entities`;
+          return [{
+            type: "action_preview",
+            ...common,
+            action: {
+              name: stored.name,
+              version: "1.0.0",
+              recordType,
+              recordId,
+              recordName: String(resultValue.record_name ?? "Current record"),
+              fromState: String(resultValue.from_state ?? (stored.name === "archive_record" ? "canon" : "archived")),
+              toState: String(resultValue.to_state ?? (stored.name === "restore_record" ? "canon" : "archived")),
+              blockers,
+              href
             }
           }];
         }

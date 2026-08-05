@@ -8,8 +8,9 @@ import type { IdParams } from "@/lib/types";
 
 type PageParams = IdParams & { entityType: string; entityId: string };
 
-export default async function EntityDetailPage({ params }: { params: Promise<PageParams> }) {
+export default async function EntityDetailPage({ params, searchParams }: { params: Promise<PageParams>; searchParams: Promise<{ prepareDelete?: string }> }) {
   const all = await params;
+  const query = await searchParams;
   if (!isEditableEntityType(all.entityType)) notFound();
   const ids: IdParams = all;
   const [{ workspace, world, saga }, detail] = await Promise.all([
@@ -24,7 +25,7 @@ export default async function EntityDetailPage({ params }: { params: Promise<Pag
       <div className="page-head library-detail-head">
         <div><div className="page-eyebrow"><RelicIcon name="library" size={12} /> Library detail</div><h1 className="page-title">{detail.record.name}</h1></div>
       </div>
-      <LibraryRecordEditor params={ids} initialDetail={detail} />
+      <LibraryRecordEditor params={ids} initialDetail={detail} initialDeleteOpen={query.prepareDelete === "1"} />
     </SanctumShell>
   );
 }

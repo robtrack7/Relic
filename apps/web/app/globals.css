@@ -2528,6 +2528,7 @@ button {
 .guide-citation-popover{position:absolute;z-index:8;left:0;top:calc(100% + 7px);width:min(360px,75vw);display:grid;gap:7px;padding:12px;border:1px solid var(--border-1);border-radius:var(--radius-md);background:var(--bg-2);box-shadow:var(--shadow-elevated);font-size:11px;line-height:1.5;color:var(--fg-2);}
 .guide-evidence-warning{color:var(--rust);font-family:var(--font-mono);font-size:8px;letter-spacing:.08em;text-transform:uppercase;}
 .guide-action-card{border-left:3px solid var(--amber);}
+.guide-plan-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:-3px 0 10px;padding:7px 9px;border:1px solid var(--border-2);border-radius:var(--radius-sm);background:var(--bg-3);color:var(--stone-700);font-family:var(--font-mono);font-size:8px;letter-spacing:.06em;text-transform:uppercase;}
 .guide-action-buttons{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;}
 .guide-action-confirm{padding-top:10px;border-top:1px solid var(--border-2);}
 .guide-composer{position:sticky;bottom:12px;z-index:5;display:grid;gap:8px;padding:14px;border:1px solid var(--border-1);border-radius:var(--radius-lg);background:color-mix(in srgb,var(--bg-2) 94%,transparent);box-shadow:var(--shadow-elevated);backdrop-filter:blur(12px);}

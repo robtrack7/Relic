@@ -126,7 +126,29 @@ function testOutputFor(
         && (entry as Record<string, unknown>).version === version);
       const evidenceType = typeof firstEvidence.source_entity_type === "string"
         ? firstEvidence.source_entity_type : "character";
-      if (question.includes("propose create") && hasContract("propose_record_create", "1.0.0")) {
+      if (question.includes("bounded plan") && hasContract("propose_record_create", "1.0.0")
+        && hasContract("create_session", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: {
+            name: "propose_record_create",
+            version: "1.0.0",
+            arguments: {
+              entity_type: "character",
+              payload: { name: "Ashen Cartographer", summary: "A mapmaker tracking roads erased from living memory." },
+              source_ids: [source]
+            }
+          },
+          explanation: "Prepare one non-canon Character proposal for ordinary Review.",
+          plan: { step: 1, depends_on: [] }
+        });
+        blocks.push({
+          type: "action_preview",
+          action: { name: "create_session", version: "1.0.0", arguments: { name: "Roads Remembered" } },
+          explanation: "Create one planned Session after the proposal step is accepted.",
+          plan: { step: 2, depends_on: [1] }
+        });
+      } else if (question.includes("propose create") && hasContract("propose_record_create", "1.0.0")) {
         blocks.push({
           type: "action_preview",
           action: {
@@ -196,6 +218,12 @@ function testOutputFor(
           type: "action_preview",
           action: { name: "retry_session_transcription", version: "1.0.0", arguments: { session_source_id: source } },
           explanation: "Review the existing failed transcription retry before applying it."
+        });
+      } else if (question.includes("archive record") && hasContract("archive_record", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: { name: "archive_record", version: "1.0.0", arguments: { record_source_id: source } },
+          explanation: "Review the current Saga record before archiving it."
         });
       } else if (question.includes("generate prep") && evidenceType === "session"
         && hasContract("start_prep_task", "1.0.0")) {
@@ -561,7 +589,8 @@ export async function callAiProvider(
               "For answer_saga_question, when retrieval_context directly answers the question, no_answer must be false and the answer must use a grounded_answer block with at least one exact source_id citation from that supporting evidence.",
               "Every block must be a flat object with a type string; never nest content under a block-type key.",
               'Valid content shapes are {"type":"grounded_answer","text":"...","citations":[{"source_id":"..."}]}, {"type":"grounded_proposal","text":"...","citations":[{"source_id":"..."}]}, {"type":"creative_proposal","text":"..."}, and {"type":"guidance","text":"..."}.',
-              'For an action preview, use exactly {"type":"action_preview","action":{"name":"<manifest name>","version":"<manifest version>","arguments":{...}},"explanation":"..."}. Use only a contract supplied in input.action_manifest, obey its argument schema exactly, never add handler or RPC names, and never claim the action has executed.',
+              'For one action preview, use exactly {"type":"action_preview","action":{"name":"<manifest name>","version":"<manifest version>","arguments":{...}},"explanation":"..."}. Use only a contract supplied in input.action_manifest, obey its argument schema exactly, never add handler or RPC names, and never claim the action has executed.',
+              'A multi-action plan contains two to five action_preview blocks. Every planned preview must add exactly "plan":{"step":<contiguous one-based integer>,"depends_on":[<unique earlier step numbers>]} and keep every step individually confirmable. Never plan read/navigation actions, downstream AI tasks, hard-delete preparation, Saga deletion, batch confirmation, or an automatic continuation.',
               "Cite every grounded paragraph only from source_id values in the supplied retrieval context; creative proposals are explicitly non-canon and have no citations.",
               "Prefer exactly one strongest citation per grounded block and copy its source_id character-for-character; never reconstruct, shorten, combine, or retype an identifier from memory.",
               'When no_answer is true, insufficiency_reason is required and must be one of "no_relevant_evidence", "conflicting_evidence", "stale_evidence", "retrieval_unavailable", or "unsupported_request"; return guidance blocks only and prefer no_answer when support is insufficient.',

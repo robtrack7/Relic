@@ -312,4 +312,78 @@ describe("RelicGuideConversation", () => {
     expect(screen.getAllByRole("link", { name: "Open workflow" }).map((link) => link.getAttribute("href")))
       .toEqual([`${root}/sessions/session-2/review`, "/app/new-saga/workshop-1"]);
   });
+
+  it("reviews archive explicitly and keeps later bounded-plan steps unavailable", () => {
+    const onConfirmAction = vi.fn();
+    render(<RelicGuideConversation
+      sagaRoot={root}
+      thread={{ id: "thread", state: "active", turns: [{
+        id: "turn", question: "Archive Mara, then create a Session.", status: "complete", noAnswer: false,
+        blocks: [
+          {
+            type: "action_preview", actionId: "archive", intentVersion: 1,
+            action: {
+              name: "archive_record", version: "1.0.0", recordType: "character", recordId: "mara",
+              recordName: "Mara Venn", fromState: "canon", toState: "archived", href: `${root}/entities/character/mara`
+            },
+            explanation: "Review this reversible archive.", authorityTier: "archive_restore", confirmationPolicy: "explicit",
+            costCredits: 0, effectSummary: "Archive Mara through the existing writer.", manualFallback: "Open Mara manually.",
+            availabilityState: "available", planStep: 1, planSize: 3, planDependsOn: []
+          },
+          {
+            type: "action_preview", actionId: "session", intentVersion: 1,
+            action: { name: "create_session", version: "1.0.0", sessionName: "Roads Remembered" },
+            explanation: "Create one Session.", authorityTier: "reversible_working_state", confirmationPolicy: "explicit",
+            costCredits: 0, effectSummary: "Create one planned Session.", manualFallback: "Create it manually.",
+            availabilityState: "unavailable", planStep: 2, planSize: 3, planDependsOn: [1]
+          },
+          {
+            type: "action_preview", actionId: "stopped-session", intentVersion: 1,
+            action: { name: "create_session", version: "1.0.0", sessionName: "Roads Forgotten" },
+            explanation: "Create a later Session.", authorityTier: "reversible_working_state", confirmationPolicy: "explicit",
+            costCredits: 0, effectSummary: "Create one planned Session.", manualFallback: "Create Roads Forgotten manually.",
+            availabilityState: "unavailable", planStep: 3, planSize: 3, planDependsOn: [2], state: "blocked"
+          }
+        ]
+      }] }}
+      onSubmit={vi.fn()}
+      onConfirmAction={onConfirmAction}
+    />);
+
+    expect(screen.getByLabelText("Plan step 1 of 3").textContent).toMatch(/no earlier dependency/i);
+    expect(screen.getByLabelText("Plan step 2 of 3").textContent).toMatch(/depends on step 1/i);
+    expect(screen.getByText(/waiting for the earlier plan step/i)).toBeTruthy();
+    expect(screen.getByText(/plan stopped before this workflow step/i)).toBeTruthy();
+    expect(screen.getByText("Create Roads Forgotten manually.")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: /review .* action/i })).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: /review lifecycle action/i }));
+    expect(screen.getByText(/existing scoped, version-checked writer/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /confirm archive/i }));
+    expect(onConfirmAction).toHaveBeenCalledWith("archive", 1);
+  });
+
+  it("makes hard-delete preparation a link to the owning protected panel, not a delete control", () => {
+    render(<RelicGuideConversation
+      sagaRoot={root}
+      thread={{ id: "thread", state: "active", turns: [{
+        id: "turn", question: "Prepare deletion for Old Gate.", status: "complete", noAnswer: false,
+        blocks: [{
+          type: "action_preview", actionId: "delete-prep", intentVersion: 2,
+          action: {
+            name: "prepare_hard_delete", version: "1.0.0", recordType: "place", recordId: "old-gate",
+            recordName: "Old Gate", fromState: "archived", toState: "archived", blockers: {},
+            href: `${root}/entities/place/old-gate?prepareDelete=1`
+          },
+          explanation: "Open the protected panel.", authorityTier: "hard_delete", confirmationPolicy: "explicit",
+          costCredits: 0, effectSummary: "Open the owning record panel only.", manualFallback: "Open the archived record.", state: "accepted"
+        }]
+      }] }}
+      onSubmit={vi.fn()}
+    />);
+
+    const link = screen.getByRole("link", { name: /open protected delete panel/i });
+    expect(link.getAttribute("href")).toContain("prepareDelete=1");
+    expect(document.body.textContent).toMatch(/did not delete anything/i);
+    expect(screen.queryByRole("button", { name: /delete permanently/i })).toBeNull();
+  });
 });

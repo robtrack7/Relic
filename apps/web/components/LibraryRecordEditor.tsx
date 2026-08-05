@@ -29,7 +29,7 @@ function blockerLabel(key: string) {
   return ({ relationships: "relationships", mentions: "mentions or backlinks", note_attachments: "Note attachments", session_pins: "Session pins", thread_activations: "active Session links", pending_drafts: "pending drafts" } as Record<string, string>)[key] ?? key;
 }
 
-export function LibraryRecordEditor({ params, initialDetail }: { params: IdParams; initialDetail: LibraryRecordDetail }) {
+export function LibraryRecordEditor({ params, initialDetail, initialDeleteOpen = false }: { params: IdParams; initialDetail: LibraryRecordDetail; initialDeleteOpen?: boolean }) {
   const [detail, setDetail] = useState(initialDetail);
   const [values, setValues] = useState({
     name: initialDetail.record.name,
@@ -41,7 +41,7 @@ export function LibraryRecordEditor({ params, initialDetail }: { params: IdParam
   const [saveError, setSaveError] = useState("");
   const [linkBusy, setLinkBusy] = useState(false);
   const [linkError, setLinkError] = useState("");
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(initialDeleteOpen && initialDetail.record.canon_state === "archived");
   const [deleteAcknowledged, setDeleteAcknowledged] = useState(false);
   const [confirmationName, setConfirmationName] = useState("");
   const versionRef = useRef(initialDetail.record.updated_at ?? "");

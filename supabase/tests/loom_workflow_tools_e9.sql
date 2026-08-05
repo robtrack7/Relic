@@ -19,9 +19,9 @@ insert into public.characters(id,workspace_id,world_id,saga_id,scope,name,summar
 insert into public.sources(id,workspace_id,world_id,saga_id,scope,kind,source_entity_type,source_entity_id,raw_excerpt) values
 ('e9050000-0000-4000-8000-000000000001','e9010000-0000-4000-8000-000000000001','e9020000-0000-4000-8000-000000000001','e9030000-0000-4000-8000-000000000001','saga','existing_entity','character','e9040000-0000-4000-8000-000000000001','Mara guards the eastern road.');
 
-select is((select count(*) from internal.loom_action_contracts()),16::bigint,'E9 expands the active Loom registry to sixteen actions');
+select is((select count(*) from internal.loom_action_contracts()),19::bigint,'All E9 workflow contracts remain active after E10 expands the registry');
 select is((select count(*) from internal.loom_action_contracts() where action_name in ('create_session','open_session_workflow','start_prep_task','retry_session_transcription')),4::bigint,'All four E9 workflow contracts are active');
-select is((select prompt_version from internal.ai_task_contracts() where task_name='answer_saga_question'),'answer_saga_question@1.5.0','E9 versions the conversational action manifest');
+select is((select prompt_version from internal.ai_task_contracts() where task_name='answer_saga_question'),'answer_saga_question@1.6.0','E9 workflow actions remain in the current conversational action manifest');
 select ok(not internal.loom_provider_action_manifest()::text~*'(handler|rpc|function_name)','Workflow manifest exposes no executor internals');
 select has_function('public','get_guide_turn_replay_for_worker',array['uuid','uuid','uuid'],'Guide replay uses a narrow worker RPC');
 select has_function('public','resolve_guide_source_ids_for_worker',array['uuid','uuid','uuid','jsonb'],'Guide source resolution uses a narrow worker RPC');

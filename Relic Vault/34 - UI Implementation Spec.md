@@ -28,6 +28,8 @@ Packet E8 adds reusable field-diff, relationship-effect, Thread-state, and objec
 
 Packet E9 adds workflow cards for Session creation, lifecycle-aware Prep/Stage/Review navigation, Prep task handoff, transcription retry, and active Workshop resume. Every separately metered Prep card shows the exact 1/3/10-credit estimate before confirmation and links its accepted request to the full Prep review surface. The card must state that generated output is pending review and that confirmation does not apply it. Processing, quota-blocked, provider-unavailable, stale Session, and retry states preserve the same action/request identity. Stage-live cards expose navigation and manual fallback only; they never offer Prep generation or unsolicited assistance.
 
+Packet E10 adds lifecycle card bodies and the first bounded `LoomPlan` projection. Archive/restore cards show record type/name, current state, reversible effect, and two-stage review/confirm controls. `prepare_hard_delete` can only reveal a link to the archived record with `prepareDelete=1`; `LibraryRecordEditor` may open its existing permanent-delete panel from that server-derived query, but keeps the checkbox, exact-name input, blocker list, and final submit entirely outside The Loom. A plan renders two to five numbered cards with effect, cost, dependency labels, receipt state, and one enabled next-step confirmation. Waiting and stopped steps remain readable, retain their manual fallback, and are not bulk-confirmable. Focus order follows step order and stays stable across refresh and all four target viewports.
+
 *Created: May 18, 2026. Updated: May 18, 2026.*  
 *Purpose: give vibe-coding agents a buildable first-pass UI map without requiring them to re-read every product document.*
 

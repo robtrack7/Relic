@@ -30,26 +30,32 @@ select ok(not internal.loom_provider_action_manifest()::text ~* '(handler|rpc|fu
 
 select public.create_guide_turn_for_worker(
   'e6010000-0000-0000-0000-000000000001','e6020000-0000-0000-0000-000000000001','e6030000-0000-0000-0000-000000000001','e6000000-0000-0000-0000-000000000001',
-  null,'e6100000-0000-0000-0000-000000000001','e6110000-0000-0000-0000-000000000001','Open Mara and draft a companion.','lexical_fallback',array['e6060000-0000-0000-0000-000000000001']::uuid[]);
+  null,'e6100000-0000-0000-0000-000000000001','e6110000-0000-0000-0000-000000000001','Open Mara.','lexical_fallback',array['e6060000-0000-0000-0000-000000000001']::uuid[]);
 select lives_ok(format($f$select public.complete_guide_turn_for_worker(%L,
-  '{"no_answer":false,"blocks":[{"type":"grounded_answer","text":"Mara guards the gate.","citations":[{"source_id":"e6060000-0000-0000-0000-000000000001"}]},{"type":"action_preview","action":{"name":"open_record","version":"1.0.0","arguments":{"source_id":"e6060000-0000-0000-0000-000000000001"}},"explanation":"Open Mara."},{"type":"action_preview","action":{"name":"draft_entity","version":"1.0.0","arguments":{"entity_type":"character","intent":"Draft Mara''s non-canon companion."}},"explanation":"Draft a companion."}],"confidence_reason":"single_clear_segment"}')$f$,
-  (select ai_task_run_id from public.guide_turns where id='e6100000-0000-0000-0000-000000000001')),'Worker materializes only validated registry-backed intents');
-select is((select count(*) from public.guide_action_intents where turn_id='e6100000-0000-0000-0000-000000000001'),2::bigint,'Both action previews become frozen intents');
+  '{"no_answer":false,"blocks":[{"type":"grounded_answer","text":"Mara guards the gate.","citations":[{"source_id":"e6060000-0000-0000-0000-000000000001"}]},{"type":"action_preview","action":{"name":"open_record","version":"1.0.0","arguments":{"source_id":"e6060000-0000-0000-0000-000000000001"}},"explanation":"Open Mara."}],"confidence_reason":"single_clear_segment"}')$f$,
+  (select ai_task_run_id from public.guide_turns where id='e6100000-0000-0000-0000-000000000001')),'Worker materializes a validated registry-backed intent');
+select public.create_guide_turn_for_worker(
+  'e6010000-0000-0000-0000-000000000001','e6020000-0000-0000-0000-000000000001','e6030000-0000-0000-0000-000000000001','e6000000-0000-0000-0000-000000000001',
+  (select thread_id from public.guide_turns where id='e6100000-0000-0000-0000-000000000001'),'e6100000-0000-0000-0000-000000000003','e6110000-0000-0000-0000-000000000003','Draft a companion.','lexical_fallback',array['e6060000-0000-0000-0000-000000000001']::uuid[]);
+select public.complete_guide_turn_for_worker(
+  (select ai_task_run_id from public.guide_turns where id='e6100000-0000-0000-0000-000000000003'),
+  '{"no_answer":false,"blocks":[{"type":"grounded_answer","text":"Mara guards the gate.","citations":[{"source_id":"e6060000-0000-0000-0000-000000000001"}]},{"type":"action_preview","action":{"name":"draft_entity","version":"1.0.0","arguments":{"entity_type":"character","intent":"Draft Mara''s non-canon companion."}},"explanation":"Draft a companion."}],"confidence_reason":"single_clear_segment"}');
+select is((select count(*) from public.guide_action_intents where turn_id in ('e6100000-0000-0000-0000-000000000001','e6100000-0000-0000-0000-000000000003')),2::bigint,'Both independent action previews become frozen intents');
 select is((select count(*) from public.drafts where saga_id='e6030000-0000-0000-0000-000000000001'),0::bigint,'Preview materialization creates no draft');
 select is((select count(*) from public.canon_audit where saga_id='e6030000-0000-0000-0000-000000000001'),0::bigint,'Preview materialization creates no canon write');
 select ok((select target_id='e6040000-0000-0000-0000-000000000001' and confirmation_policy='none' and authority_tier='read_navigation' from public.guide_action_intents where action_type='open_record' and turn_id='e6100000-0000-0000-0000-000000000001'),'Open-record intent freezes a current supported target');
-select ok((select (select count(*) from jsonb_object_keys(evidence_versions))=1 and confirmation_policy='explicit' and cost_snapshot->>'ai_credits'='3' from public.guide_action_intents where action_type='draft_entity' and turn_id='e6100000-0000-0000-0000-000000000001'),'Draft intent freezes evidence, confirmation, and price');
+select ok((select (select count(*) from jsonb_object_keys(evidence_versions))=1 and confirmation_policy='explicit' and cost_snapshot->>'ai_credits'='3' from public.guide_action_intents where action_type='draft_entity' and turn_id='e6100000-0000-0000-0000-000000000003'),'Draft intent freezes evidence, confirmation, and price');
 create temp table e6_action_ids(turn_id uuid primary key,action_id uuid not null);
-insert into e6_action_ids select turn_id,id from public.guide_action_intents where action_type='draft_entity' and turn_id='e6100000-0000-0000-0000-000000000001';
+insert into e6_action_ids select turn_id,id from public.guide_action_intents where action_type='draft_entity' and turn_id='e6100000-0000-0000-0000-000000000003';
 grant select on e6_action_ids to authenticated;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','e6000000-0000-0000-0000-000000000001',true);
 select set_config('request.jwt.claim.role','authenticated',true);
-select is(jsonb_array_length(public.get_loom_action_availability('e6010000-0000-0000-0000-000000000001','e6020000-0000-0000-0000-000000000001','e6030000-0000-0000-0000-000000000001')),16,'Owner sees safe action availability metadata after E9 registry expansion');
-select is((public.review_loom_action((select action_id from e6_action_ids where turn_id='e6100000-0000-0000-0000-000000000001'),1,'confirmed','e6120000-0000-0000-0000-000000000001')->>'state'),'processing','Explicit current-version confirmation dispatches the registered draft task');
-select is((public.review_loom_action((select action_id from e6_action_ids where turn_id='e6100000-0000-0000-0000-000000000001'),1,'confirmed','e6120000-0000-0000-0000-000000000001')->>'replayed'),'true','Exact retry returns the private receipt');
-select throws_ok($$select public.review_loom_action((select action_id from e6_action_ids where turn_id='e6100000-0000-0000-0000-000000000001'),1,'dismissed','e6120000-0000-0000-0000-000000000001')$$,'23505','Loom action idempotency key was reused with different input','Changed input cannot reuse a receipt key');
+select is(jsonb_array_length(public.get_loom_action_availability('e6010000-0000-0000-0000-000000000001','e6020000-0000-0000-0000-000000000001','e6030000-0000-0000-0000-000000000001')),19,'Owner sees safe action availability metadata after E10 registry expansion');
+select is((public.review_loom_action((select action_id from e6_action_ids where turn_id='e6100000-0000-0000-0000-000000000003'),1,'confirmed','e6120000-0000-0000-0000-000000000001')->>'state'),'processing','Explicit current-version confirmation dispatches the registered draft task');
+select is((public.review_loom_action((select action_id from e6_action_ids where turn_id='e6100000-0000-0000-0000-000000000003'),1,'confirmed','e6120000-0000-0000-0000-000000000001')->>'replayed'),'true','Exact retry returns the private receipt');
+select throws_ok($$select public.review_loom_action((select action_id from e6_action_ids where turn_id='e6100000-0000-0000-0000-000000000003'),1,'dismissed','e6120000-0000-0000-0000-000000000001')$$,'23505','Loom action idempotency key was reused with different input','Changed input cannot reuse a receipt key');
 reset role;
 select is((select count(*) from internal.ai_task_runs where saga_id='e6030000-0000-0000-0000-000000000001' and task_name='draft_entity_from_prompt' and input_payload->>'loom_action_id' is not null and cardinality(allowed_source_ids)=1 and jsonb_array_length(public.get_guide_evidence_for_worker(id))=1),1::bigint,'Confirmation creates one separately metered run linked to its frozen Loom evidence');
 insert into internal.ai_task_runs(
@@ -59,7 +65,7 @@ insert into internal.ai_task_runs(
 select 'e6200000-0000-4000-8000-000000000001','e6010000-0000-0000-0000-000000000001','e6020000-0000-0000-0000-000000000001',
   'e6030000-0000-0000-0000-000000000001','e6000000-0000-0000-0000-000000000001',
   c.task_name,c.prompt_version,c.quota_tier,c.ai_credits,c.model_tier,c.retrieval_profile,c.source_policy,c.output_mode,
-  jsonb_build_object('question','Forged linkage','loom_action_id',(select action_id from e6_action_ids where turn_id='e6100000-0000-0000-0000-000000000001')),
+  jsonb_build_object('question','Forged linkage','loom_action_id',(select action_id from e6_action_ids where turn_id='e6100000-0000-0000-0000-000000000003')),
   '{}'::uuid[],'{}'::jsonb
 from internal.ai_task_contracts() c where c.task_name='answer_saga_question';
 select is(jsonb_array_length(public.get_guide_evidence_for_worker('e6200000-0000-4000-8000-000000000001')),0,'A run cannot borrow Loom evidence by forging an action ID in its input');
