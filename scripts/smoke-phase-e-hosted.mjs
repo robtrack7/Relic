@@ -3,11 +3,17 @@ import { spawnSync } from "node:child_process";
 const PROJECT_REF = "scagegrrilvrpuilthzz";
 const AUTHORIZATION = "PHASE_E_HOSTED_SMOKE_APPROVED";
 const COST_CEILING_USD = 4.0;
-const PRIOR_PROVIDER_SPEND_RESERVE_USD = 0.25;
-const REMAINING_PROXY_BUDGET_USD = 3.74;
+const PRIOR_PROVIDER_SPEND_RESERVE_USD = 0.50;
+const REMAINING_PROXY_BUDGET_USD = 3.49;
 const MAX_LOGICAL_TASKS = 6;
 const MAX_PROVIDER_COMPLETIONS = 12;
 const PRODUCT_CREDITS = 28;
+const SAFE_VALIDATION_CATEGORIES = new Set([
+  "citation_allowlist", "citation_identifier", "citation_required", "evidence_support",
+  "substantive_block_required", "insufficiency_reason_required", "no_answer_grounded_block",
+  "no_answer_block_type", "unexpected_insufficiency_reason", "no_answer_contract",
+  "confidence_contract", "action_contract", "bounds", "response_shape", "schema_contract"
+]);
 
 const TASKS = Object.freeze([
   { id: "e5200000-0000-4000-8000-000000000001", task: "plan_saga_workshop", prompt: "plan_saga_workshop@1.0.0", alias: "relic-fast", model: "gpt-5.6-luna", credits: 1, session: false, input: {
@@ -171,7 +177,12 @@ async function invokeRunner(runId) {
   const body = await response.json().catch(() => ({}));
   if (!response.ok || body.ok !== true) {
     const category = typeof body.error === "string" ? body.error.slice(0, 80) : "safe_failure";
-    fail(`The Phase E task runner stopped safely (${response.status}/${category}).`);
+    const validationCategories = Array.isArray(body.validation_categories)
+      ? [...new Set(body.validation_categories.filter((value) => SAFE_VALIDATION_CATEGORIES.has(value)))].slice(0, 5)
+      : [];
+    const validationDetail = validationCategories.length > 0
+      ? `; validation categories: ${validationCategories.join(",")}` : "";
+    fail(`The Phase E task runner stopped safely (${response.status}/${category}${validationDetail}).`);
   }
   return body;
 }
@@ -317,6 +328,23 @@ function validateEvidence(evidence) {
 
 function collectSafeFailureEvidence() {
   return oneRow(`select jsonb_build_object(
+    'failed_run',(select jsonb_build_object(
+      'task',task_name,'status',status,'attempts',attempts,'repairs',repair_attempts,
+      'provider_completions',provider_completions,'failure_category',failure_category,
+      'checkpointed',provider_completed_at is not null,'tokens_in',provider_tokens_in,
+      'tokens_out',provider_tokens_out,'cost_usd',provider_cost_estimate_usd,
+      'cost_estimate_complete',provider_cost_estimate_complete
+    ) from internal.ai_task_runs where workspace_id='${IDS.workspace}' and attempts > 0
+      order by created_at desc limit 1),
+    'totals',(select jsonb_build_object(
+      'started_runs',count(*) filter (where attempts > 0),
+      'complete_runs',count(*) filter (where status='complete'),
+      'provider_completions',coalesce(sum(provider_completions),0),
+      'tokens_in',coalesce(sum(provider_tokens_in),0),
+      'tokens_out',coalesce(sum(provider_tokens_out),0),
+      'cost_usd',coalesce(sum(provider_cost_estimate_usd),0),
+      'cost_estimate_complete',coalesce(bool_and(provider_cost_estimate_complete) filter (where provider_completions > 0),true)
+    ) from internal.ai_task_runs where workspace_id='${IDS.workspace}'),
     'runs',coalesce((select jsonb_agg(jsonb_build_object(
       'task',task_name,'status',status,'attempts',attempts,'repairs',repair_attempts,
       'provider_completions',provider_completions,'failure_category',failure_category,
@@ -465,7 +493,13 @@ try {
   };
 } catch (error) {
   try { safeFailureEvidence = collectSafeFailureEvidence(); } catch { /* Cleanup remains authoritative. */ }
-  const detail = safeFailureEvidence ? ` Safe evidence: ${JSON.stringify(safeFailureEvidence)}` : "";
+  const compactFailureEvidence = safeFailureEvidence ? {
+    failed_run: safeFailureEvidence.failed_run,
+    totals: safeFailureEvidence.totals,
+    events: safeFailureEvidence.events,
+    error_categories: safeFailureEvidence.error_categories
+  } : null;
+  const detail = compactFailureEvidence ? ` Safe evidence: ${JSON.stringify(compactFailureEvidence)}` : "";
   executionError = new Error(`${error.message}${detail}`);
 }
 

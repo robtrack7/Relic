@@ -491,9 +491,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
         p_resolved_provider: providerResult.provider,
         p_tokens_in: providerResult.tokensIn,
         p_tokens_out: providerResult.tokensOut,
-      p_cost_estimate_usd: providerResult.costEstimateUsd,
+        p_cost_estimate_usd: providerResult.costEstimateUsd,
         p_billable: providerResult.billable,
-        p_provider_request_id_present: Boolean(providerResult.requestId)
+        p_provider_request_id_present: Boolean(providerResult.requestId),
+        p_repair_attempts: repairAttempts
       });
       if (checkpointError) throw new Error(checkpointError.message);
     }

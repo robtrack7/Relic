@@ -22,8 +22,8 @@ test("Phase E preflight is manifest-only and reports zero hosted work", () => {
   assert.equal(output.product_credits, 28);
   assert.equal(output.maximum_provider_completions, 12);
   assert.equal(output.provider_cost_ceiling_usd, 4);
-  assert.equal(output.prior_provider_spend_reserve_usd, 0.25);
-  assert.equal(output.isolated_proxy_budget_usd, 3.74);
+  assert.equal(output.prior_provider_spend_reserve_usd, 0.50);
+  assert.equal(output.isolated_proxy_budget_usd, 3.49);
   assert.equal(output.temporary_proxy_infrastructure_cost_hard_capped, false);
 });
 
@@ -97,7 +97,9 @@ test("Phase E cost and call guards reserve at most one repair per task", () => {
   assert.match(runner, /numberValue\(run\.repairs\) > 1/);
   assert.match(runner, /cost_usd\) \+ PRIOR_PROVIDER_SPEND_RESERVE_USD > COST_CEILING_USD/);
   assert.match(runner, /cost_estimate_complete/);
-  assert.match(wrapper, /max_budget: 3\.74/);
+  assert.match(wrapper, /max_budget: \$proxyBudget/);
+  assert.match(wrapper, /\$priorProviderSpendReserve = \[decimal\]0\.50/);
+  assert.match(wrapper, /\$proxyBudget = \[decimal\]3\.49/);
   assert.match(wrapper, /budget_duration: 2h/);
   assert.match(wrapper, /hard_limit = 1/);
 });
@@ -144,5 +146,9 @@ test("Phase E telemetry checks remain payload-free", () => {
   assert.doesNotMatch(wrapper, /Write-Output\s+\$openAiKey|Write-Host\s+\$openAiKey/);
   assert.match(runner, /collectSafeFailureEvidence/);
   assert.match(runner, /failure_category/);
+  assert.match(runner, /SAFE_VALIDATION_CATEGORIES/);
+  assert.match(runner, /validation categories:/);
+  assert.match(runner, /failed_run: safeFailureEvidence\.failed_run/);
+  assert.match(runner, /totals: safeFailureEvidence\.totals/);
   assert.doesNotMatch(runner, /safe_failure_evidence[\s\S]{0,1800}output_payload/);
 });

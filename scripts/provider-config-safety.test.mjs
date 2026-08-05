@@ -106,6 +106,18 @@ test("AI provider pins reasoning effort and computes a conservative GPT-5.6 cost
     }
   });
   assert.equal(body.reasoning_effort, "none");
+  assert.equal(body.max_completion_tokens, 800);
+  assert.match(body.messages[0].content, /exactly three highest-information unique questions/);
+  assert.match(body.messages[0].content, /contradiction_flags is an array of objects shaped exactly/);
+  assert.match(body.messages[0].content, /id starts with a lowercase letter/);
+  assert.match(body.messages[0].content, /entire JSON under 650 completion tokens/);
+  assert.match(body.messages[0].content, /relationships contains at most twenty objects exactly/);
+  assert.match(body.messages[0].content, /active_thread_temp_ids references threads only/);
+  assert.match(body.messages[0].content, /For prep_style light, use the lower end/);
+  assert.match(body.messages[0].content, /Never include action fields/);
+  assert.match(body.messages[0].content, /A saga replacement is exactly/);
+  assert.match(body.messages[0].content, /relationship_hooks and duplicate_warnings are safe string arrays/);
+  assert.match(body.messages[0].content, /pinned_entities or active_threads items are exact UUIDs/);
   assert.equal(result.costEstimateComplete, true);
   assert.equal(result.costEstimateSource, "proxy_or_local_upper_bound");
   assert.equal(result.costEstimateUsd, 0.00185);

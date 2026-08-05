@@ -2,7 +2,7 @@ create extension if not exists pgtap with schema extensions;
 
 begin;
 
-select plan(19);
+select plan(23);
 
 select has_table('internal', 'ai_task_provider_calls', 'private per-completion provider ledger exists');
 select has_column('internal', 'ai_task_runs', 'provider_completions', 'run ledger exposes cumulative provider completions');
@@ -18,6 +18,16 @@ select function_privs_are(
   'public', 'record_ai_task_provider_completion_for_worker',
   array['uuid','text','integer','text','text','text','text','integer','integer','numeric','boolean','text','boolean','boolean'],
   'authenticated', array[]::text[], 'authenticated cannot write provider completions'
+);
+select has_function(
+  'public', 'checkpoint_ai_task_provider_output_for_worker',
+  array['uuid','text','jsonb','text','text','text','integer','integer','numeric','boolean','boolean','integer'],
+  'successful-repair checkpoint overload exists'
+);
+select function_privs_are(
+  'public', 'checkpoint_ai_task_provider_output_for_worker',
+  array['uuid','text','jsonb','text','text','text','integer','integer','numeric','boolean','boolean','integer'],
+  'authenticated', array[]::text[], 'authenticated cannot project repair attempts'
 );
 
 insert into auth.users (
@@ -71,8 +81,14 @@ insert into phase_e_accounting_results values ('repair', public.record_ai_task_p
   'e5640000-0000-4000-8000-000000000001','phase-e-worker',1,'schema_repair','relic-fast','gpt-5.6-luna','openai',5,7,0.002,true,'proxy_or_local_upper_bound',true,false
 ));
 insert into phase_e_accounting_results values ('checkpoint', public.checkpoint_ai_task_provider_output_for_worker(
-  'e5640000-0000-4000-8000-000000000001','phase-e-worker','{}','relic-fast','gpt-5.6-luna','openai',5,7,0.002,true,false
+  'e5640000-0000-4000-8000-000000000001','phase-e-worker','{}','relic-fast','gpt-5.6-luna','openai',5,7,0.002,true,false,1
 ));
+select throws_like(
+  $$ select public.checkpoint_ai_task_provider_output_for_worker(
+    'e5640000-0000-4000-8000-000000000001','phase-e-worker','{}','relic-fast','gpt-5.6-luna','openai',5,7,0.002,true,false,2
+  ) $$,
+  '%ai_task_repair_attempts_invalid%', 'checkpoint rejects more than one repair'
+);
 insert into phase_e_accounting_results values ('fail', public.fail_ai_task_run_for_worker(
   'e5640000-0000-4000-8000-000000000001','phase-e-worker','validation_failed',false,1
 ));
@@ -86,6 +102,7 @@ select is((select provider_completions from internal.ai_task_runs where id='e564
 select is((select provider_tokens_in from internal.ai_task_runs where id='e5640000-0000-4000-8000-000000000001'),15,'input tokens accumulate across repair');
 select is((select provider_tokens_out from internal.ai_task_runs where id='e5640000-0000-4000-8000-000000000001'),27,'output tokens accumulate across repair');
 select is((select provider_cost_estimate_usd from internal.ai_task_runs where id='e5640000-0000-4000-8000-000000000001'),0.003::numeric,'cost accumulates across repair');
+select is((select repair_attempts from internal.ai_task_runs where id='e5640000-0000-4000-8000-000000000001'),1,'successful repair is projected before delivery');
 select is((select status from internal.ai_task_runs where id='e5640000-0000-4000-8000-000000000001'),'terminal','validation failure remains terminal');
 select is((select provider_completions from internal.ai_task_runs where id='e5640000-0000-4000-8000-000000000001'),2,'terminal failure preserves provider completion evidence');
 select ok((select not provider_cost_estimate_complete from internal.ai_task_runs where id='e5640000-0000-4000-8000-000000000002'),'missing provider usage makes cost evidence incomplete');

@@ -11,8 +11,8 @@ $ErrorActionPreference = "Stop"
 $approvedAuthorization = "PHASE_E_HOSTED_SMOKE_APPROVED"
 $approvedProjectRef = "scagegrrilvrpuilthzz"
 $costCeiling = [decimal]4.00
-$priorProviderSpendReserve = [decimal]0.25
-$proxyBudget = [decimal]3.74
+$priorProviderSpendReserve = [decimal]0.50
+$proxyBudget = [decimal]3.49
 $providerCompletionLimit = 12
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $stagingStatePath = Join-Path $repoRoot "infra/litellm/.secrets.e2-staging"
@@ -149,7 +149,7 @@ litellm_settings:
   set_verbose: false
   turn_off_message_logging: true
   log_raw_request_response: false
-  max_budget: 3.74
+  max_budget: $proxyBudget
   budget_duration: 2h
 general_settings:
   master_key: $masterKey
