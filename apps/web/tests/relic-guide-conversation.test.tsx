@@ -247,4 +247,69 @@ describe("RelicGuideConversation", () => {
     fireEvent.click(screen.getByRole("button", { name: /confirm canon change/i }));
     expect(onConfirmAction).toHaveBeenCalledWith("thread-state", 1);
   });
+
+  it("discloses the separate Prep task cost and keeps generated output pending review", () => {
+    const onConfirmAction = vi.fn();
+    render(<RelicGuideConversation
+      sagaRoot={root}
+      thread={{ id: "thread", state: "active", turns: [{
+        id: "turn", question: "Generate prep for Session 2.", status: "complete", noAnswer: false,
+        blocks: [{
+          type: "action_preview", actionId: "prep-task", intentVersion: 1,
+          action: {
+            name: "start_prep_task", version: "1.0.0", taskName: "generate_session_prep",
+            taskLabel: "Generate full Session Prep", sessionName: "Ember Descent", href: `${root}/sessions/session-2/prep`
+          },
+          explanation: "Review the separate full Prep task.", authorityTier: "non_canon_generation",
+          confirmationPolicy: "explicit", costCredits: 10,
+          effectSummary: "Dispatch one separately metered E4 Prep request; generated output remains pending review.",
+          manualFallback: "Open full Prep and use its AI tools manually."
+        }]
+      }] }}
+      onSubmit={vi.fn()}
+      onConfirmAction={onConfirmAction}
+    />);
+
+    expect(screen.getByText(/10 credits · generated output stays pending/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /review workflow action/i }));
+    expect(screen.getByText(/confirmation is free; the result will still require review in prep/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /confirm 10-credit task/i }));
+    expect(onConfirmAction).toHaveBeenCalledWith("prep-task", 1);
+  });
+
+  it("renders lifecycle-aware Session and Workshop handoffs as free workflow links", () => {
+    render(<RelicGuideConversation
+      sagaRoot={root}
+      thread={{ id: "thread", state: "active", turns: [{
+        id: "turn", question: "Open the workflows.", status: "complete", noAnswer: false,
+        blocks: [
+          {
+            type: "action_preview", actionId: "session-workflow", intentVersion: 1,
+            action: {
+              name: "open_session_workflow", version: "1.0.0", destination: "review",
+              sessionName: "The Broken Recording", sessionStatus: "ended", transcriptionState: "failed",
+              pipelineState: "failed", href: `${root}/sessions/session-2/review`
+            },
+            explanation: "Open current post-session status.", authorityTier: "read_navigation",
+            confirmationPolicy: "none", costCredits: 0, effectSummary: "Open Review.", manualFallback: "Open Sessions."
+          },
+          {
+            type: "action_preview", actionId: "workshop", intentVersion: 1,
+            action: {
+              name: "open_session_workflow", version: "1.0.0", destination: "active_workshop",
+              sessionName: "Ash Road", href: "/app/new-saga/workshop-1"
+            },
+            explanation: "Resume the active Workshop.", authorityTier: "read_navigation",
+            confirmationPolicy: "none", costCredits: 0, effectSummary: "Open Workshop.", manualFallback: "Use New Saga."
+          }
+        ]
+      }] }}
+      onSubmit={vi.fn()}
+    />);
+
+    expect(screen.getAllByText(/workflow · free · read only/i)).toHaveLength(2);
+    expect(screen.getByText("Transcription: failed")).toBeTruthy();
+    expect(screen.getAllByRole("link", { name: "Open workflow" }).map((link) => link.getAttribute("href")))
+      .toEqual([`${root}/sessions/session-2/review`, "/app/new-saga/workshop-1"]);
+  });
 });

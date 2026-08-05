@@ -29,6 +29,13 @@ const LOOM_RECORD_TYPES = new Set(["character", "place", "faction", "artifact", 
 const LOOM_RELATIONSHIP_TYPES = new Set(["character", "place", "faction", "artifact", "thread"]);
 const LOOM_THREAD_STATES = new Set(["active", "loose", "dormant", "resolved", "failed"]);
 const LOOM_OBJECTIVE_OPERATIONS = new Set(["create", "edit", "complete", "reopen", "move"]);
+const LOOM_PREP_TASKS = new Set([
+  "compose_prep_briefing", "generate_session_prep", "propose_scene_beats",
+  "propose_thread_complication", "propose_npc_for_scene", "propose_quick_stub_fleshing"
+]);
+const LOOM_PREP_REGENERATE_SCOPES = new Set([
+  "all", "objective", "opening_scene", "scene_notes", "pinned_entities", "active_threads", "prep_checklist"
+]);
 const GUIDE_NAVIGATION_DESTINATIONS = new Set(["home", "library", "threads", "sessions", "review", "search"]);
 const WORKSHOP_RELATIONSHIP_KINDS = new Set([
   "member-of", "located-at", "owns", "allied-with", "opposed-to", "related-to"
@@ -932,6 +939,77 @@ function validateLoomAction(
     if (typeof args.new_text === "string" && args.new_text.length > 1000) errors.push(`${path}.arguments.new_text is too long`);
     if (args.operation === "move" && (!Number.isInteger(args.target_index) || Number(args.target_index) < 0 || Number(args.target_index) > 100)) {
       errors.push(`${path}.arguments.target_index is invalid`);
+    }
+    return;
+  }
+  if (action.name === "create_session" && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(["name", "planned_date", "objective", "opening_scene"]), `${path}.arguments`, errors);
+    if (!isString(args.name) || args.name.length > 200) errors.push(`${path}.arguments.name is invalid`);
+    if (args.planned_date !== undefined && (typeof args.planned_date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(args.planned_date))) {
+      errors.push(`${path}.arguments.planned_date is invalid`);
+    }
+    if (args.objective !== undefined && (typeof args.objective !== "string" || args.objective.length > 2000)) {
+      errors.push(`${path}.arguments.objective is invalid`);
+    }
+    if (args.opening_scene !== undefined && (typeof args.opening_scene !== "string" || args.opening_scene.length > 4000)) {
+      errors.push(`${path}.arguments.opening_scene is invalid`);
+    }
+    return;
+  }
+  if (action.name === "open_session_workflow" && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(["session_source_id", "destination"]), `${path}.arguments`, errors);
+    if (args.destination === "active_workshop" && args.session_source_id === undefined) return;
+    const evidence = taskRun.retrieval_context?.find((entry) => entry.source_id === args.session_source_id);
+    if (!isUuid(args.session_source_id) || !taskRun.allowed_source_ids.includes(args.session_source_id)
+      || evidence?.source_entity_type !== "session" || !isUuid(evidence.source_entity_id)
+      || args.destination !== undefined) {
+      errors.push(`${path}.arguments must identify one allowed Session or active_workshop`);
+    }
+    return;
+  }
+  if (action.name === "retry_session_transcription" && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(["session_source_id"]), `${path}.arguments`, errors);
+    const evidence = taskRun.retrieval_context?.find((entry) => entry.source_id === args.session_source_id);
+    if (!isUuid(args.session_source_id) || !taskRun.allowed_source_ids.includes(args.session_source_id)
+      || evidence?.source_entity_type !== "session" || !isUuid(evidence.source_entity_id)) {
+      errors.push(`${path}.arguments.session_source_id must identify an allowed Session`);
+    }
+    return;
+  }
+  if (action.name === "start_prep_task" && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set([
+      "session_source_id", "task_name", "regenerate_scope", "role_description", "thread_source_id", "stub_source_id"
+    ]), `${path}.arguments`, errors);
+    const sessionEvidence = taskRun.retrieval_context?.find((entry) => entry.source_id === args.session_source_id);
+    if (!isUuid(args.session_source_id) || !taskRun.allowed_source_ids.includes(args.session_source_id)
+      || sessionEvidence?.source_entity_type !== "session" || !isUuid(sessionEvidence.source_entity_id)) {
+      errors.push(`${path}.arguments.session_source_id must identify an allowed Session`);
+    }
+    if (!isString(args.task_name) || !LOOM_PREP_TASKS.has(args.task_name)) {
+      errors.push(`${path}.arguments.task_name is invalid`);
+      return;
+    }
+    if (args.task_name === "generate_session_prep") {
+      if (args.regenerate_scope !== undefined && (!isString(args.regenerate_scope)
+        || !LOOM_PREP_REGENERATE_SCOPES.has(args.regenerate_scope))) errors.push(`${path}.arguments.regenerate_scope is invalid`);
+    } else if (args.regenerate_scope !== undefined) errors.push(`${path}.arguments.regenerate_scope is not allowed for this task`);
+    if (args.task_name === "propose_npc_for_scene") {
+      if (!isString(args.role_description) || args.role_description.length > 500) errors.push(`${path}.arguments.role_description is invalid`);
+    } else if (args.role_description !== undefined) errors.push(`${path}.arguments.role_description is not allowed for this task`);
+    for (const [field, expectedType, requiredTask] of [
+      ["thread_source_id", "thread", "propose_thread_complication"],
+      ["stub_source_id", null, "propose_quick_stub_fleshing"]
+    ] as const) {
+      if (args.task_name !== requiredTask) {
+        if (args[field] !== undefined) errors.push(`${path}.arguments.${field} is not allowed for this task`);
+        continue;
+      }
+      const evidence = taskRun.retrieval_context?.find((entry) => entry.source_id === args[field]);
+      if (!isUuid(args[field]) || !taskRun.allowed_source_ids.includes(args[field] as string)
+        || !evidence || (expectedType ? evidence.source_entity_type !== expectedType
+          : !LOOM_RELATIONSHIP_TYPES.has(String(evidence.source_entity_type))) || !isUuid(evidence.source_entity_id)) {
+        errors.push(`${path}.arguments.${field} must identify an allowed ${expectedType ?? "Quick Stub"}`);
+      }
     }
     return;
   }

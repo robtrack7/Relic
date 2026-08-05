@@ -26,6 +26,8 @@ Packet E7 extends `LoomActionCard` with display-safe `open_record`, `list_record
 
 Packet E8 adds reusable field-diff, relationship-effect, Thread-state, and objective-effect bodies to `LoomActionCard`. Proposal cards show target/type, changed fields, the ordinary Review destination, and `0 additional credits`; they never present the first confirmation as canon approval. Inline canon cards show both affected records or Thread, current-to-proposed state, explicit confirmation, receipt state, and a record/manual fallback link. The browser continues to submit only action ID, expected intent version, decision, and idempotency key; it never forwards trusted payload, target, scope, RPC, or version fields during confirmation.
 
+Packet E9 adds workflow cards for Session creation, lifecycle-aware Prep/Stage/Review navigation, Prep task handoff, transcription retry, and active Workshop resume. Every separately metered Prep card shows the exact 1/3/10-credit estimate before confirmation and links its accepted request to the full Prep review surface. The card must state that generated output is pending review and that confirmation does not apply it. Processing, quota-blocked, provider-unavailable, stale Session, and retry states preserve the same action/request identity. Stage-live cards expose navigation and manual fallback only; they never offer Prep generation or unsolicited assistance.
+
 *Created: May 18, 2026. Updated: May 18, 2026.*  
 *Purpose: give vibe-coding agents a buildable first-pass UI map without requiring them to re-read every product document.*
 

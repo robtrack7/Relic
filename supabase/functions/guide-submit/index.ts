@@ -43,36 +43,14 @@ async function resolveGuideSourceIds(
   results: GuideSearchResult[],
   scope: Required<Pick<GuideSubmitRequest, "workspace_id" | "world_id" | "saga_id">>
 ) {
-  const entityIds = [...new Set(results.filter((result) => typeof result.source_id !== "string")
-    .map((result) => result.source_entity_id)
-    .filter((value): value is string => typeof value === "string"))];
-  const fallbackByEntity = new Map<string, string>();
-  if (entityIds.length > 0) {
-    const { data, error } = await service
-      .from("sources")
-      .select("id,source_entity_type,source_entity_id,scope,saga_id,kind,created_at")
-      .eq("workspace_id", scope.workspace_id)
-      .eq("world_id", scope.world_id)
-      .in("source_entity_id", entityIds)
-      .neq("kind", "imported_text")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error("guide_source_resolution_failed");
-    for (const source of data ?? []) {
-      const eligibleScope = (source.scope === "saga" && source.saga_id === scope.saga_id)
-        || (source.scope === "world" && source.saga_id === null);
-      if (!eligibleScope || !source.source_entity_type || !source.source_entity_id) continue;
-      const key = `${source.source_entity_type}:${source.source_entity_id}`;
-      if (!fallbackByEntity.has(key)) fallbackByEntity.set(key, source.id);
-    }
-  }
-
-  return [...new Set(results.map((result) => {
-    if (typeof result.source_id === "string") return result.source_id;
-    if (typeof result.source_entity_type !== "string" || typeof result.source_entity_id !== "string") {
-      return null;
-    }
-    return fallbackByEntity.get(`${result.source_entity_type}:${result.source_entity_id}`) ?? null;
-  }).filter((value): value is string => typeof value === "string"))].slice(0, 20);
+  const { data, error } = await service.rpc("resolve_guide_source_ids_for_worker", {
+    p_workspace_id: scope.workspace_id,
+    p_world_id: scope.world_id,
+    p_saga_id: scope.saga_id,
+    p_results: results
+  });
+  if (error || !Array.isArray(data)) throw new Error("guide_source_resolution_failed");
+  return data.filter((value): value is string => typeof value === "string").slice(0, 20);
 }
 
 Deno.serve(async (req) => {
@@ -88,13 +66,11 @@ Deno.serve(async (req) => {
   }
 
   const service = createServiceClient();
-  const { data: existing, error: replayError } = await service
-    .from("guide_turns")
-    .select("id,thread_id,ai_task_run_id,status,question,workspace_id,world_id")
-    .eq("gm_id", body.gm_user_id)
-    .eq("saga_id", body.saga_id)
-    .eq("idempotency_key", body.idempotency_key)
-    .maybeSingle();
+  const { data: existing, error: replayError } = await service.rpc("get_guide_turn_replay_for_worker", {
+    p_gm_id: body.gm_user_id,
+    p_saga_id: body.saga_id,
+    p_idempotency_key: body.idempotency_key
+  });
   if (replayError) return errorResponse(500, "guide_replay_failed", "Relic Guide could not verify this retry.");
   if (existing) {
     if (existing.workspace_id !== body.workspace_id || existing.world_id !== body.world_id

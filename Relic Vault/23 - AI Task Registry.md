@@ -42,6 +42,8 @@ The Loom is the user-facing conversation shell over two distinct server-owned re
 
 ## Changelog
 
+**Packet E9 workflow-tool patch (August 2026).** `answer_saga_question@1.5.0` adds `create_session@1.0.0`, `open_session_workflow@1.0.0`, `start_prep_task@1.0.0`, and `retry_session_transcription@1.0.0`. Exact workflow commands bypass this task and cost zero; conversationally inferred actions remain inside the one-credit answer. Session creation/retry confirmation is deterministic and free. A Prep action separately displays and preflights the registered E4 1/3/10-credit task, then reuses its idempotent request/evidence/runner path. Generated Prep remains pending on the owning Prep surface; The Loom cannot bypass local merge/autosave, candidate follow-up, Approval Queue, Stage-live, or current-version guards. Approval Queue navigation reuses `navigate_surface`, and active-Workshop resume is a free current-user/Workspace read.
+
 **Packet E8 knowledge-proposal patch (August 2026).** `answer_saga_question@1.4.0` adds `propose_record_create@1.0.0`, `propose_record_update@1.0.0`, `add_relationship@1.0.0`, `remove_relationship@1.0.0`, `set_thread_state@1.0.0`, and `mutate_thread_objective@1.0.0`. Their bounded payloads are generated inside the already disclosed one-credit Loom answer; confirmation is deterministic and adds no second model charge. Create/update confirmation produces one pending Approval Queue draft, not canon. Relationship and Thread actions require a second explicit effect review, current evidence/target versions, and the existing scoped mutation path. Create/update is Saga-only; World-canon mutation, archive/delete, Session/Prep workflow, and multi-action plans remain disabled until their owning packets.
 
 **Packet E7 adaptive-read patch (August 2026).** `answer_saga_question@1.3.0` consumes the server's selected `exact`, `structured`, `lexical`, or `hybrid` frozen evidence path and the expanded read-only action manifest. The active read registry adds `list_records@1.0.0`, `show_source@1.0.0`, `explain_provenance@1.0.0`, and `navigate_surface@1.0.0`; `open_record@1.0.0` now resolves Library records, Threads, and Sessions to their owning routes and may include a one-hop structured snapshot. Recognized deterministic read commands are completed before task routing and therefore do not invoke `answer_saga_question`, consume credits, or create query embeddings. Ambiguity, missing provenance, stale targets, sibling scope, and unsupported destinations fail safely with no effects.
@@ -1031,7 +1033,7 @@ Identify loose threads and next-prep implications separately from canon drafts.
 
 ## 10. `answer_saga_question`
 
-**Quota:** light · **Model:** relic-balanced · **Prompt:** `answer_saga_question@1.4.0` · **Retrieval:** server-selected exact/structured/lexical/hybrid `sanctum_qa_grounding` · **Invocation:** GM submits a factual, continuity, or supported draft/action request that was not completed as a deterministic read in The Loom.
+**Quota:** light · **Model:** relic-balanced · **Prompt:** `answer_saga_question@1.5.0` · **Retrieval:** server-selected exact/structured/lexical/hybrid `sanctum_qa_grounding` · **Invocation:** GM submits a factual, continuity, or supported draft/action request that was not completed as a deterministic read or workflow command in The Loom.
 
 **Conversation contract.** Loom threads persist per GM and Saga across refresh, navigation, app restart, and later web/mobile handoff. A turn may receive at most eight server-selected prior turns and 6,000 normalized characters of conversation context. The browser cannot submit trusted history. Conversation helps resolve references such as “her brother” but is untrusted interpretation context: it is never retrieval evidence, cannot be cited, and cannot make a claim canon. Starting a new thread, clearing, or archiving changes conversation state only.
 
@@ -1053,13 +1055,19 @@ Identify loose threads and next-prep implications separately from canon drafts.
       name:
         | 'open_record' | 'list_records' | 'show_source' | 'explain_provenance' | 'navigate_surface'
         | 'draft_entity' | 'propose_record_create' | 'propose_record_update'
-        | 'add_relationship' | 'remove_relationship' | 'set_thread_state' | 'mutate_thread_objective',
+        | 'add_relationship' | 'remove_relationship' | 'set_thread_state' | 'mutate_thread_objective'
+        | 'create_session' | 'open_session_workflow' | 'start_prep_task' | 'retry_session_transcription',
       version: '1.0.0',
       description: string,
       arguments: provider_safe_json_schema,
       authority_tier: 'read_navigation' | 'non_canon_generation' | 'canon_mutation',
       confirmation_policy: 'none' | 'explicit',
-      ai_credits: 0 | 3,
+      ai_credits?: 0 | 3,
+      task_credit_options?: { // present only for start_prep_task
+        compose_prep_briefing: 3, generate_session_prep: 10,
+        propose_scene_beats: 1, propose_thread_complication: 1,
+        propose_npc_for_scene: 1, propose_quick_stub_fleshing: 1
+      },
       effect_summary: string
     }
   ]
@@ -1095,7 +1103,8 @@ The stored AI run envelope supplies Workspace, World, Saga, GM, task, prompt, qu
           name:
             | 'open_record' | 'list_records' | 'show_source' | 'explain_provenance' | 'navigate_surface'
             | 'draft_entity' | 'propose_record_create' | 'propose_record_update'
-            | 'add_relationship' | 'remove_relationship' | 'set_thread_state' | 'mutate_thread_objective',
+            | 'add_relationship' | 'remove_relationship' | 'set_thread_state' | 'mutate_thread_objective'
+            | 'create_session' | 'open_session_workflow' | 'start_prep_task' | 'retry_session_transcription',
           version: '1.0.0',
           arguments: registered_provider_safe_arguments
         },
@@ -1126,11 +1135,13 @@ E7 selects the cheapest sufficient path before this task is created. An exact ta
 
 **Action behavior.** Only manifest-registered `{name, version, arguments}` actions are accepted. Edge validation and database materialization independently reject unknown versions/fields, outside-evidence IDs, unsupported targets, and executable intent text. `open_record@1.0.0` resolves one current Library record, Thread, or Session and routes it through the owning product surface. `list_records@1.0.0` returns at most twenty current records of one registered type. `show_source@1.0.0` displays one allowlisted source; `explain_provenance@1.0.0` displays its bounded audit/source chain; `navigate_surface@1.0.0` accepts only registered Saga-relative destinations. These read actions are deterministic and free. `draft_entity@1.0.0` retains the E6 explicit-confirmation, exact 3-credit, immutable-evidence, and pending-draft boundary.
 
-E8 record actions use strict field allowlists for Character, Place, Faction, Artifact, Thread, and Note. Create accepts `{entity_type, payload, source_ids}`; update accepts one current mutable-record `source_id`, bounded `changes`, and optional supporting `source_ids`. Confirmation is free and creates one pending Saga Approval Queue draft with current-turn evidence; it does not publish canon. Relationship endpoints, Thread targets, and update targets must resolve from current-turn source IDs. `add_relationship`/`remove_relationship`, `set_thread_state`, and `mutate_thread_objective` require a second explicit effect review and current target/evidence versions, then use existing scoped writers. E8 does not enable World-canon record mutation, cross-Saga mutation, Prep/Stage workflow mutation, rulebook, dice, image, archive/delete, or multi-action plans.
+E8 record actions use strict field allowlists for Character, Place, Faction, Artifact, Thread, and Note. Create accepts `{entity_type, payload, source_ids}`; update accepts one current mutable-record `source_id`, bounded `changes`, and optional supporting `source_ids`. Confirmation is free and creates one pending Saga Approval Queue draft with current-turn evidence; it does not publish canon. Relationship endpoints, Thread targets, and update targets must resolve from current-turn source IDs. `add_relationship`/`remove_relationship`, `set_thread_state`, and `mutate_thread_objective` require a second explicit effect review and current target/evidence versions, then use existing scoped writers.
+
+E9 workflow actions preserve their owning product contracts. `create_session` accepts bounded name/date/objective/opening-scene fields and confirms through the existing Session creator. `open_session_workflow` accepts one current Session source and returns the server-derived Prep/Stage/Review route plus bounded lifecycle/transcription status. `retry_session_transcription` accepts one current ended Session source and confirms through the existing failed-job/finalized-audio retry. `start_prep_task` accepts one current editable Session source, one of the six E4 entry task names, and only the task-specific source-bound arguments. It freezes the Session version and exact registered credit; confirmation hands one idempotent request to E4. Prep output remains reviewable, not applied. Approval Queue navigation remains `navigate_surface(destination='review')`; active Workshop resume is server-resolved and free. Stage-live Prep/task mutation, World/cross-Saga workflow mutation, rulebook, dice, image, archive/delete, and multi-action plans remain disabled.
 
 **Failure modes.** Empty retrieval produces `no_answer`. Query-embedding/provider failure preserves lexical retrieval; total retrieval failure produces safe insufficiency. Hallucinated or unrelated citations receive one bounded repair, then fail closed. Provider/network/quota/dead-letter/permission failure preserves the question and action state. A superseded turn cannot replace the visible newer result.
 
-**Draft-status default.** Read-only answer and stored action intents. No answer, preview, dismissal, retry, clear, or conversation archive writes drafts or canon. A separately confirmed `draft_entity` dispatch may create its normal reviewed draft through the owning task. A confirmed E8 record proposal creates exactly one pending Approval Queue draft and zero canon/embedding effects; only later Queue approval commits the record and enqueues its current content identity. Confirmed relationship/Thread actions use the documented inline GM-direct audit path and never create a model-authored canon write.
+**Draft-status default.** Read-only answer and stored action intents. No answer, preview, dismissal, retry, clear, or conversation archive writes drafts or canon. A separately confirmed `draft_entity` dispatch may create its normal reviewed draft through the owning task. A confirmed E8 record proposal creates exactly one pending Approval Queue draft and zero canon/embedding effects; only later Queue approval commits the record and enqueues its current content identity. Confirmed relationship/Thread actions use the documented inline GM-direct audit path and never create a model-authored canon write. E9 Session and retry actions write only their owning reversible workflow state. A confirmed Prep action creates one normal E4 request/result; its output remains pending until the existing Prep or Approval Queue review path acts.
 
 **Latency.** p50 8s · p95 18s.
 

@@ -36,7 +36,7 @@ insert into public.sources(id,workspace_id,world_id,saga_id,scope,kind,source_en
 ('e8090000-0000-4000-8000-000000000006','e8010000-0000-4000-8000-000000000001','e8020000-0000-4000-8000-000000000001',null,'world','existing_entity','character','e8040000-0000-4000-8000-000000000002',null,'Vale records every erased road.')
 on conflict(id) do nothing;
 
-select is((select count(*) from internal.loom_action_contracts()),12::bigint,'E8 expands the active Loom registry to twelve actions');
+select is((select count(*) from internal.loom_action_contracts()),16::bigint,'E8 knowledge actions remain registered after E9 expands the active registry');
 select is((select count(*) from internal.loom_action_contracts() where action_name in ('propose_record_create','propose_record_update','add_relationship','remove_relationship','set_thread_state','mutate_thread_objective') and ai_credits=0),6::bigint,'Every E8 confirmation has zero additional AI credits');
 select ok(not has_function_privilege('authenticated','internal.review_loom_action_e6(uuid,integer,text,uuid)','EXECUTE'),'The compatibility review implementation is private and not browser callable');
 select ok(not internal.loom_provider_action_manifest()::text ~* '(handler|rpc|function_name)','Expanded provider manifest still excludes executors');

@@ -147,6 +147,66 @@ describe("security-hardened server actions", () => {
     expect(supabase.from).not.toHaveBeenCalled();
   });
 
+  it("dispatches a confirmed Loom Prep handoff only from the server-derived receipt payload", async () => {
+    const supabase = authenticatedSupabase();
+    supabase.rpc
+      .mockResolvedValueOnce({
+        data: {
+          allowed: true,
+          state: "processing",
+          intent_version: 2,
+          receipt_id: "receipt-a",
+          dispatch_kind: "prep_ai",
+          request_id: "request-a",
+          workspace_id: "workspace-a",
+          world_id: "world-a",
+          saga_id: "saga-a",
+          session_id: "session-a",
+          prep_version: "2026-08-04T10:00:00.000Z",
+          task_name: "generate_session_prep",
+          input: { regenerate_scope: "all" }
+        },
+        error: null
+      })
+      .mockResolvedValueOnce({ data: { state: "accepted", intent_version: 2, run_id: "run-a" }, error: null });
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    process.env.INTERNAL_TOKEN = "local-internal-test";
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: vi.fn().mockResolvedValue({ run_id: "run-a", request_id: "request-a" })
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await reviewLoomActionAction(form({
+      actionId: "action-a", expectedIntentVersion: "1", decision: "confirmed", idempotencyKey: "confirm-a",
+      workspaceId: "forged-workspace", sessionId: "forged-session", taskName: "forged-task", prepVersion: "forged-version"
+    }));
+
+    expect(result).toMatchObject({ ok: true, state: "accepted", runId: "run-a" });
+    const request = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(JSON.parse(String(request.body))).toEqual({
+      gm_user_id: "user-a",
+      workspace_id: "workspace-a",
+      world_id: "world-a",
+      saga_id: "saga-a",
+      session_id: "session-a",
+      request_id: "request-a",
+      idempotency_key: "request-a",
+      task_name: "generate_session_prep",
+      prep_version: "2026-08-04T10:00:00.000Z",
+      input: { regenerate_scope: "all" }
+    });
+    expect(supabase.rpc.mock.calls[1]).toEqual(["complete_loom_workflow_action", {
+      p_action_id: "action-a",
+      p_receipt_id: "receipt-a",
+      p_outcome: "accepted",
+      p_failure_category: null,
+      p_run_id: "run-a"
+    }]);
+    expect(JSON.stringify(fetchMock.mock.calls[0])).not.toMatch(/forged-workspace|forged-session|forged-task|forged-version/);
+  });
+
   it("creates entities through a scoped RPC instead of direct table mutation", async () => {
     const supabase = authenticatedSupabase();
     vi.mocked(createClient).mockResolvedValue(supabase as never);

@@ -183,6 +183,31 @@ function testOutputFor(
           },
           explanation: "Review one new Thread objective before applying it."
         });
+      } else if (question.includes("open session workflow") && evidenceType === "session"
+        && hasContract("open_session_workflow", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: { name: "open_session_workflow", version: "1.0.0", arguments: { session_source_id: source } },
+          explanation: "Open the owning Session workflow with current bounded status."
+        });
+      } else if (question.includes("retry transcription") && evidenceType === "session"
+        && hasContract("retry_session_transcription", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: { name: "retry_session_transcription", version: "1.0.0", arguments: { session_source_id: source } },
+          explanation: "Review the existing failed transcription retry before applying it."
+        });
+      } else if (question.includes("generate prep") && evidenceType === "session"
+        && hasContract("start_prep_task", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: {
+            name: "start_prep_task",
+            version: "1.0.0",
+            arguments: { session_source_id: source, task_name: "generate_session_prep", regenerate_scope: "all" }
+          },
+          explanation: "Review the separate ten-credit full Prep task before dispatch."
+        });
       } else if (allowedSourceIds.length > 1 && question.includes("add relationship")
         && hasContract("add_relationship", "1.0.0")) {
         blocks.push({

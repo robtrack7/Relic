@@ -90,6 +90,40 @@ export type GuideBlock =
             objectiveText: string;
             newText?: string;
             href: string;
+          }
+        | {
+            name: "create_session";
+            version: "1.0.0";
+            sessionName: string;
+            plannedDate?: string;
+            objective?: string;
+            href?: string;
+          }
+        | {
+            name: "open_session_workflow";
+            version: "1.0.0";
+            destination: "prep" | "stage" | "review" | "active_workshop";
+            sessionName?: string;
+            sessionStatus?: string;
+            transcriptionState?: string;
+            pipelineState?: string;
+            href: string;
+          }
+        | {
+            name: "start_prep_task";
+            version: "1.0.0";
+            taskName: string;
+            taskLabel: string;
+            sessionName: string;
+            reviewState?: string;
+            href: string;
+          }
+        | {
+            name: "retry_session_transcription";
+            version: "1.0.0";
+            sessionName: string;
+            transcriptionState?: string;
+            href: string;
           };
       explanation: string;
       authorityTier: "read_navigation" | "non_canon_generation" | "canon_mutation";
@@ -202,6 +236,84 @@ function ActionBlock({
   onDismiss?: (actionId: string, intentVersion: number) => void | Promise<void>;
 }) {
   const [reviewing, setReviewing] = useState(false);
+  if (block.action.name === "create_session" || block.action.name === "open_session_workflow"
+    || block.action.name === "start_prep_task" || block.action.name === "retry_session_transcription") {
+    const action = block.action;
+    const isNavigation = action.name === "open_session_workflow";
+    const isPrepTask = action.name === "start_prep_task";
+    const subject = action.name === "create_session" ? action.sessionName
+      : action.name === "open_session_workflow" ? (action.sessionName ?? "Active Saga Workshop")
+      : action.sessionName;
+    if (isNavigation) {
+      return (
+        <section className="guide-action-card" aria-label="Workflow navigation action">
+          <div className="guide-block-label">Workflow · Free · Read only</div>
+          <p>{block.explanation}</p>
+          <div className="guide-read-result">
+            <strong>{subject}</strong>
+            {action.sessionStatus && <p>Session status: {action.sessionStatus.replaceAll("_", " ")}</p>}
+            {action.transcriptionState && <p>Transcription: {action.transcriptionState.replaceAll("_", " ")}</p>}
+            {action.pipelineState && <p>Post-session pipeline: {action.pipelineState.replaceAll("_", " ")}</p>}
+          </div>
+          <Link href={action.href} className="btn btn-secondary btn-sm">Open workflow</Link>
+        </section>
+      );
+    }
+    if (block.state && block.state !== "pending") {
+      const copy = block.state === "accepted"
+        ? isPrepTask ? "The task was dispatched once. Its generated output remains pending review in Prep."
+          : action.name === "create_session" ? "The planned Session was created." : "The failed transcription was reset to pending."
+        : block.state === "dismissed" ? "This workflow action was dismissed with no product change."
+          : block.state === "quota_blocked" ? "The task was not dispatched because the Workspace quota blocked it."
+            : block.state === "conflict" ? "The Session changed. Refresh before trying this workflow action again."
+              : "Relic could not safely complete this workflow action.";
+      return (
+        <section className="guide-action-card" aria-label="Workflow action status">
+          <div className="guide-block-label">
+            Workflow · {block.costCredits ? `${block.costCredits} credits` : "0 credits"} · {isPrepTask ? "Pending review" : "Explicitly reviewed"}
+          </div>
+          <p>{copy}</p>
+          <strong>{subject}</strong>
+          {action.href && <p><Link href={action.href} className="btn btn-secondary btn-sm">{isPrepTask ? "Review in Prep" : "Open workflow"}</Link></p>}
+          {(block.state === "conflict" || block.state === "failed" || block.state === "quota_blocked") && <p>{block.manualFallback}</p>}
+        </section>
+      );
+    }
+    return (
+      <section className="guide-action-card" aria-label="Workflow action review">
+        <div className="guide-block-label">
+          Review before acting · {block.costCredits ? `${block.costCredits} credits` : "0 credits"} · {isPrepTask ? "Generated output stays pending" : "Reversible workflow state"}
+        </div>
+        <p>{block.explanation}</p>
+        <div className="guide-read-result">
+          <strong>{subject}</strong>
+          {action.name === "create_session" && action.plannedDate && <p>Planned date: {action.plannedDate}</p>}
+          {action.name === "create_session" && action.objective && <p>Objective: {action.objective}</p>}
+          {isPrepTask && <p>{action.taskLabel}</p>}
+        </div>
+        <p className="guide-action-meta">{block.effectSummary}</p>
+        {!reviewing ? (
+          <div className="guide-action-buttons">
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setReviewing(true)}>Review workflow action</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => onDismiss?.(block.actionId, block.intentVersion)}>Dismiss action</button>
+          </div>
+        ) : (
+          <div className="guide-action-confirm">
+            <p>{isPrepTask
+              ? `This dispatches one ${block.costCredits}-credit task. Confirmation is free; the result will still require review in Prep.`
+              : "This applies the displayed workflow effect through Relic's existing scoped, version-checked path."}</p>
+            <div className="guide-action-buttons">
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => onConfirm?.(block.actionId, block.intentVersion)}>
+                {isPrepTask ? `Confirm ${block.costCredits}-credit task` : "Confirm workflow action"}
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReviewing(false)}>Keep reviewing</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => onDismiss?.(block.actionId, block.intentVersion)}>Dismiss action</button>
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  }
   if (block.action.name === "propose_record_create" || block.action.name === "propose_record_update"
     || block.action.name === "add_relationship" || block.action.name === "remove_relationship"
     || block.action.name === "set_thread_state" || block.action.name === "mutate_thread_objective") {

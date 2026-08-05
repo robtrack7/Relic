@@ -5,6 +5,7 @@ import { parseModelJson, validateTaskOutput } from "../supabase/functions/_share
 const sourceA = "e3060000-0000-0000-0000-000000000001";
 const sourceB = "e3060000-0000-0000-0000-000000000002";
 const sourceC = "e3060000-0000-0000-0000-000000000003";
+const sourceD = "e3060000-0000-0000-0000-000000000004";
 const sourceOutside = "e3060000-0000-0000-0000-000000000099";
 
 const taskRun = {
@@ -15,7 +16,7 @@ const taskRun = {
   session_id: null,
   gm_id: "e3000000-0000-0000-0000-000000000001",
   task_name: "answer_saga_question",
-  prompt_version: "answer_saga_question@1.4.0",
+  prompt_version: "answer_saga_question@1.5.0",
   quota_tier: "light",
   ai_credits: 1,
   model_tier: "relic-balanced",
@@ -37,14 +38,19 @@ const taskRun = {
       { name: "add_relationship", version: "1.0.0" },
       { name: "remove_relationship", version: "1.0.0" },
       { name: "set_thread_state", version: "1.0.0" },
-      { name: "mutate_thread_objective", version: "1.0.0" }
+      { name: "mutate_thread_objective", version: "1.0.0" },
+      { name: "create_session", version: "1.0.0" },
+      { name: "open_session_workflow", version: "1.0.0" },
+      { name: "start_prep_task", version: "1.0.0" },
+      { name: "retry_session_transcription", version: "1.0.0" }
     ]
   },
-  allowed_source_ids: [sourceA, sourceB, sourceC],
+  allowed_source_ids: [sourceA, sourceB, sourceC, sourceD],
   retrieval_context: [
     { source_id: sourceA, text: "The Iron Gate is sealed and protects the eastern road.", source_entity_type: "place", source_entity_id: "e3060000-0000-0000-0000-000000000011" },
     { source_id: sourceB, text: "Captain Mara commands the Iron Gate watch.", source_entity_type: "character", source_entity_id: "e3060000-0000-0000-0000-000000000012" },
-    { source_id: sourceC, text: "The Broken Seal Thread has one open objective: find the opener.", source_entity_type: "thread", source_entity_id: "e3060000-0000-0000-0000-000000000013" }
+    { source_id: sourceC, text: "The Broken Seal Thread has one open objective: find the opener.", source_entity_type: "thread", source_entity_id: "e3060000-0000-0000-0000-000000000013" },
+    { source_id: sourceD, text: "Session 2 is planned for the eastern road.", source_entity_type: "session", source_entity_id: "e3060000-0000-0000-0000-000000000014" }
   ]
 };
 
@@ -272,6 +278,58 @@ test("Loom rejects malformed or outside-evidence E8 mutation arguments", () => {
   assert.equal(unknownField.ok, false);
   assert.equal(incompleteResolution.ok, false);
   assert.match(`${outside.errors.join("\n")}\n${unknownField.errors.join("\n")}\n${incompleteResolution.errors.join("\n")}`, /allowed|unknown|resolution/i);
+});
+
+test("Loom accepts the E9 Session and Prep workflow action shapes", () => {
+  const output = {
+    ...valid,
+    blocks: [
+      ...valid.blocks,
+      {
+        type: "action_preview",
+        action: { name: "create_session", version: "1.0.0", arguments: { name: "Ember Descent", planned_date: "2026-08-12" } },
+        explanation: "Review one planned Session."
+      },
+      {
+        type: "action_preview",
+        action: { name: "open_session_workflow", version: "1.0.0", arguments: { session_source_id: sourceD } },
+        explanation: "Open the owning Session workflow."
+      },
+      {
+        type: "action_preview",
+        action: { name: "start_prep_task", version: "1.0.0", arguments: { session_source_id: sourceD, task_name: "generate_session_prep", regenerate_scope: "all" } },
+        explanation: "Review the separate full Prep task."
+      },
+      {
+        type: "action_preview",
+        action: { name: "retry_session_transcription", version: "1.0.0", arguments: { session_source_id: sourceD } },
+        explanation: "Review one failed transcription retry."
+      }
+    ]
+  };
+  assert.deepEqual(validateTaskOutput(taskRun, output), { ok: true, output });
+});
+
+test("Loom rejects forged E9 workflow targets and task-specific argument smuggling", () => {
+  const rawTarget = validateTaskOutput(taskRun, {
+    ...valid,
+    blocks: [{
+      type: "action_preview",
+      action: { name: "start_prep_task", version: "1.0.0", arguments: { session_id: "e3060000-0000-0000-0000-000000000014", task_name: "generate_session_prep" } },
+      explanation: "Do not accept a browser-style raw target."
+    }]
+  });
+  const hiddenRole = validateTaskOutput(taskRun, {
+    ...valid,
+    blocks: [{
+      type: "action_preview",
+      action: { name: "start_prep_task", version: "1.0.0", arguments: { session_source_id: sourceD, task_name: "compose_prep_briefing", role_description: "Smuggled NPC role" } },
+      explanation: "Do not accept task-specific fields on another task."
+    }]
+  });
+  assert.equal(rawTarget.ok, false);
+  assert.equal(hiddenRole.ok, false);
+  assert.match(`${rawTarget.errors.join("\n")}\n${hiddenRole.errors.join("\n")}`, /not allowed|session_source_id|role_description/i);
 });
 
 test("Guide registered open-record prompt shape validates and the legacy shape is rejected", () => {

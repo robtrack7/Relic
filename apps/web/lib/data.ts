@@ -707,6 +707,82 @@ export async function getGuideThread(params: IdParams, threadId?: string | null)
             action: { name: "navigate_surface", version: "1.0.0", destination, href }
           }];
         }
+        if (stored.name === "create_session") {
+          const sessionId = String(resultValue.session_id ?? stored.target_id ?? "");
+          return [{
+            type: "action_preview",
+            ...common,
+            action: {
+              name: "create_session",
+              version: "1.0.0",
+              sessionName: String(resultValue.session_name ?? argumentsValue.name ?? "Planned Session"),
+              plannedDate: resultValue.planned_date ? String(resultValue.planned_date) : undefined,
+              objective: resultValue.objective ? String(resultValue.objective) : undefined,
+              href: sessionId ? `${sagaPath(params)}/sessions/${sessionId}/prep` : undefined
+            }
+          }];
+        }
+        if (stored.name === "open_session_workflow") {
+          const destination = String(resultValue.destination ?? "prep") as "prep" | "stage" | "review" | "active_workshop";
+          const sessionId = String(resultValue.session_id ?? stored.target_id ?? "");
+          const workflowId = String(resultValue.workshop_id ?? stored.target_id ?? "");
+          const href = destination === "active_workshop" ? `/app/new-saga/${workflowId}`
+            : sessionId ? `${sagaPath(params)}/sessions/${sessionId}/${destination}` : `${sagaPath(params)}/sessions`;
+          return [{
+            type: "action_preview",
+            ...common,
+            action: {
+              name: "open_session_workflow",
+              version: "1.0.0",
+              destination,
+              sessionName: resultValue.session_name ? String(resultValue.session_name)
+                : resultValue.saga_name ? String(resultValue.saga_name) : undefined,
+              sessionStatus: resultValue.session_status ? String(resultValue.session_status) : undefined,
+              transcriptionState: resultValue.transcription_state ? String(resultValue.transcription_state) : undefined,
+              pipelineState: resultValue.pipeline_state ? String(resultValue.pipeline_state) : undefined,
+              href
+            }
+          }];
+        }
+        if (stored.name === "start_prep_task") {
+          const sessionId = String(resultValue.session_id ?? stored.target_id ?? "");
+          const taskName = String(resultValue.task_name ?? argumentsValue.task_name ?? "Prep task");
+          const labels: Record<string, string> = {
+            compose_prep_briefing: "Compose Prep briefing",
+            generate_session_prep: "Generate full Session Prep",
+            propose_scene_beats: "Propose scene beats",
+            propose_thread_complication: "Propose Thread complication",
+            propose_npc_for_scene: "Propose NPC candidates",
+            propose_quick_stub_fleshing: "Flesh out Quick Stub"
+          };
+          return [{
+            type: "action_preview",
+            ...common,
+            action: {
+              name: "start_prep_task",
+              version: "1.0.0",
+              taskName,
+              taskLabel: labels[taskName] ?? taskName.replaceAll("_", " "),
+              sessionName: String(resultValue.session_name ?? "Current Session"),
+              reviewState: resultValue.review_state ? String(resultValue.review_state) : undefined,
+              href: sessionId ? `${sagaPath(params)}/sessions/${sessionId}/prep` : `${sagaPath(params)}/sessions`
+            }
+          }];
+        }
+        if (stored.name === "retry_session_transcription") {
+          const sessionId = String(resultValue.session_id ?? stored.target_id ?? "");
+          return [{
+            type: "action_preview",
+            ...common,
+            action: {
+              name: "retry_session_transcription",
+              version: "1.0.0",
+              sessionName: String(resultValue.session_name ?? "Current Session"),
+              transcriptionState: resultValue.transcription_state ? String(resultValue.transcription_state) : undefined,
+              href: sessionId ? `${sagaPath(params)}/sessions/${sessionId}/review` : `${sagaPath(params)}/sessions`
+            }
+          }];
+        }
         if (stored.name === "propose_record_create" || stored.name === "propose_record_update") {
           const fields = Array.isArray(resultValue.fields) ? resultValue.fields.flatMap((entry) => {
             if (typeof entry !== "object" || entry === null) return [];

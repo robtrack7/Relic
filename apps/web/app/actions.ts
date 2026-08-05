@@ -87,7 +87,7 @@ export async function submitGuideQuestionAction(formData: FormData) {
 }
 
 export async function reviewLoomActionAction(formData: FormData) {
-  const { supabase } = await requireActionUser();
+  const { supabase, user } = await requireActionUser();
   const actionId = value(formData, "actionId");
   const expectedIntentVersion = Number(value(formData, "expectedIntentVersion"));
   const decision = value(formData, "decision");
@@ -114,6 +114,63 @@ export async function reviewLoomActionAction(formData: FormData) {
       category: data?.category === "quota_blocked" ? "quota_blocked" : "action_conflict",
       state: data?.state,
       intentVersion: data?.intent_version
+    };
+  }
+  if (decision === "confirmed" && data?.dispatch_kind === "prep_ai") {
+    const internalToken = process.env.INTERNAL_TOKEN;
+    let outcome: "accepted" | "quota_blocked" | "failed" = "failed";
+    let failureCategory = "provider_unavailable";
+    let runId: string | null = null;
+    if (internalToken) {
+      try {
+        const response = await fetch(`${getSupabaseUrl()}/functions/v1/prep-ai-submit`, {
+          method: "POST",
+          headers: { authorization: `Bearer ${internalToken}`, "content-type": "application/json" },
+          body: JSON.stringify({
+            gm_user_id: user.id,
+            workspace_id: data.workspace_id,
+            world_id: data.world_id,
+            saga_id: data.saga_id,
+            session_id: data.session_id,
+            request_id: data.request_id,
+            idempotency_key: data.request_id,
+            task_name: data.task_name,
+            prep_version: data.prep_version,
+            input: data.input ?? {}
+          }),
+          cache: "no-store"
+        });
+        const payload = await response.json().catch(() => ({})) as Record<string, unknown>;
+        runId = typeof payload.run_id === "string" ? payload.run_id : null;
+        outcome = response.status === 429 ? "quota_blocked" : response.ok ? "accepted" : "failed";
+        failureCategory = response.status === 429 ? "quota_blocked"
+          : response.status === 409 ? "prep_version_conflict" : response.ok ? "" : "provider_unavailable";
+      } catch {
+        outcome = "failed";
+      }
+    }
+    const finalized = await supabase.rpc("complete_loom_workflow_action", {
+      p_action_id: actionId,
+      p_receipt_id: data.receipt_id,
+      p_outcome: outcome,
+      p_failure_category: failureCategory || null,
+      p_run_id: runId
+    });
+    revalidatePath("/app", "layout");
+    if (finalized.error || outcome !== "accepted") {
+      return {
+        ok: false,
+        category: outcome === "quota_blocked" ? "quota_blocked" : "provider_unavailable",
+        state: finalized.data?.state ?? outcome,
+        intentVersion: finalized.data?.intent_version ?? data.intent_version
+      };
+    }
+    return {
+      ok: true,
+      state: finalized.data?.state ?? "accepted",
+      intentVersion: finalized.data?.intent_version ?? data.intent_version,
+      runId: finalized.data?.run_id ?? runId,
+      replayed: data?.replayed === true
     };
   }
   if (decision === "confirmed" && data?.run_id && process.env.INTERNAL_TOKEN) {

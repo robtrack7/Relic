@@ -144,14 +144,16 @@ test("Relic Guide submission derives scope, retrieval, quota, and dispatch on th
   const submit = read("supabase/functions/guide-submit/index.ts");
   const runner = read("supabase/functions/ai-task-runner/index.ts");
   const hybrid = read("supabase/functions/hybrid-search/index.ts");
+  const workflowMigration = read("supabase/migrations/20260805060000_packet_e9_workflow_tools.sql");
 
   assert.match(submit, /requireInternalAuth/, "Guide submission must be server-only");
   assert.match(submit, /createScopedClient/, "Guide permission and quota checks must use the GM identity");
-  assert.match(submit, /\.from\("guide_turns"\)/, "Guide exact retries must resolve from their stored logical turn");
+  assert.match(submit, /get_guide_turn_replay_for_worker/, "Guide exact retries must resolve through the narrow stored-turn worker RPC");
+  assert.doesNotMatch(submit, /\.from\("guide_turns"\)/, "Guide retries must not bypass the hardened public-table boundary");
   assert.match(submit, /plan_loom_retrieval_for_worker/, "Guide must select the cheapest sufficient retrieval strategy on the server");
   assert.match(submit, /preflight_ai_task/, "Provider-backed Guide turns must preflight the registered task before dispatch");
   assert.ok(
-    submit.indexOf('.from("guide_turns")') < submit.indexOf("preflight_ai_task"),
+    submit.indexOf("get_guide_turn_replay_for_worker") < submit.indexOf("preflight_ai_task"),
     "exact retry detection must happen before quota or provider work"
   );
   assert.ok(submit.indexOf("plan_loom_retrieval_for_worker") < submit.indexOf("preflight_ai_task"),
@@ -178,10 +180,12 @@ test("Relic Guide submission derives scope, retrieval, quota, and dispatch on th
   assert.match(hybrid, /retrieve_for_task_relaxed/, "ordinary natural-language misses must have a conservative relaxed fallback");
   assert.match(hybrid, /taskProfile !== "answer_saga_question"/, "the E3 Edge route must reject unregistered task profiles");
   assert.match(submit, /retrieval_unavailable/, "retrieval infrastructure failures must not masquerade as empty evidence");
-  assert.match(submit, /if \(error\) throw new Error\("guide_source_resolution_failed"\)/);
-  assert.match(submit, /\.neq\("kind", "imported_text"\)/);
-  assert.match(submit, /source\.scope === "saga"/);
-  assert.match(submit, /source\.scope === "world"/);
+  assert.match(submit, /if \(error \|\| !Array\.isArray\(data\)\) throw new Error\("guide_source_resolution_failed"\)/);
+  assert.match(submit, /resolve_guide_source_ids_for_worker/);
+  assert.doesNotMatch(submit, /\.from\("sources"\)/, "Guide source resolution must not bypass the hardened public-table boundary");
+  assert.match(workflowMigration, /s\.kind<>'imported_text'/);
+  assert.match(workflowMigration, /s\.scope='saga'.*s\.saga_id=p_saga_id/);
+  assert.match(workflowMigration, /s\.scope='world'.*s\.saga_id is null/);
   assert.match(submit, /create_(?:loom_provider|guide)_turn_for_worker/, "Guide must persist provider-backed submissions through a scoped worker RPC");
   assert.match(submit, /idempotency_key/, "Guide must carry a stable logical-submission identity");
   assert.match(submit, /resolveGuideSourceIds[\s\S]*slice\(0,\s*20\)/, "Guide retrieval must cap its immutable allowlist");
