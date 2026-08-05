@@ -29,7 +29,7 @@ source_file: "Relic Vault/Session Logs/2026-08-04 - Phase E Hosted Gate Harness.
 ## Verification
 
 - PowerShell syntax parse and Node syntax check passed.
-- Nine focused safety tests passed.
+- Nine focused safety tests passed, including dynamic wrong-authorization and wrong-project executions with no CLI path available; both failed at the guard before any external operation.
 - Local active-schema fixture proof passed with six pending task runs, 28 credits, the current 19-action manifest, zero usage/provider events, and zero cleanup residue. No hosted network call was made.
 - The public `phase-e:smoke:hosted` command returned the expected manifest-only preflight with `network_calls_made: 0` and `provider_calls_made: 0`.
 - Full script/runtime suite passed 100/100; repository verification returned `RELIC_REPO_VERIFY_OK`.

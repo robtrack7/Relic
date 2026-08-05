@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
@@ -40,6 +40,39 @@ test("Phase E runner requires fresh authorization and the exact staging project"
   assert.match(runner, /PHASE_E_HOSTED_SMOKE_APPROVED/);
   assert.match(wrapper, /if \(\$Authorization -ne \$approvedAuthorization -or \$SupabaseProjectRef -ne \$approvedProjectRef\)/);
   assert.match(wrapper, /no hosted call was made/);
+
+  const guardedEnvironment = {
+    ...process.env,
+    PATH: "",
+    INTERNAL_TOKEN: "synthetic-guard-token",
+    PHASE_E_FIXTURE_RUN_ID: "e5000000-0000-4000-8000-000000000099",
+    PHASE_E_MAX_COST_USD: "1",
+    PHASE_E_MAX_PROVIDER_COMPLETIONS: "12",
+    PHASE_E_WRAPPER_OWNS_SCHEDULES: "1"
+  };
+  const denied = spawnSync(process.execPath, [fileURLToPath(runnerPath), "--execute"], {
+    cwd: process.cwd(), encoding: "utf8", windowsHide: true,
+    env: {
+      ...guardedEnvironment,
+      PHASE_E_HOSTED_AUTHORIZATION: "NOT_APPROVED",
+      PHASE_E_SUPABASE_PROJECT_REF: "scagegrrilvrpuilthzz"
+    }
+  });
+  assert.equal(denied.status, 1);
+  assert.match(denied.stderr, /Fresh Phase E hosted authorization is required/);
+  assert.doesNotMatch(denied.stderr, /linked staging operation|fetch failed|ENOTFOUND/);
+
+  const wrongProject = spawnSync(process.execPath, [fileURLToPath(runnerPath), "--execute"], {
+    cwd: process.cwd(), encoding: "utf8", windowsHide: true,
+    env: {
+      ...guardedEnvironment,
+      PHASE_E_HOSTED_AUTHORIZATION: "PHASE_E_HOSTED_SMOKE_APPROVED",
+      PHASE_E_SUPABASE_PROJECT_REF: "wrong-project"
+    }
+  });
+  assert.equal(wrongProject.status, 1);
+  assert.match(wrongProject.stderr, /staging project lock did not match/);
+  assert.doesNotMatch(wrongProject.stderr, /linked staging operation|fetch failed|ENOTFOUND/);
 });
 
 test("Phase E allowlist pins all six current task, prompt, alias, model, and credit contracts", () => {
