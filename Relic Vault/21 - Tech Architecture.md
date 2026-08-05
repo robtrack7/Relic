@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-08-04
+last_audited: 2026-08-05
 source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md"
 ---
 
@@ -25,6 +25,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 ---
 
 ## Changelog
+
+**Phase G PDF, attachment, and release-runtime patch (August 2026).** A service-only extraction worker accepts private PDF objects only after server-side magic/MIME/size verification, then applies page, object, character, and time ceilings and rejects encryption, active content, embedded files, malformed/polyglot/resource-exhaustion inputs, and image-only documents. It writes versioned derived text plus extractor provenance without invoking a provider, embedding, or canon writer. Private JPEG/PNG/WebP attachments use a separate bounded upload/metadata path; only GM-authored captions/descriptions may enter Loom evidence in MVP. Phase G preserves logical model aliases while mapping all staging AI aliases to `openai/gpt-5.6-luna`, with a cumulative $4 provider hard stop. Vercel staging and responsive-web device acceptance are release gates; native Expo, OCR/vision, image generation, rulebook RAG, and `.docx` extraction remain deferred. See [[75 - Phase G Release Quality and Integrated MVP Plan]].
 
 **Packet E10 destructive-action and bounded-plan patch (August 2026).** The action registry adds `archive_record@1.0.0`, `restore_record@1.0.0`, and `prepare_hard_delete@1.0.0`; exact lifecycle commands are resolved in the database without a provider or query embedding. Archive/restore confirmation rechecks the locked Saga-scoped record version and delegates to `archive_entity` / `restore_entity`, preserving their source/audit/embedding lifecycle. Hard-delete preparation never calls `hard_delete_entity`; it only returns the owning archived-record route and current blocker summary after a separate Loom confirmation. Provider responses may contain two to five eligible confirmable deterministic actions only when every action preview carries a contiguous plan step and an explicit earlier-step dependency list. Database completion independently validates the whole plan, stores plan metadata on each intent, exposes only the first step, unlocks later steps sequentially after accepted receipts, and marks the remainder stopped after conflict, denial, dismissal, or failure. There is no model-selected handler, batch confirmation, hidden paid subtask, automatic replan, or Saga-delete capability.
 
@@ -60,7 +62,7 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 
 **Manual session evidence patch (July 2026).** Adds the scoped, idempotent Session Review write boundary for pasted notes and GM manual summaries, owner-keyed local form recovery, and pipeline input metadata that can recover a no-input transcription failure without invoking synthesis or writing canon.
 
-**Import Inbox patch (July 2026).** Adds `/imports` plus scoped import write/read/state RPCs. Browser-selected text files are size-checked before read, decoded as strict UTF-8, retained locally under GM and full hierarchy through interruption, and transferred to the server action as byte-stable base64 before database validation. MVP paste/text/Markdown lives in immutable `sources.raw_excerpt`; it does not create a Storage object or expose private bucket access. Archived source rows remain retained until Saga deletion. `.docx` is deferred: a future trusted-runtime extractor must reject encrypted, macro-enabled, malformed, nested, zip-bomb-like, oversized, and MIME-mismatched packages; preserve the original when retention permits; and write extracted text as a versioned derived source rather than replacing it.
+**Import Inbox patch (July 2026; extended by Phase G).** Adds `/imports` plus scoped import write/read/state RPCs. Browser-selected text files are size-checked before read, decoded as strict UTF-8, retained locally under GM and full hierarchy through interruption, and transferred to the server action as byte-stable base64 before database validation. Paste/text/Markdown lives in immutable `sources.raw_excerpt` without a Storage object. PDF uses the private `imports` bucket and service-only extractor; its original object remains linked to immutable versioned derived text. Archived source/object rows remain retained until Saga deletion. `.docx` remains deferred behind its own package-specific adversarial extraction boundary.
 
 **Stage airplane-mode recovery patch (July 2026).** Defines the web B2 ready-packet/literal-index cache, adds Start Session, recording consent, and Go Live to the existing FIFO receipt boundary, and makes unexpected reconnect state a durable surfaced conflict rather than a silent overwrite.
 
@@ -1733,7 +1735,7 @@ All emails carry a one-click unsubscribe per kind, plus a global preferences lin
 
 ### 18.6 Push notifications
 
-**Expo Push Notifications** for mobile. The Expo SDK handles APNs and FCM under the hood; we send to `expo.dev/v2/push/send` via Expo's API.
+**Post-alpha native packet.** Expo Push Notifications ships with the native client rather than blocking the responsive-web private alpha. The existing queue/preference schema remains forward-compatible. The Expo SDK handles APNs and FCM under the hood; the native packet sends to `expo.dev/v2/push/send` via Expo's API.
 
 Push token registration:
 
@@ -1742,7 +1744,7 @@ Push token registration:
 3. Upload to `push_devices` (RLS scopes to user).
 4. On uninstall / permission revoke, mark the device stale (cleanup cron sweeps weekly).
 
-Web push is not in MVP — email plus mobile push are the MVP notification channels, and Web Push setup is meaningfully more work for less immediate value.
+Web push is not in the private alpha. Email is the alpha notification channel; Expo push follows with native mobile.
 
 ### 18.7 Preferences UI
 
@@ -1812,7 +1814,7 @@ For traceability against upstream specs.
 | T19 | Transcript editing: GM can edit segment text during pipeline review; `sources.raw_excerpt` stays frozen; source view shows citation-drift indicator when live transcript differs | CF-20 |
 | T20 | Re-embedding cadence for edited transcripts: pipeline-close batch (post-MVP-launch edits debounced 30s) | CF-20 |
 | T21 | Non-English handling: works (semantic arm carries weight), BM25 stays English; per-saga config deferred to V1 | Memory Spec §13 |
-| T22 | Notifications: email (Resend) + mobile push (Expo); `pipeline_ready` and `pipeline_failed` default-on; preferences in saga/account settings | PRD `PSP-FR-9`, V0.1 §20 |
+| T22 | Notifications: Resend email for responsive alpha; Expo push with native post-alpha; `pipeline_ready` and `pipeline_failed` default-on; preferences in saga/account settings | PRD `PSP-FR-9`, V0.1 §20 |
 | T24 | Workspace / World / Saga hierarchy is the tenancy and continuity boundary; no separate Campaign table | Priority 3 |
 | T25 | Post-session outputs default to Saga scope; World-canon promotion and era-specific versions are V1 | Priority 3 |
 | T23 | Audio upload: direct client-to-Storage; Storage RLS gates access; no Edge Function proxy | New |
@@ -1909,7 +1911,7 @@ Items this spec doesn't resolve and where they go.
 | Audio mini-player implementation in transcript source view (web only) | Stage UX Flow + this spec next revision. Likely a small `<audio>` element fed by signed URLs. |
 | Bulk-archive rejection tag (`stale_bulk_archive`) | Resolved by [[20 - Entity and Canon Schema]] enum. |
 | Transcript editor UI specifics (segment inline-edit surface, drift indicator placement) | Sanctum UX Flow |
-| Web push notifications | V1; mobile push covers the MVP loop |
+| Web push notifications | Deferred; alpha uses email and native post-alpha adds Expo push |
 
 ---
 

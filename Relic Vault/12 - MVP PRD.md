@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-08-04
+last_audited: 2026-08-05
 source_file: "Sourced - Downloaded - 260518/relic-mvp-prd-v0_10.md"
 ---
 
@@ -23,6 +23,12 @@ source_file: "Sourced - Downloaded - 260518/relic-mvp-prd-v0_10.md"
 **The Loom** supersedes **Relic Guide** as the user-facing name for the persistent, scope-aware AI conversation. Existing `guide_*`, `/guide`, and `answer_saga_question` names are internal compatibility contracts, not UI copy. The Loom must understand the Workspace → World → Saga structure; combine exact structured reads, lexical search, vector retrieval, and bounded relationship expansion as required; and expose only server-registered, schema-validated tools.
 
 The MVP Loom may read, navigate, create drafts, edit reversible working state, and orchestrate bounded workflows. Every action preview states target, effect, authority tier, cost, and confirmation. Canon writes retain explicit inline approval or Approval Queue commit. Archive is explicit; hard delete uses the existing exact-name/two-confirmation protection and is never initiated autonomously. See [[59 - Phase E Loom Operating Layer Plan]] for the implementation packets and phase gate.
+
+## August 2026 Phase G Requirement Patch
+
+The responsive web application is the private-alpha release client. PDF joins paste, plain text, and Markdown as an MVP campaign/World source format behind a trusted service-side extraction boundary. Upload/extraction alone never calls AI, embeds content, or writes canon; the GM explicitly selects ready source versions before The Loom may use them in the existing workshop and review/commit flow. The original private object and versioned extracted text retain immutable provenance. Encrypted, malformed, active-content, resource-exhaustion, and image-only/scanned files fail safely; OCR remains V1.
+
+MVP also supports bounded private JPEG/PNG/WebP attachments linked to Library records, Notes, or Threads, with GM-authored title, alt text, and atmosphere/creative description. The Loom may use that authored text—not the pixels—to propose ordinary typed record/Thread/quest-like work. AI vision, OCR, and image generation remain V1. Basic dice and GM-authored pinned reference Notes remain MVP; rulebook RAG, rules automation, and system adjudication remain V1. The complete release gate is [[75 - Phase G Release Quality and Integrated MVP Plan]].
 
 **Version:** v0.10
 **Source of truth:** `[[11 - Product Basepoint]]` · `[[13 - Design System]]` · `[[22 - Memory and Retrieval]]` · `[[20 - Entity and Canon Schema]]` · `[[23 - AI Task Registry]]` · `[[24 - Approval Queue]]` · `[[21 - Tech Architecture]]` · `[[30 - Sanctum UX Flow]]` · `[[31 - Session Prep Flow]]` · `[[32 - Stage UX Flow]]` · `[[33 - First Run UX Flow]]` · `[[34 - UI Implementation Spec]]` · `[[25 - Pricing and Rate Limits]]`
@@ -108,7 +114,7 @@ Requirement ID migration table:
 | 18 | **JSON export mirrors internal model + `schema_version` field.** |
 | 19 | ~~No-AI onboarding: short product tour, no auto-generated saga.~~ **Superseded v0.9.** Start Blank creates an empty saga directly; no separate tour surface. |
 | 20 | **Web recording: full browser MediaRecorder support** with chunked upload. |
-| 21 | **Notifications: email (Resend) + mobile push (Expo).** `pipeline_ready` and `pipeline_failed` default on. Per-channel, per-kind opt-out. No SMS, no web push, no notifications during active sessions. |
+| 21 | **Notifications.** Responsive-web private alpha uses email (Resend); native post-alpha adds mobile push (Expo). `pipeline_ready` and `pipeline_failed` default on. Per-channel, per-kind opt-out. No SMS, no web push, no notifications during active sessions. |
 | 22 | **Transcripts are editable during the pipeline review window.** Segment text only; timestamps immutable. Source citations stay frozen; source view surfaces a drift indicator. |
 | 23 | ~~Three top-level modes.~~ **Revised v0.9.** Two modes: Sanctum (home base, includes session prep surface) and Stage (live play). Session prep is embedded in the Sanctum, not a separate mode. |
 | 24 | **Saga creation rename.** Former branded "Saga Creation" is now **New saga** / **Saga creation** in user-facing copy. Internal engineering references (`workshop_sessions` table, `scaffold_saga` task, source kind `workshop_input`) retain their names. |
@@ -124,7 +130,7 @@ Requirement ID migration table:
 | 34 | **Content scope is explicit.** World-scoped canon uses `scope='world'` and `saga_id=null`; Saga-scoped canon uses `scope='saga'` and a required `saga_id`. |
 | 35 | **Post-session canon defaults to Saga scope.** World-canon promotion, era-specific canon versions, cross-Saga conflict resolution, and temporal contradiction detection are V1. |
 | 36 | **Timeline is derived.** MVP timeline views are read-only projections from Sessions, Threads, and approved canon activity. Writable timeline editor and cross-Saga/world history views are V1. |
-| 37 | **Build and surface sequencing.** The Sanctum and The Stage are both available on web and mobile. Sanctum is literary, modern, and relaxing; Stage is clean and focused. Web is built first with the full Sanctum/Stage loop, then mobile follows with platform-appropriate layouts and offline behavior. |
+| 37 | **Build and surface sequencing.** The Sanctum and The Stage both ship in the responsive-web private alpha across desktop, tablet, and phone browsers. Sanctum is literary, modern, and relaxing; Stage is clean and focused. Native mobile follows post-alpha with platform-appropriate layouts and deeper offline behavior against the same contracts. |
 
 ---
 
@@ -241,7 +247,7 @@ Stub creation surfaces:
 - `AI-FR-6` Workspace/World/Saga-aware retrieval. Top-k pgvector queries scoped via RLS. Current Saga canon is prioritized, relevant World/Era canon is included, sibling Sagas are excluded unless an explicit future workflow allows them.
 - `AI-FR-7` **Rate limits.** Hard caps on free tier. Soft caps for alpha.
 
-**Out of scope (P0).** BYOK UI. Local models. Image generation. Speaker diarization. Real-time transcription. Contradiction detection. Temporal contradiction detection. World-canon promotion workflow. Custom AI tone per saga.
+**Out of scope (P0).** BYOK UI. Local models. AI vision/OCR. Image generation. Rulebook RAG and automated rules adjudication. Speaker diarization. Real-time transcription. Contradiction detection. Temporal contradiction detection. World-canon promotion workflow. Custom AI tone per saga.
 
 ---
 
@@ -315,7 +321,7 @@ Stub creation surfaces:
 - AI failure → preserve state, retry. Never lose typed input.
 - Prompt injection in pasted notes → per AI-FR-5.
 
-**Out of scope.** PDF import (P1). docx beyond plain text. Image generation. Multi-GM creation. Full World dashboard. Era editor UI. World Anvil / Notion / Obsidian import (V1).
+**Out of scope.** `.docx` extraction. OCR for scanned/image-only PDFs. Rulebook RAG. AI vision. Image generation. Multi-GM creation. Full World dashboard. Era editor UI. World Anvil / Notion / Obsidian import (V1). Text-bearing campaign/World PDF intake is included through the Phase G trusted extraction and explicit-enrollment contract.
 
 **Dependencies.** ACC, ENT, AI, Canon state. Produces First-Session Packet (§2.1).
 

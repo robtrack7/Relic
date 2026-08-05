@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-08-04
+last_audited: 2026-08-05
 source_file: "Sourced - Downloaded - 260518/relic-pricing-rate-limits-v0_2.md"
 ---
 
@@ -165,7 +165,8 @@ Storage warning thresholds: 70%, 90%, 100%.
 | `.txt/.md/.markdown` imports / month | 100 soft | 10 hard | 250 hard | 1,000 hard |
 | Max single text import | 2 MB | 1 MB | 5 MB | 20 MB |
 | `.docx` import | P1 candidate | Not MVP | P1 candidate | Yes if shipped |
-| PDF/RAG import | V1 | V1 | V1 | V1 |
+| Text-bearing campaign/World PDF import | Phase G MVP, bounded | Phase G MVP, bounded | Phase G MVP, bounded | Phase G MVP, bounded |
+| Rulebook PDF/RAG corpus | V1 | V1 | V1 | V1 |
 | Exports / month | 50 soft | 3 hard | 100 hard | 500 hard |
 | Concurrent export jobs | 1 | 1 | 1 | 2 |
 
@@ -409,7 +410,8 @@ After completion, write `usage_events` with an idempotency key tied to the job/c
 - Block executable, archive, binary, and unknown file types.
 - Strip metadata from imports where practical.
 - Scan file size before upload.
-- PDF import remains V1 and must not be quietly accepted.
+- Text-bearing campaign/World PDF import is accepted only through the bounded Phase G extraction limits and explicit GM enrollment. Scanned/image-only PDFs fail safely because OCR is V1.
+- Rulebook PDF/RAG remains V1 and must never be inferred from a generic import.
 
 ---
 

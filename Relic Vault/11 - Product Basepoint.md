@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-08-04
+last_audited: 2026-08-05
 source_file: "Sourced - Downloaded - 260518/relic-product-basepoint-v3_5.md"
 ---
 
@@ -23,6 +23,10 @@ source_file: "Sourced - Downloaded - 260518/relic-product-basepoint-v3_5.md"
 The Loom is Relic's universal user-facing AI layer across creation, organization, preparation, live support, review, and continuity work. Explicit AI buttons remain useful, but they open a prefilled Loom intent instead of defining isolated AI islands. The Loom can inspect current scoped state and prepare typed server-owned actions; it cannot issue arbitrary database operations or hold SQL/RPC credentials.
 
 Authority is tiered: reads may complete immediately; reversible working-state changes require a visible confirmation; canon changes require documented inline GM approval or the Approval Queue commit path; archive requires explicit confirmation; hard delete requires exact-name plus two-step confirmation. The Loom never autonomously publishes canon, archives, or deletes. Detailed sequencing and cost controls are owned by [[59 - Phase E Loom Operating Layer Plan]].
+
+## August 2026 Phase G Scope Patch
+
+The private-alpha client is the responsive web application; native Expo moves to the first post-alpha plan. Phase G adds trusted campaign/World PDF intake and bounded private image attachments with GM-authored captions/descriptions. PDF extraction is reusable infrastructure for future rulebook import, but rulebook RAG, OCR/vision, and image generation remain V1. The Loom may use explicitly selected extracted text and GM-authored image descriptions through its existing typed review/approval paths; it never treats an upload as instructions, sends image pixels to a model, or makes unapproved material canon. See [[75 - Phase G Release Quality and Integrated MVP Plan]].
 
 *Source-of-truth product brief. Updated May 2026.*
 
@@ -61,7 +65,7 @@ This document defines the locked direction for Relic. It guides product, UX, arc
 **Category:** AI-assisted saga creation and continuity workspace for tabletop Game Masters
 **MVP user:** Game Master only — players, publishing, and per-player permissions are deferred
 **Core loop:** Create → Organize → Prep → Run → Review → Approve → Continue
-**Primary surfaces:** The Sanctum and The Stage are Relic's two product surfaces on both web and mobile. The Sanctum is the home base for worldbuilding, embedded session prep, review, approval, and canon work. The Stage is the live-play surface. Web is the first implementation target; mobile follows after the web app proves the full loop.
+**Primary surfaces:** The Sanctum and The Stage are Relic's two product surfaces. The Sanctum is the home base for worldbuilding, embedded session prep, review, approval, and canon work. The Stage is the live-play surface. Responsive web is the private-alpha implementation target across desktop, tablet, and phone browsers; native mobile follows post-alpha after the web app proves the full loop.
 **Locked stack:** Expo + Next.js + Supabase + LiteLLM + Whisper + pgvector
 **Canon rule:** AI drafts. GM approves. Canon changes only by explicit GM action.
 **AI invocation rule:** AI is GM-invoked through The Loom or an explicit button that opens a prefilled Loom intent. Many entry points exist. None push themselves, and none bypass the Loom authority tiers.
@@ -123,9 +127,9 @@ Relic is organized around one recurring loop. Every product decision must make t
 
 When the GM is prepping a session, the Sanctum's home surface *is* the session prep view — the briefing, agenda editor, thread carry-forward, and packet preview are all rendered inline within the Sanctum's parchment frame. The GM does not "switch to session prep workspace" — they open their session from the Sanctum home and the prep workspace opens within it.
 
-**The Stage** — the live-session surface. Clean, focused, glanceable, hard to break. Handles: current session, agenda, pinned cards, search, quick capture, quick stubs, recording, Mark Moment, basic dice, end session. Stage exists on both web and mobile, with platform-appropriate layout and offline behavior.
+**The Stage** — the live-session surface. Clean, focused, glanceable, hard to break. Handles: current session, agenda, pinned cards, search, quick capture, quick stubs, recording, Mark Moment, basic dice, end session. Stage ships first as responsive web across desktop/tablet/phone browsers; the later native client preserves the same surface with platform-appropriate layout and deeper offline behavior.
 
-**Surface rule:** The Sanctum and The Stage are two sides of the same product, not separate platform products. Both web and mobile must support both surfaces. The implementation sequence is web app first, then mobile app, because web is the faster place to prove the full GM loop.
+**Surface rule:** The Sanctum and The Stage are two sides of the same product, not separate platform products. The responsive web private alpha must support both surfaces across target devices. The later native client must also support both; it is post-alpha because web is the faster place to prove the full GM loop.
 
 **AI on The Stage:** unsolicited AI behavior is dormant. Search is the only GM-initiated AI affordance on Stage. During `in_progress` and `ended_pending_undo`, no background entity tagging, mention detection, summarization, prep nudges, or notification prompts run. Recording is captured and transcription is queued, but synthesis does not begin until End Session. V1 may add GM-initiated generators, but generated candidates remain non-canon until explicitly saved and approved.
 
@@ -266,7 +270,7 @@ MVP is model-agnostic internally, simple externally. Users do not choose models 
 
 Relic notifies the GM when the post-session pipeline finishes, when it fails, and when an Approval Queue has gone stale. Without these, the loop breaks — GMs forget the pipeline finished, queues age out, and momentum dies between sessions.
 
-**Channels:** email (via Resend) and mobile push (via Expo Push).
+**Channels:** email (via Resend) for the responsive-web private alpha; mobile push (via Expo Push) ships with the post-alpha native client. The queue/preferences contract supports both.
 
 **Defaults on:** pipeline ready, pipeline failed, queue stale at 30 days, queue stale at 90 days.
 
@@ -304,11 +308,11 @@ Build with AI / Bring your notes / Start blank help-level choice · profile-awar
 
 **AI & Retrieval** — LiteLLM proxy · task-based routing · scaffold, entity draft, note expansion, link suggestions, prep, post-session synthesis · GM-invoked creative suggestions · saga-aware semantic search · source-aware answers · no autonomous canon writes
 
-**Trust & Data** — Supabase RLS by Workspace/World/Saga and user · canon audit log · AI draft provenance · audio retention setting · Markdown and JSON export · notifications (email + mobile push) for pipeline-ready, pipeline-failed, and stale queues; per-kind opt-out
+**Trust & Data** — Supabase RLS by Workspace/World/Saga and user · canon audit log · AI draft provenance · audio retention setting · Markdown and JSON export · email notifications for pipeline-ready, pipeline-failed, and stale queues with per-kind opt-out; Expo push follows with the post-alpha native client
 
 ### P1 — After P0 is stable
 
-Import inbox (Markdown/plain text) · docx import if straightforward · practical approval review on mobile · better relationship labels · broader offline prep packet management beyond the current Stage packet · usage and processing limits display.
+Import inbox (Markdown/plain text/PDF) · bounded private image attachments with GM-authored descriptions · docx import if straightforward · practical approval review on responsive mobile web · better relationship labels · broader offline prep packet management beyond the current Stage packet · usage and processing limits display.
 
 ### Explicit MVP exclusions
 
@@ -330,7 +334,7 @@ Player wiki · player accounts · recap publishing · shareable saga pages · pe
 | AI routing | LiteLLM proxy | Provider abstraction |
 | AI proxy hosting | Fly.io | LiteLLM container per environment |
 | Transcription | OpenAI Whisper API | Async post-session |
-| Notifications | Resend (email) + Expo Push (mobile) | GM-facing async signals |
+| Notifications | Resend email for alpha; Expo Push with native post-alpha | GM-facing async signals |
 | Local state | expo-sqlite + Drizzle | Offline session cache |
 | Client state | Zustand | UI state |
 | Server state | React Query | Server sync |
@@ -434,7 +438,7 @@ After the GM loop is validated, V1 expands toward:
 3. Rulebook RAG — uploaded rulebook PDFs form a saga-local rules corpus used by `derive_system_schema`, context-aware generators, and GM-invoked rules search.
 4. System-aware Stage affordances — Mechanical Strips on Stage Cards, lightweight initiative scene tracker, per-PC dashboard when a Game System is bound.
 5. Context-aware generators — `generate_from_context` produces a single GM-invoked candidate (monster, treasure, NPC, plant, weather) that can be dismissed or saved through approval.
-6. Better imports — PDF + RAG, Obsidian vaults, Notion/World Anvil/Kanka research.
+6. Better imports — rulebook PDF/RAG, OCR/vision, Obsidian vaults, Notion/World Anvil/Kanka research. Campaign/World text-bearing PDF intake ships in the MVP but does not create a rules corpus.
 7. Richer visualization — World History / Era Timeline, basic map upload and pins, writable timeline events, read-only relationship graph / Constellation, Entity Neighborhood, Thread Map, and Session Web.
 8. More powerful AI controls — BYOK settings, custom AI tone per saga, contradiction detection, speaker diarization, optional real-time transcription.
 9. Granular continuity review primitives — paragraph-level track-changes inside the Approval Queue editor.
@@ -484,4 +488,4 @@ When making any product, UX, or architecture decision, optimize for the GM loop:
 
 > Create → Organize → Prep → Run → Review → Approve → Continue.
 
-If a feature does not make that loop faster, clearer, more trustworthy, or more delightful for the GM, it does not belong in the MVP. If a workflow is core to the loop, it must have a functional path on both web and mobile, even when one platform is clearly optimized for it.
+If a feature does not make that loop faster, clearer, more trustworthy, or more delightful for the GM, it does not belong in the MVP. For private alpha, every core workflow must have a functional responsive-web path on desktop, tablet, and phone browsers. Native mobile parity follows post-alpha against the same contracts.

@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-08-04
+last_audited: 2026-08-05
 source_file: "Sourced - Downloaded - 260518/relic-memory-retrieval-spec-v0_8.md"
 ---
 
@@ -22,7 +22,7 @@ source_file: "Sourced - Downloaded - 260518/relic-memory-retrieval-spec-v0_8.md"
 
 The Loom does not vector-search on every turn. A server-owned planner follows the cheapest sufficient path: current UI selection and stable IDs; exact name/alias lookup; structured scoped reads and full-text search; semantic vector retrieval only when ambiguity or meaning requires it; then bounded relationship, objective, Thread, or Session-neighbor expansion. Every step is Workspace/World/Saga scoped and recorded in the turn trace without exposing private payloads.
 
-Vectors remain a durable retrieval index for eligible canon, approved summaries, lore, post-session evidence, and transcript windows. Conversation, pending drafts, raw imports, and GM-private fields remain excluded. Structured hierarchy, relationship edges, Thread/objective state, and Session chronology are assembled alongside—not replaced by—semantic evidence. See [[59 - Phase E Loom Operating Layer Plan]].
+Vectors remain a durable retrieval index for eligible canon, approved summaries, lore, post-session evidence, and transcript windows. Conversation, pending drafts, raw imports (including extracted PDF text before explicit enrollment), original files, image attachments/captions, and GM-private fields remain excluded. Structured hierarchy, relationship edges, Thread/objective state, and Session chronology are assembled alongside—not replaced by—semantic evidence. An explicitly selected import may be frozen as `workshop_input`; only its later approved/committed records enter ordinary embeddings. See [[59 - Phase E Loom Operating Layer Plan]] and [[75 - Phase G Release Quality and Integrated MVP Plan]].
 
 **Packet E7 delivery contract.** The planner emits exactly one primary strategy: `deterministic_read`, `exact`, `structured`, `lexical`, or `hybrid`. Deterministic reads are recognized bounded commands and complete without an AI task run. `exact` resolves one current visible record by stable ID, Session number, or normalized full name; duplicate names return an ambiguity result rather than choosing. `structured` reads current record fields, directed relationships, Thread objectives, Session state, and provenance through existing scoped tables/RPC invariants. `lexical` is the independent FTS path. `hybrid` is the only strategy that may request a query embedding. Missing or stale vectors never suppress an exact, structured, or lexical result.
 
@@ -876,7 +876,7 @@ All Priority 7 retrieval items are resolved:
 - Approval Queue list/search uses the direct `drafts` query in Tech Architecture v1.2, not `search_for_ui`.
 - `retrieve_for_task` and `search_for_ui` both require Workspace/World/Saga filters; sibling Sagas are excluded by default.
 - Era context remains optional/derived in MVP through `era_id`/`primary_era_id`; no temporal retrieval editor ships in MVP.
-- V1 rulebook/PDF RAG remains separated under `rulebook_grounding` and does not mix silently with saga canon.
+- V1 rulebook/PDF RAG remains separated under `rulebook_grounding` and does not mix silently with saga canon. MVP text-bearing campaign/World PDF extraction is generic source intake only and never activates this profile.
 
 ## 14. Deferred to V1
 

@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-08-04
+last_audited: 2026-08-05
 source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 ---
 
@@ -30,7 +30,7 @@ Packet E10 adds Saga-record archive/restore cards and protected hard-delete prep
 
 **Source of truth:** [[11 - Product Basepoint]] · [[12 - MVP PRD]] · [[20 - Entity and Canon Schema]] · [[24 - Approval Queue]] · [[22 - Memory and Retrieval]] · [[23 - AI Task Registry]] · [[21 - Tech Architecture]] · [[31 - Session Prep Flow]] · [[13 - Design System]]
 **Status:** Active Sanctum UX specification. Replaces v0.1. Sister doc to Stage UX Flow v0.6.
-**Scope:** MVP (P0). The Sanctum is the GM's home-base surface on web and mobile — literary, modern, relaxing, and focused on worldbuilding, session prep, review, approval, settings, and canon management.
+**Scope:** MVP (P0). The Sanctum is the GM's home-base surface in the responsive-web private alpha — literary, modern, relaxing, and focused on worldbuilding, session prep, review, approval, settings, and canon management. Native mobile follows post-alpha against the same product contracts.
 
 ---
 
@@ -96,7 +96,7 @@ Requirement IDs from PRD are referenced inline. Requirements introduced in v0.1 
 
 ## 1. Premise
 
-The Sanctum is the home base for the active World and Saga. Session prep lives here. Entity management lives here. The approval queue lives here. Its tone is literary, modern, and relaxing. The Stage is the clean, focused live-session surface. Both surfaces exist on web and mobile.
+The Sanctum is the home base for the active World and Saga. Session prep lives here. Entity management lives here. The approval queue lives here. Its tone is literary, modern, and relaxing. The Stage is the clean, focused live-session surface. Both surfaces exist in responsive web for private alpha and later in native mobile.
 
 **Four rules (unchanged from v0.1):**
 
@@ -614,11 +614,11 @@ Everything else from v0.1 §9.4–9.6 is unchanged.
 
 ---
 
-## 11. Imports — paste, Markdown, docx
+## 11. Imports — paste, Markdown, PDF
 
-**D5 Import Inbox patch (July 2026).** The scoped `/imports` route accepts pasted text plus strict UTF-8 `.txt`, `.md`, and `.markdown`. Owner-and-hierarchy-keyed local recovery retains paste or decoded selected-file content, filename, MIME, byte size, stable source ID, and failed/rejected state through navigation, refresh, network failure, retry, and app restart. Ready and archived imports persist server-side with inspectable original content and immutable provenance. The UI labels all imports raw and untrusted and offers no summarize, split, embed, AI, proposal, or canon action.
+**D5 Import Inbox patch (July 2026; extended by Phase G).** The scoped `/imports` route accepts pasted text, strict UTF-8 `.txt`, `.md`, and `.markdown`, plus bounded text-bearing PDF. Owner-and-hierarchy-keyed local recovery retains the selected input, upload/extraction identity, provenance, and failed/rejected state through navigation, refresh, network failure, retry, and app restart. Ready and archived imports persist server-side with inspectable original/derived provenance. The UI labels all imports raw and untrusted. Upload/extraction offers no automatic summarize, split, embed, proposal, or canon action; a separate explicit `Draft with The Loom` control freezes selected ready sources into the existing workshop flow.
 
-`.docx` is visibly unsupported in this slice. It may ship only behind the trusted-runtime extraction boundary in [[21 - Tech Architecture]]; PDF remains out of MVP.
+`.docx` remains visibly unsupported. Scanned/image-only PDFs explain that OCR is not available in the MVP. Rulebook RAG is a separate V1 feature even when the uploaded source happens to be a rulebook.
 
 The former placeholder copy is superseded by:
 
@@ -628,9 +628,9 @@ The former placeholder copy is superseded by:
 ┌─ Import ──────────────────────────────────────────────┐
 │ Bring legacy notes into your saga.                     │
 │                                                        │
-│ Paste text or choose UTF-8 .txt, .md, or .markdown.    │
+│ Paste text or choose .txt, .md, .markdown, or .pdf.    │
 │ Review exact content and provenance before any later   │
-│ GM-directed use. docx and PDF are not supported yet.   │
+│ GM-directed use. docx and scanned PDFs are unsupported.│
 │                                                        │
 │ [ Paste text ] [ Choose file ]                         │
 └────────────────────────────────────────────────────────┘

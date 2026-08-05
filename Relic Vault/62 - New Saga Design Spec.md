@@ -11,7 +11,7 @@ depends_on:
   - "[[13 - Design System]]"
   - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-05-31
+last_audited: 2026-08-05
 source_file: "Relic Vault/62 - New Saga Design Spec.md"
 ---
 
@@ -60,7 +60,7 @@ The selected help-level card should determine CTA copy and destination.
 
 Secondary actions include resume previous draft, edit World name, use existing World, save and leave, sign out if first-run auth needs escape, and discard an abandoned draft with confirmation.
 
-Bring your notes should only expose MVP-supported note intake. Do not show disabled PDF/RAG, docx, Obsidian, Notion, World Anvil, Kanka, or advanced import controls as if they are near-term routes.
+Bring your notes should expose MVP-supported paste/text/Markdown and bounded text-bearing PDF intake. PDF is shown as campaign/World source extraction, never as rulebook RAG. Do not show `.docx`, scanned-PDF OCR, Obsidian, Notion, World Anvil, Kanka, or advanced import controls as near-term routes.
 
 ## 7. Layout structure
 
@@ -106,7 +106,7 @@ Build with AI routes to the bounded conversation. Bring your notes routes to not
 
 ## 14. Components to avoid
 
-Avoid marketing hero pages, tutorial Saga setup, player setup, co-GM invitations, full World admin, Era editor, custom calendars, image generation, model/provider settings, PDF/RAG import controls, and any language that revives retired creation-mode branding.
+Avoid marketing hero pages, tutorial Saga setup, player setup, co-GM invitations, full World admin, Era editor, custom calendars, AI vision/image generation, model/provider settings, rulebook-RAG controls, and any language that revives retired creation-mode branding.
 
 ## 15. Visual tone
 

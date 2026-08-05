@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-20
+last_audited: 2026-08-05
 source_file: "Sourced - Downloaded - 260518/relic-stage-ux-flow-v0_6.md"
 ---
 
@@ -24,11 +24,13 @@ source_file: "Sourced - Downloaded - 260518/relic-stage-ux-flow-v0_6.md"
 
 ## Document scope
 
-This document defines the user experience and interaction model for **The Stage**, Relic's live-session surface on web and mobile. It is the source of truth for Stage behavior. Companion documents — `[[31 - Session Prep Flow]]`, `[[34 - UI Implementation Spec]]`, `[[12 - MVP PRD]]`, and `[[33 - First Run UX Flow]]` — define the surfaces this one references but does not specify.
+This document defines the user experience and interaction model for **The Stage**, Relic's live-session surface in responsive web for private alpha and native mobile post-alpha. It is the source of truth for Stage behavior. Companion documents — `[[31 - Session Prep Flow]]`, `[[34 - UI Implementation Spec]]`, `[[12 - MVP PRD]]`, and `[[33 - First Run UX Flow]]` — define the surfaces this one references but does not specify.
 
 This document is optimized for downstream consumption by AI coding agents (vibe-coding tools, Claude Code). Each section is self-contained, references are explicit and versioned, and feature specs follow a consistent shape: **Purpose → Behavior → Schema/IDs → Edge cases → Out of scope.**
 
 ## Changelog
+
+**Phase G GM-reference patch (August 2026).** The MVP GM Screen may search and pin only GM-authored reference Notes already available inside the exact Saga/Stage packet. It must not ship product-authored D&D/PF2/system rules, claim rules adjudication, or silently search an uploaded rulebook. Basic dice remains system-agnostic. Rulebook RAG, rules automation, and system-derived mechanical strips remain V1. Responsive web is the private-alpha Stage client; native Expo follows post-alpha without weakening the shared packet, audio, or recovery contracts.
 
 **Session Prep parity handoff patch (July 2026).** Ready waits for the shared Prepare editor's latest local change to persist, and Stage hydrates that successfully saved relational packet. Ordered archived/missing pin placeholders remain safe and non-breaking. Stage does not read an unsaved local Prep draft and does not invoke Prep AI.
 
@@ -73,8 +75,8 @@ Relic has **two user-facing surfaces**:
 
 | Surface | Purpose | Build order |
 |---|---|---|
-| **Sanctum** | Workspace/World/Saga home, entity management, Threads, Review, Relic Guide, and Prepare workspace | Web first, mobile follows |
-| **Stage** | Live session support: agenda, pinned cards, search, Relic Guide, capture, record, dice, end session | Web first, mobile follows |
+| **Sanctum** | Workspace/World/Saga home, entity management, Threads, Review, The Loom, and Prepare workspace | Responsive-web alpha; native post-alpha |
+| **Stage** | Live session support: agenda, pinned cards, search, The Loom, capture, record, dice, end session | Responsive-web alpha; native post-alpha |
 
 **Prepare** is a Sanctum workspace, not a separate product surface. The GM opens a session from Sanctum, edits the packet in Prepare, taps **Ready for Stage**, then opens Stage. Stage can preview a `ready` packet without locking prep. Prep becomes read-only when the live-session lifecycle reaches `started`.
 
@@ -92,7 +94,7 @@ The Stage is the table surface. It exists for one moment: a GM is mid-session, w
 
 **Five rules:**
 
-1. **Mobile-ready surface.** Everything important is reachable without leaving the Stage; web ships first, then mobile follows with stronger offline ergonomics.
+1. **Responsive and native-ready surface.** Everything important is reachable without leaving the Stage; responsive web ships for private alpha, then native mobile follows with stronger offline ergonomics.
 2. **Relic Guide is GM-controlled.** Guide is available for live support and can prepare actions, but it never mutates canon autonomously.
 3. **Airplane-mode complete.** Every Stage action works offline; reconnect flushes. (Tech Arch §15.)
 4. **Cold-load to interactive <2s** on modern phone with working network. (PRD STG acceptance.)

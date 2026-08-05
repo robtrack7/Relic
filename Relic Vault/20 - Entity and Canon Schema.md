@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-08-04
+last_audited: 2026-08-05
 source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 ---
 
@@ -25,6 +25,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 ---
 
 ## Changelog
+
+**Phase G import and attachment patch (August 2026).** `imported_text` now covers paste, strict UTF-8 text/Markdown, and the versioned extracted text derived from one private PDF object. A separate import-object row owns immutable Storage path, hash, byte size, detected MIME, page count, extractor/version, extraction lifecycle, safe failure code, and derived source ID. The browser never supplies trusted extraction results. Upload/extraction creates no AI run, embedding, draft, audit, usage event, or canon row; explicit GM selection freezes the current derived source into `workshop_input` before Loom use. A new media-attachment table is distinct from record-to-record `note_attachments`: it stores one private JPEG/PNG/WebP object plus GM-authored title, alt text, and description and may link to a Saga-scoped Library record. Image pixels are never provider context in MVP. Both object kinds preserve the canonical Workspace/World/Saga prefix and participate in Saga Storage cleanup.
 
 **Packet E10 destructive-action and bounded-plan patch (August 2026).** The existing Loom action-intent ledger gains optional server-validated plan metadata: one turn may contain at most five confirmable deterministic action steps, numbered in display order with dependencies that may reference earlier steps only. Every step retains its own confirmation, optimistic target/evidence versions, effect summary, idempotency receipt, and cost snapshot; there is no batch-confirm or model continuation loop. A conflict, denial, dismissal, or failed step blocks every later step without mutating it. Loom archive/restore is limited to Saga-scoped Library records and reuses the existing version-checked lifecycle writers. Hard-delete preparation records only a reviewed navigation receipt; permanent deletion remains exclusively in the archived-record UI with its irreversible checkbox, exact typed name, dependency check, and fresh server version check. Saga deletion is never a Loom plan action.
 
@@ -52,7 +54,7 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 
 **Manual session evidence patch (July 2026).** Defines pasted notes and GM manual summaries as immutable Saga-scoped `sources` rows tied to one ended Session. A client-stable source UUID provides exact retry identity; an identical replay returns the same source, while key reuse with different scope, kind, or text fails closed. Saving evidence updates only pipeline input metadata and never creates notes, drafts, audit rows, or canon.
 
-**Import Inbox patch (July 2026).** Adds `imported_text` sources with immutable Workspace/World/Saga/uploader, filename when applicable, MIME, byte size, ingestion method, SHA-256, and creation/ready timestamps. Paste, `.txt`, `.md`, and `.markdown` enter only as raw `ready_for_review` evidence; archive changes lifecycle state without deleting provenance. The source UUID is the stable delivery key, exact content deduplicates per Saga/uploader, changed key reuse fails closed, and ingestion creates no note, entity, Thread, draft, embedding, AI run, canon audit, or usage charge. `.docx` remains rejected until a trusted extraction boundary ships.
+**Import Inbox patch (July 2026; extended by Phase G).** Adds `imported_text` sources with immutable Workspace/World/Saga/uploader, filename when applicable, MIME, byte size, ingestion method, SHA-256, and creation/ready timestamps. Paste, `.txt`, `.md`, `.markdown`, and trusted derived PDF text enter only as raw `ready_for_review` evidence; archive changes lifecycle state without deleting provenance. The source UUID is the stable delivery key, exact content deduplicates per Saga/uploader, changed key reuse fails closed, and ingestion creates no note, entity, Thread, draft, embedding, AI run, canon audit, or usage charge. `.docx` remains rejected until a separate trusted extraction boundary ships.
 
 **Stage airplane-mode recovery patch (July 2026).** Extends the Stage receipt boundary to `start_session`, `record_consent`, and `go_live`, and defines conflict results as immutable receipt outcomes rather than silent lifecycle/consent overwrites. `get_stage_packet` now carries a scope-filtered literal search document set for the current Stage cache; the index is a read-model payload, not a new canon table.
 
@@ -808,6 +810,38 @@ create index on note_attachments (saga_id, entity_type, entity_id);
 
 Zero rows = free-floating note. N rows = multi-attached.
 
+### 6.3 `media_attachments` (Phase G)
+
+This table represents private uploaded media and is not a replacement for `note_attachments`, which links a Note to another record. MVP accepts static JPEG, PNG, and WebP only.
+
+```sql
+create table media_attachments (
+  id                uuid primary key,
+  workspace_id      uuid not null references workspaces(id) on delete cascade,
+  world_id          uuid not null references worlds(id) on delete cascade,
+  saga_id           uuid not null references sagas(id) on delete cascade,
+  uploader_id       uuid not null references auth.users(id),
+  target_kind       text not null check (target_kind in ('character','place','faction','artifact','thread','note')),
+  target_id         uuid not null,
+  storage_path      text not null unique,
+  original_filename text not null,
+  detected_mime     text not null check (detected_mime in ('image/jpeg','image/png','image/webp')),
+  byte_size         bigint not null check (byte_size > 0),
+  pixel_width       int not null check (pixel_width > 0),
+  pixel_height      int not null check (pixel_height > 0),
+  sha256            text not null,
+  title             text,
+  alt_text          text not null,
+  description       text,
+  created_at        timestamptz not null default now(),
+  deleted_at        timestamptz,
+  unique (saga_id, uploader_id, sha256, target_kind, target_id)
+);
+create index on media_attachments (saga_id, target_kind, target_id) where deleted_at is null;
+```
+
+The authenticated write/read RPC derives hierarchy and uploader identity, verifies the target exists in the exact active Saga, and never accepts a browser-supplied Storage path or detected file properties as trusted. A service boundary verifies magic/MIME, dimensions, and byte limits before finalization. The public projection omits object paths; viewing uses a short-lived server-authorized signed URL. The Loom context projection exposes title, alt text, description, safe format/dimension metadata, target provenance, and the explicit statement `GM-authored description; image not inspected`. It never exposes pixels or a signed URL to the provider.
+
 ---
 
 ## 7. Embeddings (separate, multi-version)
@@ -891,6 +925,44 @@ create index on sources (transcript_id, start_seconds) where transcript_id is no
 **Manual Session evidence.** `pasted_text` and `gm_manual_summary` sources are Saga-scoped, carry the exact Workspace/World/Saga/Session hierarchy, and store the submitted text in `raw_excerpt`. The Session must already be `ended`. These rows are immutable evidence inputs, not `notes`, and do not enter canon search/retrieval until a later approved output creates the owning canon record. The client supplies the source UUID before delivery so a save retry is exactly-once; the scoped RPC returns an existing row only when every immutable field matches.
 
 The latest `pipeline_runs.inputs_summary` records the source IDs/counts and `gm_summary_present` flag. This metadata says that synthesis has a surviving input; it is not itself an invocation, usage charge, proposal, or approval.
+
+### 8.1a `source_import_objects` (Phase G)
+
+Text and Markdown continue to use the byte-stable inline D5 path. PDF originals and their extraction state use a separate private-object record so the derived text cannot be confused with the uploaded bytes.
+
+```sql
+create table source_import_objects (
+  id                 uuid primary key,
+  workspace_id       uuid not null references workspaces(id) on delete cascade,
+  world_id           uuid not null references worlds(id) on delete cascade,
+  saga_id            uuid not null references sagas(id) on delete cascade,
+  uploader_id        uuid not null references auth.users(id),
+  client_delivery_id uuid not null,
+  storage_path       text not null unique,
+  original_filename  text not null,
+  detected_mime      text not null check (detected_mime = 'application/pdf'),
+  byte_size          bigint not null check (byte_size > 0),
+  sha256             text not null,
+  state              text not null check (state in ('uploaded','extracting','ready_for_review','rejected','failed','archived')),
+  safe_failure_code  text,
+  page_count         int,
+  extracted_chars    int,
+  extractor_name     text,
+  extractor_version  text,
+  derived_source_id  uuid unique references sources(id) on delete set null,
+  attempt_count      int not null default 0,
+  created_at         timestamptz not null default now(),
+  extracted_at       timestamptz,
+  archived_at        timestamptz,
+  unique (uploader_id, client_delivery_id),
+  unique (saga_id, uploader_id, sha256)
+);
+create index on source_import_objects (saga_id, state, created_at desc);
+```
+
+Only a service-role extractor may transition `uploaded → extracting → ready_for_review|rejected|failed` or assign `derived_source_id`. A ready record points at exactly one immutable `sources(kind='imported_text')` row whose `raw_excerpt` is the normalized extracted UTF-8 text and whose import provenance matches the object. `no_extractable_text`, `encrypted`, `malformed`, `active_content`, `embedded_file`, `mime_mismatch`, `too_large`, `too_many_pages`, `resource_limit`, and `timeout` are stable safe failure families; implementation may use more specific internal detail that is never exposed to the browser.
+
+Explicit `Draft with The Loom` selection freezes the selected current source IDs, hashes, and extractor versions into `workshop_input` evidence. Archive never deletes either immutable provenance or the private object. Upload, extraction, retry, archive, and selection do not themselves enqueue embeddings or create AI, draft, audit, usage, or canon rows.
 
 ### 8.2 `draft_sources`
 
@@ -1228,14 +1300,14 @@ Two-step is deliberate (per `AQ-FR-12`): merge decides identity; the resulting c
 
 Deletion is staged so database finalization cannot orphan Storage. The scoped delete RPC verifies the exact Workspace/World/Saga, requires the GM to type the current Saga name, rejects `in_progress` and `ended_pending_undo` Sessions, sets `deleted_at`, and enqueues one `cleanup:saga:<saga_id>` job. The hidden Saga is no longer switchable or readable through browser scope.
 
-The service-role-only `cleanup-saga` worker discovers and removes every object under the exact `<workspace_id>/<world_id>/<saga_id>/` prefix in `audio`, `attachments`, and `exports`. Only after all Storage API removals succeed may cleanup completion hard-delete `sagas`, which drives the database cascade:
+The service-role-only `cleanup-saga` worker discovers and removes every object under the exact `<workspace_id>/<world_id>/<saga_id>/` prefix in `audio`, `attachments`, `imports`, and `exports`. Only after all Storage API removals succeed may cleanup completion hard-delete `sagas`, which drives the database cascade:
 
 ```
 sagas (deleted) ──CASCADE──▶
   characters, places, factions, artifacts, threads, sessions
-  notes, note_attachments
+  notes, note_attachments, media_attachments
   relationships, mentions
-  drafts, draft_sources, sources, canon_audit
+  drafts, draft_sources, sources, source_import_objects, canon_audit
   transcripts, audio_chunks, session_marked_moments, pipeline_runs
   session_pinned_entities, session_active_threads
   dice_rolls, consent_log

@@ -21,7 +21,7 @@ Relic reaches MVP only when a GM can complete this loop without manual database 
 7. Approve, edit-and-approve, reject, merge, or archive proposals explicitly.
 8. Continue into the next prep cycle with updated canon and unresolved Threads.
 9. Export owned data and receive required pipeline notifications.
-10. Complete the agreed release-platform experience: responsive web alpha if explicitly accepted, otherwise native mobile parity.
+10. Complete the approved responsive-web private-alpha experience across desktop, tablet, and phone browsers; preserve shared contracts for native mobile post-alpha.
 
 Non-negotiable invariants:
 
@@ -37,11 +37,11 @@ From `docs/MVP_GAP_ANALYSIS.md`:
 
 | Priority | Complete | Partial | Missing | Blocked | Needs verification |
 | -------- | --------:| -------:| -------:| -------:| ------------------:|
-| P0       | 11       | 5       | 4       | 2       | 0                  |
-| P1       | 1        | 4       | 2       | 0       | 1                  |
+| P0       | 10       | 7       | 3       | 2       | 0                  |
+| P1       | 1        | 4       | 3       | 0       | 1                  |
 | P2       | 0        | 3       | 0       | 0       | 1                  |
 
-The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup, D2's complete six-type Library lifecycle with explicit relationship/mention acceptance, D3's scoped Thread/objective lifecycle plus derived read-only timeline, D4's recoverable autosaving Prep parity, D5's raw paste/text/Markdown Import Inbox boundary, E1's content-versioned embedding/re-embedding delivery with scoped hybrid retrieval and lexical fallback, E2's real hosted provider delivery and observability proof, E3's sourced conversational Guide compatibility layer, E4's recoverable cited Session Prep AI review flow, E5.1-E5.2's profile-aware conversational Loom workshop, E6's typed, cost-disclosed, receipt-backed Loom action kernel, E7's cheapest-sufficient adaptive read layer, E8's source-bound knowledge proposal/canon-review tools, E9's lifecycle-aware Session/Prep/post-session/Workshop tools, and E10's protected lifecycle operations plus bounded sequential plans. Revised Phase E is complete at the deterministic boundary; its separately authorized hosted task-family smoke is the immediate decision gate. `.docx` remains a named D5 format gap.
+The proven base is auth/bootstrap, scoped RLS/RPCs, the web Stage evidence path, Mark Moment, end-session finalization, provider-shaped transcription/retry contracts, a stable Stage dialog focus lifecycle, refresh-proven Dice/Quick Create behavior, the complete B2 short-window web airplane-mode workflow, C3's atomic source-aware synthesis draft batch, C4's scoped citation inspection and transcript drift navigation, C5's explicit field-diff Approval Queue commit boundary, D1's scoped three-dropdown hierarchy plus real Saga lifecycle cleanup, D2's six-type Library lifecycle with explicit relationship/mention acceptance, D3's scoped Thread/objective lifecycle plus derived read-only timeline, D4's recoverable autosaving Prep parity, D5's raw paste/text/Markdown Import Inbox boundary, E1's content-versioned embedding/re-embedding delivery with scoped hybrid retrieval and lexical fallback, E2's real hosted provider delivery and observability proof, E3's sourced conversational Guide compatibility layer, E4's recoverable cited Session Prep AI review flow, E5.1-E5.2's profile-aware conversational Loom workshop, E6's typed, cost-disclosed, receipt-backed Loom action kernel, E7's cheapest-sufficient adaptive read layer, E8's source-bound knowledge proposal/canon-review tools, E9's lifecycle-aware Session/Prep/post-session/Workshop tools, E10's protected lifecycle operations plus bounded sequential plans, and Phase F's settings/retention/export/notification controls. Phases E and F are complete. Phase G begins with hosted prerequisite closeout and the trusted PDF/attachment feature boundary; normal Library tag/status editing is a prerequisite closure rather than completed D2 evidence. `.docx` remains deferred.
 
 ## 3. Quality-gate system
 
@@ -321,52 +321,59 @@ The detailed trust/control-plane contracts, dependencies, exclusions, and verifi
 - **Complete (2026-08-05):** safe allowlisted queue payloads, 70/90/100 quota receipts, delayed Loom ready/failed/stale events, deep links, live-session suppression, preference-at-send checks, service-only claim/prepare/complete/skip boundaries, deterministic local delivery, and the live Resend adapter pass focused and integrated proof. No external email was sent because no dedicated email provider configuration was supplied.
 - **Done when:** enabled channels deliver once, disabled channels do not, and failures are retryable/visible.
 
-**Milestone F gate: complete 2026-08-05.** Clean replay and all 40 database files / 1,149 pgTAP assertions pass; 105 script/runtime tests, 153 web tests, TypeScript, production build, repository verification, and database lint pass with no Phase F warning. Real private ZIP and deterministic notification smokes pass, Settings/export authenticated browser proof passes at four viewports, and Phase F made no OpenAI call. Phase G is open; the immediate packet is **G1 — Loading, errors, permissions, and accessibility**.
+**Milestone F gate: complete 2026-08-05.** Clean replay and all 40 database files / 1,149 pgTAP assertions pass; 105 script/runtime tests, 153 web tests, TypeScript, production build, repository verification, and database lint pass with no Phase F warning. Real private ZIP and deterministic notification smokes pass, Settings/export authenticated browser proof passes at four viewports, and Phase F made no OpenAI call. Phase G is open; the immediate packet is **G0 — Hosted foundation and fixtures**.
 
-### Phase G — Release quality and platform gate
+### Phase G — Integrated MVP and responsive-web release gate
 
-#### Packet G1 — Loading, errors, permissions, and accessibility
+[[75 - Phase G Release Quality and Integrated MVP Plan]] is the owning work order. Locked decisions: responsive web is the private-alpha client; native Expo is the first post-alpha platform packet; real provider-backed Loom calls are mandatory for hosted acceptance; all logical staging AI aliases temporarily resolve to `openai/gpt-5.6-luna`; and the cumulative Phase G OpenAI provider-cost hard stop is `$4`.
 
-- Add route-level loading/error boundaries and a shared safe failure taxonomy.
-- Add axe smoke tests, reduced-motion checks, keyboard-only walkthroughs, and focus-order coverage.
-- **Done when:** every core route has non-leaky loading/error/empty/denied recovery and no serious/critical axe findings.
+#### Packet G0 — Hosted foundation and fixtures
 
-#### Packet G2 — Full regression, visual, and performance gate
+- Deploy the complete local migration order, including Phase F, to `relic-staging`; close privilege/advisor gaps and establish Vercel staging.
+- Build deterministic adversarial text/Markdown/PDF and JPEG/PNG/WebP fixtures without making a provider call.
+- **Done when:** hosted schema matches the repository, access review is recorded, staging is reachable, and the fixture matrix is deterministic.
 
-- Put the deterministic manual loop plus Review recovery in CI.
-- Add visual baselines for auth, home, Library, Threads, Prep, Stage, Review, Settings, and failures.
-- Measure cold load, Stage search, prep, provider tasks, and queue latency; enable safe Sentry/PostHog/queue dashboards.
-- **Done when:** two consecutive clean CI runs pass with approved screenshots and recorded budgets.
+#### Packet G1 — Import, attachments, rules, and manual closure
 
-#### Packet G3 — Mobile release decision
+- Ship trusted text-bearing PDF extraction, immutable provenance, explicit source enrollment into the existing Loom workshop, and safe retry/rejection states. Keep `.docx` deferred.
+- Ship private static-image attachments with GM-authored title/alt/description. The Loom receives the authored text only; OCR/vision and image generation remain V1.
+- Close tag/status editing and replace Stage-owned D&D/rules snippets with GM-authored reference Notes/pins. Basic dice remains; rulebook RAG and rules automation remain V1.
+- **Done when:** valid fixtures survive restart, adversarial fixtures fail safely, and no upload automatically invokes AI, embeds, or writes canon.
 
-- Decide whether responsive web is accepted for private MVP alpha or native Expo remains an MVP gate.
-- Preserve the accepted three-separate-dropdown Workspace/World/Saga treatment when adapting the mobile shell.
-- Record the decision in the owning active specs and gap analysis.
+#### Packet G2 — Twin integrated creation-to-continuity journeys
 
-If responsive web is explicitly accepted:
+- Journey A imports existing World/campaign text, Markdown, and PDF, explicitly enrolls sources, then uses the real Loom to create and organize the Saga.
+- Journey B builds the same class of usable Saga through the real conversational Loom workshop.
+- Both paths cover entities, tags/status, relationships, Threads/objectives, a captioned private image used as text-only creative context, Session/Prep, Stage audio/transcription/dice/search/references, synthesis, Review/Approval, embeddings, retrieval, restart, recovery, and sibling isolation.
+- Deterministic twins run in CI, but never substitute for the real-Loom staging acceptance.
+- **Done when:** both paths complete twice without autonomous canon, duplicate effects/charges, leakage, lost work, or a cost-stop breach.
 
-- Run installability/device/offline/recording acceptance on the target alpha devices.
-- Move native Expo packets to the first post-alpha plan without weakening web recovery requirements.
+#### Packet G3 — Loading, errors, permissions, accessibility, and recovery
 
-If native Expo remains required:
+- Add route-level boundaries and safe handling for denied/missing/stale/quota/offline/provider/extraction/retry states.
+- Add axe, reduced-motion, keyboard-only, focus-return, zoom/text-scale, long-content, and no-overflow coverage.
+- **Done when:** the core loop is keyboard-completable, inputs survive recoverable failure, and there are no serious/critical axe findings.
 
-#### Packet G4 — Mobile foundation
+#### Packet G4 — Visual and responsive cleanup
 
-- Scaffold Expo Router, auth/bootstrap, shared types, secure session storage, and navigation.
-- **Done when:** target devices sign in and open the correct scoped Saga.
+- Add approved baselines for every core surface plus representative Loom/import/failure states and reconcile them with active design canon.
+- Run desktop, tablet, and phone-browser acceptance including audio permissions, offline/reconnect, and private Storage access.
+- **Done when:** approved baselines and target-device flows pass without misleading AI/rules language or layout blockers.
 
-#### Packet G5 — Mobile Stage
+#### Packet G5 — Performance, observability, and CI
 
-- Implement cached packet, SQLite queue, native recording/chunks, notes/stubs/dice/Mark/End, crash recovery, and deep links.
-- **Done when:** the full airplane-mode Stage loop passes on target hardware twice.
+- Measure the full import → Loom → retrieval → Prep → Stage → transcription → synthesis → approval → re-embedding spine and set evidence-based budgets.
+- Put migration/access, deterministic twin journeys, unit/runtime, type/build, accessibility, secret/private-content scan, and stable visual coverage in CI.
+- **Done when:** two consecutive clean CI runs pass and recorded telemetry remains payload-free.
 
-#### Packet G6 — Mobile Sanctum/Review/notifications
+#### Packet G6 — Bounded Luna smoke and release candidate
 
-- Implement required create/organize/prep/review/settings parity with sheets/stacked layouts and Expo push.
-- **Done when:** the MVP loop completes on target hardware without falling back to desktop-only capability.
+- Freeze exact models, fixture IDs, maximum calls/attempts/tokens, and conservative dollar exposure. Ledger actual usage after every call and refuse a request that could exceed the remaining `$4`.
+- Run real Loom, embedding, transcription/synthesis, failure/retry, cleanup/restart, Vercel, and responsive-device acceptance.
+- Real Resend may remain a documented external-configuration blocker if deterministic content/preference/retry behavior stays green.
+- **Done when:** both real-Loom journeys pass below `$4`, staging is clean/restartable, and responsive web is accepted as the private alpha.
 
-**Milestone G gate:** accessibility, responsive/device, recovery, telemetry, and release-platform acceptance all green.
+**Milestone G gate:** the full Create → Organize → Prep → Run → Review → Approve → Continue loop passes through both import-assisted and conversational real-Loom paths; accessibility, recovery, security, responsive-device, performance, telemetry, hosting, and cost controls are green.
 
 ## 5. Gap-to-phase coverage
 
@@ -379,9 +386,9 @@ If native Expo remains required:
 | Phase D             | Saga lifecycle/switching, manual entity/note relationships, Threads/timeline, Prep parity, and Import Inbox. |
 | Phase E             | Search/embeddings, AI delivery, Relic Guide, Prep AI, AI-assisted Saga creation, and GM-profile inputs.      |
 | Phase F             | Usage/settings/retention, real Storage cleanup/export, and notification delivery/preferences.                |
-| Phase G             | Loading/error states, accessibility, full E2E, visual/performance telemetry, and mobile release parity.      |
+| Phase G             | PDF/attachment closure, twin real-Loom full-stack journeys, release errors/accessibility, responsive visual/device acceptance, performance/CI, and the bounded hosted release candidate. |
 
-P2 relationship/timeline polish is folded into D2/D3 only to the extent required for readable, accessible MVP behavior. Further density polish remains post-MVP. P2 telemetry and visual regression are release gates in G2 because they expose late-stage regressions; they are not treated as optional decoration.
+P2 relationship/timeline polish is folded into D2/D3 only to the extent required for readable, accessible MVP behavior. Further density polish remains post-MVP. Telemetry and visual regression are release gates in G4/G5 because they expose late-stage regressions; they are not treated as optional decoration.
 
 ## 6. Release-candidate protocol
 
@@ -434,4 +441,4 @@ For every packet:
 - Commit one scoped packet and push it before beginning the next.
 - If a new cross-cutting defect appears, add it to the gap analysis and insert the smallest repair packet before dependent work.
 
-Immediate delivery packet: **G1 — Loading, errors, permissions, and accessibility**. Phases E and F are closed at their documented gates. D5 imported sources remain excluded unless a later explicit GM enrollment contract is added. The user-authorized temporary testing credential remains installed only in ignored, access-restricted local provider state for later phases and is governed by the `$4` provider-cost stop; it must never enter source control, logs, reports, or browser state.
+Immediate delivery packet: **G0 — Hosted foundation and fixtures**, followed by G1's trusted PDF/attachment/manual feature closure. Phases E and F are closed at their documented gates. Raw D5/Phase G imports remain excluded from retrieval and AI until the explicit selected-source workshop enrollment defined in [[75 - Phase G Release Quality and Integrated MVP Plan]]. The user-authorized temporary testing credential remains installed only in ignored, access-restricted local provider state and is governed by the cumulative `$4` provider-cost stop; it must never enter source control, logs, reports, or browser state.

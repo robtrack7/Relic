@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-08-04
+last_audited: 2026-08-05
 source_file: "Sourced - Downloaded - 260518/relic-ui-implementation-spec-v0_2.md"
 ---
 
@@ -29,6 +29,8 @@ Packet E8 adds reusable field-diff, relationship-effect, Thread-state, and objec
 Packet E9 adds workflow cards for Session creation, lifecycle-aware Prep/Stage/Review navigation, Prep task handoff, transcription retry, and active Workshop resume. Every separately metered Prep card shows the exact 1/3/10-credit estimate before confirmation and links its accepted request to the full Prep review surface. The card must state that generated output is pending review and that confirmation does not apply it. Processing, quota-blocked, provider-unavailable, stale Session, and retry states preserve the same action/request identity. Stage-live cards expose navigation and manual fallback only; they never offer Prep generation or unsolicited assistance.
 
 Packet E10 adds lifecycle card bodies and the first bounded `LoomPlan` projection. Archive/restore cards show record type/name, current state, reversible effect, and two-stage review/confirm controls. `prepare_hard_delete` can only reveal a link to the archived record with `prepareDelete=1`; `LibraryRecordEditor` may open its existing permanent-delete panel from that server-derived query, but keeps the checkbox, exact-name input, blocker list, and final submit entirely outside The Loom. A plan renders two to five numbered cards with effect, cost, dependency labels, receipt state, and one enabled next-step confirmation. Waiting and stopped steps remain readable, retain their manual fallback, and are not bulk-confirmable. Focus order follows step order and stays stable across refresh and all four target viewports.
+
+Phase G extends `/imports` with PDF upload/extraction/provenance/rejection states and an explicit selected-source `Draft with The Loom` handoff. It also adds private image-attachment controls for JPEG/PNG/WebP with title, alt text, and description. Loom copy must say it is using the GM-authored description and must never imply that Relic inspected the pixels. Rulebook RAG, OCR/vision, and image-generation controls are absent. Responsive web is the private-alpha platform; native Expo is post-alpha. See [[75 - Phase G Release Quality and Integrated MVP Plan]].
 
 *Created: May 18, 2026. Updated: May 18, 2026.*  
 *Purpose: give vibe-coding agents a buildable first-pass UI map without requiring them to re-read every product document.*
@@ -58,13 +60,13 @@ This spec translates the active Relic product, UX, schema, architecture, and des
 
 **Session Review manual-evidence patch (July 2026).** Render separate pasted-notes and GM-summary textareas above transcript editing. Persist unsaved text plus its stable source UUID locally under the authenticated GM and full Session scope, keep it on save/network failure, and clear it only after the scoped source RPC succeeds. Saved evidence renders read-only; Save evidence does not trigger synthesis or canon mutation.
 
-**Import Inbox patch (July 2026).** Add the Saga-scoped `/imports` rail route. Its paste/file composer exposes draft, validating, uploading, failed, rejected, and recovered local states; ready-for-review and archived records render immutable provenance plus keyboard-operable original-content disclosure. Strict UTF-8 `.txt/.md/.markdown` only; clear local state only after a confirmed scoped RPC result. Long filenames/content wrap or scroll without horizontal page overflow. No provider, embedding, proposal, or canon control appears on this page.
+**Import Inbox patch (July 2026; extended by Phase G).** Add the Saga-scoped `/imports` rail route. Its paste/file composer exposes draft, validating, uploading, extracting, failed, rejected, and recovered local states; ready-for-review and archived records render immutable provenance plus keyboard-operable original/derived-content disclosure. Strict UTF-8 `.txt/.md/.markdown` and bounded `.pdf`; clear local state only after a confirmed scoped result. Long filenames/content wrap or scroll without horizontal page overflow. No automatic provider, embedding, proposal, or canon action appears; explicit source selection enables the separate Loom workshop handoff.
 
 **Session Prep parity patch (July 2026).** Render one shared editor on Home and the full Prepare route for planned/ready Sessions. It owns an 800ms/blur optimistic autosave, owner/hierarchy/Session-scoped local recovery, saving/saved/offline/failed/conflict/retry copy, optional scheduled date/time, prior approved-summary fallback, ordered recoverable entity/Thread pins, and only state-valid Reset/Archive/Duplicate actions. Ready must flush the latest local change before navigation; all later lifecycle states render the same packet read-only.
 
 **Approval Queue trust completion patch (July 2026).** Render field-level current/proposed editors, persistent C4 source disclosures, confidence/provenance/target consequences, and filters for status, type, batch, confidence, and conflict. Offer one-by-one, explicit selected, and prominent all-compatible approval; bulk actions state the exact visible count and exclude conflicts, broken sources, dirty edits, merge decisions, and archive confirmations. Preserve edits across failed commit, make archive-versus-delete explicit with Rust confirmation, and rebase stale targets without writing canon.
 
-**MVP surface and build-order rule:** The Sanctum and The Stage are both product surfaces on web and mobile. Sanctum should feel literary, modern, and relaxing. Stage should feel clean and focused. Build the web app first with both surfaces and the full loop, then build the mobile app with platform-appropriate layouts and offline behavior.
+**MVP surface and build-order rule:** The Sanctum and The Stage are both required in the responsive-web private alpha across desktop, tablet, and phone browsers. Sanctum should feel literary, modern, and relaxing. Stage should feel clean and focused. Native mobile follows post-alpha with platform-appropriate layouts and deeper offline behavior against the same contracts.
 
 ---
 
@@ -103,7 +105,7 @@ Use IDs in routes for MVP. Slugs may be added later for readability but must not
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/review` | Sanctum | Approval Queue | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/guide` | Sanctum | The Loom fallback page reached from sidecar/context; route name is compatibility-only | P0 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/search` | Sanctum | Full search page, command-palette fallback | P0 |
-| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/imports` | Sanctum | Raw paste/text/Markdown intake and source review | P1 |
+| `/app/w/:workspaceId/world/:worldId/saga/:sagaId/imports` | Sanctum | Raw paste/text/Markdown/PDF intake, extraction/source review, and explicit Loom handoff | P1 |
 | `/app/w/:workspaceId/world/:worldId/saga/:sagaId/settings` | Sanctum | Saga settings: name, system, profile override, retention | P0 |
 | `/app/w/:workspaceId/world/:worldId/settings` | Sanctum | Lightweight World settings | P0 minimal |
 | `/app/w/:workspaceId/settings` | Sanctum | Workspace settings, usage, future billing placeholder | P0 minimal |

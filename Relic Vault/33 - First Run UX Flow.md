@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-08-04
+last_audited: 2026-08-05
 source_file: "Sourced - Downloaded - 260518/relic-first-run-ux-flow-v0_2.md"
 ---
 
@@ -23,6 +23,8 @@ source_file: "Sourced - Downloaded - 260518/relic-first-run-ux-flow-v0_2.md"
 Saga creation must resolve the effective GM profile on the server. First use creates the default profile; later `Use my default` requests ignore client-supplied profile values; `Customize for this Saga` validates the exact enum/object shape and persists `sagas.gm_profile_override` unless the GM explicitly saves those values as the new default. The effective snapshot, profile mode, and save-default choice participate in workshop idempotency and are stored in the trusted AI task input. Start Blank follows the same rules and never overwrites a returning GM's defaults silently.
 
 Build with AI and Bring your notes then become a bounded three-to-five-turn Loom workshop with a visible emerging outline, `Draft it now`, and `Save and leave`. The base scaffold matches the active cardinalities and includes tone, central conflict, first-session hook, GM secrets, World updates, tags/status, and proposal scope. Per-section regeneration creates a separately versioned proposal and preserves GM edits; no step creates canon before `Commit saga`.
+
+**Phase G intake patch.** Bring your notes may accept an explicitly selected, successfully extracted text-bearing PDF in addition to paste/text/Markdown. The import surface shows upload, extraction, rejection, provenance, and source-selection state before entering The Loom. Encrypted, malformed, scanned/image-only, and oversized PDFs do not enter the workshop. `.docx`, third-party archive import, OCR/vision, image generation, and rulebook RAG remain deferred.
 
 **Status:** Active first-run UX specification  
 **Scope:** P0 MVP  
@@ -63,7 +65,7 @@ The user-facing entry is **New saga**. Do not use **Saga Creation** in UI copy. 
 - No co-GM or Workspace member setup.
 - No Era editor.
 - No full World dashboard.
-- No PDF, Obsidian, Notion, World Anvil, Kanka, or RAG import in first-run MVP.
+- No `.docx`, scanned-PDF OCR, Obsidian, Notion, World Anvil, Kanka, or rulebook-RAG import in first-run MVP. Text-bearing campaign/World PDF intake is supported.
 - No image generation.
 - No autonomous canon writes.
 
@@ -287,7 +289,7 @@ Bring your notes is the wedge path for the alpha cohort. It should support messy
 | Upload `.txt` | Yes | UTF-8 plain text only. |
 | Upload `.md` / `.markdown` | Yes | Treated as plain text with Markdown preserved. |
 | Upload `.docx` | No, P1 candidate | Show helpful disabled-state copy. |
-| Upload `.pdf` | No, P1 | PDF/RAG import is deferred. |
+| Upload `.pdf` | Yes, Phase G MVP | Trusted extraction only; explicit source selection; scanned/image-only, encrypted, malformed, and oversized files fail safely. This is not rulebook RAG. |
 | Upload Obsidian/Notion/World Anvil/Kanka export | No, V1 | Not part of MVP. |
 | Upload images/audio | No | Audio belongs to post-session pipeline, not first-run notes import. |
 
@@ -636,7 +638,7 @@ Priority 4 is done when the following can be implemented without additional prod
 5. `experience_level` values are locked as `new`, `returning`, `experienced`, `veteran`.
 6. `improv_comfort` and `prep_style` are captured with the schema-defined enums.
 7. Build with AI conversation has clear soft and hard limits.
-8. Bring your notes supports paste plus `.txt`, `.md`, `.markdown`, with a 50,000 character cap.
+8. Bring your notes supports paste plus `.txt`, `.md`, `.markdown`, and bounded text-bearing `.pdf`; extracted workshop input still obeys the server-owned character/token budget.
 9. Unsupported file types have clear copy and do not pretend to import.
 10. Scaffold review supports edit, regenerate per item, discard, source/provenance, and commit.
 11. Commit writes canon through the synthetic resolved draft/audit pattern and does not route to Approval Queue again.
@@ -658,7 +660,8 @@ Priority 4 is done when the following can be implemented without additional prod
 | Paste notes | MVP |
 | `.txt`, `.md`, `.markdown` note upload | MVP |
 | `.docx` import | P1 candidate if straightforward |
-| PDF/RAG import | P1/V1, not first-run MVP |
+| Text-bearing campaign/World PDF import | Phase G MVP |
+| PDF rulebook RAG and scanned-PDF OCR | V1 |
 | Obsidian/Notion/World Anvil/Kanka import | V1 |
 | Full World dashboard | Deferred |
 | Era editor | V1 |

@@ -11,7 +11,7 @@ depends_on:
   - "[[34 - UI Implementation Spec]]"
   - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-07-20
+last_audited: 2026-08-05
 source_file: "Relic Vault/66 - Stage Design Spec.md"
 ---
 
@@ -19,6 +19,10 @@ source_file: "Relic Vault/66 - Stage Design Spec.md"
 > Use this for The Stage across web and mobile. Read with [[60 - Design Spec Overview]], [[72 - Navigation Design Spec]], and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[32 - Stage UX Flow]], [[31 - Session Prep Flow]], and [[34 - UI Implementation Spec]].
 
 # Stage Design Spec
+
+## August 2026 Phase G Reference Patch
+
+Keep the `GM Screen` name, but populate it from GM-authored reference Notes/pins in the current Saga packet. Search copy says `Search your references`, not `Search rules`; empty state directs the GM to pin a reference during Prep. Do not show built-in D&D/PF2 rules or imply automated adjudication. Basic dice remains available. Rulebook RAG and system automation are V1. The private-alpha target is responsive web across the Phase G device matrix; native Expo is the first post-alpha platform packet.
 
 ## 1. Purpose
 
