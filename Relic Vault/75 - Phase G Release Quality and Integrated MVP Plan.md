@@ -56,7 +56,7 @@ PDF ingestion is a service-owned extraction workflow, never a browser parser and
 - An image-only or scanned PDF returns `no_extractable_text`. OCR is V1. Rejection is a safe, stable user-facing state with retry/replace guidance and no partial source enrollment.
 - The original private object is retained under the applicable retention contract. Extracted UTF-8 text is an immutable, versioned derived source linked to original object hash, byte size, page count, extractor name/version, and extraction timestamp. Derived text never replaces the original.
 - Upload and extraction create no entity, Thread, Note, draft, AI run, embedding, usage charge, audit row, or canon mutation. The source begins in `ready_for_review` only after extraction succeeds.
-- The GM explicitly selects one or more ready sources and chooses `Draft with The Loom`. The server freezes those selected versions into `workshop_input` evidence and enters the existing conversational/scaffold review path. Commit remains explicit.
+- The GM explicitly selects one to eight ready sources and chooses `Draft with The Loom`. Because Import Inbox belongs to an existing Saga, the server freezes those selected versions into a new Saga-scoped Loom turn and reuses the E6–E10 typed action/confirmation path; it does not invoke the E5 new-Saga scaffold commit or create a duplicate Saga. Imported text is available only to that turn and its reviewed follow-up actions. Commit remains explicit.
 
 The same extraction interface may later feed a separately authorized `rulebook_grounding` corpus. That V1 path requires distinct corpus membership, licensing/retention decisions, chunk policy, retrieval profile, and GM controls; generic imports are never silently treated as rulebooks.
 
@@ -90,7 +90,7 @@ Raw imports, original PDFs, private image objects, captions, workshop conversati
 ### G1 — Import, attachment, rules, and manual creation closure
 
 - Extend Import Inbox state, schema, Storage policy, extractor worker, and UI for PDF upload/extraction/rejection/retry/recovery.
-- Add explicit import selection and `Draft with The Loom`, reusing the E5 conversational workshop and review/commit contract rather than creating an automatic import-to-canon pipeline.
+- Add explicit import selection and `Draft with The Loom`, reusing the Saga Loom conversation plus typed E6–E10 review/commit contracts rather than creating an automatic import-to-canon pipeline or misusing the E5 new-Saga scaffold.
 - Complete visible manual and Loom-assisted tag/status editing needed by the integration fixture.
 - Add private image attachment upload, caption/alt/description editing, record linking, safe viewing, deletion/retention behavior, and text-only Loom context.
 - Replace hard-coded game-system rules content on The Stage with GM-authored reference Notes/pins. Preserve basic dice and label it as a convenience tool, not a rules adjudicator.
@@ -99,6 +99,8 @@ Raw imports, original PDFs, private image objects, captions, workshop conversati
 **Gate:** adversarial PDF/image fixtures fail safely; valid sources and attachments survive refresh/restart; no upload automatically calls AI, embeds, or writes canon; a selected import and a caption can enter the ordinary Loom review flow.
 
 **2026-08-05 PDF checkpoint:** the trusted PDF slice is complete locally and on locked Supabase staging. The browser registers and uploads only to private Storage; the JWT-verified Edge extractor distrusts metadata, records immutable original/derived hashes and extractor provenance, and moves successful text only to `ready_for_review`. Ten synthetic cases pass against both local and hosted runtime: textual success plus safe rejection of empty, image-only, encrypted, active-content, embedded-file, over-page-limit, malformed, MIME-mismatched, and valid-PDF-plus-appended-image polyglot input. The final deployed bundle is 499.1 kB, all 1,181 database assertions and 155 web tests pass, and the slice made zero provider calls. G1 remains open for explicit selected-source Loom enrollment, private image attachments, tag/status editing, and GM-authored Stage references.
+
+**2026-08-05 enrollment checkpoint:** explicit selected-source Loom enrollment is complete and deployed. One to eight ready current-Saga imports are frozen by immutable content hash into a new Loom turn; ordinary retrieval still excludes raw imports, retries bind the exact selected set, sibling or non-ready sources fail closed, and enrollment itself creates no draft, canon, audit, embedding, or usage event. The UI names the provider boundary before dispatch and routes into the normal action-by-action Loom review. Clean replay plus 1,198 database assertions, 156 web tests, and 105 runtime tests pass with zero provider calls. G1 now continues with private image attachments, tag/status editing, and GM-authored Stage references.
 
 ### G2 — Twin real-Loom integrated journeys
 

@@ -1,17 +1,19 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ImportInbox } from "@/components/ImportInbox";
-import { extractPdfImportAction, preparePdfImportAction, saveImportInboxAction, setImportSourceStateAction } from "@/app/actions";
+import { draftImportsWithLoomAction, extractPdfImportAction, preparePdfImportAction, saveImportInboxAction, setImportSourceStateAction } from "@/app/actions";
 import { readImportInboxDraft } from "@/lib/import-inbox";
 import { installMemoryLocalStorage } from "./local-storage";
 
 const refresh = vi.fn();
+const push = vi.fn();
 const upload = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh, push }) }));
 vi.mock("@/lib/supabase/browser", () => ({ createClient: () => ({ storage: { from: () => ({ upload }) } }) }));
 vi.mock("@/app/actions", () => ({
   saveImportInboxAction: vi.fn(), setImportSourceStateAction: vi.fn(),
   preparePdfImportAction: vi.fn(), extractPdfImportAction: vi.fn(),
+  draftImportsWithLoomAction: vi.fn(),
 }));
 
 const params = { workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a" };
@@ -71,6 +73,20 @@ describe("ImportInbox", () => {
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Archive" })); await Promise.resolve(); });
     expect(setImportSourceStateAction).toHaveBeenCalledTimes(1);
     expect(refresh).toHaveBeenCalled();
+  });
+
+  it("enrolls only explicitly selected ready sources into a new Loom turn", async () => {
+    vi.mocked(draftImportsWithLoomAction).mockResolvedValue({ ok: true, href: "/app/scoped/guide?thread=thread-a" });
+    render(<ImportInbox ownerId="owner-a" params={params} initialImports={[source]} />);
+    const submit = screen.getByRole("button", { name: "Draft with the Loom (0)" });
+    expect((submit as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("checkbox", { name: `Select ${source.filename} for the Loom` }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Draft with the Loom (1)" })); await Promise.resolve(); });
+    const form = vi.mocked(draftImportsWithLoomAction).mock.calls[0][0];
+    expect(form.getAll("sourceId")).toEqual([source.id]);
+    expect(String(form.get("question"))).toMatch(/untrusted evidence/i);
+    expect(push).toHaveBeenCalledWith("/app/scoped/guide?thread=thread-a");
+    expect(saveImportInboxAction).not.toHaveBeenCalled();
   });
 
   it("uploads a PDF privately and invokes only the trusted extraction path", async () => {

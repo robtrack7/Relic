@@ -241,6 +241,7 @@ values
   ('plan_loom_retrieval_for_worker', 'Worker-only cheapest-sufficient Loom retrieval planner.'),
   ('create_loom_deterministic_turn_for_worker', 'Worker-only zero-provider deterministic Loom read creator.'),
   ('create_loom_provider_turn_for_worker', 'Worker-only strategy-aware provider Loom turn creator.'),
+  ('create_import_loom_turn_for_worker', 'Worker-only explicit imported-source Loom turn creator.'),
   ('get_guide_evidence_for_worker', 'Worker-only immutable Guide evidence reader.'),
   ('set_guide_turn_state_for_worker', 'Worker-only Guide lifecycle state writer.'),
   ('block_guide_turn_for_worker', 'Worker-only quota-block terminal writer.'),

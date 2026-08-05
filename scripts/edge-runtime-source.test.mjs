@@ -163,6 +163,7 @@ test("Relic Guide submission derives scope, retrieval, quota, and dispatch on th
   const runner = read("supabase/functions/ai-task-runner/index.ts");
   const hybrid = read("supabase/functions/hybrid-search/index.ts");
   const workflowMigration = read("supabase/migrations/20260805060000_packet_e9_workflow_tools.sql");
+  const importEnrollment = read("supabase/migrations/20260806002000_phase_g1_import_loom_enrollment.sql");
 
   assert.match(submit, /requireInternalAuth/, "Guide submission must be server-only");
   assert.match(submit, /createScopedClient/, "Guide permission and quota checks must use the GM identity");
@@ -180,6 +181,12 @@ test("Relic Guide submission derives scope, retrieval, quota, and dispatch on th
     "quota preflight must happen before provider-backed retrieval");
   assert.match(submit, /create_loom_deterministic_turn_for_worker/, "recognized reads must bypass provider dispatch");
   assert.match(submit, /create_loom_provider_turn_for_worker/, "provider turns must preserve their selected retrieval strategy");
+  assert.match(submit, /selected_import_source_ids/, "explicit import enrollment must be a distinct request field");
+  assert.match(submit, /create_import_loom_turn_for_worker/, "selected imports must use the service-only frozen-evidence creator");
+  assert.match(importEnrollment, /import_state='ready_for_review'/, "only ready imports may be enrolled");
+  assert.match(importEnrollment, /content_sha256/, "import evidence versions must use immutable derived-content hashes");
+  assert.match(importEnrollment, /cardinality\(v_ids\) not between 1 and 8/, "import enrollment must remain bounded");
+  assert.doesNotMatch(importEnrollment, /insert into public\.(?:drafts|canon_audit|embeddings)/, "enrollment must not write drafts, canon, or embeddings");
   assert.match(submit, /query_embedding_requested:\s*strategy === "hybrid"/, "only hybrid retrieval may request a query embedding");
   assert.match(hybrid, /body\.retrieval_strategy === "lexical"/, "lexical retrieval must have an explicit provider-free branch");
   assert.match(hybrid, /query_embedding_requested:\s*false/, "lexical telemetry must prove that no query embedding was requested");

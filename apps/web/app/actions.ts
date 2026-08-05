@@ -1383,6 +1383,46 @@ export async function extractPdfImportAction(formData: FormData) {
   return { ok: true as const, source: data as { id: string; state: string; duplicate?: boolean; failure_code?: string } };
 }
 
+export async function draftImportsWithLoomAction(formData: FormData) {
+  const { user } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const sourceIds = [...new Set(formData.getAll("sourceId").map(String).map((id) => id.trim()).filter(Boolean))].sort();
+  const question = rawValue(formData, "question").normalize("NFKC").trim();
+  if (sourceIds.length < 1 || sourceIds.length > 8 || !question || question.length > 2000) {
+    return { ok: false as const, error: "Choose 1 to 8 ready sources and tell the Loom what you want to build." };
+  }
+  const internalToken = process.env.INTERNAL_TOKEN;
+  if (!internalToken) return { ok: false as const, error: "The Loom is temporarily unavailable." };
+  const turnId = value(formData, "turnId") || crypto.randomUUID();
+  const idempotencyKey = value(formData, "idempotencyKey") || crypto.randomUUID();
+  try {
+    const response = await fetch(`${getSupabaseUrl()}/functions/v1/guide-submit`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${internalToken}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        gm_user_id: user.id,
+        workspace_id: params.workspaceId,
+        world_id: params.worldId,
+        saga_id: params.sagaId,
+        thread_id: null,
+        turn_id: turnId,
+        idempotency_key: idempotencyKey,
+        question,
+        selected_import_source_ids: sourceIds,
+      }),
+      cache: "no-store",
+    });
+    const payload = await response.json().catch(() => ({})) as { thread_id?: string; error?: { message?: string } };
+    if (!response.ok || !payload.thread_id) {
+      return { ok: false as const, error: payload.error?.message ?? "The Loom could not enroll these sources safely." };
+    }
+    revalidatePath(`${sagaPath(params)}/guide`);
+    return { ok: true as const, href: `${sagaPath(params)}/guide?thread=${payload.thread_id}` };
+  } catch {
+    return { ok: false as const, error: "The Loom request could not be reached. Your sources remain ready for review." };
+  }
+}
+
 export async function setImportSourceStateAction(formData: FormData) {
   const { supabase } = await requireActionUser();
   const params = paramsFromForm(formData);

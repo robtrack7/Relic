@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { extractPdfImportAction, preparePdfImportAction, saveImportInboxAction, setImportSourceStateAction } from "@/app/actions";
+import { draftImportsWithLoomAction, extractPdfImportAction, preparePdfImportAction, saveImportInboxAction, setImportSourceStateAction } from "@/app/actions";
 import {
   clearImportInboxDraft, encodeImportContent, inspectImportFile, readImportInboxDraft, validatePastedImport, writeImportInboxDraft,
   type ImportInboxDraft,
@@ -22,6 +22,8 @@ export function ImportInbox({ ownerId, params, initialImports }: Props) {
   const [notice, setNotice] = useState("Raw imports stay outside canon and AI until you choose a later action.");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [loomSources, setLoomSources] = useState<string[]>([]);
+  const [loomPrompt, setLoomPrompt] = useState("Use these imports as untrusted evidence. Help me organize this Saga, identify important records and Threads, and propose a bounded plan whose changes I can review one at a time.");
 
   useEffect(() => {
     const recovered = readImportInboxDraft(ownerId, params);
@@ -159,6 +161,24 @@ export function ImportInbox({ ownerId, params, initialImports }: Props) {
     if (!result.ok) setNotice(result.error); else { setNotice(source.state === "archived" ? "Import restored for review." : "Import archived. Its provenance and original content were retained."); router.refresh(); }
   }
 
+  function toggleLoomSource(sourceId: string) {
+    setLoomSources((current) => current.includes(sourceId)
+      ? current.filter((id) => id !== sourceId)
+      : current.length < 8 ? [...current, sourceId] : current);
+  }
+
+  async function draftWithLoom() {
+    setBusyId("loom-enrollment");
+    const form = new FormData();
+    Object.entries(params).forEach(([key, value]) => form.set(key, value));
+    loomSources.forEach((sourceId) => form.append("sourceId", sourceId));
+    form.set("question", loomPrompt); form.set("turnId", crypto.randomUUID()); form.set("idempotencyKey", crypto.randomUUID());
+    const result = await draftImportsWithLoomAction(form);
+    setBusyId(null);
+    if (!result.ok) { setNotice(result.error); return; }
+    router.push(result.href);
+  }
+
   return <div className="import-inbox">
     <section className="card import-compose" aria-labelledby="import-compose-title">
       <div className="import-tabs" role="tablist" aria-label="Import method">
@@ -175,8 +195,14 @@ export function ImportInbox({ ownerId, params, initialImports }: Props) {
 
     <section aria-labelledby="import-review-title">
       <h2 id="import-review-title" className="section-title">Review imported sources</h2>
+      {initialImports.some((source) => source.state === "ready_for_review") ? <div className="card import-loom-enrollment">
+        <h3>Draft with the Loom</h3>
+        <p className="small muted">Select up to eight frozen source versions. This explicit action sends their extracted or entered text to the Loom; it does not send original files, create canon, or embed the raw imports.</p>
+        <label className="field"><span>What should the Loom help build?</span><textarea className="textarea" rows={4} maxLength={2000} value={loomPrompt} onChange={(event) => setLoomPrompt(event.target.value)} /></label>
+        <div className="button-row"><button type="button" className="btn btn-primary" disabled={!loomSources.length || !loomPrompt.trim() || busyId === "loom-enrollment"} onClick={() => void draftWithLoom()}>{busyId === "loom-enrollment" ? "Opening the Loom…" : `Draft with the Loom (${loomSources.length})`}</button></div>
+      </div> : null}
       {initialImports.length === 0 ? <div className="card inspector-empty import-empty">No imports yet. Paste text or choose a supported file above.</div> : <div className="import-list">{initialImports.map((source) => <article className={`card import-source ${source.state}`} key={source.id}>
-        <header><div><span className={`chip ${source.state === "archived" ? "stone" : source.state === "failed" || source.state === "rejected" ? "rust" : "sage"}`}>{source.state.replaceAll("_", " ")}</span><h3 title={source.filename ?? "Pasted text"}>{source.filename ?? "Pasted text"}</h3></div><div className="button-row">{source.state === "failed" && source.ingestion_method === "pdf_file" ? <button type="button" className="btn btn-ghost btn-sm" disabled={busyId === source.id} onClick={() => void retryPdfSource(source)}>Retry extraction</button> : null}{(source.state === "ready_for_review" || source.state === "archived") ? <button type="button" className="btn btn-ghost btn-sm" disabled={busyId === source.id} onClick={() => void transition(source)}>{source.state === "archived" ? "Restore" : "Archive"}</button> : null}</div></header>
+        <header><div>{source.state === "ready_for_review" ? <label className="import-source-select"><input type="checkbox" aria-label={`Select ${source.filename ?? "Pasted text"} for the Loom`} checked={loomSources.includes(source.id)} onChange={() => toggleLoomSource(source.id)} /> Include for Loom</label> : null}<span className={`chip ${source.state === "archived" ? "stone" : source.state === "failed" || source.state === "rejected" ? "rust" : "sage"}`}>{source.state.replaceAll("_", " ")}</span><h3 title={source.filename ?? "Pasted text"}>{source.filename ?? "Pasted text"}</h3></div><div className="button-row">{source.state === "failed" && source.ingestion_method === "pdf_file" ? <button type="button" className="btn btn-ghost btn-sm" disabled={busyId === source.id} onClick={() => void retryPdfSource(source)}>Retry extraction</button> : null}{(source.state === "ready_for_review" || source.state === "archived") ? <button type="button" className="btn btn-ghost btn-sm" disabled={busyId === source.id} onClick={() => void transition(source)}>{source.state === "archived" ? "Restore" : "Archive"}</button> : null}</div></header>
         <dl className="import-provenance"><div><dt>Method</dt><dd>{source.ingestion_method.replaceAll("_", " ")}</dd></div><div><dt>MIME</dt><dd>{source.mime_type}</dd></div><div><dt>Size</dt><dd>{source.byte_size} bytes</dd></div><div><dt>Imported</dt><dd>{new Date(source.created_at).toLocaleString()}</dd></div><div><dt>Uploader</dt><dd>{source.uploader_id}</dd></div>{source.page_count ? <div><dt>Pages</dt><dd>{source.page_count}</dd></div> : null}{source.extraction_version ? <div><dt>Extractor</dt><dd>{source.extraction_version}</dd></div> : null}{source.failure_code ? <div><dt>Failure</dt><dd>{source.failure_code.replaceAll("_", " ")}</dd></div> : null}</dl>
         {source.content ? <details><summary>{source.ingestion_method === "pdf_file" ? "Inspect extracted text" : "Inspect original content"}</summary><pre>{source.content}</pre></details> : <p className="small muted">{source.failure_code === "no_extractable_text" ? "No selectable text was found. OCR and AI vision are planned for V1." : "No derived text is available yet."}</p>}
       </article>)}</div>}

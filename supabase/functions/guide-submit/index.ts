@@ -13,6 +13,7 @@ type GuideSubmitRequest = {
   turn_id?: string;
   idempotency_key?: string;
   question?: string;
+  selected_import_source_ids?: string[];
 };
 
 type GuideSearchResult = {
@@ -27,6 +28,8 @@ type LoomRetrievalPlan = {
   reason?: string;
   source_ids?: unknown[];
 };
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function normalizeQuestion(value: string) {
   return value.normalize("NFKC").replace(/\r\n?/g, "\n").replace(/[\t ]+/g, " ").trim();
@@ -64,6 +67,12 @@ Deno.serve(async (req) => {
     || !body.turn_id || !body.idempotency_key || question.length < 1 || question.length > 2000) {
     return errorResponse(400, "invalid_request", "The Guide question is invalid.");
   }
+  const requestedImports = body.selected_import_source_ids ?? [];
+  const selectedImportSourceIds = [...new Set(requestedImports)].sort();
+  if (!Array.isArray(requestedImports) || requestedImports.length !== selectedImportSourceIds.length
+    || selectedImportSourceIds.length > 8 || selectedImportSourceIds.some((value) => !UUID.test(value))) {
+    return errorResponse(400, "invalid_request", "Selected import sources are invalid.");
+  }
 
   const service = createServiceClient();
   const { data: existing, error: replayError } = await service.rpc("get_guide_turn_replay_for_worker", {
@@ -73,8 +82,12 @@ Deno.serve(async (req) => {
   });
   if (replayError) return errorResponse(500, "guide_replay_failed", "Relic Guide could not verify this retry.");
   if (existing) {
+    const replayImports = Array.isArray(existing.import_source_ids)
+      ? existing.import_source_ids.filter((value: unknown): value is string => typeof value === "string").sort()
+      : [];
     if (existing.workspace_id !== body.workspace_id || existing.world_id !== body.world_id
-      || existing.question !== question || existing.id !== body.turn_id) {
+      || existing.question !== question || existing.id !== body.turn_id
+      || JSON.stringify(replayImports) !== JSON.stringify(selectedImportSourceIds)) {
       return errorResponse(409, "idempotency_conflict", "This Guide retry does not match the original question.");
     }
     return jsonResponse({
@@ -86,13 +99,15 @@ Deno.serve(async (req) => {
     });
   }
 
-  const { data: planned, error: planError } = await service.rpc("plan_loom_retrieval_for_worker", {
-    p_workspace_id: body.workspace_id,
-    p_world_id: body.world_id,
-    p_saga_id: body.saga_id,
-    p_gm_id: body.gm_user_id,
-    p_question: question
-  });
+  const { data: planned, error: planError } = selectedImportSourceIds.length
+    ? { data: { strategy: "exact", provider_required: true, reason: "explicit_import_enrollment", source_ids: selectedImportSourceIds }, error: null }
+    : await service.rpc("plan_loom_retrieval_for_worker", {
+      p_workspace_id: body.workspace_id,
+      p_world_id: body.world_id,
+      p_saga_id: body.saga_id,
+      p_gm_id: body.gm_user_id,
+      p_question: question
+    });
   if (planError || typeof planned !== "object" || planned === null) {
     return errorResponse(503, "retrieval_unavailable", "The Loom could not safely plan this request.");
   }
@@ -142,7 +157,7 @@ Deno.serve(async (req) => {
     p_saga_id: body.saga_id,
     p_session_id: null,
     p_task_name: "answer_saga_question",
-    p_input_payload: { question_length: question.length }
+    p_input_payload: { question_length: question.length, selected_import_count: selectedImportSourceIds.length }
   });
   if (preflightError) return errorResponse(403, "permission_denied", "Relic Guide is unavailable in this Saga.");
 
@@ -174,7 +189,7 @@ Deno.serve(async (req) => {
 
   let retrievalMode: "hybrid" | "lexical_fallback" | "lexical" | "exact" | "structured" =
     strategy === "exact" || strategy === "structured" ? strategy : strategy === "lexical" ? "lexical" : "hybrid";
-  let sourceIds = strategy === "exact" || strategy === "structured"
+  let sourceIds = selectedImportSourceIds.length ? selectedImportSourceIds : strategy === "exact" || strategy === "structured"
     ? [...new Set((Array.isArray(plan.source_ids) ? plan.source_ids : [])
       .filter((value): value is string => typeof value === "string"))].slice(0, 20)
     : [];
@@ -231,7 +246,18 @@ Deno.serve(async (req) => {
       query_embedding_requested: strategy === "hybrid"
     }
   }).catch(() => undefined);
-  const { data: submission, error: createError } = await service.rpc("create_loom_provider_turn_for_worker", {
+  const turnRpc = selectedImportSourceIds.length ? "create_import_loom_turn_for_worker" : "create_loom_provider_turn_for_worker";
+  const turnArgs = selectedImportSourceIds.length ? {
+    p_workspace_id: body.workspace_id,
+    p_world_id: body.world_id,
+    p_saga_id: body.saga_id,
+    p_gm_id: body.gm_user_id,
+    p_thread_id: body.thread_id ?? null,
+    p_turn_id: body.turn_id,
+    p_idempotency_key: body.idempotency_key,
+    p_question: question,
+    p_source_ids: selectedImportSourceIds
+  } : {
     p_workspace_id: body.workspace_id,
     p_world_id: body.world_id,
     p_saga_id: body.saga_id,
@@ -242,7 +268,8 @@ Deno.serve(async (req) => {
     p_question: question,
     p_retrieval_mode: retrievalMode,
     p_source_ids: sourceIds
-  });
+  };
+  const { data: submission, error: createError } = await service.rpc(turnRpc, turnArgs);
   if (createError) return errorResponse(400, "guide_submit_failed", "Relic Guide could not preserve this question.");
   if (submission.replayed || submission.status === "complete") {
     return jsonResponse({ ...submission, quota: { severity: preflight.severity } });
