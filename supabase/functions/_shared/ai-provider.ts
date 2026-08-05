@@ -7,6 +7,7 @@ export type AiProviderConfig = {
   runtimeEnvironment: string;
   alias: "relic-fast" | "relic-balanced" | "relic-deep";
   resolvedModel: string;
+  reasoningEffort: "none" | "low";
   timeoutMs: number;
   maxOutputTokens: number;
   baseUrl?: string;
@@ -24,12 +25,14 @@ export type AiFailureCategory =
 export class AiProviderError extends Error {
   readonly category: AiFailureCategory;
   readonly retryable: boolean;
+  readonly providerResult?: AiProviderResult;
 
-  constructor(category: AiFailureCategory, retryable: boolean) {
+  constructor(category: AiFailureCategory, retryable: boolean, providerResult?: AiProviderResult) {
     super(category);
     this.name = "AiProviderError";
     this.category = category;
     this.retryable = retryable;
+    this.providerResult = providerResult;
   }
 }
 
@@ -75,6 +78,7 @@ export function resolveAiProviderConfig(modelTier: string, env: EnvironmentReade
     runtimeEnvironment,
     alias,
     resolvedModel,
+    reasoningEffort: alias === "relic-fast" ? "none" : "low",
     timeoutMs: positiveInteger(env.get("AI_TIMEOUT_MS"), 140_000),
     maxOutputTokens: positiveInteger(
       env.get(envKey("AI_MAX_OUTPUT_TOKENS", alias)),
@@ -519,7 +523,9 @@ function retryableStatus(status: number) {
 
 function modelMatches(reported: string, expected: string, alias: string) {
   const expectedTail = expected.split("/").at(-1);
-  return reported === alias || reported === expected || reported === expectedTail;
+  const reportedTail = reported.split("/").at(-1);
+  return reported === alias || reported === expected || reported === expectedTail
+    || reportedTail === expectedTail;
 }
 
 export async function callAiProvider(
@@ -542,6 +548,8 @@ export async function callAiProvider(
       tokensIn: 0,
       tokensOut: 0,
       costEstimateUsd: 0,
+      costEstimateComplete: true,
+      costEstimateSource: "deterministic_test",
       billable: false
     };
   }
@@ -566,6 +574,7 @@ export async function callAiProvider(
       },
       body: JSON.stringify({
         model: config.alias,
+        reasoning_effort: config.reasoningEffort,
         max_completion_tokens: config.maxOutputTokens,
         response_format: { type: "json_object" },
         messages: [
@@ -610,15 +619,16 @@ export async function callAiProvider(
       throw new AiProviderError(retryable ? "provider_unavailable" : "provider_rejected", retryable);
     }
 
+    const provider = response.headers.get("x-litellm-provider") ?? "litellm";
+    const requestId = response.headers.get("x-request-id");
     let body: Record<string, unknown>;
     try {
       body = await response.json() as Record<string, unknown>;
     } catch {
-      throw new AiProviderError("malformed_response", false);
-    }
-    const reportedModel = typeof body.model === "string" ? body.model.trim() : "";
-    if (!reportedModel || !modelMatches(reportedModel, config.resolvedModel, config.alias)) {
-      throw new AiProviderError("model_mismatch", false);
+      throw new AiProviderError("malformed_response", false, {
+        output: null, alias: config.alias, resolvedModel: config.resolvedModel, provider,
+        requestId, costEstimateComplete: false, costEstimateSource: "unavailable", billable: true
+      });
     }
     const choices = Array.isArray(body.choices) ? body.choices : [];
     const firstChoice = typeof choices[0] === "object" && choices[0] !== null
@@ -627,17 +637,43 @@ export async function callAiProvider(
       ? firstChoice.message as Record<string, unknown> : {};
     const usage = typeof body.usage === "object" && body.usage !== null
       ? body.usage as Record<string, unknown> : {};
-    return {
+    const tokensIn = typeof usage.prompt_tokens === "number" && usage.prompt_tokens >= 0
+      ? usage.prompt_tokens : undefined;
+    const tokensOut = typeof usage.completion_tokens === "number" && usage.completion_tokens >= 0
+      ? usage.completion_tokens : undefined;
+    const proxyCost = typeof usage.cost === "number" && usage.cost >= 0 ? usage.cost : undefined;
+    const price = config.resolvedModel.endsWith("gpt-5.6-luna")
+      ? { input: 1 / 1_000_000, output: 6 / 1_000_000 }
+      : config.resolvedModel.endsWith("gpt-5.6-terra")
+        ? { input: 2.5 / 1_000_000, output: 15 / 1_000_000 }
+        : config.resolvedModel.endsWith("gpt-5.6-sol")
+          ? { input: 5 / 1_000_000, output: 30 / 1_000_000 }
+          : null;
+    // The 1.25 input multiplier safely covers GPT-5.6 cache-write pricing;
+    // cached reads only make the provider invoice lower than this estimate.
+    const localUpperBound = price && tokensIn !== undefined && tokensOut !== undefined
+      ? (tokensIn * price.input * 1.25) + (tokensOut * price.output)
+      : undefined;
+    const costEstimateUsd = proxyCost === undefined ? localUpperBound
+      : localUpperBound === undefined ? proxyCost : Math.max(proxyCost, localUpperBound);
+    const providerResult: AiProviderResult = {
       output: message.content,
       alias: config.alias,
       resolvedModel: config.resolvedModel,
-      provider: response.headers.get("x-litellm-provider") ?? "litellm",
-      requestId: response.headers.get("x-request-id"),
-      tokensIn: typeof usage.prompt_tokens === "number" ? usage.prompt_tokens : undefined,
-      tokensOut: typeof usage.completion_tokens === "number" ? usage.completion_tokens : undefined,
-      costEstimateUsd: typeof usage.cost === "number" ? usage.cost : undefined,
+      provider,
+      requestId,
+      tokensIn,
+      tokensOut,
+      costEstimateUsd,
+      costEstimateComplete: costEstimateUsd !== undefined,
+      costEstimateSource: costEstimateUsd === undefined ? "unavailable" : "proxy_or_local_upper_bound",
       billable: true
     };
+    const reportedModel = typeof body.model === "string" ? body.model.trim() : "";
+    if (!reportedModel || !modelMatches(reportedModel, config.resolvedModel, config.alias)) {
+      throw new AiProviderError("model_mismatch", false, providerResult);
+    }
+    return providerResult;
   } catch (error) {
     if (error instanceof AiProviderError) throw error;
     if (controller.signal.aborted) throw new AiProviderError("timeout", true);

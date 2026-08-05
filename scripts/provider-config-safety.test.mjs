@@ -73,6 +73,42 @@ test("valid staging configuration retains only canonical aliases", () => {
   assert.equal(embedding.alias, "relic-embed");
   assert.equal(transcription.alias, "relic-transcribe");
   assert.equal(ai.alias, "relic-balanced");
+  assert.equal(ai.reasoningEffort, "low");
+  const fast = resolveAiProviderConfig("relic-fast", environment({
+    RELIC_ENV: "staging", AI_PROVIDER_MODE: "live", AI_MODEL_RELIC_FAST: "relic-fast",
+    AI_RESOLVED_MODEL_RELIC_FAST: "gpt-5.6-luna", LITELLM_PROXY_URL: "https://proxy.test", LITELLM_PROXY_KEY: "server-only"
+  }));
+  assert.equal(fast.reasoningEffort, "none");
+});
+
+test("AI provider pins reasoning effort and computes a conservative GPT-5.6 cost", async () => {
+  let body;
+  const taskRun = {
+    id: "e2000000-0000-0000-0000-000000000011", workspace_id: "e2000000-0000-0000-0000-000000000012",
+    world_id: null, saga_id: null, session_id: null, gm_id: null, task_name: "plan_saga_workshop",
+    prompt_version: "plan_saga_workshop@1.0.0", quota_tier: "light", ai_credits: 1,
+    model_tier: "relic-fast", resolved_model: null, resolved_provider: null,
+    retrieval_profile: "none", source_policy: "gm_input", output_mode: "proposal",
+    input_payload: {}, allowed_source_ids: []
+  };
+  const result = await callAiProvider({ taskRun, retrievalContext: [] }, {
+    config: {
+      mode: "live", runtimeEnvironment: "staging", alias: "relic-fast",
+      resolvedModel: "gpt-5.6-luna", reasoningEffort: "none", timeoutMs: 1000,
+      maxOutputTokens: 800, baseUrl: "https://proxy.test", apiKey: "server-only"
+    },
+    fetchImpl: async (_url, init) => {
+      body = JSON.parse(init.body);
+      return new Response(JSON.stringify({
+        model: "openai/gpt-5.6-luna", choices: [{ message: { content: "{}" } }],
+        usage: { prompt_tokens: 1000, completion_tokens: 100 }
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    }
+  });
+  assert.equal(body.reasoning_effort, "none");
+  assert.equal(result.costEstimateComplete, true);
+  assert.equal(result.costEstimateSource, "proxy_or_local_upper_bound");
+  assert.equal(result.costEstimateUsd, 0.00185);
 });
 
 test("hosted transcription cannot silently fall back to generic AI credentials", () => {
@@ -124,5 +160,7 @@ test("AI provider rejects an unexpected hosted model", async () => {
       }), { status: 200, headers: { "content-type": "application/json" } })
     }),
     (error) => error instanceof AiProviderError && error.category === "model_mismatch"
+      && error.providerResult?.costEstimateComplete === false
+      && error.providerResult?.billable === true
   );
 });

@@ -10,8 +10,9 @@ $ErrorActionPreference = "Stop"
 
 $approvedAuthorization = "PHASE_E_HOSTED_SMOKE_APPROVED"
 $approvedProjectRef = "scagegrrilvrpuilthzz"
-$costCeiling = [decimal]1.00
-$proxyBudget = [decimal]0.99
+$costCeiling = [decimal]4.00
+$priorProviderSpendReserve = [decimal]0.25
+$proxyBudget = [decimal]3.74
 $providerCompletionLimit = 12
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $stagingStatePath = Join-Path $repoRoot "infra/litellm/.secrets.e2-staging"
@@ -45,7 +46,7 @@ function Invoke-SupabaseCommand([string[]]$Arguments) {
   $priorPreference = $ErrorActionPreference
   $ErrorActionPreference = "Continue"
   try {
-    $output = & supabase @Arguments 2>&1
+    $output = & supabase @Arguments 2>$null
     $exitCode = $LASTEXITCODE
   } finally {
     $ErrorActionPreference = $priorPreference
@@ -148,7 +149,7 @@ litellm_settings:
   set_verbose: false
   turn_off_message_logging: true
   log_raw_request_response: false
-  max_budget: 0.99
+  max_budget: 3.74
   budget_duration: 2h
 general_settings:
   master_key: $masterKey
@@ -387,6 +388,7 @@ if ($executionError) { throw $executionError }
     models = @("relic-fast", "relic-balanced", "relic-deep")
     global_budget_usd = $proxyBudget
     provider_cost_ceiling_usd = $costCeiling
+    prior_provider_spend_reserve_usd = $priorProviderSpendReserve
     infrastructure_cost_hard_capped = $false
     budget_duration = "2h"
     maximum_concurrency = 1

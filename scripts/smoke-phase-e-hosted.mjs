@@ -2,7 +2,9 @@ import { spawnSync } from "node:child_process";
 
 const PROJECT_REF = "scagegrrilvrpuilthzz";
 const AUTHORIZATION = "PHASE_E_HOSTED_SMOKE_APPROVED";
-const COST_CEILING_USD = 1.0;
+const COST_CEILING_USD = 4.0;
+const PRIOR_PROVIDER_SPEND_RESERVE_USD = 0.25;
+const REMAINING_PROXY_BUDGET_USD = 3.74;
 const MAX_LOGICAL_TASKS = 6;
 const MAX_PROVIDER_COMPLETIONS = 12;
 const PRODUCT_CREDITS = 28;
@@ -78,7 +80,8 @@ function manifest() {
     maximum_provider_completions: MAX_PROVIDER_COMPLETIONS,
     maximum_repairs_per_task: 1,
     provider_cost_ceiling_usd: COST_CEILING_USD,
-    isolated_proxy_budget_usd: 0.99,
+    prior_provider_spend_reserve_usd: PRIOR_PROVIDER_SPEND_RESERVE_USD,
+    isolated_proxy_budget_usd: REMAINING_PROXY_BUDGET_USD,
     temporary_proxy_infrastructure_cost_hard_capped: false,
     tasks: TASKS.map(({ task, prompt, alias, model, credits }) => ({ task, prompt, alias, model, credits })),
     forbidden: ["query_embedding", "transcription", "synthesis", "canon_commit", "archive", "restore", "hard_delete", "saga_delete", "action_confirmation"],
@@ -243,8 +246,9 @@ function guardEvidence() {
   return oneRow(`select jsonb_build_object(
     'logical_runs',(select count(*) from internal.ai_task_runs where workspace_id='${IDS.workspace}'),
     'complete_runs',(select count(*) from internal.ai_task_runs where workspace_id='${IDS.workspace}' and status='complete'),
-    'provider_completions',coalesce((select sum(attempts+repair_attempts) from internal.ai_task_runs where workspace_id='${IDS.workspace}'),0),
+    'provider_completions',coalesce((select sum(provider_completions) from internal.ai_task_runs where workspace_id='${IDS.workspace}'),0),
     'cost_usd',coalesce((select sum(provider_cost_estimate_usd) from internal.ai_task_runs where workspace_id='${IDS.workspace}'),0),
+    'cost_estimate_complete',coalesce((select bool_and(provider_cost_estimate_complete) from internal.ai_task_runs where workspace_id='${IDS.workspace}' and provider_completions > 0),true),
     'usage_events',(select count(*) from public.usage_events where workspace_id='${IDS.workspace}'),
     'query_embedding_events',(select count(*) from internal.provider_pipeline_events where workspace_id='${IDS.workspace}' and worker_type='hybrid_search'),
     'provider_call_started',(select count(*) from internal.provider_pipeline_events where workspace_id='${IDS.workspace}' and event_name='provider_call_started')
@@ -254,16 +258,18 @@ function guardEvidence() {
 function enforceGuards(evidence, reserveCompletions = 0) {
   if (numberValue(evidence.logical_runs) !== MAX_LOGICAL_TASKS) fail("The Phase E logical-task count changed during execution.");
   if (numberValue(evidence.provider_completions) + reserveCompletions > MAX_PROVIDER_COMPLETIONS) fail("The Phase E provider-completion ceiling stopped execution.");
-  if (numberValue(evidence.cost_usd) > COST_CEILING_USD) fail("The Phase E packet cost ceiling stopped execution.");
+  if (numberValue(evidence.provider_call_started) + reserveCompletions > MAX_PROVIDER_COMPLETIONS) fail("The Phase E provider-call ceiling stopped execution.");
+  if (!evidence.cost_estimate_complete) fail("The Phase E cost evidence was incomplete; execution stopped before another provider call.");
+  if (numberValue(evidence.cost_usd) + PRIOR_PROVIDER_SPEND_RESERVE_USD > COST_CEILING_USD) fail("The Phase E packet cost ceiling stopped execution.");
   if (numberValue(evidence.query_embedding_events) !== 0) fail("The Phase E zero-query-embedding contract was violated.");
 }
 
 function collectEvidence() {
   return oneRow(`select jsonb_build_object(
     'runs',(select jsonb_agg(jsonb_build_object(
-      'task',task_name,'prompt',prompt_version,'status',status,'attempts',attempts,'repairs',repair_attempts,
+      'task',task_name,'prompt',prompt_version,'status',status,'attempts',attempts,'repairs',repair_attempts,'provider_completions',provider_completions,
       'credits',ai_credits,'alias',provider_alias,'model',resolved_model,'provider',resolved_provider,
-      'cost_usd',provider_cost_estimate_usd,'checkpointed',provider_completed_at is not null,
+      'cost_usd',provider_cost_estimate_usd,'cost_estimate_complete',provider_cost_estimate_complete,'checkpointed',provider_completed_at is not null,
       'usage_events',(select count(*) from public.usage_events u where u.id=r.usage_event_id),
       'allowed_sources',allowed_source_ids
     ) order by created_at) from internal.ai_task_runs r where workspace_id='${IDS.workspace}'),
@@ -289,7 +295,8 @@ function validateEvidence(evidence) {
     if (!run || run.prompt !== spec.prompt || run.status !== "complete" || run.alias !== spec.alias
       || run.model !== spec.model || numberValue(run.credits) !== spec.credits || !run.checkpointed
       || numberValue(run.usage_events) !== 1 || JSON.stringify(run.allowed_sources) !== JSON.stringify([IDS.source])
-      || numberValue(run.repairs) > 1) {
+      || numberValue(run.repairs) > 1 || numberValue(run.provider_completions) < 1
+      || numberValue(run.provider_completions) > 2 || !run.cost_estimate_complete) {
       fail(`The hosted ${spec.task} evidence did not match its approved contract.`);
     }
   }
@@ -302,9 +309,31 @@ function validateEvidence(evidence) {
   }
   enforceGuards(evidence.guards);
   if (numberValue(evidence.guards.complete_runs) !== MAX_LOGICAL_TASKS
-    || numberValue(evidence.guards.usage_events) !== MAX_LOGICAL_TASKS) {
+    || numberValue(evidence.guards.usage_events) !== MAX_LOGICAL_TASKS
+    || numberValue(evidence.guards.provider_call_started) !== numberValue(evidence.guards.provider_completions)) {
     fail("The Phase E completion or metering evidence was incomplete.");
   }
+}
+
+function collectSafeFailureEvidence() {
+  return oneRow(`select jsonb_build_object(
+    'runs',coalesce((select jsonb_agg(jsonb_build_object(
+      'task',task_name,'status',status,'attempts',attempts,'repairs',repair_attempts,
+      'provider_completions',provider_completions,'failure_category',failure_category,
+      'checkpointed',provider_completed_at is not null,'tokens_in',provider_tokens_in,
+      'tokens_out',provider_tokens_out,'cost_usd',provider_cost_estimate_usd,
+      'cost_estimate_complete',provider_cost_estimate_complete
+    ) order by created_at) from internal.ai_task_runs where workspace_id='${IDS.workspace}'),'[]'::jsonb),
+    'events',coalesce((select jsonb_object_agg(event_name,event_count) from (
+      select event_name,count(*) as event_count from internal.provider_pipeline_events
+      where workspace_id='${IDS.workspace}' group by event_name order by event_name
+    ) counts),'{}'::jsonb),
+    'error_categories',coalesce((select jsonb_object_agg(error_category,error_count) from (
+      select error_category,count(*) as error_count from internal.provider_pipeline_events
+      where workspace_id='${IDS.workspace}' and error_category is not null group by error_category order by error_category
+    ) counts),'{}'::jsonb),
+    'usage_events',(select count(*) from public.usage_events where workspace_id='${IDS.workspace}')
+  ) evidence;`, "safe_failure_evidence").evidence;
 }
 
 function cleanupFixture() {
@@ -397,6 +426,7 @@ if (validateLocal) {
 assertExecutionGuard();
 let output;
 let executionError;
+let safeFailureEvidence;
 try {
   runSql(`select count(*) as schedules_updated from (
     select cron.alter_job(jobid,active=>false) from cron.job
@@ -434,7 +464,9 @@ try {
     configured_guards: manifest(), evidence
   };
 } catch (error) {
-  executionError = error;
+  try { safeFailureEvidence = collectSafeFailureEvidence(); } catch { /* Cleanup remains authoritative. */ }
+  const detail = safeFailureEvidence ? ` Safe evidence: ${JSON.stringify(safeFailureEvidence)}` : "";
+  executionError = new Error(`${error.message}${detail}`);
 }
 
 let cleanupError;

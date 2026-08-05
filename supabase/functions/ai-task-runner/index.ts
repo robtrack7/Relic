@@ -43,6 +43,72 @@ async function claimRun(
   return data as AiTaskRun;
 }
 
+type ProviderUsageTotals = {
+  provider_completions: number;
+  provider_tokens_in: number;
+  provider_tokens_out: number;
+  provider_cost_estimate_usd: number;
+  provider_cost_estimate_complete: boolean;
+  provider_billable: boolean;
+  provider_request_id_present: boolean;
+  exact_redelivery: boolean;
+};
+
+async function callAndLedgerProvider(
+  service: ReturnType<typeof createServiceClient>,
+  taskRun: AiTaskRun,
+  workerId: string,
+  retrievalContext: unknown[],
+  callKind: "initial" | "schema_repair",
+  inputSize: number,
+  repair?: {
+    invalidOutput: unknown;
+    validationErrors: string[];
+    allowedSourceIds: string[];
+  }
+): Promise<{ result: AiProviderResult; totals: ProviderUsageTotals }> {
+  await recordProviderPipelineEvent({
+    eventName: "provider_call_started", workerType: `ai_task:${taskRun.task_name}`,
+    aiRunId: taskRun.id, pipelineRunId: taskRun.input_payload?.pipeline_run_id as string | undefined,
+    workspaceId: taskRun.workspace_id, worldId: taskRun.world_id, sagaId: taskRun.saga_id,
+    sessionId: taskRun.session_id,
+    idempotencyIdentifier: `ai-task:${taskRun.id}:${taskRun.attempts ?? 1}:${callKind}`,
+    attemptCount: taskRun.attempts, state: "running", providerAlias: taskRun.model_tier,
+    inputUnits: inputSize, inputUnitType: "character"
+  }).catch(() => undefined);
+
+  const ledger = async (result: AiProviderResult) => {
+    const { data, error } = await service.rpc("record_ai_task_provider_completion_for_worker", {
+      p_run_id: taskRun.id,
+      p_worker_id: workerId,
+      p_attempt_number: taskRun.attempts ?? 1,
+      p_call_kind: callKind,
+      p_provider_alias: result.alias,
+      p_resolved_model: result.resolvedModel,
+      p_resolved_provider: result.provider,
+      p_tokens_in: result.tokensIn,
+      p_tokens_out: result.tokensOut,
+      p_cost_estimate_usd: result.costEstimateUsd,
+      p_cost_estimate_complete: result.costEstimateComplete,
+      p_cost_estimate_source: result.costEstimateSource,
+      p_billable: result.billable,
+      p_provider_request_id_present: Boolean(result.requestId)
+    });
+    if (error) throw new Error(`provider accounting failed: ${error.message}`);
+    return data as ProviderUsageTotals;
+  };
+
+  try {
+    const result = await callAiProvider({ taskRun, retrievalContext, repair });
+    return { result, totals: await ledger(result) };
+  } catch (error) {
+    if (error instanceof AiProviderError && error.providerResult) {
+      await ledger(error.providerResult);
+    }
+    throw error;
+  }
+}
+
 async function retrieveContext(
   service: ReturnType<typeof createServiceClient>,
   taskRun: AiTaskRun
@@ -251,6 +317,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   try {
     taskRun = await claimRun(service, runId, workerId);
+    repairAttempts = taskRun.repair_attempts ?? 0;
     if (taskRun.claim_state === "complete") {
       await recordProviderPipelineEvent({
         eventName: "ai_task_completed", workerType: `ai_task:${taskRun.task_name}`,
@@ -308,6 +375,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     let inputSize = 0;
     let usedCheckpoint = false;
     let providerResult: AiProviderResult;
+    let providerTotals: ProviderUsageTotals;
     let validated: ValidationResult;
 
     if (taskRun.provider_completed_at && taskRun.output_payload && taskRun.provider_alias
@@ -321,8 +389,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
         tokensIn: taskRun.provider_tokens_in ?? undefined,
         tokensOut: taskRun.provider_tokens_out ?? undefined,
         costEstimateUsd: taskRun.provider_cost_estimate_usd ?? undefined,
+        costEstimateComplete: taskRun.provider_cost_estimate_complete ?? false,
+        costEstimateSource: taskRun.provider_cost_estimate_complete
+          ? "proxy_or_local_upper_bound" : "unavailable",
         billable: taskRun.provider_billable ?? true,
         requestId: taskRun.provider_request_id_present ? "checkpointed" : null
+      };
+      providerTotals = {
+        provider_completions: taskRun.provider_completions ?? 0,
+        provider_tokens_in: taskRun.provider_tokens_in ?? 0,
+        provider_tokens_out: taskRun.provider_tokens_out ?? 0,
+        provider_cost_estimate_usd: taskRun.provider_cost_estimate_usd ?? 0,
+        provider_cost_estimate_complete: taskRun.provider_cost_estimate_complete ?? false,
+        provider_billable: taskRun.provider_billable ?? true,
+        provider_request_id_present: taskRun.provider_request_id_present ?? false,
+        exact_redelivery: true
       };
       validated = validateTaskOutput(taskRun, taskRun.output_payload);
       if (!validated.ok) throw new Error("Checkpointed AI output no longer validates.");
@@ -331,30 +412,27 @@ Deno.serve(async (req: Request): Promise<Response> => {
       const retrievalContext = await retrieveContext(service, taskRun);
       const providerStartedAt = performance.now();
       inputSize = JSON.stringify({ input: taskRun.input_payload, retrieval: retrievalContext }).length;
-      await recordProviderPipelineEvent({
-        eventName: "provider_call_started", workerType: `ai_task:${taskRun.task_name}`,
-        aiRunId: taskRun.id, pipelineRunId: taskRun.input_payload?.pipeline_run_id as string | undefined,
-        workspaceId: taskRun.workspace_id, worldId: taskRun.world_id, sagaId: taskRun.saga_id,
-        sessionId: taskRun.session_id, idempotencyIdentifier: `ai-task:${taskRun.id}`,
-        attemptCount: taskRun.attempts, state: "running", providerAlias: taskRun.model_tier,
-        inputUnits: inputSize, inputUnitType: "character"
-      }).catch(() => undefined);
       phase = "provider";
-      providerResult = await callAiProvider({ taskRun, retrievalContext });
+      let completion = await callAndLedgerProvider(
+        service, taskRun, workerId, retrievalContext, "initial", inputSize
+      );
+      providerResult = completion.result;
+      providerTotals = completion.totals;
       const parsed = parseModelJson(providerResult.output);
       validated = parsed.ok ? validateTaskOutput(taskRun, parsed.output) : parsed;
 
-      if (!validated.ok) {
-        repairAttempts = 1;
-        providerResult = await callAiProvider({
-          taskRun,
-          retrievalContext,
-          repair: {
+      if (!validated.ok && repairAttempts < 1) {
+        repairAttempts += 1;
+        completion = await callAndLedgerProvider(
+          service, taskRun, workerId, retrievalContext, "schema_repair", inputSize,
+          {
             invalidOutput: validated.output ?? providerResult.output,
             validationErrors: validated.errors,
             allowedSourceIds: taskRun.allowed_source_ids
           }
-        });
+        );
+        providerResult = completion.result;
+        providerTotals = completion.totals;
         const parsedRepair = parseModelJson(providerResult.output);
         validated = parsedRepair.ok ? validateTaskOutput(taskRun, parsedRepair.output) : parsedRepair;
       }
@@ -413,7 +491,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         p_resolved_provider: providerResult.provider,
         p_tokens_in: providerResult.tokensIn,
         p_tokens_out: providerResult.tokensOut,
-        p_cost_estimate_usd: providerResult.costEstimateUsd,
+      p_cost_estimate_usd: providerResult.costEstimateUsd,
         p_billable: providerResult.billable,
         p_provider_request_id_present: Boolean(providerResult.requestId)
       });
@@ -426,9 +504,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
       taskRun,
       providerResult.resolvedModel,
       providerResult.provider,
-      providerResult.tokensIn,
-      providerResult.tokensOut,
-      providerResult.costEstimateUsd
+      providerTotals.provider_tokens_in,
+      providerTotals.provider_tokens_out,
+      providerTotals.provider_cost_estimate_usd
     );
 
     phase = "persistence";

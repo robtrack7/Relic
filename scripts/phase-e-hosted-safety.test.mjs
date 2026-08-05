@@ -21,8 +21,9 @@ test("Phase E preflight is manifest-only and reports zero hosted work", () => {
   assert.equal(output.task_count, 6);
   assert.equal(output.product_credits, 28);
   assert.equal(output.maximum_provider_completions, 12);
-  assert.equal(output.provider_cost_ceiling_usd, 1);
-  assert.equal(output.isolated_proxy_budget_usd, 0.99);
+  assert.equal(output.provider_cost_ceiling_usd, 4);
+  assert.equal(output.prior_provider_spend_reserve_usd, 0.25);
+  assert.equal(output.isolated_proxy_budget_usd, 3.74);
   assert.equal(output.temporary_proxy_infrastructure_cost_hard_capped, false);
 });
 
@@ -46,7 +47,7 @@ test("Phase E runner requires fresh authorization and the exact staging project"
     PATH: "",
     INTERNAL_TOKEN: "synthetic-guard-token",
     PHASE_E_FIXTURE_RUN_ID: "e5000000-0000-4000-8000-000000000099",
-    PHASE_E_MAX_COST_USD: "1",
+    PHASE_E_MAX_COST_USD: "4",
     PHASE_E_MAX_PROVIDER_COMPLETIONS: "12",
     PHASE_E_WRAPPER_OWNS_SCHEDULES: "1"
   };
@@ -92,10 +93,11 @@ test("Phase E allowlist pins all six current task, prompt, alias, model, and cre
 test("Phase E cost and call guards reserve at most one repair per task", () => {
   assert.match(runner, /MAX_PROVIDER_COMPLETIONS = 12/);
   assert.match(runner, /enforceGuards\(guardEvidence\(\), 2\)/);
-  assert.match(runner, /sum\(attempts\+repair_attempts\)/);
+  assert.match(runner, /sum\(provider_completions\)/);
   assert.match(runner, /numberValue\(run\.repairs\) > 1/);
-  assert.match(runner, /numberValue\(evidence\.cost_usd\) > COST_CEILING_USD/);
-  assert.match(wrapper, /max_budget: 0\.99/);
+  assert.match(runner, /cost_usd\) \+ PRIOR_PROVIDER_SPEND_RESERVE_USD > COST_CEILING_USD/);
+  assert.match(runner, /cost_estimate_complete/);
+  assert.match(wrapper, /max_budget: 3\.74/);
   assert.match(wrapper, /budget_duration: 2h/);
   assert.match(wrapper, /hard_limit = 1/);
 });
@@ -118,6 +120,8 @@ test("Phase E exact replay cannot add provider, usage, or cost work", () => {
 });
 
 test("Phase E wrapper protects secrets and restores every temporary staging change", () => {
+  assert.match(wrapper, /& supabase @Arguments 2>\$null/);
+  assert.doesNotMatch(wrapper, /& supabase @Arguments 2>&1/);
   assert.match(wrapper, /Protect-LocalFile \$envPath/);
   assert.match(wrapper, /Protect-LocalFile \$inputPath/);
   assert.match(wrapper, /Set-StagingProvider \$priorProxyUrl \$priorProxyKey/);
@@ -138,4 +142,7 @@ test("Phase E telemetry checks remain payload-free", () => {
   assert.match(runner, /secrets_printed: false/);
   assert.match(runner, /private_payloads_printed: false/);
   assert.doesNotMatch(wrapper, /Write-Output\s+\$openAiKey|Write-Host\s+\$openAiKey/);
+  assert.match(runner, /collectSafeFailureEvidence/);
+  assert.match(runner, /failure_category/);
+  assert.doesNotMatch(runner, /safe_failure_evidence[\s\S]{0,1800}output_payload/);
 });

@@ -42,6 +42,8 @@ export type AiTaskRun = {
   provider_tokens_in?: number | null;
   provider_tokens_out?: number | null;
   provider_cost_estimate_usd?: number | null;
+  provider_cost_estimate_complete?: boolean;
+  provider_completions?: number;
   provider_billable?: boolean | null;
   provider_request_id_present?: boolean;
   usage_event_id?: string | null;
@@ -67,5 +69,7 @@ export type AiProviderResult = {
   tokensIn?: number;
   tokensOut?: number;
   costEstimateUsd?: number;
+  costEstimateComplete: boolean;
+  costEstimateSource: "proxy_or_local_upper_bound" | "deterministic_test" | "unavailable";
   billable: boolean;
 };

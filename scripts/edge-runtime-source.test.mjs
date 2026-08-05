@@ -117,6 +117,11 @@ test("ai task runner uses internal auth and provider adapter boundaries", () => 
   assert.doesNotMatch(runner, /\bsession_id:\s*taskRun\.session_id,/, "session scoping must use the retrieval RPC filters contract");
   assert.match(runner, /filters:\s*taskRun\.session_id\s*\?\s*\{\s*session_id:\s*taskRun\.session_id\s*\}\s*:\s*\{\}/, "session-scoped retrieval should use filters.session_id");
   assert.match(runner, /checkpoint_ai_task_provider_output_for_worker/, "AI task runner should checkpoint validated output before delivery");
+  assert.match(runner, /record_ai_task_provider_completion_for_worker/, "every provider completion should be ledgered before validation or repair");
+  assert.ok(
+    runner.indexOf("record_ai_task_provider_completion_for_worker") < runner.indexOf("parseModelJson(providerResult.output)"),
+    "provider usage should be durable before output parsing and validation"
+  );
   assert.match(runner, /fail_ai_task_run_for_worker/, "AI task runner should use the bounded retry and dead-letter boundary");
   assert.ok(
     runner.indexOf("checkpoint_ai_task_provider_output_for_worker") < runner.indexOf("await recordUsage("),

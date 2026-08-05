@@ -249,6 +249,7 @@ values
   ('set_ai_task_usage_for_worker', 'Worker-only AI task usage event linker.'),
   ('claim_ai_task_run_for_worker', 'Worker-only atomic AI task delivery lease.'),
   ('checkpoint_ai_task_provider_output_for_worker', 'Worker-only private validated provider-output checkpoint.'),
+  ('record_ai_task_provider_completion_for_worker', 'Worker-only payload-free per-completion provider accounting ledger.'),
   ('fail_ai_task_run_for_worker', 'Worker-only bounded AI task retry and dead-letter transition.'),
   ('replay_ai_task_run_for_worker', 'Worker-only guarded AI task dead-letter replay.'),
   ('reset_stalled_ai_task_runs_for_worker', 'Worker-only stalled AI task lease watchdog.'),
