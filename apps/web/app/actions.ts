@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { editableEntityTypes, isEditableEntityType, normalizeScope } from "@/lib/entities";
 import { parseDicePool, rollDice, rollDicePool } from "@/lib/dice";
 import { getSupabaseUrl, hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
@@ -175,6 +176,8 @@ export async function createBlankSagaAction(formData: FormData) {
   const experienceLevel = value(formData, "experienceLevel") || "returning";
   const improvComfort = value(formData, "improvComfort") || "mixed";
   const prepStyle = value(formData, "prepStyle") || "mixed";
+  const profileMode = value(formData, "profileMode") || "use_default";
+  const saveProfileAsDefault = value(formData, "saveProfileAsDefault") === "true";
 
   if (!sagaName) {
     redirect("/app/new-saga?error=Saga%20name%20is%20required");
@@ -186,6 +189,8 @@ export async function createBlankSagaAction(formData: FormData) {
     experience_level: experienceLevel,
     improv_comfort: improvComfort,
     prep_style: prepStyle,
+    profile_mode: profileMode,
+    save_profile_as_default: saveProfileAsDefault,
     world_choice: value(formData, "worldChoice"),
     existing_world_id: value(formData, "existingWorldId") || null,
     world_name: value(formData, "worldName") || null,
@@ -198,6 +203,82 @@ export async function createBlankSagaAction(formData: FormData) {
   }
 
   redirect(sagaPath({ workspaceId: result.workspace_id, worldId: result.world_id, sagaId: result.saga_id }));
+}
+
+export async function createSagaWorkshopAction(formData: FormData) {
+  const { supabase, user } = await requireActionUser();
+  const workshopId = value(formData, "workshopId") || crypto.randomUUID();
+  const idempotencyKey = value(formData, "idempotencyKey") || crypto.randomUUID();
+  const workspaceId = value(formData, "targetWorkspaceId");
+  const sagaName = value(formData, "sagaName");
+  const input = rawValue(formData, "ideaOrNotes").normalize("NFKC").trim();
+  if (!workspaceId || !sagaName || !input || input.length > 50000) {
+    redirect("/app/new-saga?error=Saga%20name%20and%20an%20idea%20or%20notes%20are%20required");
+  }
+  const path = value(formData, "helpLevel") === "bring_your_notes" ? "bring_your_notes" : "build_with_ai";
+  const worldChoice = value(formData, "worldChoice");
+  const { data, error } = await supabase.rpc("create_saga_workshop", {
+    p_workshop_id: workshopId,
+    p_workspace_id: workspaceId,
+    p_existing_world_id: worldChoice === "existing" ? value(formData, "existingWorldId") || null : null,
+    p_path: path,
+    p_saga_name: sagaName,
+    p_world_name: value(formData, "worldName") || null,
+    p_game_system: value(formData, "gameSystem") || null,
+    p_idea_or_notes: input,
+    p_profile_mode: value(formData, "profileMode") || "use_default",
+    p_gm_profile: {
+      experience_level: value(formData, "experienceLevel") || "returning",
+      improv_comfort: value(formData, "improvComfort") || "mixed",
+      prep_style: value(formData, "prepStyle") || "mixed"
+    },
+    p_save_profile_as_default: value(formData, "saveProfileAsDefault") === "true",
+    p_idempotency_key: idempotencyKey
+  });
+  if (error) redirect(`/app/new-saga?error=${encodeURIComponent(error.message)}`);
+  const result = data as { run_id?: string | null } | null;
+  const internalToken = process.env.INTERNAL_TOKEN;
+  if (result?.run_id && internalToken) {
+    after(async () => {
+      await fetch(`${getSupabaseUrl()}/functions/v1/ai-task-runner`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${internalToken}`, "content-type": "application/json" },
+        body: JSON.stringify({ run_id: result.run_id }),
+        cache: "no-store"
+      }).catch(() => undefined);
+    });
+  }
+  void user;
+  redirect(`/app/new-saga/${workshopId}`);
+}
+
+export async function saveSagaWorkshopAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const workshopId = value(formData, "workshopId");
+  const expectedVersion = Number(value(formData, "expectedVersion"));
+  let draft: Record<string, unknown>;
+  try { draft = JSON.parse(rawValue(formData, "draft")); } catch { return { ok: false, category: "invalid_draft" }; }
+  const { data, error } = await supabase.rpc("save_saga_workshop_draft", {
+    p_workshop_id: workshopId, p_expected_version: expectedVersion, p_draft: draft
+  });
+  if (error) return { ok: false, category: error.code === "40001" ? "stale" : "save_failed" };
+  revalidatePath(`/app/new-saga/${workshopId}`);
+  return { ok: true, reviewVersion: Number(data?.review_version ?? expectedVersion + 1) };
+}
+
+export async function commitSagaWorkshopAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const workshopId = value(formData, "workshopId");
+  const { data, error } = await supabase.rpc("commit_saga_workshop", {
+    p_workshop_id: workshopId,
+    p_expected_version: Number(value(formData, "expectedVersion")),
+    p_commit_key: value(formData, "commitKey")
+  });
+  const result = data as RpcObject & { session_id?: string } | null;
+  if (error || !result?.workspace_id || !result.world_id || !result.saga_id) {
+    redirect(`/app/new-saga/${workshopId}?error=${encodeURIComponent(error?.message ?? "Commit failed")}`);
+  }
+  redirect(`/app/new-saga/${workshopId}?committed=1`);
 }
 
 export async function renameSagaAction(formData: FormData) {

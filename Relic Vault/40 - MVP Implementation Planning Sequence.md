@@ -9,11 +9,15 @@ depends_on:
   - "[[23 - AI Task Registry]]"
   - "[[22 - Memory and Retrieval]]"
 supersedes: []
-last_audited: 2026-07-21
+last_audited: 2026-08-04
 source_file: "Relic Vault/40 - MVP Implementation Planning Sequence.md"
 ---
 
 # MVP Implementation Planning Sequence
+
+## August 2026 Phase E revision
+
+Phase E is now the universal Loom operating-layer lane defined in [[59 - Phase E Loom Operating Layer Plan]]. The immediate packet is **E5.1 Profile-Aware Workshop Correctness**, followed by E5.2 conversational/scaffold parity and E6-E10 typed actions, adaptive retrieval, knowledge/canon proposals, workflows, destructive safeguards, and the Phase F gate. Do not begin Phase F while any E10 gate is red.
 
 This note is the Codex planning router after the AI Task Registry v1.0 standalone rewrite. It does not replace the active specs; it orders implementation planning so Codex does not plan AI wiring before the shared foundations are stable.
 

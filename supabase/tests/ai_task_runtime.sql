@@ -244,14 +244,16 @@ select ok(not exists (
   select 1
   from pg_temp.module9_contract_rows()
   where (
-       task_name = 'answer_saga_question' and prompt_version <> 'answer_saga_question@1.1.0'
+       task_name in ('answer_saga_question', 'scaffold_saga', 'draft_entity_from_prompt')
+       and prompt_version <> task_name || '@1.1.0'
      )
      or (
-       task_name <> 'answer_saga_question' and prompt_version !~ ('^' || task_name || '@1\.0\.0$')
+       task_name not in ('answer_saga_question', 'scaffold_saga', 'draft_entity_from_prompt')
+       and prompt_version !~ ('^' || task_name || '@1\.0\.0$')
      )
      or quota_tier not in ('light', 'standard', 'heavy', 'pipeline_synthesis')
      or model_tier not in ('relic-fast', 'relic-balanced', 'relic-deep')
-     or retrieval_profile not in ('none', 'session_prep_grounding', 'sanctum_grounding', 'sanctum_qa_grounding', 'post_session_synthesis')
+     or retrieval_profile not in ('none', 'workshop_grounding', 'session_prep_grounding', 'sanctum_grounding', 'sanctum_qa_grounding', 'post_session_synthesis')
      or source_policy not in ('canon_only', 'canon_plus_untrusted_input', 'untrusted_input_only', 'none')
      or output_mode not in ('workshop_draft_payload', 'draft', 'prep_suggestions', 'prep_briefing', 'draft_batch', 'ephemeral')
      or active is not true

@@ -1,7 +1,7 @@
 export type AiTaskRun = {
   id: string;
   workspace_id: string;
-  world_id: string;
+  world_id: string | null;
   saga_id: string | null;
   session_id: string | null;
   gm_id: string | null;
@@ -26,6 +26,7 @@ export type AiTaskRun = {
   guide_thread_id?: string | null;
   guide_turn_id?: string | null;
   prep_ai_request_id?: string | null;
+  workshop_session_id?: string | null;
   retrieval_context?: Array<{
     source_id: string;
     text: string;

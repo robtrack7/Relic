@@ -47,6 +47,15 @@ async function retrieveContext(
   service: ReturnType<typeof createServiceClient>,
   taskRun: AiTaskRun
 ): Promise<unknown[]> {
+  if (taskRun.workshop_session_id) {
+    const { data, error } = await service.rpc("get_workshop_evidence_for_worker", { p_run_id: taskRun.id });
+    if (error) throw new Error(`retrieval failed: ${error.message}`);
+    const evidence = Array.isArray(data) ? data : [];
+    taskRun.allowed_source_ids = evidence.map((entry: Record<string, unknown>) => entry.source_id)
+      .filter((value: unknown): value is string => typeof value === "string");
+    taskRun.retrieval_context = evidence as AiTaskRun["retrieval_context"];
+    return evidence;
+  }
   if (taskRun.retrieval_profile === "none" || !taskRun.gm_id || !taskRun.saga_id) return [];
   if (taskRun.guide_turn_id) {
     const { data, error } = await service.rpc("get_guide_evidence_for_worker", { p_run_id: taskRun.id });
@@ -277,6 +286,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
         p_failure_category: null
       });
     }
+    if (taskRun.workshop_session_id) {
+      await service.rpc("set_workshop_state_for_worker", {
+        p_run_id: taskRun.id,
+        p_status: "running",
+        p_failure_category: null
+      });
+    }
 
     await recordProviderPipelineEvent({
       eventName: "worker_claimed", workerType: `ai_task:${taskRun.task_name}`,
@@ -356,6 +372,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
           p_failure_category: "validation_failed"
         }).catch(() => undefined);
       }
+      if (taskRun.workshop_session_id) {
+        try {
+          await service.rpc("set_workshop_state_for_worker", {
+            p_run_id: taskRun.id,
+            p_status: "validation_failed",
+            p_failure_category: "validation_failed"
+          });
+        } catch { /* The AI run ledger remains the authoritative terminal state. */ }
+      }
       await recordFailedUsage(taskRun, "validation_failed").catch(() => undefined);
       await recordProviderPipelineEvent({
         eventName: "ai_task_validation_failed", severity: "warn", workerType: `ai_task:${taskRun.task_name}`,
@@ -429,6 +454,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
       });
       if (prepError) throw new Error(prepError.message);
     }
+    if (taskRun.workshop_session_id) {
+      const { error: workshopError } = await service.rpc("complete_workshop_for_worker", {
+        p_run_id: runId,
+        p_output: validated.output
+      });
+      if (workshopError) throw new Error(workshopError.message);
+    }
 
     const outputSize = typeof providerResult.output === "string"
       ? providerResult.output.length : JSON.stringify(providerResult.output).length;
@@ -482,6 +514,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
           p_status: prepState,
           p_failure_category: category
         }).catch(() => undefined);
+      }
+      if (taskRun.workshop_session_id) {
+        const workshopState = failure?.status === "dead_letter" ? "dead_letter"
+          : category === "retrieval_failed" ? "retrieval_unavailable"
+          : category === "provider_unavailable" || category === "timeout" ? "provider_unavailable"
+          : "failed";
+        try {
+          await service.rpc("set_workshop_state_for_worker", {
+            p_run_id: taskRun.id,
+            p_status: workshopState,
+            p_failure_category: category
+          });
+        } catch { /* The AI run ledger remains the authoritative terminal state. */ }
       }
       if (failure?.status === "terminal" || failure?.status === "dead_letter") {
         await recordFailedUsage(taskRun, category).catch(() => undefined);

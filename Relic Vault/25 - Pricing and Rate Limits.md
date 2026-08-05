@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-30
+last_audited: 2026-08-04
 source_file: "Sourced - Downloaded - 260518/relic-pricing-rate-limits-v0_2.md"
 ---
 
@@ -17,6 +17,10 @@ source_file: "Sourced - Downloaded - 260518/relic-pricing-rate-limits-v0_2.md"
 > Read next: [[00 - Start Here]]
 > Implementation-critical note: Treat this as coding input only after reading the authority order in [[00 - Start Here]].
 # Relic Pricing & Rate Limits Spec v0.2
+
+## August 2026 Loom Metering Patch
+
+Opening The Loom, navigating, exact/structured reads, previews, confirmations, deterministic action execution, review edits, Approval Queue commits, archive confirmation, and delete confirmation do not consume AI credits. A conversational reasoning turn is one light credit only when it actually dispatches a provider task. Any generation subtask is separately disclosed, quota-preflighted, and metered under its registered task; an action plan cannot hide or combine charges. Exact action/navigation turns do not create query embeddings, and semantic retrieval runs only when cheaper deterministic retrieval is insufficient. Deterministic local tests are non-billable; every paid smoke keeps an independent disclosed attempt and dollar ceiling.
 
 *Created: May 18, 2026. Updated: May 18, 2026.*  
 *Purpose: define enforceable alpha/MVP usage limits for AI, transcription, storage, imports, exports, and Workspace/World/Saga scale before coding begins.*
@@ -41,6 +45,8 @@ This document locks the MVP rate-limit model and alpha pricing hypothesis. It do
 ---
 
 ## Changelog
+
+**Packet E5 workshop metering patch (July 2026).** A complete `scaffold_saga` generation is one heavy/10-credit logical task through `relic-deep`; exact delivery retry, refresh, review edits, exclude/restore, source inspection, commit, and commit replay do not invoke or charge the provider. A separate deep lore/entity request remains standard/3 credits through `draft_entity_from_prompt` and lands only as a pending draft. Quota denial preserves the entire workshop and Start Blank/manual creation path. Deterministic local delivery is non-billable; any live smoke has an independent disclosed attempt and dollar ceiling.
 
 **Packet E4 Prep AI metering patch (July 2026).** `compose_prep_briefing` is standard/3 credits; `generate_session_prep` is heavy/10; scene beats, complication, NPC candidate, and Quick Stub fleshing are light/1. An accepted NPC candidate that separately invokes `draft_entity_from_prompt` preflights and meters its own standard/3-credit run. Citation inspection, edit, accept/reject/dismiss, quota denial, retrieval/provider/validation failure without usable output, manual Prep, and deterministic local delivery do not charge. Exact logical retry reuses the original run and idempotent usage event; accepting an already-generated result never calls the provider again.
 

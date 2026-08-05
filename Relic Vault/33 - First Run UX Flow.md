@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-08-04
 source_file: "Sourced - Downloaded - 260518/relic-first-run-ux-flow-v0_2.md"
 ---
 
@@ -18,6 +18,12 @@ source_file: "Sourced - Downloaded - 260518/relic-first-run-ux-flow-v0_2.md"
 > Implementation-critical note: Treat this as coding input only after reading the authority order in [[00 - Start Here]].
 # Relic First-Run UX Flow v0.2
 
+## August 2026 E5.1-E5.2 Creation Patch
+
+Saga creation must resolve the effective GM profile on the server. First use creates the default profile; later `Use my default` requests ignore client-supplied profile values; `Customize for this Saga` validates the exact enum/object shape and persists `sagas.gm_profile_override` unless the GM explicitly saves those values as the new default. The effective snapshot, profile mode, and save-default choice participate in workshop idempotency and are stored in the trusted AI task input. Start Blank follows the same rules and never overwrites a returning GM's defaults silently.
+
+Build with AI and Bring your notes then become a bounded three-to-five-turn Loom workshop with a visible emerging outline, `Draft it now`, and `Save and leave`. The base scaffold matches the active cardinalities and includes tone, central conflict, first-session hook, GM secrets, World updates, tags/status, and proposal scope. Per-section regeneration creates a separately versioned proposal and preserves GM edits; no step creates canon before `Commit saga`.
+
 **Status:** Active first-run UX specification  
 **Scope:** P0 MVP  
 **Source of truth inputs:** `[[11 - Product Basepoint]]`, `[[12 - MVP PRD]]`, `[[20 - Entity and Canon Schema]]`, `[[23 - AI Task Registry]]`, `[[31 - Session Prep Flow]]`, `[[32 - Stage UX Flow]]`, `[[34 - UI Implementation Spec]]`, `[[25 - Pricing and Rate Limits]]`, `[[13 - Design System]]`  
@@ -26,6 +32,8 @@ source_file: "Sourced - Downloaded - 260518/relic-first-run-ux-flow-v0_2.md"
 ---
 
 ## Changelog
+
+**Packet E5 agentic Saga workshop patch (July 2026).** Build with AI and Bring your notes now enter a recoverable **The Loom** drafting workspace backed by `scaffold_saga`. “Agentic” means Relic assembles the full editable scaffold in background task state; it does not mean autonomous canon publication. The Loom shows generation/quota/failure/retry state, immutable sources, and a structured review of premise, starting records, relationships, and Session 1 seed. Inline edits and exclusions autosave to the workshop. Only the separate `Commit saga` confirmation publishes the current review version; network/provider failure, refresh, restart, save-and-leave, or abandonment preserves input and creates no canon.
 
 **v0.2 (May 2026).** Document-control refresh. Updates active source references to the current versioned files after Priority 5/6. No first-run flow states or acceptance criteria changed.
 

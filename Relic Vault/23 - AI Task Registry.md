@@ -14,7 +14,7 @@ depends_on:
   - "[[24 - Approval Queue]]"
   - "[[25 - Pricing and Rate Limits]]"
 supersedes: []
-last_audited: 2026-07-30
+last_audited: 2026-08-04
 source_file: "Relic Vault/23 - AI Task Registry.md"
 ---
 
@@ -26,6 +26,12 @@ source_file: "Relic Vault/23 - AI Task Registry.md"
 
 # Relic AI Task Registry v1.0
 
+## August 2026 Loom Action Registry Patch
+
+The Loom is the user-facing conversation shell over two distinct server-owned registries: AI tasks for bounded generation/reasoning and deterministic application tools for typed product actions. The model can select only an allowlisted action name and schema-valid arguments; the server independently derives user, scope, target visibility, authority tier, cost, idempotency key, and executor. No model output is SQL, an RPC name, or direct authorization.
+
+`answer_saga_question` remains the internal conversational reasoning task during compatibility migration. Create/edit/archive/delete/workflow operations are not automatically new AI tasks: deterministic actions execute through the action registry, while any generation subtask separately uses this registry's validation, retrieval, quota, provenance, and retry rules. Detailed packet order is in [[59 - Phase E Loom Operating Layer Plan]].
+
 **Source of truth:** `[[11 - Product Basepoint]]` §10 · `[[12 - MVP PRD]]` · `[[22 - Memory and Retrieval]]` · `[[20 - Entity and Canon Schema]]` · `[[21 - Tech Architecture]]` · `[[24 - Approval Queue]]` · `[[25 - Pricing and Rate Limits]]`
 
 **Status:** Standalone MVP implementation contract. This version rewrites the missing earlier/base registry material from the active vault authority and preserves the v0.8 creative task additions.
@@ -35,6 +41,8 @@ source_file: "Relic Vault/23 - AI Task Registry.md"
 ---
 
 ## Changelog
+
+**Packet E5 agentic Saga workshop patch (July 2026).** `scaffold_saga@1.1.0` now has a strict complete-output contract and one recoverable workshop/run/evidence boundary. The deep task performs background assembly of the premise, starting cast/place/factions/Threads, relationships, and first-session packet, but its only delivery destination is `workshop_sessions.draft_payload`. Every generated record and checklist item cites frozen workshop input or eligible World canon. The GM can edit or exclude proposal cards and must explicitly commit the current optimistic review version before any hierarchy/canon write. `draft_entity_from_prompt@1.1.0` is simultaneously tightened into the single deep lore/entity proposal shape and still produces only a pending Approval Queue draft. The first bounded live E5 delivery exhausted its initial-plus-repair allowance in strict validation failure and produced zero canon writes and zero usage event; E5 remains open until a newly authorized live rerun proves the hardened 4,000-token concise scaffold contract.
 
 **Packet E4 Session Prep AI patch (July 2026).** The Prep task family uses a shared Session-scoped invocation and recoverable review-state projection. Retrieval evidence is frozen before provider dispatch and every generated item must cite one or more authorized sources; evidence-free first-session output is represented as explicit insufficiency rather than uncited factual or creative output. Provider completion writes no Session, pin, Thread, entity, canon, or Approval Queue row. Prep text is accepted only by merging into the live D4 editor and completing its existing optimistic autosave. NPC candidates invoke `draft_entity_from_prompt` only after a separate GM confirmation and quota preflight. Quick Stub fleshing remains ephemeral until the GM accepts it into a pending C5-reviewed update draft. Exact retry reuses one run, result, meter event, and provider checkpoint; newer Prep/results supersede stale UI delivery without overwriting GM edits.
 
@@ -61,7 +69,7 @@ Every task call uses this server-side envelope. Individual task inputs add task-
 ```ts
 {
   task: ai_task_name,
-  prompt_version: string,          // <task>@<semver>, e.g. scaffold_saga@1.0.0
+  prompt_version: string,          // <task>@<semver>, e.g. scaffold_saga@1.1.0
   workspace_id: uuid,
   world_id: uuid,
   saga_id?: uuid,                  // required for active Saga, prep, Stage, session, and post-session tasks
@@ -136,8 +144,8 @@ The server derives `confidence_band` from `confidence_reason`; model output does
 
 Prompt versions use `<task>@<semver>`. Examples:
 
-- `scaffold_saga@1.0.0`
-- `draft_entity_from_prompt@1.0.0`
+- `scaffold_saga@1.1.0`
+- `draft_entity_from_prompt@1.1.0`
 - `synthesize_session@1.0.0`
 
 Every AI output stored in `drafts`, `pending_prep_suggestions`, `prep_briefing`, pipeline metadata, or usage logs stores the prompt version.
@@ -190,7 +198,7 @@ Tasks that create drafts must not create partial invalid drafts. `synthesize_ses
 
 ## 2. `scaffold_saga`
 
-**Quota:** heavy · **Model:** relic-deep · **Prompt:** `scaffold_saga@1.0.0` · **Retrieval:** `none` for new Worlds, `session_prep_grounding` when adding scaffold to an existing Saga/World · **Invocation:** GM clicks Build with AI or Bring your notes in New saga.
+**Quota:** heavy · **Model:** relic-deep · **Prompt:** `scaffold_saga@1.1.0` · **Retrieval:** `workshop_grounding` over frozen GM input plus eligible World canon, including when no Saga exists yet · **Invocation:** GM clicks Build with AI or Bring your notes in New saga.
 
 **When it fires.** First-run and later New saga flows. The GM either converses from a short idea or supplies plain-text/Markdown notes. The task drafts a reviewable starting Saga, not canon.
 
@@ -332,7 +340,7 @@ Keep output compact enough for review in one scaffold screen.
 
 ## 3. `draft_entity_from_prompt`
 
-**Quota:** standard · **Model:** relic-balanced · **Prompt:** `draft_entity_from_prompt@1.0.0` · **Retrieval:** `session_prep_grounding` or `sanctum_grounding` · **Invocation:** GM clicks Draft from prompt, accepts `propose_npc_for_scene`, uses AI Quick Stub, or asks Relic to organize rough notes into an entity.
+**Quota:** standard · **Model:** relic-balanced · **Prompt:** `draft_entity_from_prompt@1.1.0` · **Retrieval:** `session_prep_grounding` or `sanctum_grounding` · **Invocation:** GM clicks Draft from prompt, accepts `propose_npc_for_scene`, uses AI Quick Stub, or asks Relic to organize rough notes into an entity.
 
 **When it fires.** Any single-entity creation or update assist. This is the one canonical AI entity drafting path.
 

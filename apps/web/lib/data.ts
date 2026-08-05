@@ -617,6 +617,22 @@ export async function getUsageSummary(workspaceId: string) {
   return data;
 }
 
+export type SagaWorkshop = {
+  id: string; workspace_id: string; world_id?: string | null; saga_id?: string | null; committed_session_id?: string | null;
+  state: "in_progress" | "committed" | "abandoned";
+  generation_status: string; failure_category?: string | null; review_version: number;
+  draft_payload: Record<string, unknown>; conversation: Array<Record<string, unknown>>;
+  quota?: Record<string, unknown>; updated_at: string;
+  sources: Array<{ source_id: string; kind: string; title: string; excerpt: string }>;
+};
+
+export async function getSagaWorkshop(workshopId: string): Promise<SagaWorkshop | null> {
+  const { supabase } = await requireUser();
+  const { data, error } = await supabase.rpc("get_saga_workshop", { p_workshop_id: workshopId });
+  if (error) throw new Error(error.message);
+  return data ? data as SagaWorkshop : null;
+}
+
 export async function getExportStatus(params: IdParams, exportId?: string | null) {
   if (!exportId) {
     return null;

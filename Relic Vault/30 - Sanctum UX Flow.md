@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-21
+last_audited: 2026-08-04
 source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 ---
 
@@ -17,6 +17,10 @@ source_file: "Sourced - Downloaded - 260518/relic-sanctum-ux-flow-v0_2.md"
 > Read next: [[00 - Start Here]]
 > Implementation-critical note: Treat this as coding input only after reading the authority order in [[00 - Start Here]].
 # Relic — Sanctum UX Flow v0.2
+
+## August 2026 Loom UX Patch
+
+**The Loom** is the universal user-facing AI surface and supersedes the **Relic Guide** label throughout current UI copy. It remains an always-available sidecar/sheet with the existing fallback route as a compatibility URL. Contextual AI buttons, create actions, Prep assists, review actions, and Stage assistance open The Loom with a prefilled intent and current server-derived scope. Read answers may render immediately; every mutation renders a typed action card with target, effect, authority tier, cost, and required confirmation. Multi-step work renders a bounded plan whose steps can be inspected, stopped, retried, or approved individually. The Loom never hides canon, archive, or delete confirmation.
 
 **Source of truth:** [[11 - Product Basepoint]] · [[12 - MVP PRD]] · [[20 - Entity and Canon Schema]] · [[24 - Approval Queue]] · [[22 - Memory and Retrieval]] · [[23 - AI Task Registry]] · [[21 - Tech Architecture]] · [[31 - Session Prep Flow]] · [[13 - Design System]]
 **Status:** Active Sanctum UX specification. Replaces v0.1. Sister doc to Stage UX Flow v0.6.

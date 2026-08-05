@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-30
+last_audited: 2026-07-31
 source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 ---
 
@@ -25,6 +25,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 ---
 
 ## Changelog
+
+**Packet E5 agentic Saga workshop patch (July 2026).** `workshop_sessions` becomes the recoverable GM-owned working boundary for Build with AI and Bring your notes. A correlated `scaffold_saga` run may persist immutable input/eligible-World evidence, generation state, and a mutable review payload, but cannot create a World, Saga, entity, relationship, Session, source, draft, audit row, or canon before explicit `Commit saga`. Commit locks the workshop/version, creates the selected hierarchy and Saga-scoped records transactionally, materializes the frozen workshop inputs as `workshop_input` sources, creates approved synthetic drafts/audit provenance, and attaches the workshop to the new Saga. Exact commit replay returns the same receipt; generation/retry/review never commits automatically.
 
 **Packet E4 Session Prep AI patch (July 2026).** Adds private Session-scoped Prep AI request and immutable evidence snapshot rows correlated to one `ai_task_run`. These rows are recoverable operational/review state, not canon or Session Prep fields. Provider completion cannot update `sessions`, pins, Threads, entities, drafts, or canon. Explicit Prep-text acceptance records the exact newer D4 autosave version; explicit NPC/Quick Stub review may create only a pending C5 draft. Idempotency keys bind task, input, Session, and Prep version, while stale completion and changed-key reuse fail closed.
 

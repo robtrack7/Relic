@@ -12,20 +12,22 @@ depends_on:
   - "[[13 - Design System]]"
   - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-08-04
 source_file: "Relic Vault/68 - Ask Search Design Spec.md"
 ---
 
 > [!info] How to use this spec
 > Use this for top-bar Search, command palette, search results, and Relic Guide. Read with [[60 - Design Spec Overview]], [[72 - Navigation Design Spec]], and [[71 - Component Inventory Design Spec]]. Upstream behavior lives in [[30 - Sanctum UX Flow]], [[22 - Memory and Retrieval]], [[23 - AI Task Registry]], and [[34 - UI Implementation Spec]].
 
-# Search And Relic Guide Design Spec
+# Search And The Loom Design Spec
+
+**August 2026 Loom patch.** The Loom supersedes Relic Guide as the visible name and expands the sidecar/fallback conversation from sourced Q&A plus two actions into Relic's universal conversational operating layer. Search remains a separate deterministic top-bar affordance. Loom results may include sourced answers, non-canon proposals, typed action cards, bounded multi-step plans, confirmation states, and execution receipts. Existing `/guide`, `guide_*`, and `answer_saga_question` names are compatibility identifiers only; the action set expands exclusively through the reviewed packets in [[59 - Phase E Loom Operating Layer Plan]].
 
 **Packet E3 conversational Guide patch (July 2026).** Relic Guide is a persistent GM-owned, Saga-scoped conversational assistant over registered Relic tasks and deterministic tools. It retains bounded thread state across navigation, refresh, app restart, and later mobile handoff without treating conversation as canon or citation evidence. Typed provenance separates grounded facts from creative proposals, guidance, action previews, and insufficiency. E3 enables only open-record and confirmed entity-draft actions.
 
 ## 1. Purpose
 
-Search and Relic Guide help the GM find, query, and act on current Saga canon plus relevant World canon. Search is a persistent top-context affordance. Relic Guide is an always-available collapsible sidecar/sheet, not a left-rail destination.
+Search and The Loom help the GM find, query, and act on current Saga canon plus relevant World canon. Search is a persistent top-context affordance. The Loom is an always-available collapsible sidecar/sheet, not a left-rail destination.
 
 Search supports fast lookup. Relic Guide supports cited, canon-grounded answers and GM-reviewed create/edit actions.
 

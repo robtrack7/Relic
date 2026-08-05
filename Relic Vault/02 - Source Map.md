@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-30
+last_audited: 2026-08-04
 source_file: "Relic Vault/02 - Source Map.md"
 ---
 
@@ -20,10 +20,10 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[11 - Product Basepoint]] | Product north star, scope, naming, exclusions | Primary |
 | [[12 - MVP PRD]] | P0 requirements and acceptance framing | Primary |
 | [[13 - Design System]] | v0.4 web UI tokens, typography, palette, app shell, Loom carriage, component feel; wrapper for [[14 - Design System Source.html]] | Primary design |
-| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, hierarchy/Saga lifecycle and staged delete cascade, Stage evidence markers, exactly-once write receipts, conflict outcomes, manual Session evidence provenance, source-aware synthesis batch identity, draft-scoped citation context, C5 approval receipts/commit invariants, D3 optimistic Thread/objective projections, D4 scheduled/ordered/recoverable Prep contracts, E4 non-canon Prep request/evidence/review projections, and D5 immutable Import Inbox provenance/lifecycle | Implementation |
-| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, hierarchy navigation/lifecycle RPCs, persistent Guide and Session Prep AI runtime boundaries, reserved-prefix-safe scoped JWT signing, real Storage-before-database Saga cleanup, Stage packet/audio/write recovery, recoverable optimistic web Prep autosave, provider-backed transcription/retry, manual evidence intake, provider-independent Import Inbox transport/retention and deferred docx extraction boundary, atomic synthesis output persistence, citation context/drift reads, approval read/edit/rebase/commit boundaries, hosted provider configuration, safe telemetry, and completed E2 synthetic staging delivery/scheduler/restart gate | Implementation |
+| [[20 - Entity and Canon Schema]] | Data model, canon states, sources, drafts, audit, RLS sketch, hierarchy/Saga lifecycle and staged delete cascade, Stage evidence markers, exactly-once write receipts, conflict outcomes, manual Session evidence provenance, source-aware synthesis batch identity, draft-scoped citation context, C5 approval receipts/commit invariants, D3 optimistic Thread/objective projections, D4 scheduled/ordered/recoverable Prep contracts, E4 non-canon Prep request/evidence/review projections, E5 pre-Saga workshop/evidence/explicit commit boundary, and D5 immutable Import Inbox provenance/lifecycle | Implementation |
+| [[21 - Tech Architecture]] | Supabase, RLS, Edge Functions, jobs, sync, hierarchy navigation/lifecycle RPCs, persistent Guide, Session Prep AI, and recoverable pre-Saga Loom runtime boundaries, reserved-prefix-safe scoped JWT signing, real Storage-before-database Saga cleanup, Stage packet/audio/write recovery, recoverable optimistic web Prep autosave, provider-backed transcription/retry, manual evidence intake, provider-independent Import Inbox transport/retention and deferred docx extraction boundary, atomic synthesis output persistence, citation context/drift reads, approval/read/edit/rebase/explicit workshop commit boundaries, hosted provider configuration, safe telemetry, and completed E2 synthetic staging delivery/scheduler/restart gate | Implementation |
 | [[22 - Memory and Retrieval]] | Embedding eligibility/text/version identity, deterministic and hosted delivery, Guide and Prep immutable evidence snapshots, non-canon conversation context, hybrid retrieval with lexical fallback, task profiles, and context assembly | Implementation |
-| [[23 - AI Task Registry]] | Standalone MVP AI task contracts, Guide and Prep typed provenance/citation/review contracts, task routing, prompt versions, validation, source-aware synthesis artifacts, and draft/canon behavior | Implementation |
+| [[23 - AI Task Registry]] | Standalone MVP AI task contracts, Guide/Prep/E5 Loom typed provenance/citation/review contracts, task routing, prompt versions, validation, source-aware synthesis artifacts, and draft/canon behavior | Implementation |
 | [[24 - Approval Queue]] | Approval UX, field diffs, source citation/context, safe drift/conflict states, explicit one/selected/all-compatible actions, and canon/audit commit behavior | Implementation |
 | [[25 - Pricing and Rate Limits]] | Caps, metering, quota preflight, hard stops | Implementation |
 | [[30 - Sanctum UX Flow]] | Sanctum IA, dashboard, shared inline/full Prep parity, D3 Thread/objective/Failed grouping and read-only evidence timeline, D5 paste/text/Markdown Import Inbox, Relic Guide, post-session transcript review/retry/manual evidence and citation navigation, settings | UX |
@@ -50,6 +50,7 @@ source_file: "Relic Vault/02 - Source Map.md"
 | [[56 - Backend Module 8 Background Job and Edge Runtime Plan]] | Completed runtime record plus E2 safe provider events, operational summary/alerts, Vault-authenticated schedules, retention, and restart evidence | Planning |
 | [[57 - Backend Module 9 AI Task Router and Runtime Plan]] | Completed Registry runtime record plus E2 explicit aliases/models, bounded provider calls, hosted light/deep proof, guarded replay, and payload-free telemetry | Planning |
 | [[58 - Backend Module 10 Notifications Export Operations Plan]] | Detailed implementation plan for notifications, exports, stale pipeline scans, cleanup workers, and operational loops | Planning |
+| [[59 - Phase E Loom Operating Layer Plan]] | Revised Phase E work order for profile-correct Saga creation, conversational workshops, typed Loom actions, adaptive retrieval, workflow tools, destructive-action safeguards, cost controls, and the Phase F gate | Planning |
 | [[50 - Session Log Index]] | Session closeout trail and implementation continuity logs | Operations |
 
 ## Design Specification Sources
@@ -66,7 +67,7 @@ These notes translate the active product, UX, and UI sources into compact screen
 | [[65 - Session Prep Design Spec]] | Prep workspace inside The Sanctum and Ready for Stage handoff | Secondary design |
 | [[66 - Stage Design Spec]] | Clean, focused live-session Stage across web and mobile; current web wireframe implementation decision and adapter boundaries | Secondary design |
 | [[67 - Approval Queue Design Spec]] | Draft review, field diff/editor, source/provenance, conflict recovery, one/selected/all-compatible actions, and canon approval | Secondary design |
-| [[68 - Ask Search Design Spec]] | Top-context search, command palette, Relic Guide Q&A/actions | Secondary design |
+| [[68 - Ask Search Design Spec]] | Top-context search, command palette, and The Loom conversations/actions | Secondary design |
 | [[69 - Settings Usage Design Spec]] | Saga/World/Workspace settings, usage, retention, export | Secondary design |
 | [[70 - Mobile App Design Spec]] | Mobile adaptation of both Sanctum and Stage | Secondary design |
 | [[71 - Component Inventory Design Spec]] | Shared component vocabulary and state coverage | Secondary design |

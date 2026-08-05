@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-08-04
 source_file: "Sourced - Downloaded - 260518/relic-mvp-prd-v0_10.md"
 ---
 
@@ -17,6 +17,12 @@ source_file: "Sourced - Downloaded - 260518/relic-mvp-prd-v0_10.md"
 > Read next: [[00 - Start Here]]
 > Implementation-critical note: Treat this as coding input only after reading the authority order in [[00 - Start Here]].
 # Relic MVP — Product Requirements Document
+
+## August 2026 Loom Requirement Patch
+
+**The Loom** supersedes **Relic Guide** as the user-facing name for the persistent, scope-aware AI conversation. Existing `guide_*`, `/guide`, and `answer_saga_question` names are internal compatibility contracts, not UI copy. The Loom must understand the Workspace → World → Saga structure; combine exact structured reads, lexical search, vector retrieval, and bounded relationship expansion as required; and expose only server-registered, schema-validated tools.
+
+The MVP Loom may read, navigate, create drafts, edit reversible working state, and orchestrate bounded workflows. Every action preview states target, effect, authority tier, cost, and confirmation. Canon writes retain explicit inline approval or Approval Queue commit. Archive is explicit; hard delete uses the existing exact-name/two-confirmation protection and is never initiated autonomously. See [[59 - Phase E Loom Operating Layer Plan]] for the implementation packets and phase gate.
 
 **Version:** v0.10
 **Source of truth:** `[[11 - Product Basepoint]]` · `[[13 - Design System]]` · `[[22 - Memory and Retrieval]]` · `[[20 - Entity and Canon Schema]]` · `[[23 - AI Task Registry]]` · `[[24 - Approval Queue]]` · `[[21 - Tech Architecture]]` · `[[30 - Sanctum UX Flow]]` · `[[31 - Session Prep Flow]]` · `[[32 - Stage UX Flow]]` · `[[33 - First Run UX Flow]]` · `[[34 - UI Implementation Spec]]` · `[[25 - Pricing and Rate Limits]]`
@@ -112,7 +118,7 @@ Requirement ID migration table:
 | 28 | ~~First-time GMs pass through session prep workspace for Session 1 via a tooltip tour.~~ **Revised v0.9.** Post-creation, the Sanctum home shows a "Plan your first session" card with a `+ Plan Session 1` CTA. No separate tooltip tour surface. Dismissal stored on `gm_profiles.session_prep_intro_dismissed_at` (field retained). |
 | 29 | **Thread Timeline is MVP.** Read-only, derived from `threads.objectives_log` + `canon_audit`. No new schema. Writable timeline editor remains V1. |
 | 30 | **AI creative tasks are GM-invoked, produce ephemeral output, never auto-run.** `propose_scene_beats`, `propose_thread_complication`, `propose_npc_for_scene`, `answer_saga_question` are all light-quota, balanced-model tasks (Registry v1.0 §§7-10). `propose_quick_stub_fleshing` (Registry v1.0 §11) is the one exception: it produces an update draft that routes through the standard approval write path. |
-| 31 | **Sanctum web navigation follows [[72 - Navigation Design Spec]].** Top context bar owns Workspace/World/Saga, Search, Relic Guide, `+ Create`, current session, Review, Usage, Account, and `Return to Stage` while live. Left rail order is Home · Threads · Library · Prepare · Sessions · Review, with Export and Settings lower. Notes is a sub-section of Library. Stage is reached from Prepare, session state, Home next-action cards, notifications/deep links, app resume, and the live-session return affordance; it is not a default rail item. Maps is absent (V1 reserve). |
+| 31 | **Sanctum web navigation follows [[72 - Navigation Design Spec]].** Top context bar owns Workspace/World/Saga, Search, The Loom, `+ Create`, current session, Review, Usage, Account, and `Return to Stage` while live. Left rail order is Home · Threads · Library · Prepare · Sessions · Review, with Export and Settings lower. Notes is a sub-section of Library. Stage is reached from Prepare, session state, Home next-action cards, notifications/deep links, app resume, and the live-session return affordance; it is not a default rail item. Maps is absent (V1 reserve). |
 | 32 | **Workspace / World / Saga hierarchy.** Workspace owns billing, usage, and future collaboration; World owns shared setting and World canon; Saga is the playable campaign/storyline inside a World. No separate Campaign layer. |
 | 33 | **Era/Timeframe is V1-ready.** MVP may create a default hidden Era and reserve Saga time-index fields; no Era editor UI ships in MVP. |
 | 34 | **Content scope is explicit.** World-scoped canon uses `scope='world'` and `saga_id=null`; Saga-scoped canon uses `scope='saga'` and a required `saga_id`. |

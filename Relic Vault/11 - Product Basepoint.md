@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-05-20
+last_audited: 2026-08-04
 source_file: "Sourced - Downloaded - 260518/relic-product-basepoint-v3_5.md"
 ---
 
@@ -17,6 +17,12 @@ source_file: "Sourced - Downloaded - 260518/relic-product-basepoint-v3_5.md"
 > Read next: [[00 - Start Here]]
 > Implementation-critical note: Highest product authority after [[00 - Start Here]].
 # Relic Product Basepoint v3.5
+
+## August 2026 Loom Operating-Layer Patch
+
+The Loom is Relic's universal user-facing AI layer across creation, organization, preparation, live support, review, and continuity work. Explicit AI buttons remain useful, but they open a prefilled Loom intent instead of defining isolated AI islands. The Loom can inspect current scoped state and prepare typed server-owned actions; it cannot issue arbitrary database operations or hold SQL/RPC credentials.
+
+Authority is tiered: reads may complete immediately; reversible working-state changes require a visible confirmation; canon changes require documented inline GM approval or the Approval Queue commit path; archive requires explicit confirmation; hard delete requires exact-name plus two-step confirmation. The Loom never autonomously publishes canon, archives, or deletes. Detailed sequencing and cost controls are owned by [[59 - Phase E Loom Operating Layer Plan]].
 
 *Source-of-truth product brief. Updated May 2026.*
 
@@ -58,7 +64,7 @@ This document defines the locked direction for Relic. It guides product, UX, arc
 **Primary surfaces:** The Sanctum and The Stage are Relic's two product surfaces on both web and mobile. The Sanctum is the home base for worldbuilding, embedded session prep, review, approval, and canon work. The Stage is the live-play surface. Web is the first implementation target; mobile follows after the web app proves the full loop.
 **Locked stack:** Expo + Next.js + Supabase + LiteLLM + Whisper + pgvector
 **Canon rule:** AI drafts. GM approves. Canon changes only by explicit GM action.
-**AI invocation rule:** AI is a button the GM can press, across creative and editorial domains. Many buttons exist. None push themselves.
+**AI invocation rule:** AI is GM-invoked through The Loom or an explicit button that opens a prefilled Loom intent. Many entry points exist. None push themselves, and none bypass the Loom authority tiers.
 **Ceremonial naming:** "Saga" replaces user-facing "Campaign" for the playable campaign/storyline. Structurally, Saga lives inside a World, which lives inside a Workspace. Do not add a separate Campaign layer.
 
 ---

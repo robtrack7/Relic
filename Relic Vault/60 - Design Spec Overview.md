@@ -17,7 +17,7 @@ depends_on:
   - "[[23 - AI Task Registry]]"
   - "[[72 - Navigation Design Spec]]"
 supersedes: []
-last_audited: 2026-06-01
+last_audited: 2026-08-04
 source_file: "Relic Vault/60 - Design Spec Overview.md"
 ---
 
@@ -25,6 +25,10 @@ source_file: "Relic Vault/60 - Design Spec Overview.md"
 > Use this as the entry note for screen-level design work after reading [[00 - Start Here]] and the relevant upstream UX spec. It translates the active Relic MVP contracts into concise design direction for Claude Design, UI implementation, and review passes. It does not replace [[11 - Product Basepoint]], [[12 - MVP PRD]], [[13 - Design System]], or the owning UX specs.
 
 # Design Spec Overview
+
+## August 2026 naming and interaction patch
+
+The universal AI carriage is **The Loom**. **Relic Guide** is retired user-facing copy; legacy route/component identifiers remain internal during migration. Design Loom conversations around explicit intent, source/provenance disclosure, typed action cards, bounded plans, cost disclosure, and the authority tiers in [[59 - Phase E Loom Operating Layer Plan]].
 
 This note defines the design-spec layer for Relic MVP. It sits between the broad product and UX contracts and the implementation-facing route/component plans. The owning upstream sources remain [[11 - Product Basepoint]], [[12 - MVP PRD]], [[13 - Design System]], [[30 - Sanctum UX Flow]], [[31 - Session Prep Flow]], [[32 - Stage UX Flow]], [[33 - First Run UX Flow]], [[34 - UI Implementation Spec]], [[24 - Approval Queue]], [[23 - AI Task Registry]], and [[72 - Navigation Design Spec]].
 

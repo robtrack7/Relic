@@ -14,7 +14,7 @@ depends_on:
   - "[[61 - Sanctum Dashboard Design Spec]]"
   - "[[71 - Component Inventory Design Spec]]"
 supersedes: []
-last_audited: 2026-07-21
+last_audited: 2026-08-04
 source_file: "Relic Vault/72 - Navigation Design Spec.md"
 ---
 
@@ -22,6 +22,8 @@ source_file: "Relic Vault/72 - Navigation Design Spec.md"
 > Use this as the navigation contract for Relic's web app shell and major product surfaces. It defines what belongs in the top context bar, left navigation rail, global create menu, World/Saga switcher, Relic Guide sidecar, and future-reserved navigation areas. Read with [[60 - Design Spec Overview]], [[61 - Sanctum Dashboard Design Spec]], [[70 - Mobile App Design Spec]], and [[71 - Component Inventory Design Spec]].
 
 # Navigation Design Spec
+
+**August 2026 Loom naming patch.** The top-bar and sheet label is **The Loom**. The `/guide` fallback route and `RelicGuide*` implementation names may remain temporarily, but no current user-facing copy should say Relic Guide. The Loom does not become a left-rail destination; contextual buttons and `+ Create` may open it with a prefilled intent.
 
 **Hierarchy and Saga lifecycle patch (July 2026).** The web MVP resolves the switcher treatment as three separate Workspace, World, and Saga dropdowns. Each dropdown changes only through an authorized server-provided landing target; empty branches enter New saga with the selected parent context. A live or ending Session disables all context dropdowns until the GM resumes or ends it.
 

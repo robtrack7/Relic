@@ -79,3 +79,5 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-07-23 - Relic Guide Conversational Foundation]]
 - [[Session Logs/2026-07-28 - E3 Provider Contract and Hosted Cleanup]]
 - [[Session Logs/2026-07-30 - Packet E4 Session Prep AI]]
+- [[Session Logs/2026-07-31 - Packet E5 Loom Live Gate]]
+- [[Session Logs/2026-08-04 - Phase E Loom Plan and E5.1 Profile Correctness]]

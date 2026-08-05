@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-30
+last_audited: 2026-08-04
 source_file: "Sourced - Downloaded - 260518/relic-approval-queue-spec-v0_5.md"
 ---
 
@@ -17,6 +17,10 @@ source_file: "Sourced - Downloaded - 260518/relic-approval-queue-spec-v0_5.md"
 > Read next: [[00 - Start Here]]
 > Implementation-critical note: Treat this as coding input only after reading the authority order in [[00 - Start Here]].
 # Relic Approval Queue Spec v0.5
+
+## August 2026 Loom Provenance Patch
+
+Loom-originated proposals do not create a second approval mechanism. Any canon-impacting action that is not covered by an existing documented inline approval path enters this Approval Queue with its originating conversation, turn, registered action, arguments, task/run and prompt versions, frozen evidence citations, GM edits, and target version. Approval still performs the only canon commit and audit write. A Loom conversation or action plan is context, never evidence and never canon.
 
 *Created: May 18, 2026. Updated: July 21, 2026.*
 *Purpose: active implementation contract for review, diff, source citation, approval, rejection, merge, archive, and canon commit behavior.*

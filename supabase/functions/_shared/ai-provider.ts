@@ -76,7 +76,10 @@ export function resolveAiProviderConfig(modelTier: string, env: EnvironmentReade
     alias,
     resolvedModel,
     timeoutMs: positiveInteger(env.get("AI_TIMEOUT_MS"), 140_000),
-    maxOutputTokens: positiveInteger(env.get(envKey("AI_MAX_OUTPUT_TOKENS", alias)), 1_800),
+    maxOutputTokens: positiveInteger(
+      env.get(envKey("AI_MAX_OUTPUT_TOKENS", alias)),
+      alias === "relic-deep" ? 4_000 : alias === "relic-balanced" ? 2_400 : 800
+    ),
     baseUrl: baseUrl?.replace(/\/$/, ""),
     apiKey
   };
@@ -133,14 +136,59 @@ function testOutputFor(
     return {
       entity: {
         entity_type: entityType,
-        name: "Guide Draft",
-        summary: "A deterministic non-canon draft created for review.",
-        narrative: "Review and revise this proposed record before approval.",
-        is_stub: true,
+        name: typeof inputPayload.name === "string" ? inputPayload.name.slice(0, 200) : "Keeper Sable",
+        summary: "A vigilant keeper bound to the last living seed of the Glass Orchard.",
+        narrative: "Keeper Sable records every bargain made beneath the glass boughs. They protect the orchard's last seed, distrust anyone promising a simple restoration, and quietly seek proof that the drowned observatory can be opened without waking what lies below. Their help is precise, costly, and never offered without a test of intent.",
+        gm_notes: "Play Sable as measured and observant. Their test should reveal character, not block progress.",
+        is_stub: false,
         proposed_scope: "saga"
       },
       sources: allowedSourceIds,
+      relationship_hooks: ["Protects the orchard's last seed.", "Knows a safe route toward the drowned observatory."],
+      suggested_fields: { role: "Keeper of the last seed", wants: "Proof that restoration will not repeat the old disaster", voice: "Quiet, exact, and patient" },
+      duplicate_warnings: [],
       confidence_reason: allowedSourceIds.length > 0 ? "single_clear_segment" : "direct_gm_input"
+    };
+  }
+  if (taskName === "scaffold_saga") {
+    if (!source) return { saga: {}, entities: [], relationships: [], session_1_prep: {}, duplicate_warnings: [], confidence_reason: "ambiguous_source" };
+    const sagaName = typeof inputPayload.saga_name === "string" ? inputPayload.saga_name.slice(0, 120) : "The Glass Orchard";
+    const gameSystem = typeof inputPayload.game_system === "string" ? inputPayload.game_system.slice(0, 120) : null;
+    const profile = inputPayload.gm_profile && typeof inputPayload.gm_profile === "object"
+      ? inputPayload.gm_profile as Record<string, unknown>
+      : {};
+    const sceneNotes = profile.prep_style === "heavy"
+      ? "Prepare three paths through Sable's test: repair the bough, follow the reflected memory, or bargain for the Last Seed. For each path, note its clue, immediate cost, likely complication, and one flexible fallback if the players change direction."
+      : profile.prep_style === "light"
+        ? "Offer three flexible paths through Sable's test; improvise one clue and cost from the path the players choose."
+        : "Let Sable offer three paths: repair the bough, follow the reflected memory, or bargain for the Last Seed. Each reveals a different clue and cost.";
+    const cited = [source];
+    return {
+      saga: { name: sagaName, premise: "A drowned observatory feeds an orchard of living glass, and every harvest changes the memories of those who taste it.", game_system: gameSystem },
+      entities: [
+        { temp_id: "keeper-sable", entity_type: "character", name: "Keeper Sable", summary: "The vigilant keeper of the orchard's last unbroken seed.", narrative: "Sable records every bargain beneath the glass boughs and tests anyone who seeks the drowned observatory.", gm_notes: "Measured, exact, never needlessly obstructive.", is_stub: false, sources: cited },
+        { temp_id: "glass-orchard", entity_type: "place", name: "The Glass Orchard", summary: "A luminous orchard rooted above a drowned observatory.", narrative: "Its fruit holds borrowed memories, while cracks in the boughs sing when the old machinery stirs below.", gm_notes: "Use reflections and distant chimes as recurring sensory motifs.", is_stub: false, sources: cited },
+        { temp_id: "last-seed", entity_type: "artifact", name: "The Last Seed", summary: "The only seed Sable believes can regrow the orchard safely.", narrative: "Warm to the touch, it reflects a memory its holder has tried to forget.", gm_notes: "The reflection is an invitation, never mind control.", is_stub: false, sources: cited },
+        { temp_id: "observatory-seal", entity_type: "thread", name: "Who broke the Observatory Seal?", summary: "Someone opened the drowned observatory and concealed the price.", narrative: "Clues point toward a deliberate breach, but the culprit and motive remain unresolved.", gm_notes: "Keep at least two plausible explanations alive.", is_stub: false, sources: cited }
+      ],
+      relationships: [
+        { from_temp_id: "keeper-sable", to_temp_id: "glass-orchard", kind: "located-at", summary: "Sable keeps watch from the orchard's central terrace.", sources: cited },
+        { from_temp_id: "keeper-sable", to_temp_id: "last-seed", kind: "owns", summary: "Sable safeguards the seed on behalf of the orchard.", sources: cited }
+      ],
+      session_1_prep: {
+        objective: "Earn access to the drowned observatory before the next glass bloom.",
+        opening_scene: "At dusk, a cracked bough sings a name one of the characters hoped never to hear again.",
+        scene_notes: sceneNotes,
+        checklist: [
+          { text: "Choose the memory echoed by the cracked bough.", sources: cited },
+          { text: "Decide what Sable asks as proof of intent.", sources: cited },
+          { text: "Keep two suspects for the broken seal in play.", sources: cited }
+        ],
+        pinned_entity_temp_ids: ["keeper-sable", "glass-orchard", "last-seed"],
+        active_thread_temp_ids: ["observatory-seal"]
+      },
+      duplicate_warnings: [],
+      confidence_reason: "single_clear_segment"
     };
   }
   if (taskName === "compose_prep_briefing") {
@@ -322,6 +370,8 @@ export async function callAiProvider(
               "compose_prep_briefing returns {no_answer,body,bullets,sources,confidence_reason}; generate_session_prep returns {no_answer,summary,suggestions,confidence_reason}, where each suggestion has id, scope, either value or items, rationale, sources, and confidence_reason.",
               "propose_scene_beats returns exactly three cited beats when grounded. propose_thread_complication returns one to three cited complications. propose_npc_for_scene returns one to three cited candidates. propose_quick_stub_fleshing returns one cited saga-scoped proposal or null when insufficient.",
               "Session Prep outputs are proposals only. Do not include actions, commands, database mutations, canon decisions, automatic pins, automatic Thread changes, or automatic entity creation.",
+              "For scaffold_saga, assemble one complete editable workshop draft only. Treat input.gm_profile as trusted presentation guidance: experience_level controls explanation depth, improv_comfort controls flexibility versus structure, and prep_style controls detail density. Return exactly saga, entities, relationships, session_1_prep, duplicate_warnings, and confidence_reason. Produce exactly four concise cited saga-scoped entities including a Thread; keep each summary under 300 characters, each narrative under 900 characters, relationships to six or fewer, and return exactly three checklist items. Every entity, relationship, checklist item, and duplicate warning cites exact retrieval_context source IDs as JSON string arrays named sources. Use stable lowercase temp_id slugs and reference only emitted temp IDs. Return duplicate_warnings as [] unless supplied World evidence names a plausible match. Never claim that the scaffold is canon or request a write.",
+              "For draft_entity_from_prompt, create a substantial non-canon saga-scoped entity proposal with exactly entity, sources, relationship_hooks, suggested_fields, duplicate_warnings, and confidence_reason. Develop motives, tensions, usable details, and relationship hooks from the supplied evidence without inventing canon. The GM must edit and approve it through the Approval Queue.",
               "For answer_saga_question, return exactly {no_answer,blocks,confidence_reason} plus insufficiency_reason exactly when no_answer is true.",
               "For answer_saga_question, when retrieval_context directly answers the question, no_answer must be false and the answer must use a grounded_answer block with at least one exact source_id citation from that supporting evidence.",
               "Every block must be a flat object with a type string; never nest content under a block-type key.",

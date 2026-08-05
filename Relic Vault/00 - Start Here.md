@@ -6,7 +6,7 @@ read_after: []
 depends_on: []
 supersedes:
   - "[[10 - Project Overview for AI]]"
-last_audited: 2026-05-20
+last_audited: 2026-08-04
 source_file: "Relic Vault/00 - Start Here.md"
 ---
 
@@ -52,6 +52,7 @@ All active source documents needed for the vault pass are present and linked.
 - Workspace owns billing, usage, and future collaboration. World owns shared setting canon. Saga owns active play and session data.
 - Era/Timeframe is V1-ready backend scaffolding only in MVP.
 - AI is GM-invoked except visible read-only prep briefing behavior. AI never mutates canon without explicit GM approval.
+- **The Loom** is the universal user-facing AI operating layer. It may inspect scoped records and prepare typed actions, but every write crosses the authority tier and confirmation rules in [[59 - Phase E Loom Operating Layer Plan]]. Legacy `guide_*`, `/guide`, and `answer_saga_question` identifiers may remain as internal compatibility names; **Relic Guide** is no longer the user-facing product name.
 - Canon writes use direct GM action or the approval write path.
 - Thread Timeline is MVP read-only. Full graph/constellation and writable timeline editors are V1.
 
@@ -73,6 +74,7 @@ All active source documents needed for the vault pass are present and linked.
 - [[40 - MVP Implementation Planning Sequence]]
 - [[45 - Security Findings Register]]
 - [[46 - Backend Audit and Module Plan]]
+- [[59 - Phase E Loom Operating Layer Plan]]
 - [[47 - Backend Module 0 Baseline Plan]]
 - [[48 - Backend Module 1 Access Control Plan]]
 - [[49 - Backend Module 2 Canon Write Path Plan]]

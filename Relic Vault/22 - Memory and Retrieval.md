@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-30
+last_audited: 2026-08-04
 source_file: "Sourced - Downloaded - 260518/relic-memory-retrieval-spec-v0_8.md"
 ---
 
@@ -18,6 +18,12 @@ source_file: "Sourced - Downloaded - 260518/relic-memory-retrieval-spec-v0_8.md"
 > Implementation-critical note: Treat this as coding input only after reading the authority order in [[00 - Start Here]].
 # Relic — AI Memory & Retrieval Specification
 
+## August 2026 Loom Retrieval Patch
+
+The Loom does not vector-search on every turn. A server-owned planner follows the cheapest sufficient path: current UI selection and stable IDs; exact name/alias lookup; structured scoped reads and full-text search; semantic vector retrieval only when ambiguity or meaning requires it; then bounded relationship, objective, Thread, or Session-neighbor expansion. Every step is Workspace/World/Saga scoped and recorded in the turn trace without exposing private payloads.
+
+Vectors remain a durable retrieval index for eligible canon, approved summaries, lore, post-session evidence, and transcript windows. Conversation, pending drafts, raw imports, and GM-private fields remain excluded. Structured hierarchy, relationship edges, Thread/objective state, and Session chronology are assembled alongside—not replaced by—semantic evidence. See [[59 - Phase E Loom Operating Layer Plan]].
+
 **Version:** v1.0
 **Source of truth:** `[[11 - Product Basepoint]]` · `[[12 - MVP PRD]]` · `[[20 - Entity and Canon Schema]]` · `[[21 - Tech Architecture]]` · `[[23 - AI Task Registry]]` · `[[31 - Session Prep Flow]]` · Memory Research Brief v0.1
 **Status:** Implementation-ready. Engineering can build from this.
@@ -26,6 +32,8 @@ source_file: "Sourced - Downloaded - 260518/relic-memory-retrieval-spec-v0_8.md"
 ---
 
 ## Changelog
+
+**Packet E5 agentic Saga workshop patch (July 2026).** Brand-new World scaffolds use no canon retrieval; GM conversation/notes are frozen as virtual untrusted `workshop_input` evidence and can never supply instructions. A new Saga inside an existing World may additionally receive only eligible World-scoped canon (`scope='world'`, no Saga ID), never sibling-Saga content, imports, drafts, private GM fields, or unsupported sources. The exact evidence/version/text set is frozen before provider dispatch and reused on retry. Every scaffold entity, relationship, and checklist item cites that allowlist; review edits retain provenance but are visibly GM-edited proposals until commit.
 
 **Packet E4 Session Prep AI patch (July 2026).** Every Prep invocation freezes the exact eligible source/version/text set before provider dispatch, reusing the E3 source-context and drift treatment without using Guide conversation as evidence. `session_prep_grounding` remains current-Saga plus eligible World canon and excludes sibling Sagas, imports, drafts, GM-private fields, archived/deleted rows, and unsupported sources. All E4 generated items require at least one allowlisted citation; a legitimate empty set yields explicit insufficiency and no proposal. The Prep job reuses its frozen evidence on exact retry, so retrieval drift cannot silently alter a logical request or duplicate provider work.
 

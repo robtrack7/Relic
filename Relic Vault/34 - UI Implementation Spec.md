@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-21
+last_audited: 2026-08-04
 source_file: "Sourced - Downloaded - 260518/relic-ui-implementation-spec-v0_2.md"
 ---
 
@@ -17,6 +17,10 @@ source_file: "Sourced - Downloaded - 260518/relic-ui-implementation-spec-v0_2.md
 > Read next: [[00 - Start Here]]
 > Implementation-critical note: Treat this as coding input only after reading the authority order in [[00 - Start Here]].
 # Relic UI Implementation Spec v0.2
+
+## August 2026 Loom UI Patch
+
+Use **The Loom** for all visible AI naming. Existing `RelicGuide*` component names and `/guide` may remain internal compatibility identifiers while UI copy and accessible names change. Add reusable `LoomIntentComposer`, `LoomActionCard`, `LoomPlan`, `LoomPlanStep`, `LoomCostDisclosure`, and `LoomAuthorityBadge` primitives. Action cards must expose target/effect, validation or stale-target state, cost, confirmation, execution receipt, retry, and dismissal. Destructive confirmations reuse the owning deterministic product dialog rather than custom model-generated UI.
 
 *Created: May 18, 2026. Updated: May 18, 2026.*  
 *Purpose: give vibe-coding agents a buildable first-pass UI map without requiring them to re-read every product document.*

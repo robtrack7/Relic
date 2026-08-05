@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-30
+last_audited: 2026-07-31
 source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md"
 ---
 
@@ -25,6 +25,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 ---
 
 ## Changelog
+
+**Packet E5 agentic Saga workshop patch (July 2026).** Adds an internal-token submission route for `scaffold_saga`, a user-owned recoverable workshop projection, immutable virtual `workshop_input`/eligible-World evidence, strict structured validation, exact logical retry, and background-safe provider state. New-Saga runs may be billed at Workspace scope before a World/Saga exists; scope attribution becomes concrete only at the explicit transactional commit. The browser supplies bounded idea/notes and review edits, never trusted scope, model, source allowlists, run state, or mutation commands. Provider completion only updates the workshop draft. `Commit saga` is a separate authenticated optimistic transaction and the sole E5 canon boundary.
 
 **Packet E4 Session Prep AI patch (July 2026).** Adds one internal Prep AI request/result/evidence boundary correlated to the existing `ai_task_runs` lease, provider checkpoint, retry, and idempotent usage ledger. The browser submits an allowlisted task intent; server code derives current Prep, retrieval, scope, quota, and acceptance destination. Generation completion updates only the recoverable request/result state. Session text, pins, and Threads cross the existing D4 optimistic autosave boundary only after explicit acceptance; NPC/Quick Stub canon changes become pending C5 drafts only after a separate confirmation. Exact idempotency-key reuse with changed input fails closed, concurrent dispatch cannot duplicate provider work or charges, and completion against an older Prep version cannot overwrite current GM edits.
 
