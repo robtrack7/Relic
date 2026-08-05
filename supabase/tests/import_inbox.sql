@@ -1,7 +1,7 @@
 create extension if not exists pgtap with schema extensions;
 
 begin;
-select plan(38);
+select plan(68);
 
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin, confirmation_token, email_change, email_change_token_new, recovery_token)
 values ('d5000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'd5@example.test', extensions.crypt('password', extensions.gen_salt('bf')), now(), now(), now(), '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, false, '', '', '', '')
@@ -30,6 +30,10 @@ create temp table before_counts as select
 select has_function('public', 'save_import_inbox_source', array['uuid','uuid','uuid','uuid','text','text','text','bigint','text'], 'scoped import write RPC exists');
 select has_function('public', 'get_import_inbox', array['uuid','uuid','uuid','boolean'], 'scoped import review RPC exists');
 select has_function('public', 'set_import_source_state', array['uuid','uuid','uuid','uuid','text'], 'scoped import state RPC exists');
+select has_function('public', 'begin_pdf_import', array['uuid','uuid','uuid','uuid','text','text','bigint'], 'scoped PDF upload registration RPC exists');
+select has_function('public', 'claim_pdf_import_extraction', array['uuid','uuid','uuid','uuid','uuid'], 'owner-scoped PDF extraction claim RPC exists');
+select has_function('public', 'complete_pdf_import_extraction_for_worker', array['uuid','uuid','uuid','text','text','text','integer','integer','text'], 'service PDF completion RPC exists');
+select has_function('public', 'fail_pdf_import_extraction_for_worker', array['uuid','uuid','uuid','text','text','text','integer'], 'service PDF failure RPC exists');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', 'd5000000-0000-0000-0000-000000000001', true);
@@ -71,6 +75,57 @@ select is(public.set_import_source_state('d5200000-0000-0000-0000-000000000001',
 select is(public.set_import_source_state('d5200000-0000-0000-0000-000000000001','d5300000-0000-0000-0000-000000000001','d5500000-0000-0000-0000-000000000001','d5600000-0000-0000-0000-000000000002','ready_for_review')->>'state', 'ready_for_review', 'archived import can be restored for review');
 select throws_like($$select public.set_import_source_state('d5200000-0000-0000-0000-000000000001','d5300000-0000-0000-0000-000000000001','d5500000-0000-0000-0000-000000000002','d5600000-0000-0000-0000-000000000002','archived')$$, '%import is not available%', 'sibling Saga cannot transition an import');
 reset role;
+
+select is((select public from storage.buckets where id='attachments'),false,'attachment originals remain in a private bucket');
+select is((select file_size_limit from storage.buckets where id='attachments'),10485760::bigint,'attachment bucket enforces the ten MiB MVP boundary');
+select ok((select allowed_mime_types @> array['application/pdf','image/jpeg','image/png','image/webp'] from storage.buckets where id='attachments'),'attachment bucket permits only the bounded PDF and static-image MIME set');
+
+update public.workspaces set usage_limits=usage_limits||'{"imports_monthly":100}'::jsonb where id='d5200000-0000-0000-0000-000000000001';
+set local role authenticated;
+select set_config('request.jwt.claim.sub','d5000000-0000-0000-0000-000000000001',true);
+select set_config('request.jwt.claim.saga_id','d5500000-0000-0000-0000-000000000001',true);
+create temp table pdf_begin as select public.begin_pdf_import(
+  'd5200000-0000-0000-0000-000000000001','d5300000-0000-0000-0000-000000000001','d5500000-0000-0000-0000-000000000001',
+  'd5600000-0000-0000-0000-000000000005','campaign.pdf','application/pdf',2462
+) result;
+select is((select result->>'state' from pdf_begin),'uploading','PDF registration creates only an uploading non-canon source');
+select is((select result->>'storage_path' from pdf_begin),'d5200000-0000-0000-0000-000000000001/d5300000-0000-0000-0000-000000000001/d5500000-0000-0000-0000-000000000001/imports/d5600000-0000-0000-0000-000000000005/original.pdf','PDF original path is deterministic and Saga-scoped');
+select ok(public.attachment_object_write_allowed((select result->>'storage_path' from pdf_begin)),'pending owner PDF path is writable through Storage RLS');
+select is(public.begin_pdf_import('d5200000-0000-0000-0000-000000000001','d5300000-0000-0000-0000-000000000001','d5500000-0000-0000-0000-000000000001','d5600000-0000-0000-0000-000000000005','campaign.pdf','application/pdf',2462)->>'replayed','true','exact PDF registration retry reuses its source and path');
+select throws_like($$select public.begin_pdf_import('d5200000-0000-0000-0000-000000000001','d5300000-0000-0000-0000-000000000001','d5500000-0000-0000-0000-000000000001',gen_random_uuid(),'campaign.pdf','text/plain',2462)$$,'%does not match PDF%','PDF MIME mismatch fails before Storage registration');
+select throws_like($$select public.begin_pdf_import('d5200000-0000-0000-0000-000000000001','d5300000-0000-0000-0000-000000000001','d5500000-0000-0000-0000-000000000001',gen_random_uuid(),'campaign.pdf','application/pdf',10485761)$$,'%too large%','oversized PDF fails before Storage registration');
+select is(public.begin_pdf_import('d5200000-0000-0000-0000-000000000001','d5300000-0000-0000-0000-000000000001','d5500000-0000-0000-0000-000000000002','d5600000-0000-0000-0000-000000000007','campaign.pdf','application/pdf',2462)->>'state','uploading','authorized sibling PDF registration remains a separately scoped source');
+select is(public.claim_pdf_import_extraction('d5200000-0000-0000-0000-000000000001','d5300000-0000-0000-0000-000000000001','d5500000-0000-0000-0000-000000000001','d5600000-0000-0000-0000-000000000005','d5700000-0000-0000-0000-000000000001')->>'id','d5600000-0000-0000-0000-000000000005','owner can claim the registered PDF extraction attempt');
+select is((select import_state::text from public.sources where id='d5600000-0000-0000-0000-000000000005'),'extracting','claim advances PDF into extracting state');
+select throws_like($$select public.claim_pdf_import_extraction('d5200000-0000-0000-0000-000000000001','d5300000-0000-0000-0000-000000000001','d5500000-0000-0000-0000-000000000002','d5600000-0000-0000-0000-000000000005',gen_random_uuid())$$,'%not available%','sibling Saga cannot claim another Saga PDF extraction');
+reset role;
+
+create temp table pdf_complete as select public.complete_pdf_import_extraction_for_worker(
+  'd5600000-0000-0000-0000-000000000005','d5000000-0000-0000-0000-000000000001','d5700000-0000-0000-0000-000000000001',repeat('a',64),
+  'PDF extracted lore',encode(extensions.digest(convert_to('PDF extracted lore','UTF8'),'sha256'),'hex'),2,18,'pdfjs-5.4.149/relic-1'
+) result;
+select is((select result->>'state' from pdf_complete),'ready_for_review','validated PDF extraction becomes reviewable');
+select is((select raw_excerpt from public.sources where id='d5600000-0000-0000-0000-000000000005'),'PDF extracted lore','only derived PDF text enters the Import Inbox source');
+select ok((select original_sha256=repeat('a',64) and extraction_version='pdfjs-5.4.149/relic-1' and page_count=2 and extracted_characters=18 and ready_at is not null from public.sources where id='d5600000-0000-0000-0000-000000000005'),'PDF provenance freezes original hash, extractor version, page count, character count, and ready time');
+select ok(not public.attachment_object_write_allowed((select storage_path from public.sources where id='d5600000-0000-0000-0000-000000000005')),'ready PDF original cannot be overwritten or deleted through browser Storage RLS');
+select throws_like($$select public.complete_pdf_import_extraction_for_worker('d5600000-0000-0000-0000-000000000005','d5000000-0000-0000-0000-000000000001','d5700000-0000-0000-0000-000000000001',repeat('a',64),'PDF extracted lore',encode(extensions.digest(convert_to('PDF extracted lore','UTF8'),'sha256'),'hex'),2,18,'pdfjs-5.4.149/relic-1')$$,'%stale or unavailable%','completed extraction cannot be replayed into mutable provenance');
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','d5000000-0000-0000-0000-000000000001',true);
+select set_config('request.jwt.claim.saga_id','d5500000-0000-0000-0000-000000000001',true);
+select is(public.begin_pdf_import('d5200000-0000-0000-0000-000000000001','d5300000-0000-0000-0000-000000000001','d5500000-0000-0000-0000-000000000001','d5600000-0000-0000-0000-000000000006','scan.pdf','application/pdf',4637)->>'state','uploading','second PDF registers independently');
+select is(public.claim_pdf_import_extraction('d5200000-0000-0000-0000-000000000001','d5300000-0000-0000-0000-000000000001','d5500000-0000-0000-0000-000000000001','d5600000-0000-0000-0000-000000000006','d5700000-0000-0000-0000-000000000002')->>'id','d5600000-0000-0000-0000-000000000006','second PDF extraction is independently claimed');
+reset role;
+select is(public.fail_pdf_import_extraction_for_worker('d5600000-0000-0000-0000-000000000006','d5000000-0000-0000-0000-000000000001','d5700000-0000-0000-0000-000000000002','rejected','no_extractable_text',repeat('b',64),1)->>'state','rejected','image-only PDF records a stable safe rejection');
+select is((select failure_code from public.sources where id='d5600000-0000-0000-0000-000000000006'),'no_extractable_text','safe PDF rejection retains its stable failure code');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','d5000000-0000-0000-0000-000000000001',true);
+select set_config('request.jwt.claim.saga_id','d5500000-0000-0000-0000-000000000001',true);
+select throws_like($$select public.claim_pdf_import_extraction('d5200000-0000-0000-0000-000000000001','d5300000-0000-0000-0000-000000000001','d5500000-0000-0000-0000-000000000001','d5600000-0000-0000-0000-000000000006',gen_random_uuid())$$,'%cannot be extracted%','terminal rejected PDF requires explicit replacement rather than unsafe retry');
+reset role;
+select ok(not has_function_privilege('anon','public.begin_pdf_import(uuid,uuid,uuid,uuid,text,text,bigint)','execute'),'anonymous PDF registration is denied');
+select ok(not has_function_privilege('authenticated','public.complete_pdf_import_extraction_for_worker(uuid,uuid,uuid,text,text,text,integer,integer,text)','execute'),'browser role cannot forge a completed extraction');
+select throws_like($$update public.sources set raw_excerpt='changed PDF text' where id='d5600000-0000-0000-0000-000000000005'$$,'%ready import provenance is immutable%','ready PDF derived text cannot be changed');
 
 select is((select uploader_id from public.sources where id='d5600000-0000-0000-0000-000000000001'), 'd5000000-0000-0000-0000-000000000001'::uuid, 'uploader provenance is immutable and exact');
 select is((select raw_excerpt from public.sources where id='d5600000-0000-0000-0000-000000000001'), E'A substantial UTF-8 import: Héritage.\r\n', 'UTF-8 and line endings remain exact');

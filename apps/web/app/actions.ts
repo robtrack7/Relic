@@ -1325,6 +1325,64 @@ export async function saveImportInboxAction(formData: FormData) {
   return { ok: true as const, source: data as { id: string; state: string; duplicate?: boolean } };
 }
 
+export async function preparePdfImportAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const byteSize = Number(value(formData, "byteSize"));
+  if (!Number.isSafeInteger(byteSize) || byteSize < 8 || byteSize > 10_485_760) {
+    return { ok: false as const, error: "PDF size is invalid or exceeds the 10 MB limit." };
+  }
+  const { data, error } = await supabase.rpc("begin_pdf_import", {
+    p_workspace_id: params.workspaceId,
+    p_world_id: params.worldId,
+    p_saga_id: params.sagaId,
+    p_source_id: value(formData, "sourceId"),
+    p_original_filename: value(formData, "filename"),
+    p_mime_type: value(formData, "mimeType"),
+    p_byte_size: byteSize,
+  });
+  if (error) return { ok: false as const, error: error.message };
+  const source = data as { id?: string; state?: string; bucket?: string; storage_path?: string; replayed?: boolean } | null;
+  const expectedPrefix = `${params.workspaceId}/${params.worldId}/${params.sagaId}/imports/${value(formData, "sourceId")}/`;
+  if (!source?.id || source.bucket !== "attachments" || typeof source.storage_path !== "string"
+    || !source.storage_path.startsWith(expectedPrefix) || !source.storage_path.endsWith("/original.pdf")) {
+    return { ok: false as const, error: "The private PDF upload target is invalid." };
+  }
+  return { ok: true as const, source: {
+    id: source.id,
+    state: source.state ?? "uploading",
+    bucket: source.bucket,
+    storage_path: source.storage_path,
+    replayed: Boolean(source.replayed),
+  } };
+}
+
+export async function extractPdfImportAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const attemptId = value(formData, "attemptId") || crypto.randomUUID();
+  const { data, error } = await supabase.functions.invoke("extract-import-pdf", {
+    body: {
+      workspace_id: params.workspaceId,
+      world_id: params.worldId,
+      saga_id: params.sagaId,
+      source_id: value(formData, "sourceId"),
+      attempt_id: attemptId,
+    },
+  });
+  if (error) {
+    let message = "PDF extraction failed. Retry or replace the file.";
+    const context = (error as { context?: { json?: () => Promise<unknown> } }).context;
+    if (context?.json) {
+      const body = await context.json().catch(() => null) as { error?: { message?: string } } | null;
+      if (body?.error?.message) message = body.error.message;
+    }
+    return { ok: false as const, error: message };
+  }
+  revalidatePath(`${sagaPath(params)}/imports`);
+  return { ok: true as const, source: data as { id: string; state: string; duplicate?: boolean; failure_code?: string } };
+}
+
 export async function setImportSourceStateAction(formData: FormData) {
   const { supabase } = await requireActionUser();
   const params = paramsFromForm(formData);

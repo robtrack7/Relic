@@ -52,7 +52,7 @@ test("D5 Import Inbox preserves raw input and creates no automatic downstream ef
   await pastedCard.getByText("Inspect original content").click();
   await expect(pastedCard.locator("pre")).toHaveText(substantial);
 
-  await page.getByRole("tab", { name: "Text or Markdown file" }).click();
+  await page.getByRole("tab", { name: "Text, Markdown, or PDF file" }).click();
   await page.locator("#import-file").setInputFiles({ name: "legacy-notes.md", mimeType: "text/markdown", buffer: Buffer.from("# Legacy notes\r\n\r\nThe bridge remains broken.", "utf8") });
   await expect(page.getByText("legacy-notes.md", { exact: false })).toBeVisible();
   await page.getByRole("button", { name: "Save for review" }).click();
@@ -71,9 +71,9 @@ test("D5 Import Inbox preserves raw input and creates no automatic downstream ef
   await page.getByRole("button", { name: "Retry import" }).click();
   await expect(page.getByText(/ready for your review and remains non-canon/i)).toBeVisible();
 
-  await page.getByRole("tab", { name: "Text or Markdown file" }).click();
+  await page.getByRole("tab", { name: "Text, Markdown, or PDF file" }).click();
   await page.locator("#import-file").setInputFiles({ name: "unsafe.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF") });
-  await expect(page.getByRole("status")).toContainText("Unsupported file type");
+  await expect(page.getByRole("status")).toContainText("empty or incomplete");
   await page.locator("#import-file").setInputFiles({ name: "too-large.md", mimeType: "text/markdown", buffer: Buffer.alloc(1_048_577, 65) });
   await expect(page.getByRole("status")).toContainText("too large");
 

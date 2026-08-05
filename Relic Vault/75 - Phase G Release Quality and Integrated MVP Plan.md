@@ -85,6 +85,8 @@ Raw imports, original PDFs, private image objects, captions, workshop conversati
 
 **Gate:** hosted schema equals repository schema; privilege/advisor review is recorded; staging deploy is reachable; fixtures are deterministic; no provider call is required.
 
+**2026-08-05 checkpoint:** the hosted schema, exact callable-surface audit, measured advisor hardening, and deterministic 19-file fixture matrix are complete with 1,151 database assertions passing. G0 remains open on two external-console items: the Supabase dashboard session required to enable leaked-password protection, and an authenticated/linked private web host required to publish staging. Local G1 work may continue, but G2 hosted acceptance cannot begin until both are closed. See `docs/PHASE_G0_HOSTED_READINESS.md`.
+
 ### G1 — Import, attachment, rules, and manual creation closure
 
 - Extend Import Inbox state, schema, Storage policy, extractor worker, and UI for PDF upload/extraction/rejection/retry/recovery.
@@ -95,6 +97,8 @@ Raw imports, original PDFs, private image objects, captions, workshop conversati
 - Add loading, empty, denied, offline, malformed, quota, extraction-failure, and retry states for every new surface.
 
 **Gate:** adversarial PDF/image fixtures fail safely; valid sources and attachments survive refresh/restart; no upload automatically calls AI, embeds, or writes canon; a selected import and a caption can enter the ordinary Loom review flow.
+
+**2026-08-05 PDF checkpoint:** the trusted PDF slice is complete locally and on locked Supabase staging. The browser registers and uploads only to private Storage; the JWT-verified Edge extractor distrusts metadata, records immutable original/derived hashes and extractor provenance, and moves successful text only to `ready_for_review`. Ten synthetic cases pass against both local and hosted runtime: textual success plus safe rejection of empty, image-only, encrypted, active-content, embedded-file, over-page-limit, malformed, MIME-mismatched, and valid-PDF-plus-appended-image polyglot input. The final deployed bundle is 499.1 kB, all 1,181 database assertions and 155 web tests pass, and the slice made zero provider calls. G1 remains open for explicit selected-source Loom enrollment, private image attachments, tag/status editing, and GM-authored Stage references.
 
 ### G2 — Twin real-Loom integrated journeys
 

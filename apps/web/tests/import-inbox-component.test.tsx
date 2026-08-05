@@ -1,13 +1,18 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ImportInbox } from "@/components/ImportInbox";
-import { saveImportInboxAction, setImportSourceStateAction } from "@/app/actions";
+import { extractPdfImportAction, preparePdfImportAction, saveImportInboxAction, setImportSourceStateAction } from "@/app/actions";
 import { readImportInboxDraft } from "@/lib/import-inbox";
 import { installMemoryLocalStorage } from "./local-storage";
 
 const refresh = vi.fn();
+const upload = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
-vi.mock("@/app/actions", () => ({ saveImportInboxAction: vi.fn(), setImportSourceStateAction: vi.fn() }));
+vi.mock("@/lib/supabase/browser", () => ({ createClient: () => ({ storage: { from: () => ({ upload }) } }) }));
+vi.mock("@/app/actions", () => ({
+  saveImportInboxAction: vi.fn(), setImportSourceStateAction: vi.fn(),
+  preparePdfImportAction: vi.fn(), extractPdfImportAction: vi.fn(),
+}));
 
 const params = { workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a" };
 const source = {
@@ -18,7 +23,7 @@ const source = {
 };
 
 describe("ImportInbox", () => {
-  beforeEach(() => { vi.clearAllMocks(); installMemoryLocalStorage(); Object.defineProperty(navigator, "onLine", { configurable: true, value: true }); });
+  beforeEach(() => { vi.clearAllMocks(); upload.mockResolvedValue({ data: { path: "private" }, error: null }); installMemoryLocalStorage(); Object.defineProperty(navigator, "onLine", { configurable: true, value: true }); });
 
   it("saves pasted text, clears only after success, and invokes no provider or canon action", async () => {
     vi.mocked(saveImportInboxAction).mockResolvedValue({ ok: true, source: { id: "source-new", state: "ready_for_review", duplicate: false } });
@@ -66,5 +71,27 @@ describe("ImportInbox", () => {
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Archive" })); await Promise.resolve(); });
     expect(setImportSourceStateAction).toHaveBeenCalledTimes(1);
     expect(refresh).toHaveBeenCalled();
+  });
+
+  it("uploads a PDF privately and invokes only the trusted extraction path", async () => {
+    vi.mocked(preparePdfImportAction).mockResolvedValue({ ok: true, source: {
+      id: "source-pdf", state: "uploading", bucket: "attachments",
+      storage_path: "workspace-a/world-a/saga-a/imports/source-pdf/original.pdf", replayed: false,
+    } });
+    vi.mocked(extractPdfImportAction).mockResolvedValue({ ok: true, source: { id: "source-pdf", state: "ready_for_review", duplicate: false } });
+    render(<ImportInbox ownerId="owner-a" params={params} initialImports={[]} />);
+    fireEvent.click(screen.getByRole("tab", { name: "Text, Markdown, or PDF file" }));
+    const pdf = new File(["%PDF-1.7\n%%EOF"], "campaign.pdf", { type: "application/pdf" });
+    Object.defineProperty(pdf, "arrayBuffer", { value: async () => new TextEncoder().encode("%PDF-1.7\n%%EOF").buffer });
+    await act(async () => { fireEvent.change(screen.getByLabelText("Choose UTF-8 .txt/.md or a text-bearing .pdf"), { target: { files: [pdf] } }); });
+    await waitFor(() => expect(screen.getByRole("status").textContent).toMatch(/PDF envelope validated/i));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Save for review" })); });
+    await waitFor(() => expect(preparePdfImportAction).toHaveBeenCalledTimes(1));
+    expect(preparePdfImportAction).toHaveBeenCalledTimes(1);
+    expect(upload).toHaveBeenCalledWith(expect.stringMatching(/\/imports\/.*\/original\.pdf$/), pdf, expect.objectContaining({ contentType: "application/pdf", upsert: false }));
+    expect(extractPdfImportAction).toHaveBeenCalledTimes(1);
+    expect(saveImportInboxAction).not.toHaveBeenCalled();
+    expect(readImportInboxDraft("owner-a", params)).toBeNull();
+    expect(screen.getByRole("status").textContent).toMatch(/versioned text is ready for review/i);
   });
 });

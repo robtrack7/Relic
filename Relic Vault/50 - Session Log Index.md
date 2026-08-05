@@ -91,3 +91,5 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-08-05 - Phase E Hosted Accounting and Credential Gate]]
 - [[Session Logs/2026-08-05 - Phase F Trust Data and Operations]]
 - [[Session Logs/2026-08-05 - Phase G Integrated MVP Plan]]
+- [[Session Logs/2026-08-05 - Phase G0 Hosted Hardening and Fixtures]]
+- [[Session Logs/2026-08-05 - Phase G1 Trusted PDF Import]]

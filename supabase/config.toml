@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.embed-row-dispatch]
 verify_jwt = false
+
+[functions.extract-import-pdf]
+verify_jwt = true

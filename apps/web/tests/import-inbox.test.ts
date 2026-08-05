@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   IMPORT_FILE_MAX_BYTES,
+  IMPORT_PDF_MAX_BYTES,
   clearImportInboxDraft,
   importInboxDraftKey,
+  inspectImportFile,
   readImportInboxDraft,
   readTextImportFile,
   writeImportInboxDraft,
@@ -49,6 +51,18 @@ describe("Import Inbox validation and recovery", () => {
     let read = false;
     const candidate = { name: "huge.md", type: "text/markdown", size: IMPORT_FILE_MAX_BYTES + 1, arrayBuffer: async () => { read = true; return new ArrayBuffer(0); } };
     await expect(readTextImportFile(candidate)).rejects.toThrow(/too large/i);
+    expect(read).toBe(false);
+  });
+
+  it("accepts only bounded PDF envelopes and leaves extraction to the trusted service", async () => {
+    const valid = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37]);
+    await expect(inspectImportFile(file("campaign.pdf", "application/pdf", valid))).resolves.toMatchObject({
+      filename: "campaign.pdf", mimeType: "application/pdf", content: "", ingestionMethod: "pdf_file",
+    });
+    await expect(inspectImportFile(file("campaign.pdf", "text/plain", valid))).rejects.toThrow(/MIME/i);
+    await expect(inspectImportFile(file("campaign.pdf", "application/pdf", "not-a-pdf"))).rejects.toThrow(/contents/i);
+    let read = false;
+    await expect(inspectImportFile({ name: "huge.pdf", type: "application/pdf", size: IMPORT_PDF_MAX_BYTES + 1, arrayBuffer: async () => { read = true; return new ArrayBuffer(0); } })).rejects.toThrow(/too large/i);
     expect(read).toBe(false);
   });
 

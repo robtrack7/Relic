@@ -2,12 +2,13 @@ create extension if not exists pgtap with schema extensions;
 
 begin;
 
-select plan(9);
+select plan(11);
 
 create temp table module1_callable_functions (
   function_name text primary key,
   browser_callable boolean not null,
-  reason text not null
+  reason text not null,
+  expected_authenticated_signatures integer not null default 1
 );
 
 insert into module1_callable_functions (function_name, browser_callable, reason)
@@ -21,6 +22,7 @@ values
   ('saga_row_allowed', false, 'RLS helper for Saga-only public rows and storage paths.'),
   ('storage_path_allowed', false, 'Storage RLS helper for workspace/world/saga object paths.'),
   ('storage_path_segment', false, 'Storage path parser used by storage_path_allowed.'),
+  ('attachment_object_write_allowed', false, 'Storage RLS helper freezes ready PDF originals while permitting scoped intake writes.'),
   ('ensure_default_workspace', true, 'Bootstrap RPC for first authenticated app load.'),
   ('get_bootstrap_context', true, 'Bootstrap read RPC for the authenticated shell.'),
   ('get_saga_context', true, 'Scoped Saga context read RPC.'),
@@ -76,6 +78,8 @@ values
   ('retry_session_transcription', true, 'Scoped explicit transcription retry RPC.'),
   ('save_session_evidence', true, 'Scoped idempotent pasted-notes and GM-summary evidence RPC.'),
   ('save_import_inbox_source', true, 'Scoped idempotent raw Import Inbox write RPC.'),
+  ('begin_pdf_import', true, 'Scoped idempotent private PDF upload registration RPC.'),
+  ('claim_pdf_import_extraction', true, 'Owner-scoped PDF extraction attempt claim RPC.'),
   ('get_import_inbox', true, 'Scoped Import Inbox provenance and original-content read RPC.'),
   ('set_import_source_state', true, 'Scoped Import Inbox archive and restore RPC.'),
   ('get_approval_queue', true, 'Scoped Approval Queue read model with field diffs and conflicts.'),
@@ -118,6 +122,13 @@ values
   ('retrieve_for_task', true, 'Scoped retrieval RPC with hard-canon filters.'),
   ('retrieve_for_task_relaxed', true, 'Scoped conservative natural-language fallback for Guide task grounding.');
 
+-- create_session intentionally retains the pre-scheduling compatibility
+-- signature plus the dated signature. Every other documented name has one
+-- authenticated signature after the obsolete notification overload is revoked.
+update module1_callable_functions
+set expected_authenticated_signatures = 2
+where function_name = 'create_session';
+
 create temp table module1_security_definer_functions (
   function_name text primary key,
   reason text not null
@@ -129,6 +140,7 @@ values
   ('user_can_access_workspace', 'Ownership helper for scoped definer RPCs.'),
   ('user_can_access_saga', 'Hierarchy helper for scoped definer RPCs.'),
   ('storage_path_allowed', 'Storage RLS helper validates scoped object paths against authenticated ownership.'),
+  ('attachment_object_write_allowed', 'Storage RLS helper freezes ready PDF originals and scopes pending intake writes.'),
   ('assert_saga_access', 'Shared failure point for scoped definer RPCs.'),
   ('scoped_entity_exists', 'Scope validator for entity references.'),
   ('write_manual_canon_source', 'Internal helper that creates synthetic GM instruction sources.'),
@@ -198,6 +210,10 @@ values
   ('retry_session_transcription', 'Explicit transcription retry RPC.'),
   ('save_session_evidence', 'Manual Session evidence write RPC.'),
   ('save_import_inbox_source', 'Raw Import Inbox source write RPC.'),
+  ('begin_pdf_import', 'Private PDF import registration RPC.'),
+  ('claim_pdf_import_extraction', 'Owner-scoped PDF extraction claim RPC.'),
+  ('complete_pdf_import_extraction_for_worker', 'Service-only validated PDF extraction result writer.'),
+  ('fail_pdf_import_extraction_for_worker', 'Service-only stable PDF extraction failure writer.'),
   ('get_import_inbox', 'Scoped Import Inbox review read RPC.'),
   ('set_import_source_state', 'Scoped Import Inbox lifecycle RPC.'),
   ('get_approval_queue', 'Approval Queue diff and conflict read model RPC.'),
@@ -329,20 +345,52 @@ select is(
 );
 
 with expected_functions as (
-  select allowed.function_name, p.oid
+  select allowed.function_name, exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname = allowed.function_name
+      and has_function_privilege('authenticated', p.oid, 'execute')
+  ) as executable
   from module1_callable_functions allowed
-  left join pg_proc p on p.proname = allowed.function_name
-  left join pg_namespace n on n.oid = p.pronamespace and n.nspname = 'public'
 )
 select is(
   (
     select count(*)
     from expected_functions
-    where oid is null
-      or not has_function_privilege('authenticated', oid, 'execute')
+    where not executable
   ),
   0::bigint,
   'authenticated can execute every documented callable/helper function'
+);
+
+with actual_signatures as (
+  select p.proname as function_name, count(*)::integer as signature_count
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public'
+    and has_function_privilege('authenticated', p.oid, 'execute')
+  group by p.proname
+)
+select is(
+  (
+    select count(*)
+    from module1_callable_functions allowed
+    left join actual_signatures actual using (function_name)
+    where coalesce(actual.signature_count, 0) <> allowed.expected_authenticated_signatures
+  ),
+  0::bigint,
+  'authenticated execute privilege has the exact documented signature cardinality'
+);
+
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'public.update_notification_preferences(jsonb)'::regprocedure,
+    'execute'
+  ),
+  'authenticated cannot execute the obsolete one-argument notification preference overload'
 );
 
 select is(

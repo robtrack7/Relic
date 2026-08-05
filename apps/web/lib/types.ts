@@ -13,12 +13,21 @@ export type ImportSource = {
   filename: string | null;
   mime_type: string;
   byte_size: number;
-  ingestion_method: "paste" | "plain_text_file" | "markdown_file";
-  state: "ready_for_review" | "archived";
+  ingestion_method: "paste" | "plain_text_file" | "markdown_file" | "pdf_file";
+  state: "uploading" | "extracting" | "ready_for_review" | "failed" | "rejected" | "archived";
+  failure_code?: string | null;
   content: string;
   created_at: string;
   ready_at: string;
   archived_at: string | null;
+  storage_bucket?: "attachments" | null;
+  storage_path?: string | null;
+  original_sha256?: string | null;
+  derived_sha256?: string | null;
+  extraction_version?: string | null;
+  page_count?: number | null;
+  extracted_characters?: number | null;
+  extracted_at?: string | null;
 };
 
 export type HierarchyOption = {

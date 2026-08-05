@@ -1,10 +1,11 @@
 import type { IdParams } from "@/lib/types";
 
 export const IMPORT_FILE_MAX_BYTES = 1_048_576;
+export const IMPORT_PDF_MAX_BYTES = 10_485_760;
 export const IMPORT_PASTE_MAX_CHARACTERS = 50_000;
 
-export type ImportIngestionMethod = "paste" | "plain_text_file" | "markdown_file";
-export type ImportLocalStatus = "draft" | "validating" | "uploading" | "failed" | "rejected";
+export type ImportIngestionMethod = "paste" | "plain_text_file" | "markdown_file" | "pdf_file";
+export type ImportLocalStatus = "draft" | "validating" | "uploading" | "extracting" | "failed" | "rejected";
 export type ImportInboxDraft = {
   sourceId: string;
   mode: "paste" | "file";
@@ -36,7 +37,7 @@ export function readImportInboxDraft(ownerId: string, scope: IdParams): ImportIn
     const parsed = JSON.parse(value) as Partial<ImportInboxDraft>;
     if (typeof parsed.sourceId !== "string" || typeof parsed.content !== "string" || typeof parsed.updatedAt !== "string") return null;
     if (!(["paste", "file"] as const).includes(parsed.mode as "paste" | "file")) return null;
-    if (!(["draft", "validating", "uploading", "failed", "rejected"] as const).includes(parsed.status as ImportLocalStatus)) return null;
+    if (!(["draft", "validating", "uploading", "extracting", "failed", "rejected"] as const).includes(parsed.status as ImportLocalStatus)) return null;
     return parsed as ImportInboxDraft;
   } catch {
     return null;
@@ -95,6 +96,25 @@ export async function readTextImportFile(candidate: TextFileLike) {
   catch { throw new Error("The selected file is not valid UTF-8 text."); }
   validateDecodedText(content);
   return { filename: candidate.name, mimeType: candidate.type, byteSize: bytes.byteLength, content, ingestionMethod };
+}
+
+export async function inspectImportFile(candidate: TextFileLike) {
+  validateFilename(candidate.name);
+  const extension = candidate.name.toLowerCase().split(".").pop();
+  if (extension !== "pdf") return readTextImportFile(candidate);
+  if (candidate.type !== "application/pdf") throw new Error("The file MIME type does not match a PDF.");
+  if (candidate.size < 8) throw new Error("The selected PDF is empty or incomplete.");
+  if (candidate.size > IMPORT_PDF_MAX_BYTES) throw new Error("The selected PDF is too large. The MVP limit is 10 MB.");
+  const bytes = new Uint8Array(await candidate.arrayBuffer());
+  if (bytes.byteLength !== candidate.size) throw new Error("The selected file changed while it was being read.");
+  if (new TextDecoder("latin1").decode(bytes.subarray(0, 5)) !== "%PDF-") throw new Error("The file contents do not match a PDF.");
+  return {
+    filename: candidate.name,
+    mimeType: candidate.type,
+    byteSize: bytes.byteLength,
+    content: "",
+    ingestionMethod: "pdf_file" as const,
+  };
 }
 
 export function validatePastedImport(content: string) {
