@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { recordPath } from "@/lib/routes";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   archiveEntityAction,
@@ -191,7 +192,7 @@ export function LibraryRecordEditor({ params, initialDetail }: { params: IdParam
         <div className="em-sep" />
         <section className="library-inspector-section" aria-labelledby="relationships-title">
           <h2 id="relationships-title">Relationships & attached notes</h2>
-          {detail.relationships.length ? <ul className="relationship-list">{detail.relationships.map((relationship) => <li key={`${relationship.link_type}-${relationship.id}`}><div><span className="chip stone">{relationship.kind}</span> <Link href={`${root}/entities/${relationship.related_type}/${relationship.related_id}`}>{relationship.related_name || "Unavailable record"}</Link>{relationship.notes && <p>{relationship.notes}</p>}</div><button className="btn btn-ghost btn-sm" disabled={linkBusy} onClick={() => void removeLink(relationship.id, relationship.link_type)}>Remove</button></li>)}</ul> : <p className="inspector-empty">No relationships or attached Notes yet.</p>}
+          {detail.relationships.length ? <ul className="relationship-list">{detail.relationships.map((relationship) => <li key={`${relationship.link_type}-${relationship.id}`}><div><span className="chip stone">{relationship.kind}</span> <Link href={recordPath(root, relationship.related_type, relationship.related_id)}>{relationship.related_name || "Unavailable record"}</Link>{relationship.notes && <p>{relationship.notes}</p>}</div><button className="btn btn-ghost btn-sm" disabled={linkBusy} onClick={() => void removeLink(relationship.id, relationship.link_type)}>Remove</button></li>)}</ul> : <p className="inspector-empty">No relationships or attached Notes yet.</p>}
           {!archived && candidates.length > 0 && <form action={(formData) => void createLink(formData)} className="relationship-picker">
             <HiddenContextFields params={params} /><input type="hidden" name="entityType" value={detail.record.entityType} /><input type="hidden" name="entityId" value={detail.record.id} />
             <label className="field"><span>Related record</span><select name="target" required defaultValue=""><option value="" disabled>Choose a record</option>{candidates.map((candidate) => <option key={`${candidate.entityType}-${candidate.id}`} value={`${candidate.entityType}:${candidate.id}`}>{candidate.name} · {candidate.entityType}</option>)}</select></label>
@@ -205,7 +206,7 @@ export function LibraryRecordEditor({ params, initialDetail }: { params: IdParam
           <h2 id="mentions-title">Mention suggestions</h2>
           {detail.mentions.filter((mention) => mention.state === "suggested").length ? <ul className="mention-list">{detail.mentions.filter((mention) => mention.state === "suggested").map((mention) => <li key={mention.id}><span>“{mention.mention_text}” may refer to <strong>{mention.related_name}</strong>.</span><div><button className="btn btn-secondary btn-sm" disabled={linkBusy} onClick={() => void resolveMention(mention.id, "accepted")}>Accept link</button><button className="btn btn-ghost btn-sm" disabled={linkBusy} onClick={() => void resolveMention(mention.id, "dismissed")}>Dismiss</button></div></li>)}</ul> : <p className="inspector-empty">No mention suggestions.</p>}
           <h3>Backlinks</h3>
-          {detail.backlinks.length ? <ul className="backlink-list">{detail.backlinks.map((mention) => <li key={mention.id}><Link href={`${root}/entities/${mention.source_type}/${mention.source_id}`}>{mention.source_name || "Unavailable record"}</Link><button className="btn btn-ghost btn-sm" disabled={linkBusy} onClick={() => void resolveMention(mention.id, "dismissed")}>Remove link</button></li>)}</ul> : <p className="inspector-empty">No accepted backlinks.</p>}
+          {detail.backlinks.length ? <ul className="backlink-list">{detail.backlinks.map((mention) => <li key={mention.id}>{mention.source_type && mention.source_id ? <Link href={recordPath(root, mention.source_type, mention.source_id)}>{mention.source_name || "Unavailable record"}</Link> : <span>{mention.source_name || "Unavailable record"}</span>}<button className="btn btn-ghost btn-sm" disabled={linkBusy} onClick={() => void resolveMention(mention.id, "dismissed")}>Remove link</button></li>)}</ul> : <p className="inspector-empty">No accepted backlinks.</p>}
           {linkError && <div className="validation-warning">{linkError}</div>}
         </section>
       </main>

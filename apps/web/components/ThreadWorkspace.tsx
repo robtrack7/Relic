@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { recordPath } from "@/lib/routes";
 import { useRef, useState } from "react";
 import { createLibraryLinkAction, mutateThreadObjectiveAction, removeLibraryLinkAction, updateThreadDetailsAction } from "@/app/actions";
 import { sagaPath } from "@/lib/routes";
@@ -99,7 +100,7 @@ export function ThreadWorkspace({ params, initialDetail, initialTimeline, sessio
     <div className="thread-history-grid">
       <section className="card td-card" role="region" aria-label="Related entities">
         <div className="td-eyebrow">Related entities</div>
-        {detail.relationships.length ? <ul className="relationship-list">{detail.relationships.map((relation) => <li key={`${relation.link_type}-${relation.id}`}><div><span className="chip stone">{relation.kind}</span> {relation.related_name ? <Link href={`${root}/entities/${relation.related_type}/${relation.related_id}`}>{relation.related_name}</Link> : <span>Unavailable record</span>} {relation.related_archived && <span className="chip rust">Archived</span>}{relation.notes && <p>{relation.notes}</p>}</div><button className="btn btn-ghost btn-sm" aria-label={`Remove ${relation.related_name || "Unavailable record"}`} disabled={busy} onClick={() => void removeRelated(relation.id, relation.link_type)}>Remove</button></li>)}</ul> : <p className="inspector-empty">No related entities yet.</p>}
+        {detail.relationships.length ? <ul className="relationship-list">{detail.relationships.map((relation) => <li key={`${relation.link_type}-${relation.id}`}><div><span className="chip stone">{relation.kind}</span> {relation.related_name ? <Link href={recordPath(root, relation.related_type, relation.related_id)}>{relation.related_name}</Link> : <span>Unavailable record</span>} {relation.related_archived && <span className="chip rust">Archived</span>}{relation.notes && <p>{relation.notes}</p>}</div><button className="btn btn-ghost btn-sm" aria-label={`Remove ${relation.related_name || "Unavailable record"}`} disabled={busy} onClick={() => void removeRelated(relation.id, relation.link_type)}>Remove</button></li>)}</ul> : <p className="inspector-empty">No related entities yet.</p>}
         {detail.candidates.length > 0 && <form action={(form) => void addRelated(form)} className="relationship-picker"><label className="field"><span>Related record</span><select name="target" required defaultValue=""><option value="" disabled>Choose a record</option>{detail.candidates.filter((candidate) => candidate.entityType !== "note").map((candidate) => <option key={`${candidate.entityType}-${candidate.id}`} value={`${candidate.entityType}:${candidate.id}`}>{candidate.name} · {candidate.entityType}</option>)}</select></label><label className="field"><span>Relationship</span><select name="relationshipKind" defaultValue="related-to">{relationshipKinds.map((kind) => <option key={kind}>{kind}</option>)}</select></label><label className="field"><span>Context</span><input name="relationshipNotes" /></label><button className="btn btn-secondary btn-sm" disabled={busy}>Add related entity</button></form>}
       </section>
 

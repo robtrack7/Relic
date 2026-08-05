@@ -2,6 +2,7 @@ import { errorResponse, jsonResponse } from "../_shared/http.ts";
 import { requireInternalAuth } from "../_shared/internal-auth.ts";
 import { createScopedClient } from "../_shared/scoped-client.ts";
 import { createServiceClient } from "../_shared/service-client.ts";
+import { recordProviderPipelineEvent } from "../_shared/observability.ts";
 
 type GuideSubmitRequest = {
   gm_user_id?: string;
@@ -20,8 +21,21 @@ type GuideSearchResult = {
   source_entity_id?: string | null;
 };
 
+type LoomRetrievalPlan = {
+  strategy?: "deterministic_read" | "exact" | "structured" | "lexical" | "hybrid";
+  provider_required?: boolean;
+  reason?: string;
+  source_ids?: unknown[];
+};
+
 function normalizeQuestion(value: string) {
   return value.normalize("NFKC").replace(/\r\n?/g, "\n").replace(/[\t ]+/g, " ").trim();
+}
+
+async function safeQuestionHash(question: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(question));
+  return Array.from(new Uint8Array(digest)).slice(0, 8)
+    .map((value) => value.toString(16).padStart(2, "0")).join("");
 }
 
 async function resolveGuideSourceIds(
@@ -96,6 +110,55 @@ Deno.serve(async (req) => {
     });
   }
 
+  const { data: planned, error: planError } = await service.rpc("plan_loom_retrieval_for_worker", {
+    p_workspace_id: body.workspace_id,
+    p_world_id: body.world_id,
+    p_saga_id: body.saga_id,
+    p_gm_id: body.gm_user_id,
+    p_question: question
+  });
+  if (planError || typeof planned !== "object" || planned === null) {
+    return errorResponse(503, "retrieval_unavailable", "The Loom could not safely plan this request.");
+  }
+  const plan = planned as LoomRetrievalPlan;
+  const strategy = plan.strategy ?? "hybrid";
+  const queryHash = await safeQuestionHash(question);
+  if (strategy === "deterministic_read" && plan.provider_required === false) {
+    const { data: completed, error: deterministicError } = await service.rpc(
+      "create_loom_deterministic_turn_for_worker",
+      {
+        p_workspace_id: body.workspace_id,
+        p_world_id: body.world_id,
+        p_saga_id: body.saga_id,
+        p_gm_id: body.gm_user_id,
+        p_thread_id: body.thread_id ?? null,
+        p_turn_id: body.turn_id,
+        p_idempotency_key: body.idempotency_key,
+        p_question: question
+      }
+    );
+    if (deterministicError) {
+      return errorResponse(400, "loom_read_failed", "The Loom could not complete this scoped read.");
+    }
+    await recordProviderPipelineEvent({
+      eventName: "loom_deterministic_read_completed",
+      workerType: "loom_retrieval",
+      workspaceId: body.workspace_id,
+      worldId: body.world_id,
+      sagaId: body.saga_id,
+      idempotencyIdentifier: queryHash,
+      state: "success",
+      safeMetadata: {
+        retrieval_strategy: strategy,
+        planner_reason: typeof plan.reason === "string" ? plan.reason.slice(0, 80) : "deterministic_read",
+        source_count: Array.isArray(plan.source_ids) ? plan.source_ids.length : 0,
+        provider_dispatched: false,
+        query_embedding_requested: false
+      }
+    }).catch(() => undefined);
+    return jsonResponse({ ...completed, status: "complete", deterministic: true });
+  }
+
   const scoped = await createScopedClient(body.gm_user_id, "guide_submit", body.saga_id);
   const { data: preflight, error: preflightError } = await scoped.rpc("preflight_ai_task", {
     p_workspace_id: body.workspace_id,
@@ -133,42 +196,66 @@ Deno.serve(async (req) => {
   const baseUrl = Deno.env.get("SUPABASE_URL");
   if (!internalToken || !baseUrl) return errorResponse(500, "configuration", "Relic Guide is temporarily unavailable.");
 
-  let results: GuideSearchResult[];
-  let retrievalMode: "hybrid" | "lexical_fallback";
-  try {
-    const retrievalResponse = await fetch(`${baseUrl}/functions/v1/hybrid-search`, {
-      method: "POST",
-      headers: { authorization: `Bearer ${internalToken}`, "content-type": "application/json" },
-      body: JSON.stringify({
-        gm_user_id: body.gm_user_id,
+  let retrievalMode: "hybrid" | "lexical_fallback" | "lexical" | "exact" | "structured" =
+    strategy === "exact" || strategy === "structured" ? strategy : strategy === "lexical" ? "lexical" : "hybrid";
+  let sourceIds = strategy === "exact" || strategy === "structured"
+    ? [...new Set((Array.isArray(plan.source_ids) ? plan.source_ids : [])
+      .filter((value): value is string => typeof value === "string"))].slice(0, 20)
+    : [];
+  if (strategy === "lexical" || strategy === "hybrid") {
+    let results: GuideSearchResult[];
+    try {
+      const retrievalResponse = await fetch(`${baseUrl}/functions/v1/hybrid-search`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${internalToken}`, "content-type": "application/json" },
+        body: JSON.stringify({
+          gm_user_id: body.gm_user_id,
+          workspace_id: body.workspace_id,
+          world_id: body.world_id,
+          saga_id: body.saga_id,
+          query_text: question,
+          task_profile: "answer_saga_question",
+          retrieval_strategy: strategy,
+          top_k: 20,
+          include_world_canon: true
+        })
+      });
+      if (!retrievalResponse.ok) throw new Error("guide_retrieval_failed");
+      const retrieval = await retrievalResponse.json();
+      results = Array.isArray(retrieval.results) ? retrieval.results : [];
+      retrievalMode = retrieval.retrieval_mode === "lexical_fallback" ? "lexical_fallback"
+        : retrieval.retrieval_mode === "lexical" ? "lexical" : "hybrid";
+    } catch {
+      return errorResponse(503, "retrieval_unavailable", "The Loom could not safely retrieve Saga evidence.");
+    }
+    try {
+      sourceIds = await resolveGuideSourceIds(service, results, {
         workspace_id: body.workspace_id,
         world_id: body.world_id,
-        saga_id: body.saga_id,
-        query_text: question,
-        task_profile: "answer_saga_question",
-        top_k: 20,
-        include_world_canon: true
-      })
-    });
-    if (!retrievalResponse.ok) throw new Error("guide_retrieval_failed");
-    const retrieval = await retrievalResponse.json();
-    results = Array.isArray(retrieval.results) ? retrieval.results : [];
-    retrievalMode = retrieval.retrieval_mode === "lexical_fallback" ? "lexical_fallback" : "hybrid";
-  } catch {
-    return errorResponse(503, "retrieval_unavailable", "Relic Guide could not safely retrieve Saga evidence.");
+        saga_id: body.saga_id
+      });
+    } catch {
+      return errorResponse(503, "retrieval_unavailable", "The Loom could not safely resolve Saga evidence.");
+    }
   }
-
-  let sourceIds: string[];
-  try {
-    sourceIds = await resolveGuideSourceIds(service, results, {
-      workspace_id: body.workspace_id,
-      world_id: body.world_id,
-      saga_id: body.saga_id
-    });
-  } catch {
-    return errorResponse(503, "retrieval_unavailable", "Relic Guide could not safely resolve Saga evidence.");
-  }
-  const { data: submission, error: createError } = await service.rpc("create_guide_turn_for_worker", {
+  await recordProviderPipelineEvent({
+    eventName: "loom_retrieval_planned",
+    workerType: "loom_retrieval",
+    workspaceId: body.workspace_id,
+    worldId: body.world_id,
+    sagaId: body.saga_id,
+    idempotencyIdentifier: queryHash,
+    state: "success",
+    safeMetadata: {
+      retrieval_strategy: strategy,
+      retrieval_mode: retrievalMode,
+      planner_reason: typeof plan.reason === "string" ? plan.reason.slice(0, 80) : "unknown",
+      source_count: sourceIds.length,
+      provider_dispatched: true,
+      query_embedding_requested: strategy === "hybrid"
+    }
+  }).catch(() => undefined);
+  const { data: submission, error: createError } = await service.rpc("create_loom_provider_turn_for_worker", {
     p_workspace_id: body.workspace_id,
     p_world_id: body.world_id,
     p_saga_id: body.saga_id,

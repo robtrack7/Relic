@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-31
+last_audited: 2026-08-04
 source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 ---
 
@@ -25,6 +25,8 @@ source_file: "Sourced - Downloaded - 260518/relic-entity-canon-schema-v0_8.md"
 ---
 
 ## Changelog
+
+**Packet E7 adaptive-read patch (August 2026).** The existing Loom/Guide turn and action ledgers also carry a safe server-derived retrieval strategy and display-safe deterministic read snapshot. Exact record, list, source, provenance, Thread/objective, relationship-neighborhood, Session, and navigation reads create no AI task run, usage event, canon row, audit row, draft, or embedding job. Read snapshots are current projections, not new canon or citation sources; any fact sent to a provider still requires an immutable `sources` allowlist entry. Graph expansion is one hop with a hard result bound. Multi-hop graph retrieval remains V1.
 
 **Packet E5.2 conversational workshop patch (August 2026).** `workshop_sessions` now carries a server-owned phase, one bounded interview plan, an emerging outline, message counters, and the current task run. A private idempotency-receipt table serializes each GM turn and draft dispatch. The initial planning run may read the starting workshop input; the deep scaffold run freezes the complete normalized GM conversation before dispatch. Neither run may create canon. `sagas.creation_context` stores reviewed tone, conflict, first hook, GM secrets, and any existing-World update proposal; it is GM-private setup context and is excluded from embeddings and ordinary player-facing projections.
 

@@ -14,7 +14,7 @@ const taskRun = {
   session_id: null,
   gm_id: "e3000000-0000-0000-0000-000000000001",
   task_name: "answer_saga_question",
-  prompt_version: "answer_saga_question@1.2.0",
+  prompt_version: "answer_saga_question@1.3.0",
   quota_tier: "light",
   ai_credits: 1,
   model_tier: "relic-balanced",
@@ -26,6 +26,10 @@ const taskRun = {
     question: "What protects the eastern road?",
     action_manifest: [
       { name: "open_record", version: "1.0.0" },
+      { name: "list_records", version: "1.0.0" },
+      { name: "show_source", version: "1.0.0" },
+      { name: "explain_provenance", version: "1.0.0" },
+      { name: "navigate_surface", version: "1.0.0" },
       { name: "draft_entity", version: "1.0.0" }
     ]
   },
@@ -145,7 +149,7 @@ test("Guide rejects unsupported actions and mutation instructions", () => {
   assert.match(`${unsupported.errors.join("\n")}\n${mutation.errors.join("\n")}`, /unsupported|mutation|executable/i);
 });
 
-test("Guide permits only open-record and bounded entity-draft action intents", () => {
+test("Guide permits the registered read tools and bounded entity-draft action intents", () => {
   const output = {
     ...valid,
     blocks: [
@@ -154,6 +158,26 @@ test("Guide permits only open-record and bounded entity-draft action intents", (
         type: "action_preview",
         action: { name: "open_record", version: "1.0.0", arguments: { source_id: sourceA } },
         explanation: "Open the cited Iron Gate record."
+      },
+      {
+        type: "action_preview",
+        action: { name: "list_records", version: "1.0.0", arguments: { record_type: "thread", status: "active", limit: 10 } },
+        explanation: "List active Threads."
+      },
+      {
+        type: "action_preview",
+        action: { name: "show_source", version: "1.0.0", arguments: { source_id: sourceA } },
+        explanation: "Show the cited source."
+      },
+      {
+        type: "action_preview",
+        action: { name: "explain_provenance", version: "1.0.0", arguments: { source_id: sourceA } },
+        explanation: "Explain why this source is trusted."
+      },
+      {
+        type: "action_preview",
+        action: { name: "navigate_surface", version: "1.0.0", arguments: { destination: "search", query: "Iron Gate" } },
+        explanation: "Open literal search."
       },
       {
         type: "action_preview",

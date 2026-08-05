@@ -22,6 +22,8 @@ source_file: "Sourced - Downloaded - 260518/relic-ui-implementation-spec-v0_2.md
 
 Use **The Loom** for all visible AI naming. Existing `RelicGuide*` component names and `/guide` may remain internal compatibility identifiers while UI copy and accessible names change. Add reusable `LoomIntentComposer`, `LoomActionCard`, `LoomPlan`, `LoomPlanStep`, `LoomCostDisclosure`, and `LoomAuthorityBadge` primitives. Action cards must expose target/effect, validation or stale-target state, cost, confirmation, execution receipt, retry, and dismissal. Destructive confirmations reuse the owning deterministic product dialog rather than custom model-generated UI.
 
+Packet E7 extends `LoomActionCard` with display-safe `open_record`, `list_records`, `show_source`, `explain_provenance`, and `navigate_surface` result projections. Read cards are keyboard-operable links/disclosures, label themselves `Free · Read only`, cap lists at twenty and graph neighbors at eight, and never expose scores, handlers, RPC names, private GM fields, or source IDs as raw UI copy. One shared route helper maps Library records, Threads, and Sessions to their actual route hierarchy so search, relationship links, and Loom navigation cannot manufacture `/entities/thread/...` or `/entities/session/...` URLs.
+
 *Created: May 18, 2026. Updated: May 18, 2026.*  
 *Purpose: give vibe-coding agents a buildable first-pass UI map without requiring them to re-read every product document.*
 

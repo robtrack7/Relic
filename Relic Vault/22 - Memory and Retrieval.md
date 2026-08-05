@@ -24,6 +24,10 @@ The Loom does not vector-search on every turn. A server-owned planner follows th
 
 Vectors remain a durable retrieval index for eligible canon, approved summaries, lore, post-session evidence, and transcript windows. Conversation, pending drafts, raw imports, and GM-private fields remain excluded. Structured hierarchy, relationship edges, Thread/objective state, and Session chronology are assembled alongside—not replaced by—semantic evidence. See [[59 - Phase E Loom Operating Layer Plan]].
 
+**Packet E7 delivery contract.** The planner emits exactly one primary strategy: `deterministic_read`, `exact`, `structured`, `lexical`, or `hybrid`. Deterministic reads are recognized bounded commands and complete without an AI task run. `exact` resolves one current visible record by stable ID, Session number, or normalized full name; duplicate names return an ambiguity result rather than choosing. `structured` reads current record fields, directed relationships, Thread objectives, Session state, and provenance through existing scoped tables/RPC invariants. `lexical` is the independent FTS path. `hybrid` is the only strategy that may request a query embedding. Missing or stale vectors never suppress an exact, structured, or lexical result.
+
+Target expansion is capped at one relationship hop and eight neighboring records, with at most twenty total frozen provider evidence items. This is neighborhood assembly, not V1 multi-hop graph traversal. A deterministic UI read may display a current versioned row even when historical provenance is absent; it must label provenance as unavailable. Any row text sent to a provider still requires a current authorized `sources.id` and immutable source version. No read creates a source, draft, audit row, canon write, usage event, or embedding job merely to make itself citeable.
+
 **Version:** v1.0
 **Source of truth:** `[[11 - Product Basepoint]]` · `[[12 - MVP PRD]]` · `[[20 - Entity and Canon Schema]]` · `[[21 - Tech Architecture]]` · `[[23 - AI Task Registry]]` · `[[31 - Session Prep Flow]]` · Memory Research Brief v0.1
 **Status:** Implementation-ready. Engineering can build from this.

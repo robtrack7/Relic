@@ -148,15 +148,21 @@ test("Relic Guide submission derives scope, retrieval, quota, and dispatch on th
   assert.match(submit, /requireInternalAuth/, "Guide submission must be server-only");
   assert.match(submit, /createScopedClient/, "Guide permission and quota checks must use the GM identity");
   assert.match(submit, /\.from\("guide_turns"\)/, "Guide exact retries must resolve from their stored logical turn");
-  assert.match(submit, /preflight_ai_task/, "Guide must preflight the registered task before retrieval or dispatch");
+  assert.match(submit, /plan_loom_retrieval_for_worker/, "Guide must select the cheapest sufficient retrieval strategy on the server");
+  assert.match(submit, /preflight_ai_task/, "Provider-backed Guide turns must preflight the registered task before dispatch");
   assert.ok(
     submit.indexOf('.from("guide_turns")') < submit.indexOf("preflight_ai_task"),
     "exact retry detection must happen before quota or provider work"
   );
-  assert.ok(
-    submit.indexOf("preflight_ai_task") < submit.indexOf("/functions/v1/hybrid-search"),
-    "quota preflight must happen before retrieval/provider work"
-  );
+  assert.ok(submit.indexOf("plan_loom_retrieval_for_worker") < submit.indexOf("preflight_ai_task"),
+    "free deterministic reads must be recognized before paid-task preflight");
+  assert.ok(submit.indexOf("preflight_ai_task") < submit.indexOf("/functions/v1/hybrid-search"),
+    "quota preflight must happen before provider-backed retrieval");
+  assert.match(submit, /create_loom_deterministic_turn_for_worker/, "recognized reads must bypass provider dispatch");
+  assert.match(submit, /create_loom_provider_turn_for_worker/, "provider turns must preserve their selected retrieval strategy");
+  assert.match(submit, /query_embedding_requested:\s*strategy === "hybrid"/, "only hybrid retrieval may request a query embedding");
+  assert.match(hybrid, /body\.retrieval_strategy === "lexical"/, "lexical retrieval must have an explicit provider-free branch");
+  assert.match(hybrid, /query_embedding_requested:\s*false/, "lexical telemetry must prove that no query embedding was requested");
   const provider = read("supabase/functions/_shared/ai-provider.ts");
   assert.match(provider, /Every block must be a flat object with a type string/);
   assert.match(provider, /"type":"grounded_answer"/);
@@ -176,7 +182,7 @@ test("Relic Guide submission derives scope, retrieval, quota, and dispatch on th
   assert.match(submit, /\.neq\("kind", "imported_text"\)/);
   assert.match(submit, /source\.scope === "saga"/);
   assert.match(submit, /source\.scope === "world"/);
-  assert.match(submit, /create_guide_turn_for_worker/, "Guide must persist the logical submission through its scoped RPC");
+  assert.match(submit, /create_(?:loom_provider|guide)_turn_for_worker/, "Guide must persist provider-backed submissions through a scoped worker RPC");
   assert.match(submit, /idempotency_key/, "Guide must carry a stable logical-submission identity");
   assert.match(submit, /resolveGuideSourceIds[\s\S]*slice\(0,\s*20\)/, "Guide retrieval must cap its immutable allowlist");
   assert.match(submit, /runnerResponse\?\.ok\s*\?\s*200\s*:\s*202/, "dispatch failure must preserve a recoverable queued turn");

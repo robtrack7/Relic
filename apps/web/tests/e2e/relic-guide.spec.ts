@@ -11,6 +11,7 @@ const fixture = {
   sagaId: "e6930000-0000-4000-8000-000000000001",
   siblingSagaId: "e6930000-0000-4000-8000-000000000002",
   characterId: "e6940000-0000-4000-8000-000000000001",
+  threadId: "e6950000-0000-4000-8000-000000000001",
   sourceId: "e6960000-0000-4000-8000-000000000001",
   siblingCharacterId: "e6940000-0000-4000-8000-000000000002",
   siblingSourceId: "e6960000-0000-4000-8000-000000000002",
@@ -23,7 +24,7 @@ test.skip(
   "Requires local Supabase auth and service-role fixture setup."
 );
 
-test("E6 Loom recovers cited answers and executes a priced typed action at every viewport", async ({ page }) => {
+test("E6-E7 Loom persists priced actions and serves adaptive free reads at every viewport", async ({ page }) => {
   test.skip(persistenceOnly, "Persistence-only rerun preserves the first process's fixture.");
   test.setTimeout(120_000);
   const admin = createClient(supabaseUrl!, serviceRoleKey!, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -68,6 +69,13 @@ test("E6 Loom recovers cited answers and executes a priced typed action at every
       narrative: "This record must never appear in the Guide.", canon_state: "canon"
     }
   ])).error).toBeNull();
+  expect((await admin.from("threads").insert({
+    id: fixture.threadId, workspace_id: workspaceId, world_id: worldId, saga_id: sagaId,
+    scope: "saga", name: "Broken Seal", summary: "Who opened the seal?",
+    narrative: "The seal was opened from within.", objective: "Find the opener",
+    objectives_log: [{ id: "o1", text: "Find the opener", state: "open", order_index: 0 }],
+    resolution_state: "active", canon_state: "canon"
+  })).error).toBeNull();
   expect((await admin.from("sources").insert([
     {
       id: sourceId, workspace_id: workspaceId, world_id: worldId, saga_id: sagaId,
@@ -194,6 +202,31 @@ test("E6 Loom recovers cited answers and executes a priced typed action at every
   await expect(submittedTurn.locator(".guide-answer-block, .guide-no-answer")).toBeVisible({ timeout: 20_000 });
   await page.reload();
   await expect(page.locator(".guide-question p", { hasText: "Who currently guards the eastern road?" })).toBeVisible();
+
+  const beforeFreeRead = {
+    aiRuns: (await admin.from("guide_turns").select("id", { count: "exact", head: true }).eq("saga_id", sagaId).not("ai_task_run_id", "is", null)).count,
+    usage: (await admin.from("usage_events").select("id", { count: "exact", head: true }).eq("saga_id", sagaId)).count,
+    drafts: (await admin.from("drafts").select("id", { count: "exact", head: true }).eq("saga_id", sagaId)).count
+  };
+  await page.locator("#guide-question").fill("list active threads");
+  await page.getByRole("button", { name: "Ask The Loom" }).click();
+  const freeReadTurn = page.locator(".guide-turn").filter({ hasText: "list active threads" });
+  await expect(freeReadTurn.getByText(/Record list · Free · Read only/i)).toBeVisible({ timeout: 20_000 });
+  await expect(freeReadTurn.getByRole("link", { name: "Broken Seal" })).toHaveAttribute("href", new RegExp(`/threads/${fixture.threadId}$`));
+  expect((await admin.from("guide_turns").select("id", { count: "exact", head: true }).eq("saga_id", sagaId).not("ai_task_run_id", "is", null)).count).toBe(beforeFreeRead.aiRuns);
+  expect((await admin.from("usage_events").select("id", { count: "exact", head: true }).eq("saga_id", sagaId)).count).toBe(beforeFreeRead.usage);
+  expect((await admin.from("drafts").select("id", { count: "exact", head: true }).eq("saga_id", sagaId)).count).toBe(beforeFreeRead.drafts);
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1024, height: 768 },
+    { width: 768, height: 1024 },
+    { width: 390, height: 844 }
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto(guideUrl);
+    await expect(page.getByText(/Record list · Free · Read only/i)).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width);
+  }
 });
 
 test("E6 Loom thread and action outcome survive a fresh application process", async ({ page }) => {

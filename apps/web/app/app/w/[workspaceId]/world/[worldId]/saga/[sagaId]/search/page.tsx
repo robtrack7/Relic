@@ -2,7 +2,7 @@ import Link from "next/link";
 import { RelicIcon } from "@/components/RelicIcon";
 import { SanctumShell } from "@/components/SanctumShell";
 import { requireSagaContext, searchForUi } from "@/lib/data";
-import { sagaPath } from "@/lib/routes";
+import { recordPath, sagaPath } from "@/lib/routes";
 import type { IdParams } from "@/lib/types";
 
 function entityRowClass(type: string | null): string {
@@ -69,7 +69,7 @@ export default async function SearchPage({
             <div className="sp-group-label">Results</div>
             {results.map((result) => {
               const href = result.source_entity_type
-                ? `${root}/entities/${result.source_entity_type}/${result.source_entity_id}`
+                ? recordPath(root, result.source_entity_type, result.source_entity_id)
                 : `${root}/search?q=${encodeURIComponent(query.q ?? "")}`;
               return (
                 <Link

@@ -11,6 +11,7 @@ type SearchRequest = {
   saga_id?: string;
   query_text?: string;
   task_profile?: string;
+  retrieval_strategy?: "lexical" | "hybrid";
   session_id?: string;
   top_k?: number;
   include_world_canon?: boolean;
@@ -52,6 +53,9 @@ Deno.serve(async (req) => {
   ]);
   if (taskProfile && !allowedTaskProfiles.has(taskProfile)) {
     return jsonResponse({ error: "invalid_task_profile" }, { status: 400 });
+  }
+  if (body.retrieval_strategy && body.retrieval_strategy !== "lexical" && body.retrieval_strategy !== "hybrid") {
+    return jsonResponse({ error: "invalid_retrieval_strategy" }, { status: 400 });
   }
 
   const queryHash = await safeQueryHash(query);
@@ -120,6 +124,38 @@ Deno.serve(async (req) => {
     if (error) return jsonResponse({ error: "search_unavailable" }, { status: 503 });
     return jsonResponse({ results: data ?? [], retrieval_mode: "lexical_fallback" });
   };
+
+  if (body.retrieval_strategy === "lexical") {
+    const databaseStartedAt = performance.now();
+    const { data, error } = taskProfile
+      ? await taskRetrieval()
+      : await scoped.rpc("search_for_ui", {
+        workspace_id: body.workspace_id,
+        world_id: body.world_id,
+        saga_id: body.saga_id,
+        query_text: query,
+        surface: "sanctum",
+        top_k: topK,
+        include_archived: false,
+        literal_only: true,
+        include_world_canon: body.include_world_canon ?? true,
+      });
+    const databaseLatencyMs = Math.round(performance.now() - databaseStartedAt);
+    await recordProviderPipelineEvent({
+      eventName: "lexical_search_completed", workerType: "hybrid_search",
+      workspaceId: body.workspace_id, worldId: body.world_id, sagaId: body.saga_id,
+      idempotencyIdentifier: queryHash, endToEndLatencyMs: databaseLatencyMs,
+      state: error ? "terminal_failure" : "success", errorCategory: error ? "database_unavailable" : undefined,
+      safeMetadata: {
+        retrieval_mode: "lexical",
+        retrieval_surface: taskProfile ? "task_profile" : "ui",
+        result_count: data?.length ?? 0,
+        query_embedding_requested: false
+      }
+    }).catch(() => undefined);
+    if (error) return jsonResponse({ error: "search_unavailable" }, { status: 503 });
+    return jsonResponse({ results: data ?? [], retrieval_mode: "lexical" });
+  }
 
   try {
     const embedding = await callEmbeddingProvider(query);

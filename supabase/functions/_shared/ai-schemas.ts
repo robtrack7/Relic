@@ -24,6 +24,8 @@ const CONFIDENCE_REASONS = new Set([
 ]);
 const SYNTHESIS_ENTITY_TYPES = new Set(["character", "place", "faction", "artifact", "thread"]);
 const GUIDE_ENTITY_TYPES = new Set(["character", "place", "faction", "artifact", "thread"]);
+const GUIDE_READ_TYPES = new Set(["character", "place", "faction", "artifact", "thread", "session"]);
+const GUIDE_NAVIGATION_DESTINATIONS = new Set(["home", "library", "threads", "sessions", "review", "search"]);
 const WORKSHOP_RELATIONSHIP_KINDS = new Set([
   "member-of", "located-at", "owns", "allied-with", "opposed-to", "related-to"
 ]);
@@ -734,9 +736,42 @@ function validateLoomAction(
     }
     const evidence = taskRun.retrieval_context?.find((entry) => entry.source_id === args.source_id);
     if (!evidence || !isString(evidence.source_entity_type)
-      || !GUIDE_ENTITY_TYPES.has(evidence.source_entity_type)
+      || !GUIDE_READ_TYPES.has(evidence.source_entity_type)
       || !isUuid(evidence.source_entity_id)) {
       errors.push(`${path}.arguments.source_id must identify a current supported entity record`);
+    }
+    return;
+  }
+  if (action.name === "list_records" && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(["record_type", "status", "limit"]), `${path}.arguments`, errors);
+    if (!isString(args.record_type) || !GUIDE_READ_TYPES.has(args.record_type)) {
+      errors.push(`${path}.arguments.record_type is unsupported`);
+    }
+    if (args.status !== undefined && (typeof args.status !== "string" || args.status.length > 40
+      || !/^[a-z_ -]+$/.test(args.status))) {
+      errors.push(`${path}.arguments.status is invalid`);
+    }
+    if (args.limit !== undefined && (!Number.isInteger(args.limit) || Number(args.limit) < 1 || Number(args.limit) > 20)) {
+      errors.push(`${path}.arguments.limit must be an integer from 1 to 20`);
+    }
+    return;
+  }
+  if ((action.name === "show_source" || action.name === "explain_provenance")
+    && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(["source_id"]), `${path}.arguments`, errors);
+    if (!isUuid(args.source_id) || !taskRun.allowed_source_ids.includes(args.source_id)) {
+      errors.push(`${path}.arguments.source_id must belong to the allowed retrieval set`);
+    }
+    return;
+  }
+  if (action.name === "navigate_surface" && action.version === "1.0.0") {
+    hasOnlyFields(args, new Set(["destination", "query"]), `${path}.arguments`, errors);
+    if (!isString(args.destination) || !GUIDE_NAVIGATION_DESTINATIONS.has(args.destination)) {
+      errors.push(`${path}.arguments.destination is unsupported`);
+    }
+    if (args.query !== undefined && (typeof args.query !== "string" || args.query.length > 200
+      || EXECUTABLE_OR_MUTATION_PATTERN.test(args.query))) {
+      errors.push(`${path}.arguments.query is invalid`);
     }
     return;
   }

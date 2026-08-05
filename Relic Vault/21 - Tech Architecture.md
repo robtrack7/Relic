@@ -7,7 +7,7 @@ read_after:
 depends_on:
   - "[[00 - Start Here]]"
 supersedes: []
-last_audited: 2026-07-31
+last_audited: 2026-08-04
 source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md"
 ---
 
@@ -25,6 +25,8 @@ source_file: "Sourced - Downloaded - 260518/relic-tech-architecture-spec-v1_2.md
 ---
 
 ## Changelog
+
+**Packet E7 adaptive-read patch (August 2026).** `guide-submit` asks a server-owned deterministic planner for the cheapest sufficient retrieval strategy before quota preflight. Recognized open/list/source/provenance/navigation and structured Thread/relationship/Session requests complete through a scoped database read projection with no AI run, query embedding, or usage event. Exact targets with a current source use exact plus one-hop source assembly; explicit literal search uses FTS; only unresolved meaning-based questions call hybrid retrieval. The database independently re-plans deterministic turns, derives every target and route, caps list/graph fanout, excludes sibling Sagas and archived/unsupported records, and stores only safe strategy/count/fallback metadata. Provider-facing action schemas never expose handlers or RPC names.
 
 **Packet E6 Loom action-kernel patch (August 2026).** The existing Guide compatibility tables become the first universal Loom action ledger rather than being duplicated. A server-owned registry supplies a provider-safe action manifest and freezes authority/cost/confirmation/effect metadata into each versioned intent. Database materialization revalidates the active registry and frozen evidence independently of Edge output validation. One narrow authenticated review RPC derives scope from the locked intent, enforces optimistic intent and evidence/target versions, and writes a private idempotent receipt before any downstream task dispatch. Public projections omit executor/RPC details. Unknown, stale, sibling-scope, replay-mismatched, or prose-only actions have zero effects.
 

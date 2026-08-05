@@ -94,6 +94,62 @@ describe("RelicGuideConversation", () => {
     expect(screen.getByText("New proposal · Not canon")).toBeTruthy();
   });
 
+  it("renders accepted deterministic reads as free read-only cards with canonical links", () => {
+    render(<RelicGuideConversation
+      sagaRoot={root}
+      thread={{ id: "thread", state: "active", turns: [{
+        id: "turn",
+        question: "Show me what is current.",
+        status: "complete",
+        noAnswer: false,
+        blocks: [
+          {
+            type: "action_preview", actionId: "open", intentVersion: 1,
+            action: { name: "open_record", version: "1.0.0", href: `${root}/threads/t1`, result: {
+              record: { recordType: "thread", recordId: "t1", name: "Broken Seal", status: "active", href: `${root}/threads/t1` },
+              relationships: [{ recordType: "place", recordId: "p1", name: "Iron Gate", href: `${root}/entities/place/p1`, kind: "located-at", direction: "outbound" }],
+              objectives: [{ id: "o1", text: "Find the opener", state: "open" }]
+            } }, explanation: "Open the Thread.", authorityTier: "read_navigation", confirmationPolicy: "none", costCredits: 0,
+            effectSummary: "Show the current record.", manualFallback: "Open Threads manually.", state: "accepted"
+          },
+          {
+            type: "action_preview", actionId: "list", intentVersion: 1,
+            action: { name: "list_records", version: "1.0.0", records: [{ recordType: "session", recordId: "s1", name: "First Watch", status: "ready", href: `${root}/sessions/s1/prep` }] },
+            explanation: "List Sessions.", authorityTier: "read_navigation", confirmationPolicy: "none", costCredits: 0,
+            effectSummary: "Show the bounded list.", manualFallback: "Open Sessions manually.", state: "accepted"
+          },
+          {
+            type: "action_preview", actionId: "source", intentVersion: 1,
+            action: { name: "show_source", version: "1.0.0", result: { source: { kind: "existing_entity", excerpt: "The seal was opened from within." } } },
+            explanation: "Show the source.", authorityTier: "read_navigation", confirmationPolicy: "none", costCredits: 0,
+            effectSummary: "Show authorized evidence.", manualFallback: "Inspect the record manually.", state: "accepted"
+          },
+          {
+            type: "action_preview", actionId: "provenance", intentVersion: 1,
+            action: { name: "explain_provenance", version: "1.0.0", result: { source: { kind: "existing_entity" }, provenance: [{ operation: "approved", actorKind: "gm" }] } },
+            explanation: "Explain provenance.", authorityTier: "read_navigation", confirmationPolicy: "none", costCredits: 0,
+            effectSummary: "Show the evidence trail.", manualFallback: "Inspect provenance manually.", state: "accepted"
+          },
+          {
+            type: "action_preview", actionId: "navigate", intentVersion: 1,
+            action: { name: "navigate_surface", version: "1.0.0", destination: "search", href: `${root}/search?mode=literal&q=seal` },
+            explanation: "Open literal search.", authorityTier: "read_navigation", confirmationPolicy: "none", costCredits: 0,
+            effectSummary: "Open the active-Saga search surface.", manualFallback: "Use navigation.", state: "accepted"
+          }
+        ]
+      }] }}
+      onSubmit={vi.fn()}
+    />);
+
+    expect(screen.getAllByText(/free · read only/i)).toHaveLength(5);
+    expect(screen.getByRole("link", { name: "Open record" }).getAttribute("href")).toBe(`${root}/threads/t1`);
+    expect(screen.getByRole("link", { name: "Iron Gate" }).getAttribute("href")).toBe(`${root}/entities/place/p1`);
+    expect(screen.getByRole("link", { name: "First Watch" }).getAttribute("href")).toBe(`${root}/sessions/s1/prep`);
+    expect(screen.getByText("Find the opener · open")).toBeTruthy();
+    expect(screen.getByText("The seal was opened from within.")).toBeTruthy();
+    expect(screen.getByText("approved · gm")).toBeTruthy();
+  });
+
   it("requires confirmation for entity drafts while dismissal is side-effect free", () => {
     const onConfirmAction = vi.fn();
     const onDismissAction = vi.fn();

@@ -124,7 +124,21 @@ function testOutputFor(
         typeof entry === "object" && entry !== null
         && (entry as Record<string, unknown>).name === name
         && (entry as Record<string, unknown>).version === version);
-      if (question.includes("open") && hasContract("open_record", "1.0.0")) {
+      if ((question.includes("provenance") || question.includes("why do we know"))
+        && hasContract("explain_provenance", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: { name: "explain_provenance", version: "1.0.0", arguments: { source_id: source } },
+          explanation: "Show the current evidence trail for this fact."
+        });
+      } else if ((question.includes("source") || question.includes("excerpt"))
+        && hasContract("show_source", "1.0.0")) {
+        blocks.push({
+          type: "action_preview",
+          action: { name: "show_source", version: "1.0.0", arguments: { source_id: source } },
+          explanation: "Show the allowlisted source excerpt."
+        });
+      } else if (question.includes("open") && hasContract("open_record", "1.0.0")) {
         blocks.push({
           type: "action_preview",
           action: { name: "open_record", version: "1.0.0", arguments: { source_id: source } },

@@ -10,6 +10,23 @@ export type GuideCitation = {
   context: DraftCitationContext;
 };
 
+export type LoomReadRecord = {
+  recordType: string;
+  recordId: string;
+  name: string;
+  status?: string;
+  summary?: string;
+  href: string;
+};
+
+export type LoomReadSnapshot = {
+  record?: LoomReadRecord;
+  relationships?: Array<LoomReadRecord & { kind: string; direction: string }>;
+  objectives?: Array<{ id?: string; text: string; state: string }>;
+  source?: { kind: string; excerpt?: string; createdAt?: string };
+  provenance?: Array<{ operation: string; actorKind?: string; createdAt?: string; sourceCount?: number }>;
+};
+
 export type GuideBlock =
   | { type: "grounded_answer"; text: string; citations: GuideCitation[] }
   | { type: "creative_proposal"; text: string }
@@ -20,7 +37,11 @@ export type GuideBlock =
       actionId: string;
       intentVersion: number;
       action:
-        | { name: "open_record"; version: "1.0.0"; href: string }
+        | { name: "open_record"; version: "1.0.0"; href: string; result?: LoomReadSnapshot }
+        | { name: "list_records"; version: "1.0.0"; records: LoomReadRecord[] }
+        | { name: "show_source"; version: "1.0.0"; result: LoomReadSnapshot }
+        | { name: "explain_provenance"; version: "1.0.0"; result: LoomReadSnapshot }
+        | { name: "navigate_surface"; version: "1.0.0"; destination: string; href: string }
         | {
             name: "draft_entity";
             version: "1.0.0";
@@ -81,13 +102,70 @@ function ActionBlock({
   onDismiss?: (actionId: string, intentVersion: number) => void | Promise<void>;
 }) {
   const [reviewing, setReviewing] = useState(false);
-  if (block.action.name === "open_record") {
+  if (block.action.name !== "draft_entity") {
+    const action = block.action;
+    const result = "result" in action ? action.result : undefined;
+    const readLabel = action.name === "list_records" ? "Record list"
+      : action.name === "show_source" ? "Source"
+      : action.name === "explain_provenance" ? "Provenance"
+      : action.name === "navigate_surface" ? "Navigation" : "Current record";
     return (
-      <section className="guide-action-card" aria-label="Suggested action">
-        <div className="guide-block-label">Suggested action · Free · Read only</div>
+      <section className="guide-action-card" aria-label={`${readLabel} read action`}>
+        <div className="guide-block-label">{readLabel} · Free · Read only</div>
         <p>{block.explanation}</p>
         <p className="guide-action-meta">{block.effectSummary}</p>
-        <Link href={block.action.href} className="btn btn-secondary btn-sm">Open record</Link>
+        {action.name === "open_record" && result?.record && (
+          <div className="guide-read-result">
+            <strong>{result.record.name}</strong>
+            {result.record.status && <span className="chip stone">{result.record.status}</span>}
+            {result.record.summary && <p>{result.record.summary}</p>}
+            {result.relationships?.length ? (
+              <div>
+                <div className="guide-block-label">One-hop relationships</div>
+                <ul>{result.relationships.map((record) => (
+                  <li key={`${record.recordType}:${record.recordId}:${record.kind}`}>
+                    <Link href={record.href}>{record.name}</Link> · {record.kind}
+                  </li>
+                ))}</ul>
+              </div>
+            ) : null}
+            {result.objectives?.length ? (
+              <div>
+                <div className="guide-block-label">Thread objectives</div>
+                <ul>{result.objectives.map((objective, index) => (
+                  <li key={objective.id ?? `${objective.text}-${index}`}>{objective.text} · {objective.state}</li>
+                ))}</ul>
+              </div>
+            ) : null}
+          </div>
+        )}
+        {action.name === "list_records" && (
+          action.records.length ? <ul className="guide-read-list">{action.records.map((record) => (
+            <li key={`${record.recordType}:${record.recordId}`}>
+              <Link href={record.href}>{record.name}</Link>
+              {record.status && <span className="chip stone">{record.status}</span>}
+              {record.summary && <p>{record.summary}</p>}
+            </li>
+          ))}</ul> : <p>No current records match that bounded list.</p>
+        )}
+        {(action.name === "show_source" || action.name === "explain_provenance") && (
+          <div className="guide-read-result">
+            <p><strong>{result?.source?.kind ?? "Source"}</strong></p>
+            {result?.source?.excerpt ? <blockquote>{result.source.excerpt}</blockquote> : <p>Source text is unavailable.</p>}
+            {action.name === "explain_provenance" && (
+              result?.provenance?.length ? <ol>{result.provenance.map((entry, index) => (
+                <li key={`${entry.operation}-${entry.createdAt ?? index}`}>
+                  {entry.operation}{entry.actorKind ? ` · ${entry.actorKind}` : ""}
+                </li>
+              ))}</ol> : <p>No additional audit provenance is available.</p>
+            )}
+          </div>
+        )}
+        {(action.name === "open_record" || action.name === "navigate_surface") && (
+          <Link href={action.href} className="btn btn-secondary btn-sm">
+            {action.name === "open_record" ? "Open record" : "Open surface"}
+          </Link>
+        )}
       </section>
     );
   }

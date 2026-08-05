@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { entityConfigs } from "@/lib/entities";
 import { getSupabaseUrl, hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
-import { sagaPath } from "@/lib/routes";
+import { recordPath, sagaPath } from "@/lib/routes";
 import type { AppContext, EntitySummary, EntityType, HierarchyContext, IdParams, ImportSource, LibraryRecordDetail, SearchResult, SessionPrepData, SessionPrepPin, StageLiteralSearchDocument, ThreadDetail, ThreadObjective, ThreadTimelineEntry } from "@/lib/types";
 import type { GuideBlock, GuideThread, GuideTurn } from "@/components/RelicGuideConversation";
 
@@ -576,6 +576,8 @@ export async function getGuideThread(params: IdParams, threadId?: string | null)
           ? stored.arguments as Record<string, unknown> : {};
         const cost = typeof stored.cost === "object" && stored.cost !== null
           ? stored.cost as Record<string, unknown> : {};
+        const resultValue = typeof stored.result === "object" && stored.result !== null
+          ? stored.result as Record<string, unknown> : {};
         const common = {
           actionId: String(stored.id),
           intentVersion: Number(stored.intent_version ?? 1),
@@ -589,13 +591,120 @@ export async function getGuideThread(params: IdParams, threadId?: string | null)
           state: String(stored.state ?? "pending") as Extract<GuideBlock, { type: "action_preview" }>["state"]
         };
         if (stored.name === "open_record") {
-          const href = stored.target_type && stored.target_id
-            ? `${sagaPath(params)}/entities/${stored.target_type}/${stored.target_id}`
+          const rawRecord = typeof resultValue.record === "object" && resultValue.record !== null
+            ? resultValue.record as Record<string, unknown> : {};
+          const targetType = String(stored.target_type ?? rawRecord.record_type ?? "");
+          const targetId = String(stored.target_id ?? rawRecord.record_id ?? "");
+          const targetStatus = String(rawRecord.status ?? "");
+          const href = targetType && targetId
+            ? recordPath(sagaPath(params), targetType, targetId, targetStatus)
             : `${sagaPath(params)}/search?q=${encodeURIComponent(turn.question)}`;
+          const relationships = Array.isArray(resultValue.relationships) ? resultValue.relationships.flatMap((entry) => {
+            if (typeof entry !== "object" || entry === null) return [];
+            const value = entry as Record<string, unknown>;
+            const recordType = String(value.record_type ?? "");
+            const recordId = String(value.record_id ?? "");
+            if (!recordType || !recordId) return [];
+            return [{
+              recordType,
+              recordId,
+              name: String(value.name ?? "Unavailable record"),
+              status: value.status ? String(value.status) : undefined,
+              href: recordPath(sagaPath(params), recordType, recordId, String(value.status ?? "")),
+              kind: String(value.kind ?? "related-to"),
+              direction: String(value.direction ?? "outbound")
+            }];
+          }) : [];
+          const objectives = Array.isArray(resultValue.objectives) ? resultValue.objectives.flatMap((entry) => {
+            if (typeof entry !== "object" || entry === null) return [];
+            const value = entry as Record<string, unknown>;
+            if (!value.text) return [];
+            return [{ id: value.id ? String(value.id) : undefined, text: String(value.text), state: String(value.state ?? "open") }];
+          }) : [];
           return [{
             type: "action_preview",
             ...common,
-            action: { name: "open_record", version: "1.0.0", href }
+            action: {
+              name: "open_record",
+              version: "1.0.0",
+              href,
+              result: {
+                record: targetType && targetId ? {
+                  recordType: targetType,
+                  recordId: targetId,
+                  name: String(rawRecord.name ?? "Current record"),
+                  status: targetStatus || undefined,
+                  summary: rawRecord.summary ? String(rawRecord.summary) : undefined,
+                  href
+                } : undefined,
+                relationships,
+                objectives
+              }
+            }
+          }];
+        }
+        if (stored.name === "list_records") {
+          const records = Array.isArray(resultValue.records) ? resultValue.records.flatMap((entry) => {
+            if (typeof entry !== "object" || entry === null) return [];
+            const value = entry as Record<string, unknown>;
+            const recordType = String(value.record_type ?? "");
+            const recordId = String(value.record_id ?? "");
+            if (!recordType || !recordId) return [];
+            const status = value.status ? String(value.status) : undefined;
+            return [{
+              recordType,
+              recordId,
+              name: String(value.name ?? "Untitled record"),
+              status,
+              summary: value.summary ? String(value.summary) : undefined,
+              href: recordPath(sagaPath(params), recordType, recordId, status)
+            }];
+          }) : [];
+          return [{ type: "action_preview", ...common, action: { name: "list_records", version: "1.0.0", records } }];
+        }
+        if (stored.name === "show_source" || stored.name === "explain_provenance") {
+          const sourceValue = typeof resultValue.source === "object" && resultValue.source !== null
+            ? resultValue.source as Record<string, unknown> : {};
+          const provenance = Array.isArray(resultValue.provenance) ? resultValue.provenance.flatMap((entry) => {
+            if (typeof entry !== "object" || entry === null) return [];
+            const value = entry as Record<string, unknown>;
+            return [{
+              operation: String(value.operation ?? "canon change"),
+              actorKind: value.actor_kind ? String(value.actor_kind) : undefined,
+              createdAt: value.created_at ? String(value.created_at) : undefined,
+              sourceCount: Number.isFinite(Number(value.source_count)) ? Number(value.source_count) : undefined
+            }];
+          }) : [];
+          const result = {
+            source: {
+              kind: String(sourceValue.kind ?? "source"),
+              excerpt: sourceValue.excerpt ? String(sourceValue.excerpt) : undefined,
+              createdAt: sourceValue.created_at ? String(sourceValue.created_at) : undefined
+            },
+            provenance
+          };
+          return [{
+            type: "action_preview",
+            ...common,
+            action: stored.name === "show_source"
+              ? { name: "show_source", version: "1.0.0", result }
+              : { name: "explain_provenance", version: "1.0.0", result }
+          }];
+        }
+        if (stored.name === "navigate_surface") {
+          const destination = String(resultValue.destination ?? argumentsValue.destination ?? "home");
+          const query = String(resultValue.query ?? argumentsValue.query ?? "");
+          const root = sagaPath(params);
+          const href = destination === "home" ? root
+            : destination === "library" ? `${root}/entities`
+            : destination === "threads" ? `${root}/threads`
+            : destination === "sessions" ? `${root}/sessions`
+            : destination === "review" ? `${root}/review`
+            : `${root}/search${query ? `?q=${encodeURIComponent(query)}&mode=literal` : ""}`;
+          return [{
+            type: "action_preview",
+            ...common,
+            action: { name: "navigate_surface", version: "1.0.0", destination, href }
           }];
         }
         if (stored.name !== "draft_entity") return [];
