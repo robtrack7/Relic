@@ -392,9 +392,10 @@ describe("security-hardened server actions", () => {
       .mockResolvedValueOnce({ data: { deleted: true }, error: null });
     vi.mocked(createClient).mockResolvedValue(supabase as never);
 
-    const autosave = await autosaveEntityAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", entityType: "character", entityId: "entity-a", expectedVersion: "2026-07-21T18:00:00Z", name: "Mara", summary: "Scout", narrative: "Glass Bridge", gmNotes: "Private" }));
+    const autosave = await autosaveEntityAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", entityType: "character", entityId: "entity-a", expectedVersion: "2026-07-21T18:00:00Z", name: "Mara", summary: "Scout", narrative: "Glass Bridge", gmNotes: "Private", status: "missing", tags: "Hidden Path, politics, hidden path" }));
     expect(autosave.ok).toBe(true);
     expect(supabase.rpc.mock.calls[0][0]).toBe("update_entity");
+    expect(supabase.rpc.mock.calls[0][1]).toMatchObject({ payload: { status: "missing", tags: ["hidden-path", "politics"] } });
     expect(supabase.rpc.mock.calls[1][0]).toBe("get_library_record_detail");
 
     const linked = await createLibraryLinkAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", entityType: "character", entityId: "entity-a", targetType: "place", targetId: "place-a", relationshipKind: "located-at", relationshipNotes: "Watches the bridge" }));

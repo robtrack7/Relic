@@ -21,7 +21,7 @@ const relationshipKinds = ["member-of", "located-at", "owns", "allied-with", "op
 
 type SaveState = "saved" | "unsaved" | "saving" | "failed" | "conflict";
 
-function serialize(values: { name: string; summary: string; narrative: string; gmNotes: string }) {
+function serialize(values: { name: string; summary: string; narrative: string; gmNotes: string; status: string; tags: string }) {
   return JSON.stringify(values);
 }
 
@@ -36,6 +36,8 @@ export function LibraryRecordEditor({ params, initialDetail, initialDeleteOpen =
     summary: initialDetail.record.summary ?? "",
     narrative: initialDetail.record.narrative ?? initialDetail.record.summary ?? "",
     gmNotes: initialDetail.record.gm_notes ?? "",
+    status: initialDetail.record.status ?? "active",
+    tags: initialDetail.record.tags?.join(", ") ?? "",
   });
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [saveError, setSaveError] = useState("");
@@ -145,7 +147,7 @@ export function LibraryRecordEditor({ params, initialDetail, initialDeleteOpen =
         <div className="es-sep" />
         <div><div className="es-key">Scope</div><div className="es-val">{detail.record.scope} canon</div></div>
         <div className="es-sep" />
-        <div><div className="es-key">Status</div><div className="es-val"><span className={archived ? "chip rust" : "chip verdigris"}>{detail.record.canon_state}</span></div></div>
+        <div><div className="es-key">Canon state</div><div className="es-val"><span className={archived ? "chip rust" : "chip verdigris"}>{detail.record.canon_state}</span></div></div>
         {detail.record.is_stub && <><div className="es-sep" /><div><div className="es-key">Stub</div><span className="chip amber">stub</span></div></>}
         <div className="es-sep" />
         <section className="source-dock" aria-labelledby="source-dock-title">
@@ -185,6 +187,7 @@ export function LibraryRecordEditor({ params, initialDetail, initialDeleteOpen =
         <div className="library-editor-fields">
           <label className="field"><span>Name / title</span><input aria-label="Name / title" className="settings-field" value={values.name} disabled={archived || saveState === "conflict"} onChange={(event) => updateField("name", event.target.value)} onBlur={() => void saveNow()} required /></label>
           {detail.record.entityType !== "note" && <label className="field"><span>Summary</span><input aria-label="Summary" className="settings-field" value={values.summary} disabled={archived || saveState === "conflict"} onChange={(event) => updateField("summary", event.target.value)} onBlur={() => void saveNow()} /></label>}
+          {detail.record.entityType !== "note" && <div className="library-editor-metadata"><label className="field"><span>Status</span><input aria-label="Status" className="settings-field" maxLength={80} value={values.status} disabled={archived || saveState === "conflict"} onChange={(event) => updateField("status", event.target.value)} onBlur={() => void saveNow()} /></label><label className="field"><span>Tags</span><input aria-label="Tags" className="settings-field" value={values.tags} disabled={archived || saveState === "conflict"} onChange={(event) => updateField("tags", event.target.value)} onBlur={() => void saveNow()} placeholder="politics, hidden-path" /><small>Comma-separated; saved as lowercase tags.</small></label></div>}
           <label className="field"><span>Narrative / body</span><textarea aria-label="Narrative / body" className="settings-field" rows={8} value={values.narrative} disabled={archived || saveState === "conflict"} onChange={(event) => updateField("narrative", event.target.value)} onBlur={() => void saveNow()} /></label>
           {detail.record.entityType !== "note" && <label className="field"><span>GM notes</span><textarea aria-label="GM notes" className="settings-field" rows={4} value={values.gmNotes} disabled={archived || saveState === "conflict"} onChange={(event) => updateField("gmNotes", event.target.value)} onBlur={() => void saveNow()} /></label>}
         </div>

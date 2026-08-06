@@ -19,7 +19,7 @@ const params = { workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a
 
 function fixture(overrides: Partial<LibraryRecordDetail> = {}): LibraryRecordDetail {
   return {
-    record: { id: "character-a", entityType: "character", workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", scope: "saga", name: "Mara Vale", summary: "Scout", narrative: "Old text", gm_notes: "Private", canon_state: "canon", updated_at: "2026-07-21T18:00:00.000Z" },
+    record: { id: "character-a", entityType: "character", workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", scope: "saga", name: "Mara Vale", summary: "Scout", narrative: "Old text", gm_notes: "Private", status: "active", tags: ["scout"], canon_state: "canon", updated_at: "2026-07-21T18:00:00.000Z" },
     provenance: [{ id: "audit-a", operation: "create", actor_kind: "gm", from_state: null, to_state: "canon", created_at: "2026-07-21T18:00:00.000Z", sources: [{ id: "source-a", kind: "gm_instruction", excerpt: "Manual GM create: Mara Vale", created_at: "2026-07-21T18:00:00.000Z" }] }],
     relationships: [],
     mentions: [{ id: "mention-a", state: "suggested", mention_text: "Glass Bridge", related_type: "place", related_id: "place-a", related_name: "Glass Bridge", updated_at: "2026-07-21T18:00:00.000Z" }],
@@ -49,9 +49,26 @@ describe("LibraryRecordEditor", () => {
     expect(autosaveEntityAction).toHaveBeenCalledTimes(1);
     const sent = vi.mocked(autosaveEntityAction).mock.calls[0][0];
     expect(sent.get("narrative")).toBe("New text");
+    expect(sent.get("status")).toBe("active");
+    expect(sent.get("tags")).toBe("scout");
     expect(sent.get("expectedVersion")).toBe("2026-07-21T18:00:00.000Z");
     expect(screen.getByRole("status").textContent).toContain("Saved");
     expect(screen.queryByRole("button", { name: /Save manual edit/i })).toBeNull();
+  });
+
+  it("autosaves descriptive status and tags through the same optimistic edit", async () => {
+    const next = fixture(); next.record = { ...next.record, status: "missing", tags: ["hidden-path", "politics"], updated_at: "2026-07-21T18:00:01.000Z" };
+    vi.mocked(autosaveEntityAction).mockResolvedValue({ ok: true, updatedAt: next.record.updated_at!, detail: next });
+    render(<LibraryRecordEditor params={params} initialDetail={fixture()} />);
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Status" }), { target: { value: "missing" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Tags" }), { target: { value: "Hidden Path, politics" } });
+    await act(async () => { vi.advanceTimersByTime(800); await Promise.resolve(); });
+
+    const sent = vi.mocked(autosaveEntityAction).mock.calls[0][0];
+    expect(sent.get("status")).toBe("missing");
+    expect(sent.get("tags")).toBe("Hidden Path, politics");
+    expect(sent.get("expectedVersion")).toBe("2026-07-21T18:00:00.000Z");
   });
 
   it("keeps mention acceptance and relationship creation explicit", async () => {

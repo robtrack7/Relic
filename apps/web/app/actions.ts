@@ -37,6 +37,17 @@ function rawValue(formData: FormData, key: string) {
   return String(formData.get(key) ?? "");
 }
 
+function entityMetadata(formData: FormData) {
+  const metadata: { status?: string; tags?: string[] } = {};
+  if (formData.has("status")) metadata.status = value(formData, "status") || "active";
+  if (formData.has("tags")) {
+    metadata.tags = [...new Set(value(formData, "tags").split(",")
+      .map((tag) => tag.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""))
+      .filter(Boolean))].slice(0, 12);
+  }
+  return metadata;
+}
+
 function paramsFromForm(formData: FormData): IdParams {
   return {
     workspaceId: value(formData, "workspaceId"),
@@ -616,7 +627,7 @@ export async function updateEntityAction(formData: FormData) {
 
   const payload = type === "note"
     ? { title: value(formData, "name"), body: value(formData, "narrative"), expected_version: value(formData, "expectedVersion") }
-    : { name: value(formData, "name"), summary: value(formData, "summary"), narrative: value(formData, "narrative"), gm_notes: value(formData, "gmNotes"), expected_version: value(formData, "expectedVersion") };
+    : { name: value(formData, "name"), summary: value(formData, "summary"), narrative: value(formData, "narrative"), gm_notes: value(formData, "gmNotes"), ...entityMetadata(formData), expected_version: value(formData, "expectedVersion") };
 
   if (!payload.expected_version) {
     throw new Error("Missing expected version for this manual edit.");
@@ -664,7 +675,7 @@ export async function autosaveEntityAction(formData: FormData) {
   if (!expectedVersion) return { ok: false as const, error: "This record needs to be refreshed before saving." };
   const payload = type === "note"
     ? { title: value(formData, "name"), body: value(formData, "narrative"), expected_version: expectedVersion }
-    : { name: value(formData, "name"), summary: value(formData, "summary"), narrative: value(formData, "narrative"), gm_notes: value(formData, "gmNotes"), expected_version: expectedVersion };
+    : { name: value(formData, "name"), summary: value(formData, "summary"), narrative: value(formData, "narrative"), gm_notes: value(formData, "gmNotes"), ...entityMetadata(formData), expected_version: expectedVersion };
   const { error } = await supabase.rpc("update_entity", {
     workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId,
     entity_type: type, entity_id: id, payload,

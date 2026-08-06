@@ -91,6 +91,7 @@ export type EntitySummary = {
   summary: string | null;
   narrative?: string | null;
   gm_notes?: string | null;
+  tags?: string[];
   canon_state: "canon" | "archived";
   is_stub?: boolean;
   status?: string;
