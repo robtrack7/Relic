@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { recordDicePoolAction } from "@/app/actions";
 import { StageRuntimeDraft } from "@/components/relic-draft/StageRuntimeDraft";
-import type { IdParams } from "@/lib/types";
+import type { EntitySummary, IdParams } from "@/lib/types";
 
 const writeQueueMocks = vi.hoisted(() => ({
   enqueue: vi.fn(),
@@ -47,13 +47,13 @@ const params: IdParams = {
   sagaId: "saga-1"
 };
 
-function renderLiveStage() {
+function renderLiveStage(pinned: Array<{ pin: { entity_type: string; entity_id: string }; entity?: EntitySummary | null }> = []) {
   return render(
     <StageRuntimeDraft
       params={params}
       saga={{ name: "The Shattered Crown", game_system: "5e" }}
       session={{ id: "session-1", name: "Session 16", status: "in_progress" }}
-      pinned={[]}
+      pinned={pinned}
       activeThreads={[]}
       results={[]}
       query=""
@@ -85,34 +85,55 @@ describe("Stage Dice and Quick Create", () => {
     writeQueueMocks.flushSession.mockResolvedValue({ status: "idle", queued: 0, uploading: 0, failed: 0, lastError: null });
   });
 
-  it("submits normal and disadvantage d20 rolls and preserves advantage when pinned", async () => {
+  it("keeps dice as a system-neutral convenience roller", async () => {
     renderLiveStage();
     fireEvent.click(screen.getByRole("button", { name: "Dice" }));
-    let dialog = screen.getByRole("dialog", { name: "Dice" });
+    const dialog = screen.getByRole("dialog", { name: "Dice" });
+    expect(within(dialog).getByText(/Convenience roller only/)).toBeTruthy();
     fireEvent.click(within(dialog).getAllByRole("button", { name: /d20/ })[0]);
-    expect(within(dialog).getByRole("group", { name: "d20 roll mode" })).toBeTruthy();
+    expect(within(dialog).queryByText(/Advantage|Disadvantage/)).toBeNull();
 
     fireEvent.click(within(dialog).getByRole("button", { name: /^Roll$/ }));
     await waitFor(() => expect(recordDicePoolAction).toHaveBeenCalledTimes(1));
     expect(formValues(vi.mocked(recordDicePoolAction).mock.calls[0])).toMatchObject({ mode: "normal", pool: "[20]" });
 
-    fireEvent.click(within(dialog).getByRole("button", { name: /Disadvantage/ }));
-    fireEvent.click(within(dialog).getByRole("button", { name: /^Roll$/ }));
-    await waitFor(() => expect(recordDicePoolAction).toHaveBeenCalledTimes(2));
-    expect(formValues(vi.mocked(recordDicePoolAction).mock.calls[1])).toMatchObject({ mode: "disadvantage", pool: "[20]" });
-
-    fireEvent.click(within(dialog).getByRole("button", { name: /Advantage/ }));
     fireEvent.click(within(dialog).getByRole("button", { name: "Pin to board" }));
     expect(screen.queryByRole("dialog", { name: "Dice" })).toBeNull();
     const pinned = screen.getByRole("complementary", { name: "Pinned dice widget" });
     fireEvent.click(within(pinned).getByRole("button", { name: "Roll" }));
-    await waitFor(() => expect(recordDicePoolAction).toHaveBeenCalledTimes(3));
-    expect(formValues(vi.mocked(recordDicePoolAction).mock.calls[2])).toMatchObject({ mode: "advantage", pool: "[20]", label: "Pinned roll" });
+    await waitFor(() => expect(recordDicePoolAction).toHaveBeenCalledTimes(2));
+    expect(formValues(vi.mocked(recordDicePoolAction).mock.calls[1])).toMatchObject({ mode: "normal", pool: "[20]", label: "Pinned roll" });
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: "Dice" }));
-    dialog = screen.getByRole("dialog", { name: "Dice" });
-    fireEvent.click(within(dialog).getAllByRole("button", { name: /d20/ })[0]);
-    expect(within(dialog).getByRole("button", { name: /Normal/ }).className).toBe("active");
+  it("loads the GM Screen from pinned GM-authored Notes instead of built-in rules", () => {
+    const note: EntitySummary = {
+      id: "note-reference", entityType: "note", workspace_id: "workspace-1", world_id: "world-1", saga_id: "saga-1",
+      scope: "saga", name: "Storm chase procedure", summary: "Escalate the clock after each failed obstacle.",
+      narrative: "Advance the storm clock, describe the worsening weather, then ask what the crew risks next.", canon_state: "canon",
+    };
+    const character: EntitySummary = {
+      id: "character-1", entityType: "character", workspace_id: "workspace-1", world_id: "world-1", saga_id: "saga-1",
+      scope: "saga", name: "Keeper Sable", summary: "Observatory keeper", canon_state: "canon",
+    };
+    renderLiveStage([
+      { pin: { entity_type: "note", entity_id: note.id }, entity: note },
+      { pin: { entity_type: "character", entity_id: character.id }, entity: character },
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "GM Screen" }));
+    const screenPanel = screen.getByRole("complementary", { name: "GM Screen" });
+    expect(within(screenPanel).getByText("Your GM-authored references for this Session.")).toBeTruthy();
+    expect(within(screenPanel).getByPlaceholderText("Search your references…")).toBeTruthy();
+    expect(within(screenPanel).queryByText("Keeper Sable")).toBeNull();
+    expect(within(screenPanel).queryByText(/Difficulty classes|Death saves|Advantage/)).toBeNull();
+    fireEvent.click(within(screenPanel).getByRole("button", { name: /Storm chase procedure/ }));
+    expect(within(screenPanel).getByText(/Advance the storm clock/)).toBeTruthy();
+  });
+
+  it("directs an empty GM Screen back to Session Prep", () => {
+    renderLiveStage();
+    fireEvent.click(screen.getByRole("button", { name: "GM Screen" }));
+    expect(screen.getByText(/Pin a GM-authored Note during Session Prep/)).toBeTruthy();
   });
 
   it("routes every Create type with the correct persistence semantics", async () => {

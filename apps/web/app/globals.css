@@ -6,6 +6,7 @@
   font-weight: 300 700;
 }
 
+.stage-v2-boundary-note{margin:0 0 12px;padding:8px 10px;border-left:3px solid var(--stage-v2-amber);background:rgba(201,138,69,.1);color:var(--stage-v2-fg-2);font-size:11px;line-height:1.45}
 @font-face {
   font-family: "Cormorant Garamond";
   src: url("/fonts/relic/CormorantGaramond-Italic-VariableFont_wght.ttf") format("truetype-variations");

@@ -62,14 +62,6 @@ const createTypes: Array<{ key: string; label: string; icon: IconName; descripti
   { key: "faction", label: "Faction", icon: "crown", description: "Organization or group" },
 ];
 
-const rules = [
-  { id: "advantage", category: "Core checks", title: "Advantage & disadvantage", body: "Roll two d20s. Keep the higher result for advantage or the lower for disadvantage." },
-  { id: "difficulty", category: "Core checks", title: "Difficulty classes", body: "Easy 10 · Moderate 15 · Hard 20 · Very hard 25 · Nearly impossible 30." },
-  { id: "cover", category: "Combat", title: "Cover", body: "Half cover grants +2 AC and Dexterity saves; three-quarters cover grants +5." },
-  { id: "conditions", category: "Combat", title: "Common conditions", body: "Blinded, charmed, frightened, grappled, incapacitated, prone, restrained, stunned." },
-  { id: "death", category: "Recovery", title: "Death saves", body: "Three successes stabilize. Three failures kill. A natural 20 restores 1 hit point." },
-];
-
 function Portrait({ entity, small = false }: { entity: EntitySummary; small?: boolean }) {
   return <span className={small ? "stage-v2-portrait small" : "stage-v2-portrait"}>{entity.name.replace(/^(the|a|an)\s+/i, "")[0] ?? "?"}</span>;
 }
@@ -127,13 +119,12 @@ function StageDialog({ title, icon, tone, onClose, children, wide = false }: {
   );
 }
 
-function GmScreen({ system, onClose }: { system: string; onClose: () => void }) {
+function GmScreen({ references, onClose }: { references: EntitySummary[]; onClose: () => void }) {
   const panelRef = useRef<HTMLElement>(null);
   const [search, setSearch] = useState("");
-  const [pinned, setPinned] = useState(["advantage", "death"]);
   const [expanded, setExpanded] = useState<string[]>([]);
-  const filtered = rules.filter((rule) => `${rule.category} ${rule.title} ${rule.body}`.toLowerCase().includes(search.toLowerCase()));
-  const ordered = [...filtered].sort((a, b) => Number(pinned.includes(b.id)) - Number(pinned.includes(a.id)));
+  const needle = search.trim().toLowerCase();
+  const filtered = references.filter((reference) => `${reference.name} ${reference.summary ?? ""} ${reference.narrative ?? ""}`.toLowerCase().includes(needle));
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     panelRef.current?.querySelector<HTMLInputElement>("input")?.focus();
@@ -143,18 +134,18 @@ function GmScreen({ system, onClose }: { system: string; onClose: () => void }) 
   }, [onClose]);
   return (
     <aside ref={panelRef} className="stage-v2-gm-panel" aria-label="GM Screen">
-      <header><RelicIcon name="library" size={18} /><div><strong>GM Screen</strong><span>Rules at the table — pin what you need.</span></div><em>{system}</em><button onClick={onClose} aria-label="Close GM Screen"><RelicIcon name="x" size={16} /></button></header>
-      <label className="stage-v2-gm-search"><RelicIcon name="search" size={15} /><span className="sr-only">Search rules</span><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={`Search ${system} rules…`} /></label>
+      <header><RelicIcon name="library" size={18} /><div><strong>GM Screen</strong><span>Your GM-authored references for this Session.</span></div><em>{references.length} pinned</em><button onClick={onClose} aria-label="Close GM Screen"><RelicIcon name="x" size={16} /></button></header>
+      <label className="stage-v2-gm-search"><RelicIcon name="search" size={15} /><span className="sr-only">Search your references</span><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search your references…" /></label>
       <div className="stage-v2-gm-body">
-        {!ordered.length && <p className="stage-v2-empty">No rules match “{search}”.</p>}
-        {ordered.map((rule) => {
-          const isOpen = expanded.includes(rule.id);
-          const isPinned = pinned.includes(rule.id);
-          return <article className="stage-v2-rule" key={rule.id}>
-            <button className="stage-v2-rule-main" onClick={() => setExpanded((items) => isOpen ? items.filter((id) => id !== rule.id) : [...items, rule.id])} aria-expanded={isOpen}>
-              <span><small>{isPinned ? "Pinned · " : ""}{rule.category}</small>{rule.title}</span><RelicIcon name="chevronDown" size={15} />
+        {!references.length && <p className="stage-v2-empty">No reference Notes are pinned. Pin a GM-authored Note during Session Prep to make it available here.</p>}
+        {references.length > 0 && !filtered.length && <p className="stage-v2-empty">No references match “{search}”.</p>}
+        {filtered.map((reference) => {
+          const isOpen = expanded.includes(reference.id);
+          return <article className="stage-v2-rule" key={reference.id}>
+            <button className="stage-v2-rule-main" onClick={() => setExpanded((items) => isOpen ? items.filter((id) => id !== reference.id) : [...items, reference.id])} aria-expanded={isOpen}>
+              <span><small>Pinned Note</small>{reference.name}</span><RelicIcon name="chevronDown" size={15} />
             </button>
-            {isOpen && <div className="stage-v2-rule-body"><p>{rule.body}</p><button onClick={() => setPinned((items) => isPinned ? items.filter((id) => id !== rule.id) : [rule.id, ...items])}><RelicIcon name={isPinned ? "x" : "pin"} size={12} />{isPinned ? "Unpin" : "Pin reference"}</button></div>}
+            {isOpen && <div className="stage-v2-rule-body"><p>{reference.narrative || reference.summary || "This reference Note has no body text."}</p></div>}
           </article>;
         })}
       </div>
@@ -166,12 +157,11 @@ function DiceTool({ packetRolls, busy, onRoll, onPin, onClose }: {
   packetRolls: NonNullable<StagePacket["dice_rolls"]>;
   busy: boolean;
   onRoll: (pool: number[], modifier: number, mode: string, label: string) => Promise<Record<string, unknown> | null>;
-  onPin: (config: { pool: number[]; modifier: number; mode: string }) => void;
+  onPin: (config: { pool: number[]; modifier: number }) => void;
   onClose: () => void;
 }) {
   const [pool, setPool] = useState<number[]>([]);
   const [modifier, setModifier] = useState(0);
-  const [mode, setMode] = useState("normal");
   const [label, setLabel] = useState("");
   const [latest, setLatest] = useState<Record<string, unknown> | null>(null);
   const [localHistory, setLocalHistory] = useState<Array<Record<string, unknown>>>([]);
@@ -181,23 +171,23 @@ function DiceTool({ packetRolls, busy, onRoll, onPin, onClose }: {
   const history = [...localHistory, ...packetRolls.map((roll) => ({ expression: roll.expression, total: roll.result_total, label: roll.label }))];
 
   async function roll() {
-    const result = await onRoll(pool, modifier, mode, label);
+    const result = await onRoll(pool, modifier, "normal", label);
     if (result) { setLatest(result); setLocalHistory((items) => [result, ...items].slice(0, 20)); }
   }
 
   return <StageDialog title="Dice" icon="dice" tone="amber" onClose={onClose} wide>
     <div className="stage-v2-dialog-body dice-tool">
+      <p className="stage-v2-boundary-note">Convenience roller only. Use your table&apos;s rules to interpret the result.</p>
       <label className="stage-v2-field"><span>Roll label <small>optional</small></span><input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Attack roll, perception, stealth…" data-stage-autofocus /></label>
       <div className="stage-v2-dice-picker">
         {counts.map(({ sides, count }) => <div className="stage-v2-die-slot" key={sides}><button className={count ? "selected" : ""} onClick={() => add(sides)}><RelicIcon name="dice" size={23} /><span>d{sides === 100 ? "%" : sides}</span></button>{count > 0 && <div><button onClick={() => remove(sides)} aria-label={`Remove d${sides}`}>−</button><span>{count}</span><button onClick={() => add(sides)} aria-label={`Add d${sides}`}>+</button></div>}</div>)}
       </div>
-      {pool.includes(20) && <div className="stage-v2-segmented" role="group" aria-label="d20 roll mode">{[["normal", "Normal"], ["advantage", "↑ Advantage"], ["disadvantage", "↓ Disadvantage"]].map(([value, text]) => <button key={value} className={mode === value ? "active" : ""} onClick={() => setMode(value)}>{text}</button>)}</div>}
-      <div className="stage-v2-pool-row"><div><small>Rolling</small><strong>{pool.length ? counts.filter((d) => d.count).map((d) => `${d.count}d${d.sides}`).join(" + ") : "Pick a die above"}</strong></div><label>Mod<input type="number" min={-99} max={99} value={modifier} onChange={(e) => setModifier(Number(e.target.value))} /></label>{pool.length > 0 && <button onClick={() => { setPool([]); setLatest(null); setMode("normal"); }}>Clear</button>}</div>
+      <div className="stage-v2-pool-row"><div><small>Rolling</small><strong>{pool.length ? counts.filter((d) => d.count).map((d) => `${d.count}d${d.sides}`).join(" + ") : "Pick a die above"}</strong></div><label>Mod<input type="number" min={-99} max={99} value={modifier} onChange={(e) => setModifier(Number(e.target.value))} /></label>{pool.length > 0 && <button onClick={() => { setPool([]); setLatest(null); }}>Clear</button>}</div>
       <button className="stage-v2-roll-button" disabled={!pool.length || busy} onClick={roll}>{busy ? "Rolling…" : pool.length ? "Roll" : "Pick a die above"}</button>
       {latest && <div className="stage-v2-roll-result"><strong>{String(latest.total)}</strong><span>{String(latest.label || latest.expression)}</span><small>{Array.isArray(latest.rolls) ? latest.rolls.join(" · ") : ""}</small></div>}
       {history.length > 0 && <div className="stage-v2-history"><header><span>History</span><button onClick={() => setLocalHistory([])}>Clear local</button></header>{history.slice(0, 8).map((item, index) => <button key={`${String(item.expression)}-${index}`} onClick={() => { const match = /^(\d+)d(\d+)/.exec(String(item.expression)); if (match) setPool(Array.from({ length: Number(match[1]) }, () => Number(match[2]))); }}><span>{String(item.label || item.expression)}</span><strong>{String(item.total)}</strong><RelicIcon name="arrowRight" size={12} /></button>)}</div>}
     </div>
-    <footer className="stage-v2-dialog-foot"><button className="stage-v2-secondary" disabled={!pool.length} onClick={() => onPin({ pool, modifier, mode })}><RelicIcon name="pin" size={13} />Pin to board</button><button className="stage-v2-primary" onClick={onClose}>Done</button></footer>
+    <footer className="stage-v2-dialog-foot"><button className="stage-v2-secondary" disabled={!pool.length} onClick={() => onPin({ pool, modifier })}><RelicIcon name="pin" size={13} />Pin to board</button><button className="stage-v2-primary" onClick={onClose}>Done</button></footer>
   </StageDialog>;
 }
 
@@ -247,7 +237,7 @@ export function StageRuntimeDraft({ params, ownerId = "local-stage-owner", saga,
   const elapsed = formatStageElapsed(session.started_at, now);
   const sceneNotes = (currentSession.scene_notes ?? "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const tags = selectedEntity ? parseGmNotesTags(selectedEntity.gm_notes) : null;
-  const [pinnedDice, setPinnedDice] = useState<{ pool: number[]; modifier: number; mode: string } | null>(null);
+  const [pinnedDice, setPinnedDice] = useState<{ pool: number[]; modifier: number } | null>(null);
   const [pinnedResult, setPinnedResult] = useState<Record<string, unknown> | null>(null);
   const audioScope: StageAudioScope = { workspaceId: params.workspaceId, worldId: params.worldId, sagaId: params.sagaId, sessionId: session.id };
   const audioSessionKey = stageAudioSessionKey(audioScope);
@@ -624,9 +614,9 @@ export function StageRuntimeDraft({ params, ownerId = "local-stage-owner", saga,
           {selectedEntity ? <section className="stage-v2-card stage-v2-entity"><div className="stage-v2-entity-art"><Portrait entity={selectedEntity} /></div><div className="stage-v2-entity-summary"><h2>{selectedEntity.name}<RelicIcon name="pin" size={16} /></h2><small>{selectedEntity.entityType} · {selectedEntity.status || "Canon"}</small>{selectedEntity.narrative && <blockquote>“{selectedEntity.narrative}”</blockquote>}<h3>Summary</h3><p>{selectedEntity.summary || "No summary recorded."}</p></div><div className="stage-v2-entity-notes"><h3>Wants / Voice</h3>{tags?.wants && <p><strong>Wants:</strong> {tags.wants}</p>}{tags?.voice && <p><strong>Voice:</strong> {tags.voice}</p>}{!tags?.wants && !tags?.voice && <p>No structured wants or voice notes.</p>}<h3>GM Notes</h3><p>{tags?.body || "No GM notes recorded."}</p></div><div className="stage-v2-entity-links"><h3>Links</h3>{threads.map((thread) => <span key={thread.id}><RelicIcon name="threads" size={14} />{thread.name}</span>)}<h3>Places</h3>{relatedPlaces.map((place) => <span key={place.id}><RelicIcon name="map" size={14} />{place.name}</span>)}<h3>Related NPCs</h3>{relatedNpcs.map((npc) => <span key={npc.id}><RelicIcon name="users" size={14} />{npc.name}</span>)}<Link href={`${root}/entities/${selectedEntity.entityType}/${selectedEntity.id}`}>Open in Library <RelicIcon name="arrowRight" size={12} /></Link></div></section> : <section className="stage-v2-card stage-v2-empty-card">Pin entities in Prepare to see their live detail here.</section>}
         </div>
 
-        {gmOpen ? <div className="stage-v2-gm-overlay"><button className="stage-v2-gm-scrim" aria-label="Close GM Screen" onClick={() => setGmOpen(false)} /><GmScreen system={saga.game_system || "Game system"} onClose={() => setGmOpen(false)} /></div> : <button className="stage-v2-gm-edge" onClick={() => setGmOpen(true)}><RelicIcon name="library" size={18} /><span>GM Screen</span></button>}
+        {gmOpen ? <div className="stage-v2-gm-overlay"><button className="stage-v2-gm-scrim" aria-label="Close GM Screen" onClick={() => setGmOpen(false)} /><GmScreen references={initialPins.map(({ entity }) => entity).filter((entity) => entity.entityType === "note")} onClose={() => setGmOpen(false)} /></div> : <button className="stage-v2-gm-edge" onClick={() => setGmOpen(true)}><RelicIcon name="library" size={18} /><span>GM Screen</span></button>}
 
-        {pinnedDice && <aside className="stage-v2-pinned-dice" aria-label="Pinned dice widget"><header><span><RelicIcon name="dice" size={13} />Dice</span><button onClick={() => setPinnedDice(null)} aria-label="Unpin dice"><RelicIcon name="pin" size={12} /></button></header><div>{diceTypes.map((sides) => <button key={sides} className={pinnedDice.pool.includes(sides) ? "active" : ""} onClick={() => setPinnedDice((config) => config ? { ...config, pool: config.pool.includes(sides) ? config.pool.filter((die) => die !== sides) : [...config.pool, sides] } : null)}>d{sides === 100 ? "%" : sides}</button>)}</div><label>Mod<input type="number" value={pinnedDice.modifier} onChange={(e) => setPinnedDice({ ...pinnedDice, modifier: Number(e.target.value) })} /></label><button disabled={busy || !pinnedDice.pool.length} onClick={async () => setPinnedResult(await rollPool(pinnedDice.pool, pinnedDice.modifier, pinnedDice.mode, "Pinned roll"))}>Roll</button>{pinnedResult && <strong>{String(pinnedResult.total)}</strong>}</aside>}
+        {pinnedDice && <aside className="stage-v2-pinned-dice" aria-label="Pinned dice widget"><header><span><RelicIcon name="dice" size={13} />Dice</span><button onClick={() => setPinnedDice(null)} aria-label="Unpin dice"><RelicIcon name="pin" size={12} /></button></header><div>{diceTypes.map((sides) => <button key={sides} className={pinnedDice.pool.includes(sides) ? "active" : ""} onClick={() => setPinnedDice((config) => config ? { ...config, pool: config.pool.includes(sides) ? config.pool.filter((die) => die !== sides) : [...config.pool, sides] } : null)}>d{sides === 100 ? "%" : sides}</button>)}</div><label>Mod<input type="number" value={pinnedDice.modifier} onChange={(e) => setPinnedDice({ ...pinnedDice, modifier: Number(e.target.value) })} /></label><button disabled={busy || !pinnedDice.pool.length} onClick={async () => setPinnedResult(await rollPool(pinnedDice.pool, pinnedDice.modifier, "normal", "Pinned roll"))}>Roll</button>{pinnedResult && <strong>{String(pinnedResult.total)}</strong>}</aside>}
 
         {endedPending && <div className="stage-v2-undo" role="status"><strong>{undoSeconds}</strong><div><span>Session ended</span><p>Undo is available for {undoSeconds} seconds. Then this session enters the review pipeline.</p></div><button disabled={busy} onClick={() => void undoEndSession()}>Undo</button></div>}
 
