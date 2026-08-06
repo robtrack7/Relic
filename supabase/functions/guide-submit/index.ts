@@ -14,6 +14,7 @@ type GuideSubmitRequest = {
   idempotency_key?: string;
   question?: string;
   selected_import_source_ids?: string[];
+  selected_media_attachment_ids?: string[];
 };
 
 type GuideSearchResult = {
@@ -67,11 +68,20 @@ Deno.serve(async (req) => {
     || !body.turn_id || !body.idempotency_key || question.length < 1 || question.length > 2000) {
     return errorResponse(400, "invalid_request", "The Guide question is invalid.");
   }
-  const requestedImports = body.selected_import_source_ids ?? [];
+  const requestedImports = Array.isArray(body.selected_import_source_ids) ? body.selected_import_source_ids : [];
   const selectedImportSourceIds = [...new Set(requestedImports)].sort();
-  if (!Array.isArray(requestedImports) || requestedImports.length !== selectedImportSourceIds.length
+  if ((body.selected_import_source_ids !== undefined && !Array.isArray(body.selected_import_source_ids))
+    || requestedImports.length !== selectedImportSourceIds.length
     || selectedImportSourceIds.length > 8 || selectedImportSourceIds.some((value) => !UUID.test(value))) {
     return errorResponse(400, "invalid_request", "Selected import sources are invalid.");
+  }
+  const requestedMedia = Array.isArray(body.selected_media_attachment_ids) ? body.selected_media_attachment_ids : [];
+  const selectedMediaAttachmentIds = [...new Set(requestedMedia)].sort();
+  if ((body.selected_media_attachment_ids !== undefined && !Array.isArray(body.selected_media_attachment_ids))
+    || requestedMedia.length !== selectedMediaAttachmentIds.length
+    || selectedMediaAttachmentIds.length > 4 || selectedMediaAttachmentIds.some((value) => !UUID.test(value))
+    || (selectedMediaAttachmentIds.length > 0 && selectedImportSourceIds.length > 0)) {
+    return errorResponse(400, "invalid_request", "Selected media attachments are invalid.");
   }
 
   const service = createServiceClient();
@@ -85,9 +95,13 @@ Deno.serve(async (req) => {
     const replayImports = Array.isArray(existing.import_source_ids)
       ? existing.import_source_ids.filter((value: unknown): value is string => typeof value === "string").sort()
       : [];
+    const replayMedia = Array.isArray(existing.media_attachment_ids)
+      ? existing.media_attachment_ids.filter((value: unknown): value is string => typeof value === "string").sort()
+      : [];
     if (existing.workspace_id !== body.workspace_id || existing.world_id !== body.world_id
       || existing.question !== question || existing.id !== body.turn_id
-      || JSON.stringify(replayImports) !== JSON.stringify(selectedImportSourceIds)) {
+      || JSON.stringify(replayImports) !== JSON.stringify(selectedImportSourceIds)
+      || JSON.stringify(replayMedia) !== JSON.stringify(selectedMediaAttachmentIds)) {
       return errorResponse(409, "idempotency_conflict", "This Guide retry does not match the original question.");
     }
     return jsonResponse({
@@ -99,8 +113,9 @@ Deno.serve(async (req) => {
     });
   }
 
-  const { data: planned, error: planError } = selectedImportSourceIds.length
-    ? { data: { strategy: "exact", provider_required: true, reason: "explicit_import_enrollment", source_ids: selectedImportSourceIds }, error: null }
+  const explicitEvidence = selectedImportSourceIds.length > 0 || selectedMediaAttachmentIds.length > 0;
+  const { data: planned, error: planError } = explicitEvidence
+    ? { data: { strategy: "exact", provider_required: true, reason: selectedMediaAttachmentIds.length ? "explicit_media_description_enrollment" : "explicit_import_enrollment", source_ids: selectedImportSourceIds }, error: null }
     : await service.rpc("plan_loom_retrieval_for_worker", {
       p_workspace_id: body.workspace_id,
       p_world_id: body.world_id,
@@ -157,7 +172,7 @@ Deno.serve(async (req) => {
     p_saga_id: body.saga_id,
     p_session_id: null,
     p_task_name: "answer_saga_question",
-    p_input_payload: { question_length: question.length, selected_import_count: selectedImportSourceIds.length }
+    p_input_payload: { question_length: question.length, selected_import_count: selectedImportSourceIds.length, selected_media_count: selectedMediaAttachmentIds.length }
   });
   if (preflightError) return errorResponse(403, "permission_denied", "Relic Guide is unavailable in this Saga.");
 
@@ -189,7 +204,7 @@ Deno.serve(async (req) => {
 
   let retrievalMode: "hybrid" | "lexical_fallback" | "lexical" | "exact" | "structured" =
     strategy === "exact" || strategy === "structured" ? strategy : strategy === "lexical" ? "lexical" : "hybrid";
-  let sourceIds = selectedImportSourceIds.length ? selectedImportSourceIds : strategy === "exact" || strategy === "structured"
+  let sourceIds = selectedImportSourceIds.length ? selectedImportSourceIds : selectedMediaAttachmentIds.length ? [] : strategy === "exact" || strategy === "structured"
     ? [...new Set((Array.isArray(plan.source_ids) ? plan.source_ids : [])
       .filter((value): value is string => typeof value === "string"))].slice(0, 20)
     : [];
@@ -246,7 +261,8 @@ Deno.serve(async (req) => {
       query_embedding_requested: strategy === "hybrid"
     }
   }).catch(() => undefined);
-  const turnRpc = selectedImportSourceIds.length ? "create_import_loom_turn_for_worker" : "create_loom_provider_turn_for_worker";
+  const turnRpc = selectedImportSourceIds.length ? "create_import_loom_turn_for_worker"
+    : selectedMediaAttachmentIds.length ? "create_media_attachment_loom_turn_for_worker" : "create_loom_provider_turn_for_worker";
   const turnArgs = selectedImportSourceIds.length ? {
     p_workspace_id: body.workspace_id,
     p_world_id: body.world_id,
@@ -257,6 +273,16 @@ Deno.serve(async (req) => {
     p_idempotency_key: body.idempotency_key,
     p_question: question,
     p_source_ids: selectedImportSourceIds
+  } : selectedMediaAttachmentIds.length ? {
+    p_workspace_id: body.workspace_id,
+    p_world_id: body.world_id,
+    p_saga_id: body.saga_id,
+    p_gm_id: body.gm_user_id,
+    p_thread_id: body.thread_id ?? null,
+    p_turn_id: body.turn_id,
+    p_idempotency_key: body.idempotency_key,
+    p_question: question,
+    p_attachment_ids: selectedMediaAttachmentIds
   } : {
     p_workspace_id: body.workspace_id,
     p_world_id: body.world_id,

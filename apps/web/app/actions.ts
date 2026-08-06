@@ -654,15 +654,19 @@ async function readLibraryDetail(
   type: string,
   id: string,
 ) {
-  const { data, error } = await supabase.rpc("get_library_record_detail", {
-    workspace_id: params.workspaceId,
-    world_id: params.worldId,
-    saga_id: params.sagaId,
-    entity_type: type,
-    entity_id: id,
-  });
+  const [{ data, error }, { data: media, error: mediaError }] = await Promise.all([
+    supabase.rpc("get_library_record_detail", {
+      workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId,
+      entity_type: type, entity_id: id,
+    }),
+    supabase.rpc("list_media_attachments", {
+      p_workspace_id: params.workspaceId, p_world_id: params.worldId, p_saga_id: params.sagaId,
+      p_target_kind: type, p_target_id: id,
+    }),
+  ]);
   if (error) throw new Error(error.message);
-  return data as unknown as LibraryRecordDetail;
+  if (mediaError) throw new Error(mediaError.message);
+  return { ...(data as unknown as LibraryRecordDetail), media_attachments: Array.isArray(media) ? media : [] };
 }
 
 export async function autosaveEntityAction(formData: FormData) {
@@ -684,6 +688,107 @@ export async function autosaveEntityAction(formData: FormData) {
   const detail = await readLibraryDetail(supabase, params, type, id);
   revalidatePath(`${sagaPath(params)}/entities/${type}/${id}`);
   return { ok: true as const, updatedAt: detail.record.updated_at ?? expectedVersion, detail };
+}
+
+export async function prepareMediaAttachmentAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const attachmentId = value(formData, "attachmentId");
+  const targetKind = value(formData, "entityType");
+  const targetId = value(formData, "entityId");
+  const mimeType = value(formData, "mimeType");
+  const byteSize = Number(value(formData, "byteSize"));
+  if (!isEditableEntityType(targetKind) || !Number.isSafeInteger(byteSize) || byteSize < 16 || byteSize > 5_242_880
+    || !["image/jpeg", "image/png", "image/webp"].includes(mimeType)) {
+    return { ok: false as const, error: "Choose a JPEG, PNG, or WebP image up to 5 MiB." };
+  }
+  const { data, error } = await supabase.rpc("begin_media_attachment", {
+    p_workspace_id: params.workspaceId, p_world_id: params.worldId, p_saga_id: params.sagaId,
+    p_attachment_id: attachmentId, p_target_kind: targetKind, p_target_id: targetId,
+    p_original_filename: rawValue(formData, "filename"), p_declared_mime: mimeType, p_declared_byte_size: byteSize,
+    p_title: value(formData, "title") || null, p_alt_text: value(formData, "altText"), p_description: value(formData, "description") || null,
+  });
+  if (error) return { ok: false as const, error: error.message };
+  const claim = data as { id?: string; state?: string; bucket?: string; storage_path?: string; replayed?: boolean } | null;
+  const expectedPrefix = `${params.workspaceId}/${params.worldId}/${params.sagaId}/images/${attachmentId}/original.`;
+  if (!claim?.id || claim.bucket !== "attachments" || typeof claim.storage_path !== "string" || !claim.storage_path.startsWith(expectedPrefix)) {
+    return { ok: false as const, error: "The private image upload target is invalid." };
+  }
+  return { ok: true as const, attachment: { id: claim.id, state: claim.state ?? "uploading", bucket: "attachments" as const, storage_path: claim.storage_path, replayed: Boolean(claim.replayed) } };
+}
+
+async function runMediaAttachmentOperation(formData: FormData, operation: "validate" | "view" | "delete") {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const { data, error } = await supabase.functions.invoke("media-attachment", {
+    body: {
+      workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId,
+      attachment_id: value(formData, "attachmentId"), attempt_id: value(formData, "attemptId") || crypto.randomUUID(), operation,
+    },
+  });
+  if (error) {
+    let message = `The private image could not be ${operation === "view" ? "opened" : operation === "delete" ? "deleted" : "validated"}.`;
+    const context = (error as { context?: { json?: () => Promise<unknown> } }).context;
+    if (context?.json) {
+      const body = await context.json().catch(() => null) as { error?: { message?: string } } | null;
+      if (body?.error?.message) message = body.error.message;
+    }
+    return { ok: false as const, error: message };
+  }
+  revalidatePath(`${sagaPath(params)}/entities`);
+  return { ok: true as const, result: data as { id: string; state?: string; deleted?: boolean; signed_url?: string; expires_in?: number; duplicate?: boolean } };
+}
+
+export async function validateMediaAttachmentAction(formData: FormData) {
+  return runMediaAttachmentOperation(formData, "validate");
+}
+
+export async function viewMediaAttachmentAction(formData: FormData) {
+  return runMediaAttachmentOperation(formData, "view");
+}
+
+export async function deleteMediaAttachmentAction(formData: FormData) {
+  return runMediaAttachmentOperation(formData, "delete");
+}
+
+export async function updateMediaAttachmentMetadataAction(formData: FormData) {
+  const { supabase } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const { data, error } = await supabase.rpc("update_media_attachment_metadata", {
+    p_workspace_id: params.workspaceId, p_world_id: params.worldId, p_saga_id: params.sagaId,
+    p_attachment_id: value(formData, "attachmentId"), p_title: value(formData, "title") || null,
+    p_alt_text: value(formData, "altText"), p_description: value(formData, "description") || null,
+    p_expected_version: value(formData, "expectedVersion"),
+  });
+  if (error) return { ok: false as const, conflict: error.code === "40001", error: error.code === "40001" ? "This attachment changed elsewhere. Refresh before continuing." : error.message };
+  revalidatePath(`${sagaPath(params)}/entities`);
+  return { ok: true as const, attachment: data };
+}
+
+export async function draftMediaAttachmentWithLoomAction(formData: FormData) {
+  const { user } = await requireActionUser();
+  const params = paramsFromForm(formData);
+  const question = rawValue(formData, "question").normalize("NFKC").trim();
+  const attachmentId = value(formData, "attachmentId");
+  if (!attachmentId || !question || question.length > 2000) return { ok: false as const, error: "Describe what the Loom should propose from this authored image description." };
+  const internalToken = process.env.INTERNAL_TOKEN;
+  if (!internalToken) return { ok: false as const, error: "The Loom is temporarily unavailable." };
+  try {
+    const response = await fetch(`${getSupabaseUrl()}/functions/v1/guide-submit`, {
+      method: "POST", headers: { authorization: `Bearer ${internalToken}`, "content-type": "application/json" }, cache: "no-store",
+      body: JSON.stringify({
+        gm_user_id: user.id, workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId,
+        thread_id: null, turn_id: value(formData, "turnId") || crypto.randomUUID(), idempotency_key: value(formData, "idempotencyKey") || crypto.randomUUID(),
+        question, selected_media_attachment_ids: [attachmentId],
+      }),
+    });
+    const payload = await response.json().catch(() => ({})) as { thread_id?: string; error?: { message?: string } };
+    if (!response.ok || !payload.thread_id) return { ok: false as const, error: payload.error?.message ?? "The Loom could not use this description safely." };
+    revalidatePath(`${sagaPath(params)}/guide`);
+    return { ok: true as const, href: `${sagaPath(params)}/guide?thread=${payload.thread_id}` };
+  } catch {
+    return { ok: false as const, error: "The Loom request could not be reached. The attachment remains private and unchanged." };
+  }
 }
 
 export async function archiveEntityAction(formData: FormData) {

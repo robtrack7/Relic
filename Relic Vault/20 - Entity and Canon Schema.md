@@ -825,22 +825,30 @@ create table media_attachments (
   target_id         uuid not null,
   storage_path      text not null unique,
   original_filename text not null,
-  detected_mime     text not null check (detected_mime in ('image/jpeg','image/png','image/webp')),
-  byte_size         bigint not null check (byte_size > 0),
-  pixel_width       int not null check (pixel_width > 0),
-  pixel_height      int not null check (pixel_height > 0),
-  sha256            text not null,
+  state             text not null check (state in ('uploading','validating','ready','failed','rejected')),
+  declared_mime     text not null,
+  declared_byte_size bigint not null check (declared_byte_size > 0),
+  detected_mime     text check (detected_mime in ('image/jpeg','image/png','image/webp')),
+  byte_size         bigint check (byte_size > 0),
+  pixel_width       int check (pixel_width > 0),
+  pixel_height      int check (pixel_height > 0),
+  sha256            text,
   title             text,
   alt_text          text not null,
   description       text,
+  failure_code      text,
+  validation_attempt_id uuid,
+  validated_at      timestamptz,
   created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now(),
   deleted_at        timestamptz,
-  unique (saga_id, uploader_id, sha256, target_kind, target_id)
+  check (state <> 'ready' or (detected_mime is not null and byte_size is not null and pixel_width is not null and pixel_height is not null and sha256 is not null))
 );
 create index on media_attachments (saga_id, target_kind, target_id) where deleted_at is null;
+create unique index on media_attachments (saga_id, uploader_id, sha256, target_kind, target_id) where state = 'ready' and deleted_at is null;
 ```
 
-The authenticated write/read RPC derives hierarchy and uploader identity, verifies the target exists in the exact active Saga, and never accepts a browser-supplied Storage path or detected file properties as trusted. A service boundary verifies magic/MIME, dimensions, and byte limits before finalization. The public projection omits object paths; viewing uses a short-lived server-authorized signed URL. The Loom context projection exposes title, alt text, description, safe format/dimension metadata, target provenance, and the explicit statement `GM-authored description; image not inspected`. It never exposes pixels or a signed URL to the provider.
+The nullable detected fields support the persisted upload/validation state machine; the `ready` constraint closes them before an attachment becomes viewable or Loom-eligible. The authenticated write/read RPC derives hierarchy and uploader identity, verifies the target exists in the exact active Saga, and never accepts a browser-supplied Storage path or detected file properties as trusted. A service boundary verifies magic/MIME, static-only structure, dimensions, and byte limits before finalization. MVP limits are 5 MiB, 8,192 pixels on either edge, and 32 megapixels total. The public projection omits object paths; viewing uses a short-lived server-authorized signed URL. The Loom context projection exposes title, alt text, description, safe format/dimension metadata, target provenance, and the explicit statement `GM-authored description; image not inspected`. It never exposes pixels or a signed URL to the provider.
 
 ---
 

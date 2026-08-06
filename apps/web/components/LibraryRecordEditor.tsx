@@ -13,6 +13,7 @@ import {
   restoreEntityAction,
 } from "@/app/actions";
 import { HiddenContextFields } from "@/components/HiddenContextFields";
+import { MediaAttachmentsPanel } from "@/components/MediaAttachmentsPanel";
 import { entityConfigs } from "@/lib/entities";
 import { sagaPath } from "@/lib/routes";
 import type { IdParams, LibraryRecordDetail } from "@/lib/types";
@@ -26,7 +27,7 @@ function serialize(values: { name: string; summary: string; narrative: string; g
 }
 
 function blockerLabel(key: string) {
-  return ({ relationships: "relationships", mentions: "mentions or backlinks", note_attachments: "Note attachments", session_pins: "Session pins", thread_activations: "active Session links", pending_drafts: "pending drafts" } as Record<string, string>)[key] ?? key;
+  return ({ relationships: "relationships", mentions: "mentions or backlinks", note_attachments: "Note attachments", media_attachments: "private image attachments", session_pins: "Session pins", thread_activations: "active Session links", pending_drafts: "pending drafts" } as Record<string, string>)[key] ?? key;
 }
 
 export function LibraryRecordEditor({ params, initialDetail, initialDeleteOpen = false }: { params: IdParams; initialDetail: LibraryRecordDetail; initialDeleteOpen?: boolean }) {
@@ -191,6 +192,9 @@ export function LibraryRecordEditor({ params, initialDetail, initialDeleteOpen =
           <label className="field"><span>Narrative / body</span><textarea aria-label="Narrative / body" className="settings-field" rows={8} value={values.narrative} disabled={archived || saveState === "conflict"} onChange={(event) => updateField("narrative", event.target.value)} onBlur={() => void saveNow()} /></label>
           {detail.record.entityType !== "note" && <label className="field"><span>GM notes</span><textarea aria-label="GM notes" className="settings-field" rows={4} value={values.gmNotes} disabled={archived || saveState === "conflict"} onChange={(event) => updateField("gmNotes", event.target.value)} onBlur={() => void saveNow()} /></label>}
         </div>
+
+        <div className="em-sep" />
+        <MediaAttachmentsPanel params={params} entityType={detail.record.entityType} entityId={detail.record.id} attachments={detail.media_attachments} readOnly={archived} />
 
         <div className="em-sep" />
         <section className="library-inspector-section" aria-labelledby="relationships-title">

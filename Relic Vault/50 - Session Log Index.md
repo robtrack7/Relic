@@ -95,3 +95,4 @@ Use this index to keep a short Obsidian-linked trail of Relic development sessio
 - [[Session Logs/2026-08-05 - Phase G1 Trusted PDF Import]]
 - [[Session Logs/2026-08-05 - Phase G1 Import Loom Enrollment]]
 - [[Session Logs/2026-08-05 - Phase G1 Library Metadata Editing]]
+- [[Session Logs/2026-08-05 - Phase G1 Private Image Attachments]]

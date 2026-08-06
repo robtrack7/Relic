@@ -29,7 +29,10 @@ import {
   updateTranscriptAction,
   updateEntityAction,
   updateNotificationPreferencesAction,
-  updateSagaRetentionSettingsAction
+  updateSagaRetentionSettingsAction,
+  draftMediaAttachmentWithLoomAction,
+  prepareMediaAttachmentAction,
+  updateMediaAttachmentMetadataAction,
 } from "@/app/actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -386,8 +389,10 @@ describe("security-hardened server actions", () => {
     supabase.rpc
       .mockResolvedValueOnce({ data: "entity-a", error: null })
       .mockResolvedValueOnce({ data: { record: { id: "entity-a", updated_at: "2026-07-21T18:01:00Z" }, relationships: [] }, error: null })
+      .mockResolvedValueOnce({ data: [], error: null })
       .mockResolvedValueOnce({ data: { id: "relationship-a" }, error: null })
       .mockResolvedValueOnce({ data: { record: { id: "entity-a" }, relationships: [{ id: "relationship-a" }] }, error: null })
+      .mockResolvedValueOnce({ data: [], error: null })
       .mockResolvedValueOnce({ data: "entity-a", error: null })
       .mockResolvedValueOnce({ data: { deleted: true }, error: null });
     vi.mocked(createClient).mockResolvedValue(supabase as never);
@@ -400,12 +405,36 @@ describe("security-hardened server actions", () => {
 
     const linked = await createLibraryLinkAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", entityType: "character", entityId: "entity-a", targetType: "place", targetId: "place-a", relationshipKind: "located-at", relationshipNotes: "Watches the bridge" }));
     expect(linked.ok).toBe(true);
-    expect(supabase.rpc.mock.calls[2]).toEqual(["create_relationship", { workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", from_entity_type: "character", from_entity_id: "entity-a", to_entity_type: "place", to_entity_id: "place-a", relationship_kind: "located-at", relationship_notes: "Watches the bridge" }]);
+    expect(supabase.rpc.mock.calls[3]).toEqual(["create_relationship", { workspace_id: "workspace-a", world_id: "world-a", saga_id: "saga-a", from_entity_type: "character", from_entity_id: "entity-a", to_entity_type: "place", to_entity_id: "place-a", relationship_kind: "located-at", relationship_notes: "Watches the bridge" }]);
 
     await expect(restoreEntityAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", entityType: "character", entityId: "entity-a", expectedVersion: "2026-07-21T18:01:00Z" }))).rejects.toThrow("NEXT_REDIRECT:/app/w/workspace-a/world/world-a/saga/saga-a/entities/character/entity-a?lifecycleNotice=restored");
     await expect(hardDeleteEntityAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", entityType: "character", entityId: "entity-a", expectedVersion: "2026-07-21T18:02:00Z", destructiveConfirmed: "true", confirmationName: "Mara" }))).rejects.toThrow("NEXT_REDIRECT:/app/w/workspace-a/world/world-a/saga/saga-a/entities?lifecycleNotice=deleted");
-    expect(supabase.rpc.mock.calls[5][0]).toBe("hard_delete_entity");
+    expect(supabase.rpc.mock.calls[7][0]).toBe("hard_delete_entity");
     expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it("registers private media metadata and sends only its ID to the explicit Loom handoff", async () => {
+    const supabase = authenticatedSupabase();
+    supabase.rpc
+      .mockResolvedValueOnce({ data: { id: "attachment-a", state: "uploading", bucket: "attachments", storage_path: "workspace-a/world-a/saga-a/images/attachment-a/original.png" }, error: null })
+      .mockResolvedValueOnce({ data: { id: "attachment-a", updated_at: "2026-08-05T20:00:00Z" }, error: null });
+    vi.mocked(createClient).mockResolvedValue(supabase as never);
+
+    const prepared = await prepareMediaAttachmentAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", entityType: "place", entityId: "place-a", attachmentId: "attachment-a", filename: "storm.png", mimeType: "image/png", byteSize: "1024", title: "Stormglass", altText: "A bridge in green lightning", description: "Cold rain" }));
+    expect(prepared.ok).toBe(true);
+    expect(supabase.rpc.mock.calls[0]).toEqual(["begin_media_attachment", expect.objectContaining({ p_attachment_id: "attachment-a", p_target_kind: "place", p_alt_text: "A bridge in green lightning" })]);
+
+    const updated = await updateMediaAttachmentMetadataAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", attachmentId: "attachment-a", title: "Stormglass", altText: "A bridge", description: "Hidden path", expectedVersion: "2026-08-05T19:00:00Z" }));
+    expect(updated.ok).toBe(true);
+
+    process.env.INTERNAL_TOKEN = "local-internal-test";
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: vi.fn().mockResolvedValue({ thread_id: "thread-media" }) });
+    vi.stubGlobal("fetch", fetchMock);
+    const loom = await draftMediaAttachmentWithLoomAction(form({ workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a", attachmentId: "attachment-a", question: "Propose an atmosphere Note.", turnId: "turn-a", idempotencyKey: "idem-a" }));
+    expect(loom.ok).toBe(true);
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body).toMatchObject({ selected_media_attachment_ids: ["attachment-a"], question: "Propose an atmosphere Note." });
+    expect(JSON.stringify(body)).not.toMatch(/signed|storage|pixel|base64|bytes/i);
   });
 
   it("records session recording consent through the Stage RPC", async () => {

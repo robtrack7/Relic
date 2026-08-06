@@ -10,9 +10,14 @@ import {
 } from "@/app/actions";
 
 vi.mock("next/link", () => ({ default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => <a href={href} {...props}>{children}</a> }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}));
 vi.mock("@/app/actions", () => ({
   archiveEntityAction: vi.fn(), autosaveEntityAction: vi.fn(), createLibraryLinkAction: vi.fn(),
-  hardDeleteEntityAction: vi.fn(), removeLibraryLinkAction: vi.fn(), resolveMentionAction: vi.fn(), restoreEntityAction: vi.fn(),
+  deleteMediaAttachmentAction: vi.fn(), draftMediaAttachmentWithLoomAction: vi.fn(), hardDeleteEntityAction: vi.fn(),
+  prepareMediaAttachmentAction: vi.fn(), removeLibraryLinkAction: vi.fn(), resolveMentionAction: vi.fn(), restoreEntityAction: vi.fn(),
+  updateMediaAttachmentMetadataAction: vi.fn(), validateMediaAttachmentAction: vi.fn(), viewMediaAttachmentAction: vi.fn(),
 }));
 
 const params = { workspaceId: "workspace-a", worldId: "world-a", sagaId: "saga-a" };
@@ -25,6 +30,7 @@ function fixture(overrides: Partial<LibraryRecordDetail> = {}): LibraryRecordDet
     mentions: [{ id: "mention-a", state: "suggested", mention_text: "Glass Bridge", related_type: "place", related_id: "place-a", related_name: "Glass Bridge", updated_at: "2026-07-21T18:00:00.000Z" }],
     backlinks: [],
     candidates: [{ entityType: "place", id: "place-a", name: "Glass Bridge", scope: "saga" }],
+    media_attachments: [],
     delete_blockers: { total: 0, relationships: 0, mentions: 0, note_attachments: 0, session_pins: 0, thread_activations: 0, pending_drafts: 0 },
     can_hard_delete: false,
     ...overrides,
@@ -41,7 +47,7 @@ describe("LibraryRecordEditor", () => {
     render(<LibraryRecordEditor params={params} initialDetail={fixture()} />);
 
     fireEvent.change(screen.getByRole("textbox", { name: "Narrative / body" }), { target: { value: "New text" } });
-    expect(screen.getByRole("status").textContent).toContain("Unsaved");
+    expect(screen.getByText("Unsaved changes")).toBeTruthy();
     await act(async () => { vi.advanceTimersByTime(799); });
     expect(autosaveEntityAction).not.toHaveBeenCalled();
     await act(async () => { vi.advanceTimersByTime(1); await Promise.resolve(); });
@@ -52,7 +58,7 @@ describe("LibraryRecordEditor", () => {
     expect(sent.get("status")).toBe("active");
     expect(sent.get("tags")).toBe("scout");
     expect(sent.get("expectedVersion")).toBe("2026-07-21T18:00:00.000Z");
-    expect(screen.getByRole("status").textContent).toContain("Saved");
+    expect(screen.getByText(/^Saved/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Save manual edit/i })).toBeNull();
   });
 

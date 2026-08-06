@@ -39,6 +39,7 @@ test("module 8 edge runtime function tree exists", () => {
     "supabase/functions/_shared/ai-provider.ts",
     "supabase/functions/_shared/export-builder.ts",
     "supabase/functions/_shared/storage-cleanup.ts",
+    "supabase/functions/_shared/image-validator.ts",
     "supabase/functions/_shared/notification-provider.ts",
     "supabase/functions/_shared/transcription-provider.ts",
     "supabase/functions/_shared/embedding-provider.ts",
@@ -55,7 +56,8 @@ test("module 8 edge runtime function tree exists", () => {
     "supabase/functions/export-saga/index.ts",
     "supabase/functions/send-notification/index.ts",
     "supabase/functions/transcript-edit-reembed/index.ts"
-    ,"supabase/functions/hybrid-search/index.ts"
+    ,"supabase/functions/hybrid-search/index.ts",
+    "supabase/functions/media-attachment/index.ts"
   ];
 
   for (const file of expectedFiles) {
@@ -164,6 +166,7 @@ test("Relic Guide submission derives scope, retrieval, quota, and dispatch on th
   const hybrid = read("supabase/functions/hybrid-search/index.ts");
   const workflowMigration = read("supabase/migrations/20260805060000_packet_e9_workflow_tools.sql");
   const importEnrollment = read("supabase/migrations/20260806002000_phase_g1_import_loom_enrollment.sql");
+  const mediaEnrollment = read("supabase/migrations/20260806020000_phase_g1_media_attachments.sql");
 
   assert.match(submit, /requireInternalAuth/, "Guide submission must be server-only");
   assert.match(submit, /createScopedClient/, "Guide permission and quota checks must use the GM identity");
@@ -183,10 +186,14 @@ test("Relic Guide submission derives scope, retrieval, quota, and dispatch on th
   assert.match(submit, /create_loom_provider_turn_for_worker/, "provider turns must preserve their selected retrieval strategy");
   assert.match(submit, /selected_import_source_ids/, "explicit import enrollment must be a distinct request field");
   assert.match(submit, /create_import_loom_turn_for_worker/, "selected imports must use the service-only frozen-evidence creator");
+  assert.match(submit, /selected_media_attachment_ids/, "explicit image-description enrollment must be a distinct request field");
+  assert.match(submit, /create_media_attachment_loom_turn_for_worker/, "selected media descriptions must use the service-only text evidence creator");
   assert.match(importEnrollment, /import_state='ready_for_review'/, "only ready imports may be enrolled");
   assert.match(importEnrollment, /content_sha256/, "import evidence versions must use immutable derived-content hashes");
   assert.match(importEnrollment, /cardinality\(v_ids\) not between 1 and 8/, "import enrollment must remain bounded");
   assert.doesNotMatch(importEnrollment, /insert into public\.(?:drafts|canon_audit|embeddings)/, "enrollment must not write drafts, canon, or embeddings");
+  assert.match(mediaEnrollment, /GM-authored description; image not inspected/, "media evidence must disclose that pixels were not inspected");
+  assert.doesNotMatch(mediaEnrollment, /insert into public\.(?:drafts|canon_audit|embeddings)/, "media enrollment must not write drafts, canon, or embeddings");
   assert.match(submit, /query_embedding_requested:\s*strategy === "hybrid"/, "only hybrid retrieval may request a query embedding");
   assert.match(hybrid, /body\.retrieval_strategy === "lexical"/, "lexical retrieval must have an explicit provider-free branch");
   assert.match(hybrid, /query_embedding_requested:\s*false/, "lexical telemetry must prove that no query embedding was requested");
@@ -218,6 +225,18 @@ test("Relic Guide submission derives scope, retrieval, quota, and dispatch on th
   assert.doesNotMatch(submit, /console\.(?:log|error)/, "Guide submission must not log questions or evidence");
   assert.match(runner, /get_guide_evidence_for_worker/, "the shared runner must use frozen Guide evidence");
   assert.match(runner, /complete_guide_turn_for_worker/, "the shared runner must persist only validated Guide output");
+});
+
+test("Phase G private-image smoke is project-locked, bounded, and exercises real lifecycle edges", () => {
+  const smoke = read("scripts/smoke-phase-g-image-local.mjs");
+  assert.match(smoke, /scagegrrilvrpuilthzz/, "hosted image smoke must be locked to staging");
+  assert.match(smoke, /safe-atmosphere\.(?:jpg|png|webp)/, "the static-format fixture set must be explicit");
+  assert.match(smoke, /malformed_image/);
+  assert.match(smoke, /image_dimensions_exceeded/);
+  assert.match(smoke, /mime_mismatch/);
+  assert.match(smoke, /operation: "view"/);
+  assert.match(smoke, /operation: "delete"/);
+  assert.doesNotMatch(smoke, /console\.log\([^)]*(?:anonKey|serviceKey|password)/, "smoke output must not expose credentials");
 });
 
 test("Session Prep AI derives scope and preserves the E4 non-writing review boundary", () => {

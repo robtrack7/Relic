@@ -59,6 +59,10 @@ Revisit this before production hardening or multi-tenant collaboration work. A d
 | `get_session_review(...)` | Read scoped post-session audio, transcript, job, and pipeline state without exposing internal queue rows. |
 | `retry_session_transcription(...)` | Explicitly requeue a failed complete recording with a fresh retry budget. |
 | `save_session_evidence(...)` | Save idempotent pasted-note or GM-summary Session evidence without creating canon or starting synthesis. |
+| `begin_media_attachment(...)` | Register one bounded private static-image upload against an exact active-Saga Library record. |
+| `claim_media_attachment_operation(...)` | Claim an owner-scoped validation, short-lived view, or delete operation without exposing the object path to other callers. |
+| `list_media_attachments(...)` | Read sanitized image state and GM-authored metadata; omit object paths, hashes, and uploader identifiers. |
+| `update_media_attachment_metadata(...)` | Optimistically update the ready attachment's GM-authored title, alt text, and description. |
 | `get_approval_queue(...)` | Read scoped field diffs, source health, provenance, and current conflict state without exposing sibling-Saga rows. |
 | `save_draft_edit(...)` | Persist recoverable GM proposal edits without changing canon or writing audit. |
 | `refresh_draft_baseline(...)` | Explicitly rebase a pending draft to the live target version without changing canon. |
@@ -99,6 +103,7 @@ These helpers are callable by `authenticated` because RLS policies or storage po
 - `saga_row_allowed(uuid, uuid, uuid)`
 - `storage_path_allowed(text)`
 - `storage_path_segment(text, integer)`
+- `attachment_object_write_allowed(text)`
 
 `storage_path_allowed(text)` is a fixed-search-path `security definer` helper so Supabase Storage can validate the Workspace/World/Saga path against authenticated ownership without relying on an optional active-Saga JWT claim.
 
@@ -113,6 +118,7 @@ These public-schema helpers are `security definer` because they are called by sc
 - `write_manual_canon_audit(...)`
 - `materialize_embedding_job_for_test(...)`
 - AI worker wrappers: `get_ai_task_run_for_worker(...)`, `claim_ai_task_run_for_worker(...)`, `checkpoint_ai_task_provider_output_for_worker(...)`, `record_ai_task_output_for_worker(...)`, `fail_ai_task_run_for_worker(...)`, `replay_ai_task_run_for_worker(...)`, `reset_stalled_ai_task_runs_for_worker(...)`, and `set_ai_task_usage_for_worker(...)`
+- private-image workers: `complete_media_attachment_validation_for_worker(...)`, `fail_media_attachment_for_worker(...)`, `complete_media_attachment_delete_for_worker(...)`, and `create_media_attachment_loom_turn_for_worker(...)`; they accept only an owner-scoped claim or explicit GM handoff, and the Loom enrollment freezes authored text plus safe format/dimension metadata without pixels, paths, hashes, or signed URLs
 - `get_saga_export_payload_for_worker(...)` (service-only curated Saga/export projection; excludes runtime secrets, prompts, provider payloads, telemetry, and embeddings)
 - validation trigger helpers for session pins, active threads, notes, relationships, mentions, sources, and draft sources
 - private `internal.library_*` lookup/dependency helpers plus the exact-mention trigger; none are browser-callable

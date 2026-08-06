@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.extract-import-pdf]
 verify_jwt = true
+
+[functions.media-attachment]
+verify_jwt = true

@@ -180,6 +180,24 @@ export type LibraryCandidate = {
   scope: EntityScope;
 };
 
+export type MediaAttachment = {
+  id: string;
+  target_kind: EntityType;
+  target_id: string;
+  state: "uploading" | "validating" | "ready" | "failed" | "rejected";
+  original_filename: string;
+  detected_mime: "image/jpeg" | "image/png" | "image/webp" | null;
+  byte_size: number | null;
+  pixel_width: number | null;
+  pixel_height: number | null;
+  title: string | null;
+  alt_text: string;
+  description: string | null;
+  failure_code: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type LibraryRecordDetail = {
   record: EntitySummary;
   provenance: LibraryProvenanceEntry[];
@@ -187,6 +205,7 @@ export type LibraryRecordDetail = {
   mentions: LibraryMention[];
   backlinks: LibraryMention[];
   candidates: LibraryCandidate[];
+  media_attachments: MediaAttachment[];
   delete_blockers: Record<string, number> & { total: number };
   can_hard_delete: boolean;
 };

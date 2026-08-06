@@ -255,20 +255,24 @@ export async function getThreadTimeline(params: IdParams, threadId: string): Pro
 
 export async function getLibraryRecordDetail(params: IdParams, type: EntityType, id: string): Promise<LibraryRecordDetail | null> {
   const { supabase } = await requireSagaContext(params);
-  const { data, error } = await supabase.rpc("get_library_record_detail", {
-    workspace_id: params.workspaceId,
-    world_id: params.worldId,
-    saga_id: params.sagaId,
-    entity_type: type,
-    entity_id: id,
-  });
+  const [{ data, error }, { data: media, error: mediaError }] = await Promise.all([
+    supabase.rpc("get_library_record_detail", {
+      workspace_id: params.workspaceId, world_id: params.worldId, saga_id: params.sagaId,
+      entity_type: type, entity_id: id,
+    }),
+    supabase.rpc("list_media_attachments", {
+      p_workspace_id: params.workspaceId, p_world_id: params.worldId, p_saga_id: params.sagaId,
+      p_target_kind: type, p_target_id: id,
+    }),
+  ]);
   if (error) {
     if (error.code === "42501") return null;
     throw new Error(error.message);
   }
+  if (mediaError) throw new Error(mediaError.message);
   if (!data || typeof data !== "object" || !("record" in data)) return null;
   const detail = data as unknown as LibraryRecordDetail & { record: Record<string, unknown> };
-  return { ...detail, record: normalizeEntityRow(detail.record, type) } as LibraryRecordDetail;
+  return { ...detail, record: normalizeEntityRow(detail.record, type), media_attachments: Array.isArray(media) ? media : [] } as LibraryRecordDetail;
 }
 
 export async function getRecentEntities(params: IdParams) {

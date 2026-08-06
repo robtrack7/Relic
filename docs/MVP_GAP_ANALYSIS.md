@@ -4,7 +4,7 @@
 
 **Authority:** `Relic Vault/00 - Start Here.md`, then active product, architecture, UX, and implementation notes.
 
-**Implementation snapshot:** current working tree after Stage A1–B2, completed Phase C, manual-spine Packets D1–D4, D5 paste/text/Markdown Import Inbox intake, completed E1/E2 shared delivery, E3 Guide compatibility layer, E4 Session Prep AI, complete E5.1-E10 Universal Loom operating layer including the authorized hosted task-family gate, completed Phase F trust/data/operations, and Phase G's trusted PDF plus explicit selected-source Loom enrollment slice. [[75 - Phase G Release Quality and Integrated MVP Plan]] is now the active release work order. Bounded private image attachments, normal Library tag/status editing, twin real-Loom journeys, and release-quality/device gates remain open. `.docx`, OCR/vision, image generation, rulebook RAG, and native Expo remain deferred by the approved boundary.
+**Implementation snapshot:** current working tree after Stage A1–B2, completed Phase C, manual-spine Packets D1–D4, D5 paste/text/Markdown Import Inbox intake, completed E1/E2 shared delivery, E3 Guide compatibility layer, E4 Session Prep AI, complete E5.1-E10 Universal Loom operating layer including the authorized hosted task-family gate, completed Phase F trust/data/operations, and Phase G's trusted PDF, explicit selected-source Loom enrollment, Library metadata, and bounded private-image slices. [[75 - Phase G Release Quality and Integrated MVP Plan]] is now the active release work order. GM-authored Stage references, twin real-Loom journeys, and release-quality/device gates remain open. `.docx`, OCR/vision, image generation, rulebook RAG, and native Expo remain deferred by the approved boundary.
 
 ## How this audit was performed
 

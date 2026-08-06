@@ -22,6 +22,8 @@
     "phase-g:fixtures": "python scripts/generate-phase-g-fixtures.py",
     "phase-g:pdf-smoke:local": "node scripts/smoke-phase-g-pdf-local.mjs",
     "phase-g:pdf-smoke:hosted": "node scripts/smoke-phase-g-pdf-local.mjs --hosted",
+    "phase-g:image-smoke:local": "node scripts/smoke-phase-g-image-local.mjs",
+    "phase-g:image-smoke:hosted": "node scripts/smoke-phase-g-image-local.mjs --hosted",
     "e2:smoke:hosted": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/invoke-e2-hosted-smoke.ps1",
     "e3:smoke:hosted": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/invoke-e3-hosted-smoke.ps1",
     "phase-e:smoke:hosted": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/invoke-phase-e-hosted-smoke.ps1",
