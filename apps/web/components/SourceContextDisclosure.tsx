@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { DraftCitationContext } from "@/lib/data";
+import type { DraftCitationContext } from "@/lib/types";
 
 export type SourceContextCitation = {
   sourceId: string;

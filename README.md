@@ -1,93 +1,38 @@
 # Relic
 
-Relic is Game Master software for the MVP loop: Create -> Organize -> Prep -> Run -> Review -> Approve -> Continue.
+Relic is Game Master software for the MVP loop: Create -> Organize -> Prep -> Run -> Review -> Approve -> Continue. The web app contains The Sanctum and The Stage.
 
-## Canonical Specs
+## Start with the right contract
 
-Start every task at `Relic Vault/00 - Start Here.md`. Treat `Relic Vault` as canonical. Treat `Sourced - Downloaded - 260518` as a read-only import snapshot if present.
+Read [00 - Start Here](<Relic Vault/00 - Start Here.md>) first, then load only the relevant compact contract:
 
-## Repository Layout
+- [10 - Product Contract](<Relic Vault/10 - Product Contract.md>) — scope, language, and MVP boundaries.
+- [20 - Engineering Contract](<Relic Vault/20 - Engineering Contract.md>) — schema, RLS, RPCs, workers, AI, and trusted data paths.
+- [30 - Experience Contract](<Relic Vault/30 - Experience Contract.md>) — routes, surfaces, design, and UX behavior.
+- [40 - Delivery Status](<Relic Vault/40 - Delivery Status.md>) — active work and release gates.
+- [45 - Security Findings Register](<Relic Vault/45 - Security Findings Register.md>) — security controls and operational risks.
+- [05 - Deferred Decisions](<Relic Vault/05 - Deferred Decisions.md>) — intentional exclusions.
 
-- `apps/web` - future Next.js App Router app for the Sanctum and web Stage fallback.
-- `apps/mobile` - future Expo Router app for Stage-first mobile and Sanctum-lite.
-- `packages/core` - shared Relic domain constants and MVP-safe types.
-- `packages/config` - shared tooling configuration.
-- `supabase` - migrations, Edge Functions, tests, and fixtures.
-- `services/litellm` - LiteLLM proxy config and deployment notes.
-- `scripts` - repository checks and setup helpers.
-- `Relic Vault` - canonical product, architecture, UX, and planning specs.
+`AGENTS.md` is the concise implementation guide. Historical vault material, Claude/Figma exports, session logs, and build output are reference-only unless a task explicitly requires them.
 
-## Current State
+## Layout
 
-This repository has the bootstrap and foundation substrate for the MVP. AI task contracts are specified in `Relic Vault/23 - AI Task Registry.md`, but AI task surfaces must not be coded until the AI runtime implementation plan is accepted.
+- `apps/web` — Next.js web application.
+- `supabase` — migrations, Edge Functions, database tests, fixtures, and RPC boundary documentation.
+- `scripts` — repeatable verification and local operator helpers.
+- `docs/operations.md` — hosted-operation and smoke-test guardrails.
 
-## Verify
+## Commands
 
-```bash
-node scripts/verify-repo.mjs
-```
-
-## Web App
-
-The initial web app lives in `apps/web` and implements the manual Sanctum spine:
-auth, bootstrap, Start Blank, manual canon CRUD, session prep, browser Stage
-fallback, Review shell, Search shell, and lightweight settings.
-
-For Figma-to-React handoff work, use `docs/ui-figma-import.md` and
-`Relic Vault/73 - Figma UI Import Readiness.md`. Import one route or component
-family at a time, keep existing loaders/actions in place, and adapt generated
-React to the backend contracts before replacing live UI.
-
-Install dependencies and run local web checks with pnpm:
+Requires Node 22+ and `pnpm@10.11.0`.
 
 ```bash
 npx pnpm@10.11.0 install
-npx pnpm@10.11.0 --filter @relic/web dev
+npx pnpm@10.11.0 verify
+npx pnpm@10.11.0 test:scripts
+npx pnpm@10.11.0 --filter @relic/web lint
 npx pnpm@10.11.0 --filter @relic/web test
 npx pnpm@10.11.0 --filter @relic/web build
 ```
 
-For the Playwright smoke test, build first, start the web app, then run the
-test in another terminal:
-
-```bash
-cd apps/web
-node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3000
-node_modules/.bin/playwright test
-```
-
-Required web environment values:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<local anon or publishable key>
-```
-
-The web app must not use service-role keys, provider SDKs, live AI task routes,
-prompt templates, or model-provider calls in this phase. AI-dependent UI is
-disabled or routed to manual alternatives until the AI runtime implementation
-plan is accepted.
-
-## Supabase Foundation
-
-Foundation migrations live in `supabase/migrations` and are ordered by responsibility:
-
-1. extensions and enums
-2. Workspace / World / Era / Saga hierarchy
-3. canon entities, notes, sources, drafts, audit, embeddings
-4. sessions, transcripts, audio, pipeline evidence
-5. usage, quota, and internal job queues
-6. Storage buckets
-7. RLS helpers, policies, bootstrap, quota RPCs
-8. retrieval profiles and retrieval/search RPCs
-9. production-safe fixture contract view
-
-Run the SQL test harness with Supabase CLI:
-
-```bash
-supabase start
-npm run test:supabase
-supabase stop --no-backup
-```
-
-The SQL fixtures in `supabase/fixtures/foundation.sql` create two users, two Workspaces, sibling Sagas, scoped canon, drafts, quota edge cases, and storage path edge cases for the foundation tests.
+For database work, use the documented Supabase commands and run the focused SQL tests before broader baseline checks. For visual imports, use [docs/ui-figma-import.md](docs/ui-figma-import.md) and adapt one route or component family at a time.

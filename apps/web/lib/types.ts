@@ -48,6 +48,18 @@ export type CanonEntityType = Exclude<EntityType, "note">;
 export type EntityScope = "saga" | "world";
 export type SessionStatus = "planned" | "ready" | "started" | "in_progress" | "ended_pending_undo" | "ended";
 
+export type DraftCitationContext = {
+  status: "available" | "unavailable" | "broken" | "permission_denied" | "unsupported";
+  source_kind: string;
+  label: string;
+  frozen_excerpt?: string | null;
+  current_text?: string | null;
+  start_seconds?: number | null;
+  end_seconds?: number | null;
+  session_id?: string | null;
+  drift_state: "exact" | "edited" | "deleted" | "not_applicable" | "unavailable";
+};
+
 export type PrepPinState = "available" | "archived" | "missing" | "permission_denied";
 export type SessionPrepPin = {
   key: string;

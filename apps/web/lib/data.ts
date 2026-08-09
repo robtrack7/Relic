@@ -3,8 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { entityConfigs } from "@/lib/entities";
 import { getSupabaseUrl, hasSupabaseEnv, supabaseConfigErrorPath } from "@/lib/env";
 import { recordPath, sagaPath } from "@/lib/routes";
-import type { AppContext, EntitySummary, EntityType, HierarchyContext, IdParams, ImportSource, LibraryRecordDetail, SearchResult, SessionPrepData, SessionPrepPin, StageLiteralSearchDocument, ThreadDetail, ThreadObjective, ThreadTimelineEntry } from "@/lib/types";
-import type { GuideBlock, GuideThread, GuideTurn } from "@/components/RelicGuideConversation";
+import type { GuideBlock, GuideThread, GuideTurn } from "@/lib/loom-types";
+import type { AppContext, DraftCitationContext, EntitySummary, EntityType, HierarchyContext, IdParams, ImportSource, LibraryRecordDetail, SearchResult, SessionPrepData, SessionPrepPin, StageLiteralSearchDocument, ThreadDetail, ThreadObjective, ThreadTimelineEntry } from "@/lib/types";
 
 type WorkspaceContext = { id: string; name: string; usage_limits?: Record<string, unknown>; hierarchy?: HierarchyContext };
 type WorldContext = { id: string; name: string; summary?: string | null; default_game_system?: string | null };
@@ -48,18 +48,6 @@ export type SessionReviewData = {
 };
 type PinRow = { entity_type: EntityType; entity_id: string; order_index?: number };
 type ActiveThreadRow = { thread_id: string };
-export type DraftCitationContext = {
-  status: "available" | "unavailable" | "broken" | "permission_denied" | "unsupported";
-  source_kind: string;
-  label: string;
-  frozen_excerpt?: string | null;
-  current_text?: string | null;
-  start_seconds?: number | null;
-  end_seconds?: number | null;
-  session_id?: string | null;
-  drift_state: "exact" | "edited" | "deleted" | "not_applicable" | "unavailable";
-};
-
 export type PrepAiRequest = {
   id: string;
   task_name: string;
@@ -918,12 +906,6 @@ export async function getGuideThread(params: IdParams, threadId?: string | null)
     };
   }));
   return { id: raw.id, state: raw.state, turns };
-}
-
-export async function getUsageSummary(workspaceId: string) {
-  const { supabase } = await requireUser();
-  const { data } = await supabase.rpc("get_workspace_usage_summary", { workspace_id: workspaceId });
-  return data;
 }
 
 export type SettingsControlPlane = {

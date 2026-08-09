@@ -29,6 +29,9 @@ jobs:
       - name: Verify repository structure
         run: pnpm run verify
 
+      - name: Run repository script tests
+        run: pnpm run test:scripts
+
       - name: Run web unit tests
         run: pnpm run test:web
 

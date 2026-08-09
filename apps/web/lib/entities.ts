@@ -17,14 +17,6 @@ export function isEditableEntityType(value: string): value is EditableEntityType
   return editableEntityTypes.includes(value as EditableEntityType);
 }
 
-export function isEntityType(value: string): value is EntityType {
-  return value in entityConfigs;
-}
-
-export function tableForEntity(type: EntityType) {
-  return entityConfigs[type].table;
-}
-
 export function normalizeScope(scope: FormDataEntryValue | null): EntityScope {
   return scope === "world" ? "world" : "saga";
 }

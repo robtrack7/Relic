@@ -9,7 +9,7 @@ body:
     attributes:
       label: Spec sources
       description: List the active Relic Vault notes that own this work.
-      placeholder: "Relic Vault/00 - Start Here.md\nRelic Vault/41 - Foundation Implementation Plan.md"
+      placeholder: "Relic Vault/00 - Start Here.md\nRelic Vault/20 - Engineering Contract.md"
     validations:
       required: true
   - type: textarea
@@ -35,7 +35,7 @@ body:
           required: true
         - label: This preserves supervised canon approval.
           required: true
-        - label: This does not implement live AI task surfaces before AI runtime acceptance.
+        - label: This keeps provider work scoped, reviewed, metered, and unable to write canon autonomously.
           required: true
         - label: This does not add V1-excluded MVP scope.
           required: true

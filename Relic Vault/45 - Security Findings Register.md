@@ -1,51 +1,39 @@
 ---
 status: active
-authority: secondary
+authority: primary
 scope: security
 read_after:
   - "[[00 - Start Here]]"
-depends_on:
-  - "[[20 - Entity and Canon Schema]]"
-  - "[[21 - Tech Architecture]]"
-  - "[[41 - Foundation Implementation Plan]]"
-supersedes: []
-last_audited: 2026-08-05
-source_file: "Relic Vault/45 - Security Findings Register.md"
+last_audited: 2026-08-08
 ---
 
 # Security Findings Register
 
-Use this register to track security findings, their current status, and the verification that proves a finding is fixed or intentionally deferred. Do not record secrets, keys, tokens, private environment values, or production identifiers here.
+Do not put secrets, keys, tokens, private environment values, prompts, provider payloads, audio, transcripts, images, signed URLs, or production identifiers in this register.
 
-Status values: `live`, `fixed`, `deferred`, `accepted-risk`.
+## Live release blockers
 
-| Finding ID | Severity | Status | Area | Summary | Fix or Mitigation | Verification |
-|---|---|---|---|---|---|---|
-| SEC-FOUNDATION-001 | high | fixed | quota | Workspace usage limits were editable through the user-owned `workspaces` row. | Revoked direct browser-role writes on public tables and moved quota reads through scoped RPCs. | `supabase/tests/foundation.sql`: direct `workspaces.usage_limits` update must be denied. |
-| SEC-FOUNDATION-002 | high | fixed | RLS | Sibling-Saga isolation depended on an active Saga JWT claim that normal app sessions did not set. | `active_saga_matches()` now fails closed when the claim is absent; app access uses scoped RPCs that validate Workspace/World/Saga hierarchy. | `supabase/tests/foundation.sql`: direct Saga-scoped reads without active Saga claim return no rows. |
-| SEC-FOUNDATION-003 | high | fixed | usage | Authenticated users could update or delete their own `usage_events`. | Replaced the broad usage policy with select/insert-only policy and revoked direct update/delete grants. | `supabase/tests/foundation.sql`: direct usage-event update/delete must be denied. |
-| SEC-FOUNDATION-004 | medium-high | fixed | drafts | Draft state could be directly mutated by authenticated users. | Revoked direct draft updates and added `update_draft_state()` as the scoped resolution path. | `supabase/tests/foundation.sql`: direct update denied; scoped RPC resolves draft. |
-| SEC-FOUNDATION-005 | medium | fixed | app actions | Server actions trusted hidden Workspace/World/Saga form IDs too much and wrote directly to tables. | Server actions now call scoped RPCs that validate hierarchy server-side. | `apps/web/tests/security-actions.test.ts`: actions use RPCs and avoid direct table mutation. |
-| SEC-FOUNDATION-006 | medium | fixed | relationships | Session/junction rows could point at out-of-scope entity IDs. | Added trigger validation for session pinned entities and active threads; relationship/source validations remain part of the next schema-hardening pass. | `supabase/tests/foundation.sql`: sibling-Saga pinned entity insert must be rejected. |
-| SEC-FOUNDATION-007 | medium | fixed | grants | Broad public-schema DML grants made future table exposure fragile. | Revoked direct insert/update/delete on public tables from browser roles; re-granted only storage object DML under storage RLS and scoped function execution. | Migration review plus `supabase/tests/foundation.sql` permission-denial cases. |
-| SEC-FOUNDATION-008 | medium | deferred | retrieval | Retrieval still uses lexical/trigram behavior until embedding workers populate real vectors. | Keep current retrieval as MVP-safe fallback; require embedding-worker verification before claiming vector retrieval complete. | Future AI/runtime or embedding-worker phase. |
-| SEC-FOUNDATION-009 | medium | deferred | jobs | Background job worker/service-role execution model is schema-only. | Keep jobs inert until worker code defines scoped execution, service-role use, retry, and audit behavior. | Future job-worker implementation plan. |
-| SEC-FOUNDATION-010 | medium | deferred | storage | Upload UI is not active, so signed upload and storage RLS UX are not fully exercised. | Keep private buckets and path RLS; require signed upload/RLS verification before enabling uploads. | Future upload-flow implementation. |
-| SEC-FOUNDATION-011 | medium | accepted-risk | RPC boundary | Browser-callable RPCs currently live in `public` and use `security definer` for scoped operations. | Accepted for the rough-UI backend milestone only. Direct table writes are revoked, anonymous function execution is denied, authenticated execution is allowlisted, every public `security definer` function requires fixed `search_path`, and the boundary is documented in `supabase/security/rpc-boundary.md`. | `supabase/tests/access_control.sql` plus `npm run backend:baseline:reset`. |
-| SEC-E2-001 | high | fixed | hosted secrets | The staging project/functions and proxy aliases initially lacked custom Edge secrets and authenticated CLI access. | Required names are installed only in server-side hosted storage; values were never requested in chat, fixtures, documentation, commits, or browser-visible configuration. | Name-only bootstrap verification, hosted fail-closed probes, and `docs/E2_HOSTED_READINESS.md`. |
-| SEC-E2-002 | high | fixed | provider configuration | Transcription and AI deterministic modes or implicit model/endpoint fallbacks could activate without an explicit hosted mapping. | Hosted modes require `RELIC_ENV`, explicit live mode, canonical alias, explicit resolved model, and LiteLLM proxy configuration; unexpected model responses fail closed. | `scripts/provider-config-safety.test.mjs` and Edge source tests. |
-| SEC-E2-003 | high | fixed | telemetry | Older active language allowed raw query/prompt/response logging, which conflicts with provider-pipeline privacy requirements. | Disabled raw proxy logging; added fixed safe event fields, metadata allowlist, server-only grants, and sensitive-key rejection/omission tests. | `supabase/tests/hosted_observability_e2.sql` and Edge source tests. |
-| SEC-E2-004 | high | fixed | delivery | Hosted retry, scheduler, metering, and worker-restart evidence was initially absent. | Synthetic staging transcription, embedding, light/deep tasks, exact retry, dead-letter/replay, Vault-authenticated schedules, cold restart, idempotent metering, tenant isolation, and zero canon writes now pass. | [[Session Logs/2026-07-22 - Hosted Provider and Observability Gate]] and `docs/E2_HOSTED_READINESS.md`. |
-| SEC-E2-005 | high | accepted-risk | provider permission | Restricted capability settings returned 401 for transcription, so the isolated capped E2 key was temporarily set to All permissions. | E2 passed under the `$5` project cap and `$1` packet stop. Rotate or restrict the temporary key after E2; normal staging/production must use independently rotatable least-privilege keys. | Hosted transcription proof and safe-log scan; no key, body, prompt, audio, or transcript logged. |
-| SEC-E2-006 | medium | accepted-risk | hosted database | Supabase advisors flag internal tables with RLS disabled even though browser roles lack schema usage, table grants, and direct internal-function execution. Enabling no-policy RLS blindly could break service workers. | Preserve explicit privilege revocation for E2; review defense-in-depth RLS with worker-role tests before production rather than changing it during the hosted smoke. | Hosted catalog privilege queries, pgTAP access suite, and zero advisor errors after `security_invoker` hardening. |
-| SEC-E2-007 | high | fixed | call guard | The restart harness made a 41st inference attempt after the authorized 40-call ceiling by invoking generic idle embedding dispatch, which claimed a different queued synthetic job. | Removed repeat-mode idle dispatch, cleaned all synthetic residue, hard-disabled the runner at 41 previous/0 additional/40 limit, and retained the incident in closeout evidence. It was not an exact-retry duplicate and remained below `$1`/`$5`. | Hosted closeout log, smoke-runner call guard, and script safety tests. |
-| SEC-E3-001 | high | fixed | local provider isolation | The initial E3 local Edge harness inherited live provider values from `supabase/.env.local` despite process-level deterministic overrides, producing four synthetic LiteLLM requests before detection. | Stopped the harness, audited safe telemetry, and changed `serve-functions-local.mjs` to build an authoritative temporary environment that defaults AI/embedding/transcription to deterministic modes and omits every live provider endpoint/key. Live local mode now requires explicit opt-in. | Edge source tests plus the repeated authenticated E3 browser proof: providers are `deterministic-test` / `deterministic-development-test`, billable flags are false, repair count is zero, and no LiteLLM event exists after clean reset. |
-| SEC-E3-002 | high | fixed | Guide authorization | Browser-provided source IDs, models, aliases, history, quota decisions, and mutation targets could create BOLA or prompt-boundary risk if trusted. | Browser actions send only scope identifiers, logical turn identity, and question; scoped preflight validates the GM, worker RPCs revalidate hierarchy, source allowlists are server-generated/frozen, public tables are select-only under owner RLS, and action acceptance revalidates scope and task quota. | `relic_guide_e3.sql`, `security-actions.test.ts`, and `edge-runtime-source.test.mjs`. |
-| SEC-F-001 | medium | fixed | function search path | Hosted advisors identified ten foundational invoker helpers without fixed `search_path` settings. | Added an additive migration that pins each fully qualified helper body to an empty `search_path`. | `supabase/tests/access_control.sql`, clean replay, database lint, and migration `20260805195751_phase_f_advisor_search_path_hardening.sql`. |
-| SEC-G-001 | medium | live | authentication configuration | Hosted Supabase Auth leaked-password protection is disabled. | Enable compromised-password checks during G1/G2 release configuration and verify sign-up/sign-in recovery before private-alpha release. | [Supabase password security guidance](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) plus a post-change advisor read. |
+| ID | Severity | Finding | Required closure | Evidence |
+|---|---|---|---|---|
+| SEC-G-001 | medium | Hosted Supabase Auth leaked-password protection is disabled. | Enable it during hosted Phase G setup and verify sign-up/sign-in recovery. | Hosted advisor read and authenticated recovery check. |
 
-## Open Follow-Ups
+## Accepted risks requiring production review
 
-- Add targeted pgtap fixtures for each relationship/source trigger, beyond the current session-pinned sibling-Saga regression.
-- Revisit the accepted public-schema `security definer` RPC placement before production hardening or multi-tenant collaboration work.
-- Enable hosted leaked-password protection and rerun security advisors during Phase G.
+| ID | Severity | Risk | Guardrail | Required follow-up |
+|---|---|---|---|---|
+| SEC-E2-005 | high | The isolated staging provider key temporarily has broad permissions because restricted transcription failed. | Capped staging spend; no credential/payload logging; server-only storage. | Rotate/restrict before normal staging or production use. |
+| SEC-E2-006 | medium | Some internal worker tables have RLS disabled. | Browser roles have no schema/table/function access; service-only worker path is tested. | Add defense-in-depth RLS only with worker-role regression coverage. |
+| SEC-FOUNDATION-011 | medium | Allowlisted browser-callable `security definer` RPCs remain in `public`. | Direct browser table DML/anonymous execution denied; fixed search paths; allowlisted execution only. | Revisit placement before production hardening or multi-GM work. |
+
+## Fixed invariants to preserve
+
+- Direct browser mutation of workspace usage, drafts, public tables, and usage-event update/delete is denied. Scoped RPCs validate the hierarchy and expected versions.
+- Absent active-Saga scope fails closed; sibling-Saga relationship, pin, source, and target writes are denied.
+- Hosted provider configuration is explicit and fail-closed. Test mode cannot inherit live provider endpoints/credentials; unexpected aliases/models fail closed.
+- Telemetry uses fixed safe fields. Raw query, prompt, response, provider, import, transcript, audio, image, vector, cookie, JWT, signed URL, and credential content is excluded.
+- Provider retries, schedules, metering, restart, dead-letter/replay, and zero-canon-write boundaries have deterministic and hosted evidence. Exact replay cannot duplicate a charge/effect.
+- Browser-provided source IDs, model/alias choices, history, quota decisions, and mutation targets are untrusted; server-generated scope/evidence/action validation is mandatory.
+
+## Ongoing verification
+
+For relevant work run `supabase/tests/foundation.sql`, `supabase/tests/access_control.sql`, hosted-observability/provider safety checks, Edge/runtime source tests, and the affected route/action tests. Perform a clean migration replay and permission-denial regression before closing a tenant/security change.

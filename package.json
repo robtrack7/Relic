@@ -2,6 +2,7 @@
   "name": "relic",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "packageManager": "pnpm@10.11.0",
   "scripts": {
     "verify": "node scripts/verify-repo.mjs",

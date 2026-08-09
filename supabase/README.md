@@ -3,7 +3,7 @@
 Supabase implementation folder for Relic MVP.
 
 - `migrations` - ordered SQL migrations for schema, RLS, policies, functions, indexes, and storage policies.
-- `functions` - Edge Functions for scoped backend actions, async jobs, retrieval, notifications, exports, and later AI runtime work.
+- `functions` - Edge Functions for scoped backend actions, async jobs, retrieval, Loom tasks, notifications, and exports.
 - `tests` - RLS, access-control, migration, retrieval, quota, storage, and job tests.
 - `fixtures` - test fixture data.
 - `security/rpc-boundary.md` - browser-callable RPC boundary and accepted short-term definer-function constraints.
@@ -12,7 +12,7 @@ Guardrails:
 
 - Start with Workspace / World / Era / Saga schema and RLS before UI work.
 - Keep all user-data tables RLS-protected.
-- Do not add live AI runtime functions until `Relic Vault/43 - AI Runtime Implementation Plan.md` is accepted.
+- Keep provider work server-only, schema-validated, scoped, metered, idempotent, and unable to write canon without the reviewed GM path.
 - Storage paths must preserve Workspace / World / Saga boundaries.
 
 ## Local Foundation Checks

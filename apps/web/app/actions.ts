@@ -1575,28 +1575,6 @@ export async function requestSagaExportAction(formData: FormData) {
   redirect(`${sagaPath(params)}/export?exportId=${result.export_id}`);
 }
 
-export async function updateDraftStateAction(formData: FormData) {
-  const { supabase } = await requireActionUser();
-  const params = paramsFromForm(formData);
-  const draftId = value(formData, "draftId");
-  const state = value(formData, "state");
-  if (!["approved", "rejected", "merged", "superseded"].includes(state)) {
-    throw new Error("Unsupported draft state.");
-  }
-  const { error } = await supabase.rpc("update_draft_state", {
-    workspace_id: params.workspaceId,
-    world_id: params.worldId,
-    saga_id: params.sagaId,
-    draft_id: draftId,
-    state,
-    rejection_note: value(formData, "rejectionNote") || null
-  });
-  if (error) {
-    throw new Error(error.message);
-  }
-  revalidatePath(`${sagaPath(params)}/review`);
-}
-
 function jsonObjectValue(formData: FormData, key: string) {
   const raw = value(formData, key);
   if (!raw) return {};

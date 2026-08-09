@@ -1,37 +1,33 @@
-# AGENTS.md
+# Relic Agent Guide
 
-## Start and Authority
+## Start here
 
-- Start every Relic task at `Relic Vault/00 - Start Here.md`.
-- Treat `Relic Vault` as the canonical edited bundle, following the authority order and read paths in `00 - Start Here`.
-- Treat `Sourced - Downloaded - 260518`, archive stubs, imported snapshots, and historical design exports as reference only. Do not build from or rewrite them unless the user explicitly asks for an archival/source-maintenance pass.
-- Active implementation decisions belong in the owning active vault note first, then in code.
+Read `Relic Vault/00 - Start Here.md` before every task. The vault is the product authority; code, tests, and this file implement it. Do not use imported exports, historical notes, session logs, or generated output as current product truth.
 
-## Canon and Protected Decisions
+## Load only the contract your change needs
 
-- Relic product canon is controlled by the active vault notes, especially `00`, `11`, `12`, `13`, and the `20`-series implementation contracts.
-- Preserve the core canon rule: AI output is never canon until explicit GM approval or the Approval Queue commit path.
-- Do not rename product surfaces, entities, workflow steps, schema concepts, or route hierarchy without checking the relevant active vault source.
-- `Relic Vault` notes may be edited as specs. Preserve Obsidian wikilinks/backlinks, frontmatter intent, and source-map consistency when doing so.
+| Work | Read after `00` |
+| --- | --- |
+| Product scope, names, or MVP boundary | `10 - Product Contract` |
+| Schema, RLS, RPCs, workers, AI, Storage, or tests | `20 - Engineering Contract` |
+| Routes, UI states, design, accessibility, or Figma handoff | `30 - Experience Contract` |
+| Current packet, release gate, or verification evidence | `40 - Delivery Status` |
+| Secrets, privacy, permissions, destructive actions, or incident response | `45 - Security Findings Register` |
+| Explicitly deferred work | `05 - Deferred Decisions` |
 
-## Gitignore and Local State
+Read the target code and its focused tests before changing it. Do not load the entire vault or visual exports unless the task needs them.
 
-- Respect `.gitignore`. Do not stage ignored or local-only artifacts such as dependency folders, build outputs, browser reports, agent state, local settings, logs, or private attachments.
-- If a new tool creates repeatable local noise, add a narrow `.gitignore` entry instead of committing the artifact.
-- Do not commit secrets, keys, tokens, private environment files, local Supabase credentials, or machine-specific config.
-- Before staging, inspect `git status --short`. If unrelated or ambiguous changes exist, stage only the files that belong to the current session and summarize what was left untouched.
+## Implementation rules
 
-## Spec and Code Changes
+- Preserve the Workspace -> World -> Saga security boundary. Server routes validate hierarchy and scope; database RPC/RLS remains the enforcement layer.
+- AI may prepare scoped, typed work, but it never makes canon without explicit GM approval or the approval write path. Do not weaken confirmation, provenance, retry, or quota boundaries.
+- Keep provider credentials, service-role keys, signed URLs, private evidence, and worker-only configuration out of browser code, commits, fixtures, and logs.
+- Treat `apps/web` as the product app, `supabase` as database/Edge ownership, and `scripts` as repeatable verification tooling. Generated Figma code is visual input, not a replacement for loaders, actions, route checks, or tests.
+- Use `pnpm@10.11.0`. For web changes, run the relevant lint, unit tests, and build; for database changes, run focused SQL tests plus the appropriate baseline when feasible.
 
-- After spec edits, run link, stale-term, and version-reference checks against the touched vault scope.
-- For app changes, use the repo's package manager and commands from `package.json` or committed workspace docs; the usual web sequence is lint, test, then build.
-- Add code comments only where they aid troubleshooting: intent, invariants, failure modes, setup assumptions, or non-obvious constraints. Keep comments short and avoid restating obvious code.
+## Repository hygiene
 
-## Session Closeout
-
-- Add a concise log under `Relic Vault/Session Logs/` and link it from `Relic Vault/50 - Session Log Index.md`.
-- Session logs should cover accomplished work, files/notes changed, verification run, and open follow-ups. Do not include secrets, keys, tokens, or private env values.
-- Prefer GitHub CLI (`gh`) for GitHub authentication, PR creation, and PR/status inspection when available.
-- Prefer HTTPS for GitHub remotes unless the user explicitly asks for SSH.
-- If work was completed and the user has not asked to pause, run relevant verification, inspect `git status`, commit the intended changes with a concise message, and push the current branch to `origin`.
-- Never force-push, rewrite published history, or push secrets/tokens/private env values.
+- Respect `.gitignore`; do not stage dependencies, builds, browser reports, local `.tmp` fixtures, editor state, logs, or credentials.
+- Preserve unrelated worktree changes. Inspect `git status --short` before staging and stage only task-owned files.
+- Keep comments limited to non-obvious invariants, failure modes, and setup assumptions.
+- Close out with a concise commit message and record the checks run and follow-ups in the handoff; Git history is the implementation trail.

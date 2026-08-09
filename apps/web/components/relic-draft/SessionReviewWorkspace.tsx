@@ -6,6 +6,7 @@ import { retrySessionTranscriptionAction, saveSessionEvidenceAction, updateTrans
 import { RelicIcon } from "@/components/RelicIcon";
 import { transcriptSegmentAnchor } from "@/components/relic-draft/DraftCitationList";
 import type { SessionReviewData, TranscriptSegment } from "@/lib/data";
+import { formatTimestamp } from "@/lib/format";
 import {
   clearSessionEvidenceDraft,
   readSessionEvidenceDraft,
@@ -13,11 +14,6 @@ import {
   type SessionEvidenceKind,
 } from "@/lib/session-evidence-draft";
 import type { IdParams } from "@/lib/types";
-
-function formatTimestamp(seconds: number) {
-  const whole = Math.max(0, Math.floor(seconds));
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
-}
 
 function stepTone(state: string | undefined, completeStates: string[]) {
   if (state === "failed") return "failed";

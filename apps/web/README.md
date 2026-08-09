@@ -1,5 +1,10 @@
-# apps/web
+# Relic web app
 
-Future Next.js App Router app for the Sanctum, auth/bootstrap, Approval Queue, settings, export, and browser Stage fallback.
+This Next.js App Router application implements the responsive-web Sanctum and
+Stage, including the reviewed Loom workflows. Start at
+`Relic Vault/00 - Start Here.md`, then read only the contract relevant to the
+route or boundary being changed.
 
-Do not implement live AI task surfaces here until `Relic Vault/43 - AI Runtime Implementation Plan.md` is accepted.
+Exact behavior lives in `app`, `components`, `lib`, and `tests`. Preserve the
+server-validated Workspace/World/Saga boundary and the rule that AI output is
+never canon without explicit GM approval.

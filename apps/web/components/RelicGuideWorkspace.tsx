@@ -8,9 +8,9 @@ import {
   submitGuideQuestionAction
 } from "@/app/actions";
 import {
-  RelicGuideConversation,
-  type GuideThread
+  RelicGuideConversation
 } from "@/components/RelicGuideConversation";
+import type { GuideThread } from "@/lib/loom-types";
 import type { IdParams } from "@/lib/types";
 
 function scopedForm(params: IdParams) {
