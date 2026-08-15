@@ -2,7 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { cardTitle, type DeskCard, type FieldValues } from "@/lib/world/model";
+import {
+  cardTitle,
+  type ClaimDef,
+  type DeskCard,
+  type FieldValues,
+  type Link,
+  type ObjectRef,
+  type WorldObjectId
+} from "@/lib/world/model";
 import { builtInTemplate, groupFields, REPRESENTATION_KINDS } from "@/lib/world/templates";
 
 import type { DeskStore } from "./use-desk";
@@ -28,11 +36,14 @@ import styles from "./desk.module.css";
 export function Inspector({
   card,
   store,
-  onClose
+  onClose,
+  onFollow
 }: {
   card: DeskCard;
   store: DeskStore;
   onClose: () => void;
+  /** Deepen into something this object is connected to. */
+  onFollow: (link: Link) => void;
 }) {
   const representation = card.representation;
 
@@ -65,6 +76,8 @@ export function Inspector({
         </section>
       ) : null}
 
+      <Connections card={card} onFollow={onFollow} />
+
       {template.fields.length > 0 ? (
         <section className={styles.inspectorSection}>
           <h4 className={styles.inspectorHeading}>
@@ -75,6 +88,60 @@ export function Inspector({
         </section>
       ) : null}
     </aside>
+  );
+}
+
+/**
+ * Everything this object is connected to, and the way to follow it.
+ *
+ * Both directions, because they are different statements and both are true:
+ * what Mara says about herself, and what the world says about Mara. Following
+ * one deepens into the other end rather than navigating anywhere — and if that
+ * end is not on this composition, it is brought here first.
+ */
+function Connections({
+  card,
+  onFollow
+}: {
+  card: DeskCard;
+  onFollow: (link: Link) => void;
+}) {
+  if (card.links.length === 0) return null;
+
+  return (
+    <section className={styles.inspectorSection}>
+      <h4 className={styles.inspectorHeading}>
+        Connected
+        <span className={styles.inspectorNote}>{card.links.length} in this world</span>
+      </h4>
+      <ul className={styles.linkList}>
+        {card.links.map((link) => (
+          <li key={`${link.claimId}-${link.direction}`}>
+            <button
+              type="button"
+              className={styles.linkRow}
+              onClick={() => onFollow(link)}
+              title={
+                link.direction === "out"
+                  ? `This ${link.claimKind}: ${link.other.label}`
+                  : `${link.other.label} — ${link.claimKind}: this`
+              }
+            >
+              {/* Direction reads as a word and an arrow, never as position
+                  alone: which way a relationship was asserted is meaning. */}
+              <span className={styles.linkRelation}>
+                {link.direction === "out" ? "→" : "←"} {link.claimKind}
+              </span>
+              <span className={styles.linkName}>{link.other.label}</span>
+              {link.other.kind ? (
+                <span className={styles.linkKind}>{link.other.kind}</span>
+              ) : null}
+              <TruthMark state={link.truthState} />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -182,7 +249,7 @@ function ClaimField({
 }: {
   card: DeskCard;
   store: DeskStore;
-  def: { key: string; label: string };
+  def: ClaimDef;
 }) {
   const existing = card.claims.find((claim) => claim.claimKind === def.key);
   const [draft, setDraft] = useState(existing?.value ?? "");
@@ -196,9 +263,17 @@ function ClaimField({
     }
   }, [existing?.value]);
 
-  const commit = () => {
-    const next = draft.trim();
-    if (next === settled.current) return;
+  /**
+   * Commits what was typed.
+   *
+   * `link` is what makes this a relationship instead of a phrase. Without one
+   * the claim is still a claim — a template naming a field "Location" must not
+   * refuse a place that has never been captured. That is law: thought before
+   * structure.
+   */
+  const commit = (text: string, link?: ObjectRef) => {
+    const next = text.trim();
+    if (next === settled.current && !link) return;
     settled.current = next;
     // Emptying a claim retracts it. Relic stops believing something rather
     // than believing it to be blank.
@@ -206,25 +281,135 @@ function ClaimField({
       if (existing) store.retract(card.objectId, existing.id);
       return;
     }
-    store.assert(card.objectId, def.key, next);
+    store.assert(card.objectId, def.key, next, link ?? null);
   };
 
+  const bound = existing?.objectValue != null;
+
   return (
-    <label className={styles.inspectorField}>
-      <span className={styles.inspectorLabel}>{def.label}</span>
-      <input
-        className={styles.inspectorInput}
-        value={draft}
-        aria-label={def.label}
-        onChange={(event) => setDraft(event.target.value)}
-        onBlur={commit}
-        onKeyDown={(event) => {
-          event.stopPropagation();
-          if (event.key === "Enter") event.currentTarget.blur();
-        }}
-      />
+    <div className={styles.inspectorField}>
+      <span className={styles.inspectorLabel} id={`claim-${def.key}`}>
+        {def.label}
+      </span>
+
+      <div className={styles.claimEntry}>
+        <input
+          className={styles.inspectorInput}
+          value={draft}
+          aria-labelledby={`claim-${def.key}`}
+          data-linked={bound || undefined}
+          onChange={(event) => setDraft(event.target.value)}
+          onBlur={() => commit(draft)}
+          onKeyDown={(event) => {
+            event.stopPropagation();
+            if (event.key === "Enter") event.currentTarget.blur();
+          }}
+        />
+        {def.relational ? (
+          <Suggestions
+            query={draft}
+            subject={card.objectId}
+            store={store}
+            bound={bound}
+            onPick={(ref) => {
+              setDraft(ref.label);
+              commit(ref.label, ref);
+            }}
+          />
+        ) : null}
+      </div>
+
       {existing ? <TruthMark state={existing.truthState} /> : null}
-    </label>
+    </div>
+  );
+}
+
+/**
+ * Objects that could be what was just typed.
+ *
+ * Deliberately not a required picker. Typing wins; this only offers to make the
+ * text mean an identity, and says plainly when it already does — because the
+ * difference between "she is at the Quay" and "she is at *the Quay*" is whether
+ * Relic can follow it.
+ */
+function Suggestions({
+  query,
+  subject,
+  store,
+  bound,
+  onPick
+}: {
+  query: string;
+  subject: WorldObjectId;
+  store: DeskStore;
+  bound: boolean;
+  onPick: (ref: ObjectRef) => void;
+}) {
+  const [matches, setMatches] = useState<readonly ObjectRef[]>([]);
+  const [open, setOpen] = useState(false);
+  const { findObjects } = store;
+
+  useEffect(() => {
+    const text = query.trim();
+    if (text.length < 2) {
+      setMatches([]);
+      return;
+    }
+    let live = true;
+    const timer = setTimeout(async () => {
+      const found = await findObjects(text, subject);
+      if (live) setMatches(found);
+    }, 180);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [findObjects, query, subject]);
+
+  if (bound) {
+    return (
+      <span className={styles.linkedMark} title="Points at a thing in this world">
+        LINKED
+      </span>
+    );
+  }
+
+  if (matches.length === 0) return null;
+
+  return (
+    <div className={styles.suggestWrap}>
+      <button
+        type="button"
+        className={styles.suggestToggle}
+        aria-expanded={open}
+        onClick={() => setOpen((was) => !was)}
+        title="Point this at something in the world"
+      >
+        link
+      </button>
+      {open ? (
+        <div className={styles.suggestMenu} role="menu">
+          {matches.map((ref) => (
+            <button
+              key={ref.objectId}
+              type="button"
+              role="menuitem"
+              className={styles.suggestItem}
+              // Pointer-down, not click: the input blurs first otherwise, and
+              // the blur commits the plain text before the pick can land.
+              onMouseDown={(event) => {
+                event.preventDefault();
+                setOpen(false);
+                onPick(ref);
+              }}
+            >
+              <span className={styles.suggestName}>{ref.label}</span>
+              {ref.kind ? <span className={styles.linkKind}>{ref.kind}</span> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

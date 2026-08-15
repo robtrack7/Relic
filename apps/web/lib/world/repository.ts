@@ -9,6 +9,7 @@ import type {
   FieldValues,
   Layout,
   Lifecycle,
+  ObjectRef,
   Representation,
   RepresentationId,
   RepresentationKind,
@@ -108,7 +109,25 @@ export interface DeskRepository {
 
   /** Retires a claim. Archival, not deletion — provenance survives. */
   removeClaim(input: RemoveClaimInput): Promise<WriteResult<ClaimId>>;
+
+  /**
+   * Objects of a world that could stand at the other end of a relationship.
+   *
+   * A read, not a write, and the only place Relic offers identities the current
+   * composition does not hold — which is the point: a relationship reaches into
+   * the world, not into the Board you are looking at.
+   */
+  searchObjects(input: SearchObjectsInput): Promise<readonly ObjectRef[]>;
 }
+
+export type SearchObjectsInput = Readonly<{
+  worldId: WorldId;
+  /** Empty means "the most recent few", which is what an opened picker wants. */
+  query: string;
+  /** Nothing is its own allegiance; the subject is never offered. */
+  excludeId?: WorldObjectId;
+  limit?: number;
+}>;
 
 export type RepresentObjectInput = Readonly<{
   objectId: WorldObjectId;
@@ -130,6 +149,13 @@ export type SetClaimInput = Readonly<{
   claimId: ClaimId;
   claimKind: string;
   value: string;
+  /**
+   * Makes this a relationship: the claim's value is another World Object.
+   *
+   * Refused as `missing` if that object is gone, archived, or belongs to another
+   * world — the same seam `referenceObjects` holds, for the same reason.
+   */
+  objectValue?: WorldObjectId | null;
   /** Omitted means "no story position", which replaces rather than appends. */
   story?: StoryPosition;
 }>;

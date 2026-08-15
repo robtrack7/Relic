@@ -53,6 +53,8 @@ type Props = {
   /** The card being deepened into, if any. Focus is a second, deliberate stage. */
   focusId: CardId | null;
   onFocusChange: (cardId: CardId | null) => void;
+  /** Cards the focused object is connected to. They do not recede. */
+  neighbours: ReadonlySet<string>;
 };
 
 export function DeskCanvas({
@@ -63,7 +65,8 @@ export function DeskCanvas({
   editing,
   onEditingChange,
   focusId,
-  onFocusChange
+  onFocusChange,
+  neighbours
 }: Props) {
   const surface = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState<Viewport>(IDENTITY_VIEWPORT);
@@ -427,8 +430,12 @@ export function DeskCanvas({
               focused={focusId === card.cardId}
               // Attention suppresses unrelated material: once one object is
               // being deepened into, the rest of the world recedes without
-              // leaving.
-              receded={focusId !== null && focusId !== card.cardId}
+              // leaving. What it is connected to is not unrelated, so a
+              // neighbour keeps its weight and says why it kept it.
+              neighbour={neighbours.has(card.cardId)}
+              receded={
+                focusId !== null && focusId !== card.cardId && !neighbours.has(card.cardId)
+              }
               onPointerDown={onCardPointerDown(card.cardId)}
               onOpen={() => {
                 onSelectionChange(only(card.cardId));

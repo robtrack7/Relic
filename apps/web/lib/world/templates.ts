@@ -22,6 +22,10 @@ import type { FieldDef, RepresentationKind, Template } from "@/lib/world/model";
  *
  * When adding a field, ask which of those two it is. If it would ever appear in
  * a sentence beginning "we believe this because…", it is a claim.
+ *
+ * A claim marked `relational` usually answers with another thing in the world —
+ * a location, an allegiance, a holder. That only changes what the field offers
+ * while you type; a name nobody has captured is still a perfectly good answer.
  */
 
 const ABILITIES: readonly FieldDef[] = [
@@ -46,8 +50,8 @@ export const BUILT_IN_TEMPLATES: Readonly<Record<RepresentationKind, Template>> 
     ],
     claims: [
       { key: "occupation", label: "Occupation" },
-      { key: "location", label: "Location" },
-      { key: "allegiance", label: "Allegiance" },
+      { key: "location", label: "Location", relational: true },
+      { key: "allegiance", label: "Allegiance", relational: true },
       { key: "status", label: "Status" }
     ]
   },
@@ -61,8 +65,8 @@ export const BUILT_IN_TEMPLATES: Readonly<Record<RepresentationKind, Template>> 
       { key: "terrain", label: "Terrain", kind: "text", group: "Scale" }
     ],
     claims: [
-      { key: "region", label: "Region" },
-      { key: "ruler", label: "Held by" },
+      { key: "region", label: "Region", relational: true },
+      { key: "ruler", label: "Held by", relational: true },
       { key: "status", label: "Status" }
     ]
   },
@@ -73,8 +77,8 @@ export const BUILT_IN_TEMPLATES: Readonly<Record<RepresentationKind, Template>> 
     labelPrompt: "What is this faction called?",
     fields: [{ key: "size", label: "Size", kind: "text", group: "Scale" }],
     claims: [
-      { key: "seat", label: "Seat" },
-      { key: "leader", label: "Led by" },
+      { key: "seat", label: "Seat", relational: true },
+      { key: "leader", label: "Led by", relational: true },
       { key: "goal", label: "Wants" },
       { key: "status", label: "Status" }
     ]
@@ -89,8 +93,8 @@ export const BUILT_IN_TEMPLATES: Readonly<Record<RepresentationKind, Template>> 
       { key: "attunement", label: "Attunement", kind: "text", group: "Rules" }
     ],
     claims: [
-      { key: "holder", label: "Held by" },
-      { key: "location", label: "Location" },
+      { key: "holder", label: "Held by", relational: true },
+      { key: "location", label: "Location", relational: true },
       { key: "origin", label: "Origin" }
     ]
   },
@@ -101,7 +105,10 @@ export const BUILT_IN_TEMPLATES: Readonly<Record<RepresentationKind, Template>> 
     labelPrompt: "What happened?",
     fields: [],
     claims: [
-      { key: "location", label: "Where" },
+      { key: "location", label: "Where", relational: true },
+      // Deliberately not relational: "who was there" is many objects, and a
+      // relational field replaces by kind, so a second name would retire the
+      // first. Multi-valued relationships arrive with Events as structures.
       { key: "participants", label: "Who" },
       { key: "consequence", label: "Consequence" }
     ]

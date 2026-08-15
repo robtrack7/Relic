@@ -16,7 +16,7 @@ Build **vertical slices**, not administrative phases. Prefer visible product pro
 6. ~~Move storage to Supabase behind the existing port.~~ **Done** — Postgres via the local Supabase stack, same five tables, no new features. The suite is the proof: the same specification, a new engine.
 7. ~~Representations, typed Cards, and claims.~~ **Done** — eight kinds as representations of one identity, a mechanical sheet for what the rules care about, claims as the addressable truth unit carrying a story position, and a contextual surface to edit both.
 8. ~~Add Focus and progressively deepen/widen objects/cards without identity churn.~~ **Done** — semantic zoom tiers, Focus as a second deliberate stage after selection, and the entity surface beside the canvas rather than over it.
-9. **Relationship assertions.** A claim whose value is another World Object. This is what makes "pull the thread" mean anything — Focus can then reveal a neighbourhood instead of only suppressing everything else, and Chronicle later has edges to draw. *Added to the order: `WORLD-MODEL.md` lists relationship assertions as one of the three truth units and the build order never sequenced them.*
+9. ~~Relationship assertions.~~ **Done** — a claim whose value is another World Object, both directions of a neighbourhood on every card, and Focus that reveals what an object is connected to instead of only suppressing everything else.
 10. Add Ink, provenance, and deliberate truth editing.
 11. Add Library/search and pull existing material into the Desk.
 12. Make the Librarian understand current Board, focus, and selection.
@@ -92,6 +92,44 @@ immediately instead of one short.
 
 **Recession, not removal.** Unfocused material dims and desaturates but stays in
 place, legible and clickable. Attention suppresses; it does not hide.
+
+## Decisions the Relationships slice settled
+
+**A relationship is one nullable column on `claims`, not a table.** `object_value`
+carries the id of the object at the other end, and everything a claim already
+carries — truth, provenance, story position — applies to it unchanged. There is
+one write path, so nothing downstream has to learn that relationships are
+special, and Chronicle inherits story-ordered edges the day it arrives. A
+`relationships` table would have had to grow all of that back.
+
+**The words and the id are both kept, and neither is what gets shown.** The id is
+what Relic follows; the text is what the GM wrote, and it keeps the claim
+readable if the far end is ever archived. What a card displays is the other
+object's name *now* — renaming the Harbour Guild renames it everywhere it is
+referred to, because identity is stable and names are not.
+
+**Linking is never a precondition for asserting.** A relational field takes text
+first and offers to bind it to an identity second. A template naming a field
+"Location" must not refuse a place nobody has captured yet — that would be
+structure blocking thought, which is the one thing the Desk exists to prevent.
+
+**Relational attributes are single-valued, deliberately.** Setting a location
+retires the standing one, exactly as correcting text does, because the unit of
+replacement is the claim kind. That is right for Location, Allegiance, Held by,
+and Seat, and wrong for an Event's participants — so `participants` stays free
+text until multi-valued relationships have a unit of their own. Guessing at one
+now would have meant guessing without a case to answer to.
+
+**A neighbourhood is a property of the world, not of the view.** Both directions
+are resolved on every card and neither is scoped to the composition being
+looked at, so a Board holding only Mara still knows the Guild is there. Following
+a link to something absent *references it here* rather than navigating — pulling
+the thread brings the thing to you, and Focus never leaves what you were reading.
+
+**Attention now has three levels instead of two.** Focused, connected, and
+receded. A neighbour keeps full weight and a quiet ring; only genuinely
+unrelated material dims. Focus stopped being a uniform dimming of the world the
+moment Relic could say what "related" meant.
 
 ## Decisions the Representations slice settled
 

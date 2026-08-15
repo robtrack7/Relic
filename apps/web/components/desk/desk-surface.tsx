@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { EMPTY_SELECTION, only, type Selection } from "@/lib/desk/selection";
-import type { CardId, DeskView, Workspace } from "@/lib/world/model";
+import type { CardId, DeskView, Link, Workspace } from "@/lib/world/model";
 
 import { DeskCanvas } from "./desk-canvas";
 import { DeskStack } from "./desk-stack";
@@ -56,6 +56,40 @@ export function DeskSurface({
     if (focusId !== null && !store.byId.has(focusId)) setFocusId(null);
   }, [focusId, store.byId]);
 
+  /*
+   * The neighbourhood: what the focused object is connected to.
+   *
+   * Focus suppresses everything unrelated, but "unrelated" is a claim Relic can
+   * now actually make. A card the focused object points at, or that points at
+   * it, keeps its weight — so deepening into Mara shows her footprint rather
+   * than dimming the world uniformly around her.
+   */
+  const neighbours = useMemo(() => {
+    if (!focused) return new Set<string>();
+    const objectIds = new Set(focused.links.map((link) => link.other.objectId as string));
+    return new Set(
+      store.cards
+        .filter((card) => objectIds.has(card.objectId))
+        .map((card) => card.cardId as string)
+    );
+  }, [focused, store.cards]);
+
+  /**
+   * Follows a relationship to its other end.
+   *
+   * If that end is not on this composition it is referenced here first, next to
+   * the card it was reached from — pulling the thread brings the thing to you
+   * rather than taking you somewhere else.
+   */
+  const follow = async (link: Link) => {
+    if (!focused) return;
+    const cardId = await store.pullIn(link.other, focused.layout);
+    if (cardId) {
+      setSelection(only(cardId));
+      setFocusId(cardId);
+    }
+  };
+
   const captureFromChrome = () => {
     // Placed just below the newest card so the stack view stays readable and
     // the canvas does not pile every card on one spot.
@@ -99,6 +133,7 @@ export function DeskSurface({
             onEditingChange={setEditing}
             focusId={focusId}
             onFocusChange={setFocusId}
+            neighbours={neighbours}
           />
         ) : (
           <DeskStack
@@ -110,13 +145,19 @@ export function DeskSurface({
             onEditingChange={setEditing}
             focusId={focusId}
             onFocusChange={setFocusId}
+            neighbours={neighbours}
           />
         )}
 
         {/* Emerges from selection, beside the canvas rather than over it: the
             surrounding world stays perceptible while one object deepens. */}
         {focused ? (
-          <Inspector card={focused} store={store} onClose={() => setFocusId(null)} />
+          <Inspector
+            card={focused}
+            store={store}
+            onClose={() => setFocusId(null)}
+            onFollow={follow}
+          />
         ) : null}
       </main>
 

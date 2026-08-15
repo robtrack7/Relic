@@ -11,12 +11,14 @@ import {
   removeCardsAction,
   removeClaimAction,
   representObjectAction,
+  searchObjectsAction,
   setClaimAction,
   type ActionResult
 } from "@/app/actions";
 import {
   asCardId,
   asWorldObjectId,
+  cardRef,
   DEFAULT_CARD_HEIGHT,
   DEFAULT_CARD_WIDTH,
   type CardId,
@@ -25,6 +27,9 @@ import {
   type DeskCard,
   type DeskView,
   type FieldValues,
+  type Layout,
+  type Link,
+  type ObjectRef,
   type RepresentationKind,
   type WorldObjectId
 } from "@/lib/world/model";
@@ -56,6 +61,7 @@ export type DeskStore = ReturnType<typeof useDesk>;
 
 export function useDesk(initial: DeskView) {
   const compositionId: CompositionId = initial.compositionId;
+  const worldId = initial.worldId;
   const [cards, setCards] = useState<readonly DeskCard[]>(initial.cards);
   const [sync, setSync] = useState<SyncState>({ kind: "settled" });
 
@@ -180,9 +186,10 @@ export function useDesk(initial: DeskView) {
           cardVersion: 1,
           bodyVersion: 1,
           // A captured thought has not been deepened into anything yet, and
-          // asserts nothing. Both arrive later, if at all.
+          // asserts nothing. All of these arrive later, if at all.
           representation: null,
-          claims: []
+          claims: [],
+          links: []
         }
       ]);
       versions.current.set(cardId, { cardVersion: 1, bodyVersion: 1 });
@@ -430,47 +437,176 @@ export function useDesk(initial: DeskView) {
     [absorb, enqueue]
   );
 
+  /**
+   * Asserts a narrative attribute, optionally pointing it at another object.
+   *
+   * A relationship has two ends and both are on screen, so both are updated
+   * here: the subject gains an outbound link and the target — if it happens to
+   * be on this composition — gains the inbound one. Waiting for a refetch would
+   * mean the neighbourhood lit up a beat after the assertion that made it.
+   */
   const assert = useCallback(
-    (objectId: WorldObjectId, claimKind: string, value: string) => {
+    (objectId: WorldObjectId, claimKind: string, value: string, target?: ObjectRef | null) => {
       enqueue(async () => {
         const result = await setClaimAction({
           subjectId: objectId,
           claimId: crypto.randomUUID(),
           claimKind,
-          value
+          value,
+          objectValue: target?.objectId ?? null
         });
         absorb(result, (claim) => {
-          setCards((cards) =>
-            cards.map((card) =>
-              card.objectId === objectId
-                ? {
-                    ...card,
-                    // No story position, so this replaced the standing claim of
-                    // this kind rather than adding to it. Mirror that here.
-                    claims: [
-                      ...card.claims.filter(
-                        (c) => !(c.claimKind === claim.claimKind && c.story.order === null)
-                      ),
-                      claim
-                    ]
-                  }
-                : card
-            )
-          );
+          setCards((cards) => {
+            const subject = cards.find((card) => card.objectId === objectId);
+            if (!subject) return cards;
+            const subjectRef = cardRef(subject);
+
+            // The edge this assertion replaces. Held onto so the far end can
+            // forget it as well — an in-link nobody points at any more would
+            // keep a card lit for a relationship that no longer exists.
+            const replaced = subject.links.find(
+              (link) => link.direction === "out" && link.claimKind === claimKind
+            );
+
+            const stale = (link: Link) =>
+              link.direction === "in" &&
+              link.claimKind === claimKind &&
+              link.other.objectId === objectId;
+
+            return cards.map((card) => {
+              if (card.objectId === objectId) {
+                return {
+                  ...card,
+                  // No story position, so this replaced the standing claim of
+                  // this kind rather than adding to it. Mirror that here.
+                  claims: [
+                    ...card.claims.filter(
+                      (c) => !(c.claimKind === claim.claimKind && c.story.order === null)
+                    ),
+                    claim
+                  ],
+                  links: [
+                    ...card.links.filter(
+                      (link) => !(link.direction === "out" && link.claimKind === claimKind)
+                    ),
+                    ...(target
+                      ? [
+                          {
+                            claimId: claim.id,
+                            claimKind,
+                            direction: "out" as const,
+                            other: target,
+                            truthState: claim.truthState
+                          }
+                        ]
+                      : [])
+                  ]
+                };
+              }
+
+              const wasOther = replaced?.other.objectId === card.objectId;
+              const isOther = target?.objectId === card.objectId;
+              if (!wasOther && !isOther) return card;
+
+              return {
+                ...card,
+                links: [
+                  ...card.links.filter((link) => !stale(link)),
+                  ...(isOther
+                    ? [
+                        {
+                          claimId: claim.id,
+                          claimKind,
+                          direction: "in" as const,
+                          other: subjectRef,
+                          truthState: claim.truthState
+                        }
+                      ]
+                    : [])
+                ]
+              };
+            });
+          });
         });
       });
     },
     [absorb, enqueue]
   );
 
+  /**
+   * Brings an object that is elsewhere in the world onto this composition.
+   *
+   * Pulling a thread is literal: following a relationship to something not on
+   * this Desk places it here rather than navigating away from what you were
+   * looking at. It is a reference, so nothing is copied and nothing moves.
+   */
+  const pullIn = useCallback(
+    async (ref: ObjectRef, near: Layout): Promise<CardId | null> => {
+      const already = cardsRef.current.find((card) => card.objectId === ref.objectId);
+      if (already) return already.cardId;
+
+      const layout: Layout = {
+        x: Math.round(near.x + near.width + 48),
+        y: Math.round(near.y),
+        width: DEFAULT_CARD_WIDTH,
+        height: DEFAULT_CARD_HEIGHT
+      };
+
+      // Resolved rather than returned early: the caller usually wants to deepen
+      // into what it just pulled, and Focus is keyed on a card that has to
+      // exist first.
+      const landed: { cardId: CardId | null } = { cardId: null };
+
+      await enqueue(async () => {
+        const result = await referenceObjectsAction({
+          compositionId,
+          placements: [
+            {
+              cardId: crypto.randomUUID(),
+              objectId: ref.objectId,
+              x: layout.x,
+              y: layout.y,
+              width: layout.width,
+              height: layout.height
+            }
+          ]
+        });
+        absorb(result, (placed) => {
+          // The server resolves the object's whole state — its representation,
+          // its claims, and both ends of every relationship it holds. Nothing
+          // here is in a position to invent that.
+          setCards((current) => [
+            ...current.filter((card) => !placed.some((p) => p.cardId === card.cardId)),
+            ...placed
+          ]);
+          for (const card of placed) {
+            versions.current.set(card.cardId, {
+              cardVersion: card.cardVersion,
+              bodyVersion: card.bodyVersion
+            });
+            savedBodies.current.set(card.cardId, card.body);
+          }
+          landed.cardId = placed[0]?.cardId ?? null;
+        });
+      });
+
+      return landed.cardId;
+    },
+    [absorb, compositionId, enqueue]
+  );
+
   const retract = useCallback(
     (objectId: WorldObjectId, claimId: ClaimId) => {
       setCards((cards) =>
-        cards.map((card) =>
-          card.objectId === objectId
-            ? { ...card, claims: card.claims.filter((c) => c.id !== claimId) }
-            : card
-        )
+        cards.map((card) => ({
+          ...card,
+          claims:
+            card.objectId === objectId
+              ? card.claims.filter((c) => c.id !== claimId)
+              : card.claims,
+          // Retracting a relationship unlights both ends, wherever they are.
+          links: card.links.filter((link) => link.claimId !== claimId)
+        }))
       );
       enqueue(async () => {
         const result = await removeClaimAction({ claimId });
@@ -478,6 +614,21 @@ export function useDesk(initial: DeskView) {
       });
     },
     [absorb, enqueue]
+  );
+
+  /**
+   * Objects of this world that could stand at the other end of a relationship.
+   *
+   * Reaches past this composition on purpose: a relationship is a fact about
+   * the world, and only being able to point at what is already on the Desk
+   * would make the Desk the world.
+   */
+  const findObjects = useCallback(
+    async (query: string, excludeId?: WorldObjectId): Promise<readonly ObjectRef[]> => {
+      const result = await searchObjectsAction({ worldId, query, excludeId });
+      return result.state === "ok" ? result.data : [];
+    },
+    [worldId]
   );
 
   const dismissProblem = useCallback(() => setSync({ kind: "settled" }), []);
@@ -504,6 +655,8 @@ export function useDesk(initial: DeskView) {
     editSheet,
     assert,
     retract,
+    pullIn,
+    findObjects,
     dismissProblem
   };
 }

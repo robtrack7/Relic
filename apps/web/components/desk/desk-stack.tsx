@@ -28,6 +28,8 @@ type Props = {
   onEditingChange: (cardId: CardId | null) => void;
   focusId: CardId | null;
   onFocusChange: (cardId: CardId | null) => void;
+  /** Cards the focused object is connected to. */
+  neighbours: ReadonlySet<string>;
 };
 
 /**
@@ -45,7 +47,8 @@ export function DeskStack({
   editing,
   onEditingChange,
   focusId,
-  onFocusChange
+  onFocusChange,
+  neighbours
 }: Props) {
   const editor = useRef<HTMLTextAreaElement>(null);
 
@@ -78,6 +81,16 @@ export function DeskStack({
               className={styles.stackItem}
               data-truth={card.truthState}
               data-selected={selected || undefined}
+              data-focused={focusId === card.cardId || undefined}
+              // The same attention model without the canvas: what the focused
+              // object is connected to keeps its weight, the rest recedes.
+              data-neighbour={neighbours.has(card.cardId) || undefined}
+              data-receded={
+                (focusId !== null &&
+                  focusId !== card.cardId &&
+                  !neighbours.has(card.cardId)) ||
+                undefined
+              }
             >
               {isEditing ? (
                 <textarea

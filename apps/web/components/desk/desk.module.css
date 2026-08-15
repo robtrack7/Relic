@@ -909,6 +909,151 @@
   color: var(--orange-deep);
 }
 
+/* Holds the input and whatever offers to turn its text into an identity. */
+.claimEntry {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.claimEntry .inspectorInput {
+  flex: 1;
+}
+
+/* A claim that points at a thing is a different kind of statement from one
+   that describes it, and reads as one. */
+.inspectorInput[data-linked] {
+  border-color: var(--orange-edge);
+  background: var(--orange-wash);
+}
+
+.linkedMark {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: var(--orange-deep);
+}
+
+.suggestWrap {
+  position: relative;
+}
+
+.suggestToggle {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-control);
+  padding: 2px 6px;
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-quiet);
+  cursor: pointer;
+}
+
+.suggestToggle:hover {
+  border-color: var(--orange);
+  color: var(--ink);
+}
+
+.suggestMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-width: 190px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--card-raised);
+  box-shadow: var(--lift-raised);
+  overflow: hidden;
+}
+
+.suggestItem {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  border: 0;
+  padding: 6px 9px;
+  background: transparent;
+  font-family: var(--sans);
+  font-size: 13px;
+  text-align: left;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.suggestItem:hover {
+  background: var(--orange-wash);
+}
+
+.suggestName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Connections ------------------------------------------------------------ */
+
+.linkList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.linkRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  padding: 4px 6px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.linkRow:hover {
+  border-color: var(--rule);
+  background: var(--orange-wash);
+}
+
+/* Which way the relationship was asserted is meaning, so it is a word and an
+   arrow rather than a position in a list. */
+.linkRelation {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+.linkName {
+  overflow: hidden;
+  font-family: var(--serif);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.linkKind {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
 .kindGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1036,6 +1181,30 @@
 .card[data-focused] {
   border-color: var(--orange);
   box-shadow: var(--lift-raised), 0 0 0 2px var(--orange-edge);
+}
+
+/*
+ * The neighbourhood. What the focused object is connected to is not unrelated
+ * material, so it does not recede — it is marked instead, quietly and by shape
+ * rather than by colour alone: a card that stays lit while everything around it
+ * dims is already saying "this one is involved".
+ */
+.card[data-neighbour] {
+  border-color: var(--rule-strong);
+  box-shadow: var(--lift-raised), 0 0 0 1px var(--orange-edge);
+}
+
+/*
+ * Same attention model in the stack. Tinted rather than outlined: the item's
+ * border already carries truth (dashed for Pencil) and selection, and attention
+ * must not start overwriting either of them.
+ */
+.stackItem[data-receded] {
+  opacity: 0.45;
+}
+
+.stackItem[data-neighbour] {
+  background: var(--orange-wash);
 }
 
 @media (prefers-reduced-motion: reduce) {

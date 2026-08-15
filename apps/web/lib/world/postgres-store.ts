@@ -21,6 +21,8 @@ import {
   type DeskCard,
   type DeskView,
   type Lifecycle,
+  type Link,
+  type ObjectRef,
   type ProvenanceKind,
   type Representation,
   type RepresentationKind,
@@ -44,6 +46,7 @@ import {
   type RemoveCardsInput,
   type RemoveClaimInput,
   type RepresentObjectInput,
+  type SearchObjectsInput,
   type SetClaimInput,
   type WriteResult
 } from "@/lib/world/repository";
@@ -136,6 +139,7 @@ type ClaimRow = {
   subject_id: string;
   claim_kind: string;
   value: string;
+  object_value: string | null;
   truth_state: string;
   authored_by: string;
   provenance: string;
@@ -145,6 +149,50 @@ type ClaimRow = {
   story_label: string | null;
   version: number;
 };
+
+const claimColumns = (sql: Sql) => sql`
+  id, subject_id, claim_kind, value, object_value, truth_state, authored_by,
+  provenance, recorded_at, story_order, story_precision, story_label, version
+`;
+
+type ObjectRefRow = {
+  id: string;
+  kind: string | null;
+  label: string | null;
+  body: string | null;
+};
+
+/**
+ * What an object is *called*, which is not stored anywhere as such.
+ *
+ * A name lives on a representation, and an object that has not been deepened
+ * into anything has no name — only the thought it was captured as. The fallback
+ * is the same one the card uses, stated here so an object with no card on this
+ * composition still reads as something.
+ */
+const objectRefSelect = (sql: Sql) => sql`
+  select wo.id as id, r.kind as kind, r.label as label, f.body as body
+    from world_objects wo
+    left join fragments f on f.object_id = wo.id
+    left join lateral (
+      select kind, label
+        from representations
+       where object_id = wo.id and lifecycle = 'active'
+       order by seq asc
+       limit 1
+    ) r on true
+   where wo.lifecycle = 'active'
+`;
+
+function toObjectRef(row: ObjectRefRow): ObjectRef {
+  const named = row.label?.trim() ?? "";
+  const firstLine = (row.body ?? "").trim().split("\n")[0]?.trim() ?? "";
+  return {
+    objectId: asWorldObjectId(row.id),
+    label: named !== "" ? named : firstLine !== "" ? firstLine : "Unnamed",
+    kind: (row.kind as RepresentationKind | null) ?? null
+  };
+}
 
 function toRepresentation(row: RepresentationRow): Representation {
   return {
@@ -164,6 +212,7 @@ function toClaim(row: ClaimRow): Claim {
     subjectId: asWorldObjectId(row.subject_id),
     claimKind: row.claim_kind,
     value: row.value,
+    objectValue: row.object_value === null ? null : asWorldObjectId(row.object_value),
     truthState: row.truth_state as TruthState,
     provenance: {
       kind: row.provenance as ProvenanceKind,
@@ -187,7 +236,8 @@ function toClaim(row: ClaimRow): Claim {
 function toDeskCard(
   row: CardRow,
   representation: Representation | null,
-  claims: readonly Claim[]
+  claims: readonly Claim[],
+  links: readonly Link[]
 ): DeskCard {
   return {
     cardId: asCardId(row.card_id),
@@ -199,7 +249,8 @@ function toDeskCard(
     cardVersion: row.card_version,
     bodyVersion: row.body_version,
     representation,
-    claims
+    claims,
+    links
   };
 }
 
@@ -232,11 +283,11 @@ export class PostgresDeskRepository implements DeskRepository {
   }
 
   /**
-   * Attaches each object's representation and claims to its cards.
+   * Attaches each object's representation, claims, and neighbourhood.
    *
-   * Two queries for the whole composition rather than two per card. The same
-   * object referenced from several cards is fetched once and shared, which is
-   * the read-side shape of "one identity, many placements".
+   * A fixed number of queries for the whole composition rather than a few per
+   * card. The same object referenced from several cards is fetched once and
+   * shared, which is the read-side shape of "one identity, many placements".
    */
   async #hydrate(sql: Sql, rows: readonly CardRow[]): Promise<DeskCard[]> {
     if (rows.length === 0) return [];
@@ -251,12 +302,20 @@ export class PostgresDeskRepository implements DeskRepository {
     `) as unknown as RepresentationRow[];
 
     const claimRows = (await sql`
-      select id, subject_id, claim_kind, value, truth_state, authored_by,
-             provenance, recorded_at, story_order, story_precision, story_label,
-             version
+      select ${claimColumns(sql)}
         from claims
        where subject_id = any(${objectIds}::uuid[]) and lifecycle = 'active'
        order by subject_id, claim_kind, story_order asc nulls first, seq asc
+    `) as unknown as ClaimRow[];
+
+    // The inbound half. Asked separately because it is a different question:
+    // not "what does this object assert" but "what does the world assert about
+    // it", and the answer is not scoped to this composition.
+    const inboundRows = (await sql`
+      select ${claimColumns(sql)}
+        from claims
+       where object_value = any(${objectIds}::uuid[]) and lifecycle = 'active'
+       order by object_value, claim_kind, seq asc
     `) as unknown as ClaimRow[];
 
     // An object may hold several kinds at once. The one a card shows is the
@@ -276,13 +335,93 @@ export class PostgresDeskRepository implements DeskRepository {
       claims.set(row.subject_id, list);
     }
 
+    const links = await this.#linksFor(sql, objectIds, claimRows, inboundRows);
+
     return rows.map((row) =>
       toDeskCard(
         row,
         representations.get(row.object_id) ?? null,
-        claims.get(row.object_id) ?? []
+        claims.get(row.object_id) ?? [],
+        links.get(row.object_id) ?? []
       )
     );
+  }
+
+  /**
+   * Resolves both halves of each object's neighbourhood into named ends.
+   *
+   * The name comes from the object *now*, never from the text stored on the
+   * claim: identity is stable and names are not, so renaming Mara renames her
+   * everywhere she is referred to. An end that no longer resolves — archived, or
+   * cleared by `on delete set null` — drops out rather than dangling; the claim
+   * itself survives and still reads as words.
+   */
+  async #linksFor(
+    sql: Sql,
+    objectIds: readonly string[],
+    outbound: readonly ClaimRow[],
+    inbound: readonly ClaimRow[]
+  ): Promise<Map<string, Link[]>> {
+    const links = new Map<string, Link[]>();
+
+    const relational = outbound.filter((row) => row.object_value !== null);
+    if (relational.length === 0 && inbound.length === 0) return links;
+
+    const otherIds = [
+      ...new Set([
+        ...relational.map((row) => row.object_value as string),
+        ...inbound.map((row) => row.subject_id)
+      ])
+    ].filter((id) => !objectIds.includes(id));
+
+    const known = new Map<string, ObjectRef>();
+    if (otherIds.length > 0) {
+      const refRows = (await sql`
+        ${objectRefSelect(sql)}
+          and wo.id = any(${otherIds}::uuid[])
+      `) as unknown as ObjectRefRow[];
+      for (const row of refRows) known.set(row.id, toObjectRef(row));
+    }
+
+    // Ends that are already on this composition are named from what was fetched
+    // for them, so a card and the link pointing at it can never disagree.
+    const localRefs = (await sql`
+      ${objectRefSelect(sql)}
+        and wo.id = any(${objectIds}::uuid[])
+    `) as unknown as ObjectRefRow[];
+    for (const row of localRefs) known.set(row.id, toObjectRef(row));
+
+    const add = (owner: string, link: Link) => {
+      const list = links.get(owner) ?? [];
+      list.push(link);
+      links.set(owner, list);
+    };
+
+    for (const row of relational) {
+      const other = known.get(row.object_value as string);
+      if (!other) continue;
+      add(row.subject_id, {
+        claimId: asClaimId(row.id),
+        claimKind: row.claim_kind,
+        direction: "out",
+        other,
+        truthState: row.truth_state as TruthState
+      });
+    }
+
+    for (const row of inbound) {
+      const other = known.get(row.subject_id);
+      if (!other) continue;
+      add(row.object_value as string, {
+        claimId: asClaimId(row.id),
+        claimKind: row.claim_kind,
+        direction: "in",
+        other,
+        truthState: row.truth_state as TruthState
+      });
+    }
+
+    return links;
   }
 
   async #hydrateOne(sql: Sql, row: CardRow): Promise<DeskCard> {
@@ -815,12 +954,38 @@ export class PostgresDeskRepository implements DeskRepository {
 
   async setClaim(input: SetClaimInput): Promise<WriteResult<Claim>> {
     return await this.#tx(async (tx) => {
+      const target = input.objectValue ?? null;
+
+      /*
+       * Both ends are locked, in ascending id order — the global rule for
+       * `world_objects`, and the only thing standing between two overlapping
+       * relationship assertions and a deadlock.
+       *
+       * The foreign key would catch an id that never existed. It would not
+       * catch one that has been archived, nor one belonging to another world,
+       * so both are checked here. A relationship crossing worlds is refused for
+       * exactly the reason `referenceObjects` refuses a cross-world placement:
+       * the seam belongs in the store, not in whichever caller happened to hold
+       * both ids.
+       */
+      // Deduplicated before it is counted. A self-edge would otherwise lock one
+      // row, count two, and be reported as `missing` — which would be a lie
+      // about an object that is plainly there. It is refused by the database
+      // constraint instead, because a caller sending one has a bug rather than
+      // an outcome.
+      const ids = [
+        ...new Set(target === null ? [input.subjectId as string] : [input.subjectId as string, target as string])
+      ].sort();
+
       const objects = (await tx`
-        select id from world_objects
-         where id = ${input.subjectId} and lifecycle = 'active'
+        select id, world_id from world_objects
+         where id = any(${ids}::uuid[]) and lifecycle = 'active'
+         order by id
          for no key update
-      `) as unknown as { id: string }[];
-      if (!objects[0]) return missing<Claim>();
+      `) as unknown as { id: string; world_id: string }[];
+
+      if (objects.length !== ids.length) return missing<Claim>();
+      if (new Set(objects.map((row) => row.world_id)).size > 1) return missing<Claim>();
 
       const story = input.story;
 
@@ -832,6 +997,12 @@ export class PostgresDeskRepository implements DeskRepository {
       //
       // With a story position, append. Mara's allegiance before the cathedral
       // and after it are two claims, both true.
+      //
+      // A relationship follows the same rule, which makes every relational
+      // attribute single-valued: setting Mara's location to the Cathedral
+      // retires her location at the Quay, exactly as a text correction would.
+      // Multi-valued relationships — an Event's participants, a Faction's
+      // members — need a different unit of replacement and are not this slice.
       if (!story) {
         await tx`
           update claims
@@ -845,23 +1016,25 @@ export class PostgresDeskRepository implements DeskRepository {
 
       const inserted = (await tx`
         insert into claims (
-          id, subject_id, claim_kind, value, truth_state,
+          id, subject_id, claim_kind, value, object_value, truth_state,
           authored_by, provenance, recorded_at,
           story_order, story_precision, story_label,
           version, lifecycle
         )
         values (
           ${input.claimId}, ${input.subjectId}, ${input.claimKind}, ${input.value},
-          -- A claim asserted by hand is not thereby established. Ink is step 9
+          -- A relationship is this column and nothing else. Everything a claim
+          -- already carries — truth, provenance, story position — applies to it
+          -- unchanged, which is the reason it is not its own table.
+          ${target}::uuid,
+          -- A claim asserted by hand is not thereby established. Ink is step 10
           -- and needs its own deliberate, previewed action.
           'pencil',
           'gm', 'gm_assertion', ${now()},
           ${story?.order ?? null}, ${story?.precision ?? "unknown"}, ${story?.label ?? null},
           1, 'active'
         )
-        returning id, subject_id, claim_kind, value, truth_state, authored_by,
-                  provenance, recorded_at, story_order, story_precision,
-                  story_label, version
+        returning ${claimColumns(tx)}
       `) as unknown as ClaimRow[];
 
       const row = inserted[0];
@@ -883,5 +1056,35 @@ export class PostgresDeskRepository implements DeskRepository {
       if (!row) return missing<ClaimId>();
       return ok(asClaimId(row.id));
     });
+  }
+
+  /**
+   * Objects of a world, for choosing the other end of a relationship.
+   *
+   * Matches on the name and on the captured text, because an object that has
+   * not been deepened into anything has no name — and "that thing I wrote about
+   * the harbour" has to be findable, or relationships would only ever reach
+   * material that had already been classified.
+   */
+  async searchObjects(input: SearchObjectsInput): Promise<readonly ObjectRef[]> {
+    const sql = this.#sql;
+    const limit = Math.min(Math.max(Math.trunc(input.limit ?? 8), 1), 50);
+    const query = input.query.trim();
+    const like = `%${query.replace(/[\\%_]/g, "\\$&")}%`;
+
+    const rows = (await sql`
+      ${objectRefSelect(sql)}
+        and wo.world_id = ${input.worldId}
+        ${input.excludeId ? sql`and wo.id <> ${input.excludeId}` : sql``}
+        ${
+          query === ""
+            ? sql``
+            : sql`and (coalesce(r.label, '') ilike ${like} or coalesce(f.body, '') ilike ${like})`
+        }
+      order by r.label asc nulls last, wo.created_at desc
+      limit ${limit}
+    `) as unknown as ObjectRefRow[];
+
+    return rows.map(toObjectRef);
   }
 }

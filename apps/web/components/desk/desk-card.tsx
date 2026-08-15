@@ -21,7 +21,9 @@ type Props = {
   editing: boolean;
   /** This is the object being deepened into. */
   focused?: boolean;
-  /** Something else is. Recede without leaving. */
+  /** Connected to the focused object. Keeps its weight while the rest recedes. */
+  neighbour?: boolean;
+  /** Something else is focused, and this is not part of its neighbourhood. */
   receded?: boolean;
   onPointerDown: (event: React.PointerEvent<HTMLElement>) => void;
   onOpen?: () => void;
@@ -36,6 +38,7 @@ export function DeskCard({
   selected,
   editing,
   focused = false,
+  neighbour = false,
   receded = false,
   onPointerDown,
   onOpen,
@@ -101,6 +104,7 @@ export function DeskCard({
       data-kind={representation?.kind}
       data-tier={tier}
       data-focused={focused || undefined}
+      data-neighbour={neighbour || undefined}
       data-receded={receded || undefined}
       aria-label={
         representation

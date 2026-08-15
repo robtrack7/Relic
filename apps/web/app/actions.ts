@@ -15,6 +15,7 @@ import {
   type CompositionSummary,
   type DeskCard,
   type FieldValues,
+  type ObjectRef,
   type Representation,
   type RepresentationKind
 } from "@/lib/world/model";
@@ -337,15 +338,62 @@ export async function setClaimAction(raw: {
   claimId: string;
   claimKind: string;
   value: string;
+  /** Present makes this a relationship: the value is another World Object. */
+  objectValue?: string | null;
 }): Promise<ActionResult<Claim>> {
-  return run(() =>
-    deskRepository().setClaim({
-      subjectId: asWorldObjectId(id(raw.subjectId, "subjectId")),
+  return run(() => {
+    const subjectId = asWorldObjectId(id(raw.subjectId, "subjectId"));
+    const objectValue =
+      raw.objectValue === undefined || raw.objectValue === null
+        ? null
+        : asWorldObjectId(id(raw.objectValue, "objectValue"));
+
+    // Nothing is its own allegiance. The database refuses this too; refusing it
+    // here means the GM is told rather than shown a failed write.
+    if (objectValue !== null && objectValue === subjectId) {
+      throw new InvalidInput("a thing cannot be related to itself");
+    }
+
+    return deskRepository().setClaim({
+      subjectId,
       claimId: asClaimId(id(raw.claimId, "claimId")),
       claimKind: claimKind(raw.claimKind),
-      value: claimValue(raw.value)
-    })
-  );
+      value: claimValue(raw.value),
+      objectValue
+    });
+  });
+}
+
+/**
+ * Objects that could stand at the other end of a relationship.
+ *
+ * A read rather than a write, so it does not go through `run` — but the world
+ * is still re-resolved from an opaque id here, and the query is treated as
+ * text, never as a fragment of anything.
+ */
+export async function searchObjectsAction(raw: {
+  worldId: string;
+  query: string;
+  excludeId?: string;
+  limit?: number;
+}): Promise<ActionResult<readonly ObjectRef[]>> {
+  try {
+    const results = await deskRepository().searchObjects({
+      worldId: asWorldId(id(raw.worldId, "worldId")),
+      query: typeof raw.query === "string" ? raw.query.slice(0, 200) : "",
+      excludeId: raw.excludeId
+        ? asWorldObjectId(id(raw.excludeId, "excludeId"))
+        : undefined,
+      limit: typeof raw.limit === "number" ? raw.limit : undefined
+    });
+    return { state: "ok", data: results };
+  } catch (error) {
+    if (error instanceof InvalidInput) {
+      return { state: "invalid", message: error.message };
+    }
+    console.error("[relic] object search failed", error);
+    return { state: "failed", message: "Relic could not search this world." };
+  }
 }
 
 export async function removeClaimAction(raw: {

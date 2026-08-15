@@ -108,8 +108,19 @@ export type FieldDef = Readonly<{
   group?: string;
 }>;
 
-/** One narrative attribute a template suggests asserting. */
-export type ClaimDef = Readonly<{ key: string; label: string }>;
+/**
+ * One narrative attribute a template suggests asserting.
+ *
+ * `relational` marks the ones whose answer is usually another thing in the
+ * world rather than a word — a location, an allegiance, a holder. It is a
+ * suggestion, never a requirement: typing a name nobody has captured yet is
+ * still a perfectly good claim, and a template must not stop a thought.
+ */
+export type ClaimDef = Readonly<{
+  key: string;
+  label: string;
+  relational?: boolean;
+}>;
 
 export type Template = Readonly<{
   kind: RepresentationKind;
@@ -167,6 +178,14 @@ export type Claim = Readonly<{
   /** The attribute asserted, or `assertion` for a free sentence. */
   claimKind: string;
   value: string;
+  /**
+   * The other end, when this claim asserts a relationship.
+   *
+   * A relationship is a claim whose value is another World Object — not a
+   * separate kind of record. `value` still holds the reading in words, and is
+   * what remains legible if the other end is ever archived.
+   */
+  objectValue: WorldObjectId | null;
   truthState: TruthState;
   provenance: Provenance;
   story: StoryPosition;
@@ -174,6 +193,30 @@ export type Claim = Readonly<{
 }>;
 
 export const FREE_ASSERTION = "assertion";
+
+/** Just enough of a World Object to name it and point at it. */
+export type ObjectRef = Readonly<{
+  objectId: WorldObjectId;
+  /** Its name, or the first line of what was captured. Never empty. */
+  label: string;
+  kind: RepresentationKind | null;
+}>;
+
+/**
+ * One relationship claim, seen from one end of it.
+ *
+ * Both directions matter and they are not the same statement. Mara asserting an
+ * allegiance to the Harbour Guild is something Mara says about herself; from the
+ * Guild's side it is something the world says about the Guild. Pulling the
+ * thread has to work either way, so a Link records which way it was asserted.
+ */
+export type Link = Readonly<{
+  claimId: ClaimId;
+  claimKind: string;
+  direction: "out" | "in";
+  other: ObjectRef;
+  truthState: TruthState;
+}>;
 
 export type CompositionKind = "desk" | "board" | "prep" | "session";
 
@@ -226,6 +269,12 @@ export type DeskCard = Readonly<{
   representation: Representation | null;
   /** Narrative assertions about the object, at the current story position. */
   claims: readonly Claim[];
+  /**
+   * What this object is connected to, in both directions and world-wide — not
+   * only to what happens to be on this composition. A neighbourhood is a
+   * property of the world, and a Board showing half of one would be lying.
+   */
+  links: readonly Link[];
 }>;
 
 /** What a card shows as its name, falling back through what it actually has. */
@@ -234,6 +283,21 @@ export function cardTitle(card: DeskCard): string {
   if (label) return label;
   const firstLine = card.body.trim().split("\n")[0]?.trim() ?? "";
   return firstLine;
+}
+
+/**
+ * How this card's object appears at the other end of a relationship.
+ *
+ * The same fallback the store applies to objects with no card here, so a link
+ * and the card it points at can never end up calling the thing two names.
+ */
+export function cardRef(card: DeskCard): ObjectRef {
+  const title = cardTitle(card);
+  return {
+    objectId: card.objectId,
+    label: title === "" ? "Unnamed" : title,
+    kind: card.representation?.kind ?? null
+  };
 }
 
 export type DeskView = Readonly<{

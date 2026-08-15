@@ -63,6 +63,25 @@ Correcting a claim replaces it; recording that the world changed appends a new
 one. Never enforce one claim per subject per kind — that constraint is the
 temporal axis being quietly removed.
 
+### A relationship is a claim whose value is another object
+
+Relationship assertions are listed above as their own truth unit because they
+are independently addressable — not because they need their own machinery. A
+relationship is a claim carrying the id of the object at its other end, which
+means it inherits truth, provenance, and story position rather than
+reimplementing them. "She served the Guild until the fire" is one claim with a
+story position, disputable and citeable like any other.
+
+The words of the claim are kept as well as the id, and the two answer different
+questions. The id is what Relic follows; the words are what the GM wrote, and
+they must still read as language if the other end is ever archived. What a
+relationship *displays* is neither — it is the other object's current name,
+because identity is stable and names are not.
+
+Pointing at an identity is never a precondition for asserting something. A
+location nobody has captured yet is a perfectly good claim, and a template that
+refused it would be structure blocking thought.
+
 ## Story time
 
 **Identity is permanent. State is temporal. Presentation is projected.**
