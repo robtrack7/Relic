@@ -5,16 +5,26 @@ import type postgres from "postgres";
 import { db } from "@/lib/world/db";
 import {
   asCardId,
+  asClaimId,
   asCompositionId,
+  asRepresentationId,
+  asTemplateId,
   asWorldId,
   asWorldObjectId,
+  type AuthorKind,
   type CardId,
+  type Claim,
+  type ClaimId,
   type CompositionId,
   type CompositionKind,
   type CompositionSummary,
   type DeskCard,
   type DeskView,
   type Lifecycle,
+  type ProvenanceKind,
+  type Representation,
+  type RepresentationKind,
+  type StoryPosition,
   type TruthState,
   type Workspace,
   type WorldId,
@@ -28,9 +38,13 @@ import {
   type CreateBoardInput,
   type DeskRepository,
   type EditBodyInput,
+  type EditRepresentationInput,
   type MoveCardsInput,
   type ReferenceObjectsInput,
   type RemoveCardsInput,
+  type RemoveClaimInput,
+  type RepresentObjectInput,
+  type SetClaimInput,
   type WriteResult
 } from "@/lib/world/repository";
 
@@ -107,7 +121,74 @@ const cardSelect = (sql: Sql) => sql`
   where ci.lifecycle = 'active' and wo.lifecycle = 'active'
 `;
 
-function toDeskCard(row: CardRow): DeskCard {
+type RepresentationRow = {
+  id: string;
+  object_id: string;
+  kind: string;
+  label: string | null;
+  template_id: string | null;
+  fields: Record<string, string | number>;
+  version: number;
+};
+
+type ClaimRow = {
+  id: string;
+  subject_id: string;
+  claim_kind: string;
+  value: string;
+  truth_state: string;
+  authored_by: string;
+  provenance: string;
+  recorded_at: string | Date;
+  story_order: string | number | null;
+  story_precision: string;
+  story_label: string | null;
+  version: number;
+};
+
+function toRepresentation(row: RepresentationRow): Representation {
+  return {
+    id: asRepresentationId(row.id),
+    objectId: asWorldObjectId(row.object_id),
+    kind: row.kind as RepresentationKind,
+    label: row.label,
+    templateId: row.template_id ? asTemplateId(row.template_id) : null,
+    fields: row.fields ?? {},
+    version: row.version
+  };
+}
+
+function toClaim(row: ClaimRow): Claim {
+  return {
+    id: asClaimId(row.id),
+    subjectId: asWorldObjectId(row.subject_id),
+    claimKind: row.claim_kind,
+    value: row.value,
+    truthState: row.truth_state as TruthState,
+    provenance: {
+      kind: row.provenance as ProvenanceKind,
+      authoredBy: row.authored_by as AuthorKind,
+      recordedAt:
+        row.recorded_at instanceof Date
+          ? row.recorded_at.toISOString()
+          : String(row.recorded_at)
+    },
+    story: {
+      // bigint arrives as a string from postgres.js; the ordering axis is a
+      // number to everything above the store.
+      order: row.story_order === null ? null : Number(row.story_order),
+      precision: row.story_precision as StoryPosition["precision"],
+      label: row.story_label
+    },
+    version: row.version
+  };
+}
+
+function toDeskCard(
+  row: CardRow,
+  representation: Representation | null,
+  claims: readonly Claim[]
+): DeskCard {
   return {
     cardId: asCardId(row.card_id),
     objectId: asWorldObjectId(row.object_id),
@@ -116,7 +197,9 @@ function toDeskCard(row: CardRow): DeskCard {
     body: row.body,
     truthState: row.truth_state as TruthState,
     cardVersion: row.card_version,
-    bodyVersion: row.body_version
+    bodyVersion: row.body_version,
+    representation,
+    claims
   };
 }
 
@@ -148,13 +231,73 @@ export class PostgresDeskRepository implements DeskRepository {
     })) as T;
   }
 
+  /**
+   * Attaches each object's representation and claims to its cards.
+   *
+   * Two queries for the whole composition rather than two per card. The same
+   * object referenced from several cards is fetched once and shared, which is
+   * the read-side shape of "one identity, many placements".
+   */
+  async #hydrate(sql: Sql, rows: readonly CardRow[]): Promise<DeskCard[]> {
+    if (rows.length === 0) return [];
+
+    const objectIds = [...new Set(rows.map((row) => row.object_id))];
+
+    const representationRows = (await sql`
+      select id, object_id, kind, label, template_id, fields, version
+        from representations
+       where object_id = any(${objectIds}::uuid[]) and lifecycle = 'active'
+       order by object_id, seq asc
+    `) as unknown as RepresentationRow[];
+
+    const claimRows = (await sql`
+      select id, subject_id, claim_kind, value, truth_state, authored_by,
+             provenance, recorded_at, story_order, story_precision, story_label,
+             version
+        from claims
+       where subject_id = any(${objectIds}::uuid[]) and lifecycle = 'active'
+       order by subject_id, claim_kind, story_order asc nulls first, seq asc
+    `) as unknown as ClaimRow[];
+
+    // An object may hold several kinds at once. The one a card shows is the
+    // earliest — the way it was first understood — until something explicitly
+    // says otherwise, which is a Focus concern rather than a card one.
+    const representations = new Map<string, Representation>();
+    for (const row of representationRows) {
+      if (!representations.has(row.object_id)) {
+        representations.set(row.object_id, toRepresentation(row));
+      }
+    }
+
+    const claims = new Map<string, Claim[]>();
+    for (const row of claimRows) {
+      const list = claims.get(row.subject_id) ?? [];
+      list.push(toClaim(row));
+      claims.set(row.subject_id, list);
+    }
+
+    return rows.map((row) =>
+      toDeskCard(
+        row,
+        representations.get(row.object_id) ?? null,
+        claims.get(row.object_id) ?? []
+      )
+    );
+  }
+
+  async #hydrateOne(sql: Sql, row: CardRow): Promise<DeskCard> {
+    const [card] = await this.#hydrate(sql, [row]);
+    if (!card) throw new Error("hydrate: a card resolved to nothing");
+    return card;
+  }
+
   async #cardsOf(sql: Sql, compositionId: CompositionId): Promise<DeskCard[]> {
     const rows = (await sql`
       ${cardSelect(sql)}
         and ci.composition_id = ${compositionId}
       order by ci.z asc, ci.seq asc
     `) as unknown as CardRow[];
-    return rows.map(toDeskCard);
+    return await this.#hydrate(sql, rows);
   }
 
   async #cardById(
@@ -380,7 +523,7 @@ export class PostgresDeskRepository implements DeskRepository {
             and ci.object_id = ${placement.objectId}
         `) as unknown as CardRow[];
         if (existing[0]) {
-          placed.push(toDeskCard(existing[0]));
+          placed.push(await this.#hydrateOne(tx, existing[0]));
           continue;
         }
 
@@ -397,7 +540,7 @@ export class PostgresDeskRepository implements DeskRepository {
 
         const row = await this.#cardById(tx, input.compositionId, placement.cardId);
         if (!row) throw new Error("referenceObjects: card vanished inside its own transaction");
-        placed.push(toDeskCard(row));
+        placed.push(await this.#hydrateOne(tx, row));
       }
 
       return ok<readonly DeskCard[]>(placed);
@@ -441,7 +584,7 @@ export class PostgresDeskRepository implements DeskRepository {
 
       const row = await this.#cardById(tx, input.compositionId, input.cardId);
       if (!row) throw new Error("captureCard: card vanished inside its own transaction");
-      return toDeskCard(row);
+      return await this.#hydrateOne(tx, row);
     });
   }
 
@@ -473,7 +616,7 @@ export class PostgresDeskRepository implements DeskRepository {
 
       const after = await this.#cardById(tx, input.compositionId, input.cardId);
       if (!after) throw new Error("editCardBody: card vanished inside its own transaction");
-      return ok(toDeskCard(after));
+      return ok(await this.#hydrateOne(tx, after));
     });
   }
 
@@ -538,7 +681,7 @@ export class PostgresDeskRepository implements DeskRepository {
       const moved: DeskCard[] = [];
       for (const move of input.moves) {
         const row = await this.#cardById(tx, input.compositionId, move.cardId);
-        if (row) moved.push(toDeskCard(row));
+        if (row) moved.push(await this.#hydrateOne(tx, row));
       }
       return ok<readonly DeskCard[]>(moved);
     });
@@ -593,6 +736,152 @@ export class PostgresDeskRepository implements DeskRepository {
       }
 
       return ok<readonly CardId[]>(removed);
+    });
+  }
+
+  // Representations and claims ---------------------------------------------
+
+  async representObject(
+    input: RepresentObjectInput
+  ): Promise<WriteResult<Representation>> {
+    return await this.#tx(async (tx) => {
+      // Lock the identity, not a card. Deepening is an act on the object, and
+      // every composition referencing it sees the result.
+      const objects = (await tx`
+        select id from world_objects
+         where id = ${input.objectId} and lifecycle = 'active'
+         for no key update
+      `) as unknown as { id: string }[];
+      if (!objects[0]) return missing<Representation>();
+
+      // Idempotent: asking for a kind the object already has returns what is
+      // there, so a repeated gesture is harmless.
+      const existing = (await tx`
+        select id, object_id, kind, label, template_id, fields, version
+          from representations
+         where object_id = ${input.objectId}
+           and kind = ${input.kind}
+           and lifecycle = 'active'
+      `) as unknown as RepresentationRow[];
+      if (existing[0]) return ok(toRepresentation(existing[0]));
+
+      const inserted = (await tx`
+        insert into representations (id, object_id, kind, label, fields, version, lifecycle, created_at)
+        values (${input.representationId}, ${input.objectId}, ${input.kind},
+                ${input.label}, '{}'::jsonb, 1, 'active', ${now()})
+        returning id, object_id, kind, label, template_id, fields, version
+      `) as unknown as RepresentationRow[];
+
+      const row = inserted[0];
+      if (!row) throw new Error("representObject: representation vanished inside its own transaction");
+      return ok(toRepresentation(row));
+    });
+  }
+
+  async editRepresentation(
+    input: EditRepresentationInput
+  ): Promise<WriteResult<Representation>> {
+    return await this.#tx(async (tx) => {
+      const locked = (await tx`
+        select id, object_id, kind, label, template_id, fields, version
+          from representations
+         where id = ${input.representationId} and lifecycle = 'active'
+         for no key update
+      `) as unknown as RepresentationRow[];
+
+      const row = locked[0];
+      if (!row) return missing<Representation>();
+      if (row.version !== input.observedVersion) {
+        return conflict<Representation>([]);
+      }
+
+      const updated = (await tx`
+        update representations
+           set label = ${input.label},
+               -- Cast through text deliberately: handed a bare string,
+               -- postgres.js encodes it as a jsonb string rather than parsing
+               -- it, and the object check would reject that.
+               fields = ${JSON.stringify(input.fields)}::text::jsonb,
+               version = version + 1
+         where id = ${input.representationId}
+        returning id, object_id, kind, label, template_id, fields, version
+      `) as unknown as RepresentationRow[];
+
+      const after = updated[0];
+      if (!after) throw new Error("editRepresentation: representation vanished inside its own transaction");
+      return ok(toRepresentation(after));
+    });
+  }
+
+  async setClaim(input: SetClaimInput): Promise<WriteResult<Claim>> {
+    return await this.#tx(async (tx) => {
+      const objects = (await tx`
+        select id from world_objects
+         where id = ${input.subjectId} and lifecycle = 'active'
+         for no key update
+      `) as unknown as { id: string }[];
+      if (!objects[0]) return missing<Claim>();
+
+      const story = input.story;
+
+      // With no story position, this is a correction: the GM is fixing what
+      // they said, not recording that the world changed. Retire the current
+      // claim of this kind rather than accumulating contradictions at the same
+      // point in time. Provenance survives — the old row is archived, never
+      // deleted.
+      //
+      // With a story position, append. Mara's allegiance before the cathedral
+      // and after it are two claims, both true.
+      if (!story) {
+        await tx`
+          update claims
+             set lifecycle = 'archived', version = version + 1
+           where subject_id = ${input.subjectId}
+             and claim_kind = ${input.claimKind}
+             and lifecycle = 'active'
+             and story_order is null
+        `;
+      }
+
+      const inserted = (await tx`
+        insert into claims (
+          id, subject_id, claim_kind, value, truth_state,
+          authored_by, provenance, recorded_at,
+          story_order, story_precision, story_label,
+          version, lifecycle
+        )
+        values (
+          ${input.claimId}, ${input.subjectId}, ${input.claimKind}, ${input.value},
+          -- A claim asserted by hand is not thereby established. Ink is step 9
+          -- and needs its own deliberate, previewed action.
+          'pencil',
+          'gm', 'gm_assertion', ${now()},
+          ${story?.order ?? null}, ${story?.precision ?? "unknown"}, ${story?.label ?? null},
+          1, 'active'
+        )
+        returning id, subject_id, claim_kind, value, truth_state, authored_by,
+                  provenance, recorded_at, story_order, story_precision,
+                  story_label, version
+      `) as unknown as ClaimRow[];
+
+      const row = inserted[0];
+      if (!row) throw new Error("setClaim: claim vanished inside its own transaction");
+      return ok(toClaim(row));
+    });
+  }
+
+  async removeClaim(input: RemoveClaimInput): Promise<WriteResult<ClaimId>> {
+    return await this.#tx(async (tx) => {
+      const updated = (await tx`
+        update claims
+           set lifecycle = 'archived', version = version + 1
+         where id = ${input.claimId} and lifecycle = 'active'
+        returning id
+      `) as unknown as { id: string }[];
+
+      const row = updated[0];
+      if (!row) return missing<ClaimId>();
+      return ok(asClaimId(row.id));
     });
   }
 }

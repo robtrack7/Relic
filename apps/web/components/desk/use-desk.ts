@@ -5,9 +5,13 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import {
   captureCardAction,
   editCardBodyAction,
+  editRepresentationAction,
   moveCardsAction,
   referenceObjectsAction,
   removeCardsAction,
+  removeClaimAction,
+  representObjectAction,
+  setClaimAction,
   type ActionResult
 } from "@/app/actions";
 import {
@@ -16,9 +20,13 @@ import {
   DEFAULT_CARD_HEIGHT,
   DEFAULT_CARD_WIDTH,
   type CardId,
+  type ClaimId,
   type CompositionId,
   type DeskCard,
-  type DeskView
+  type DeskView,
+  type FieldValues,
+  type RepresentationKind,
+  type WorldObjectId
 } from "@/lib/world/model";
 
 /**
@@ -170,7 +178,11 @@ export function useDesk(initial: DeskView) {
           body,
           truthState: "pencil",
           cardVersion: 1,
-          bodyVersion: 1
+          bodyVersion: 1,
+          // A captured thought has not been deepened into anything yet, and
+          // asserts nothing. Both arrive later, if at all.
+          representation: null,
+          claims: []
         }
       ]);
       versions.current.set(cardId, { cardVersion: 1, bodyVersion: 1 });
@@ -364,6 +376,110 @@ export function useDesk(initial: DeskView) {
     [compositionId, enqueue]
   );
 
+  /**
+   * Deepens an object into a kind of thing.
+   *
+   * Patched by `objectId`, not by card: the same identity may sit on this
+   * composition more than once only across Boards, but the principle is the
+   * point — deepening happens to the thing, not to the card you were looking
+   * at when you asked.
+   */
+  const represent = useCallback(
+    (objectId: WorldObjectId, kind: RepresentationKind, label: string) => {
+      enqueue(async () => {
+        const result = await representObjectAction({
+          objectId,
+          representationId: crypto.randomUUID(),
+          kind,
+          label
+        });
+        absorb(result, (representation) => {
+          setCards((current) =>
+            current.map((card) =>
+              card.objectId === objectId ? { ...card, representation } : card
+            )
+          );
+        });
+      });
+    },
+    [absorb, enqueue]
+  );
+
+  const editSheet = useCallback(
+    (objectId: WorldObjectId, label: string, fields: FieldValues) => {
+      const current = cardsRef.current.find((card) => card.objectId === objectId);
+      const representation = current?.representation;
+      if (!representation) return;
+
+      enqueue(async () => {
+        const result = await editRepresentationAction({
+          representationId: representation.id,
+          label,
+          fields,
+          observedVersion: representation.version
+        });
+        absorb(result, (updated) => {
+          setCards((cards) =>
+            cards.map((card) =>
+              card.objectId === objectId ? { ...card, representation: updated } : card
+            )
+          );
+        });
+      });
+    },
+    [absorb, enqueue]
+  );
+
+  const assert = useCallback(
+    (objectId: WorldObjectId, claimKind: string, value: string) => {
+      enqueue(async () => {
+        const result = await setClaimAction({
+          subjectId: objectId,
+          claimId: crypto.randomUUID(),
+          claimKind,
+          value
+        });
+        absorb(result, (claim) => {
+          setCards((cards) =>
+            cards.map((card) =>
+              card.objectId === objectId
+                ? {
+                    ...card,
+                    // No story position, so this replaced the standing claim of
+                    // this kind rather than adding to it. Mirror that here.
+                    claims: [
+                      ...card.claims.filter(
+                        (c) => !(c.claimKind === claim.claimKind && c.story.order === null)
+                      ),
+                      claim
+                    ]
+                  }
+                : card
+            )
+          );
+        });
+      });
+    },
+    [absorb, enqueue]
+  );
+
+  const retract = useCallback(
+    (objectId: WorldObjectId, claimId: ClaimId) => {
+      setCards((cards) =>
+        cards.map((card) =>
+          card.objectId === objectId
+            ? { ...card, claims: card.claims.filter((c) => c.id !== claimId) }
+            : card
+        )
+      );
+      enqueue(async () => {
+        const result = await removeClaimAction({ claimId });
+        absorb(result, () => {});
+      });
+    },
+    [absorb, enqueue]
+  );
+
   const dismissProblem = useCallback(() => setSync({ kind: "settled" }), []);
 
   const byId = useMemo(() => {
@@ -384,6 +500,10 @@ export function useDesk(initial: DeskView) {
     commitMove,
     remove,
     referenceInto,
+    represent,
+    editSheet,
+    assert,
+    retract,
     dismissProblem
   };
 }

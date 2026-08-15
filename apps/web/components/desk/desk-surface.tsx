@@ -9,6 +9,7 @@ import { DeskCanvas } from "./desk-canvas";
 import { DeskStack } from "./desk-stack";
 import { useDesk, type DeskStore } from "./use-desk";
 import { WorldBar } from "./world-bar";
+import { Inspector } from "./inspector";
 import styles from "./desk.module.css";
 
 type Arrangement = "canvas" | "stack";
@@ -36,6 +37,16 @@ export function DeskSurface({
 
   const arrangement: Arrangement = override ?? (narrow ? "stack" : "canvas");
   const surfaceName = initial.kind === "desk" ? "desk" : initial.kind;
+
+  /*
+   * One selected card deepens. Several is an arrangement gesture, not an
+   * inspection one — the inspector would have to pick a subject, and picking
+   * one arbitrarily is worse than staying out of the way.
+   */
+  const focused =
+    selection.size === 1 && editing === null
+      ? (store.byId.get([...selection][0] as string) ?? null)
+      : null;
 
   const captureFromChrome = () => {
     // Placed just below the newest card so the stack view stays readable and
@@ -89,6 +100,10 @@ export function DeskSurface({
             onEditingChange={setEditing}
           />
         )}
+
+        {/* Emerges from selection, beside the canvas rather than over it: the
+            surrounding world stays perceptible while one object deepens. */}
+        {focused ? <Inspector card={focused} store={store} /> : null}
       </main>
 
       <footer className={styles.statusBar}>

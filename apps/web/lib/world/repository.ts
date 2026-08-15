@@ -1,11 +1,18 @@
 import type {
   CardId,
+  Claim,
+  ClaimId,
   CompositionId,
   CompositionSummary,
   DeskCard,
   DeskView,
+  FieldValues,
   Layout,
   Lifecycle,
+  Representation,
+  RepresentationId,
+  RepresentationKind,
+  StoryPosition,
   Workspace,
   WorldId,
   WorldObjectId
@@ -74,7 +81,62 @@ export interface DeskRepository {
    * makes, and this is the only way to observe that it kept it.
    */
   objectLifecycle(objectId: WorldObjectId): Promise<Lifecycle | null>;
+
+  /**
+   * Deepens an object into a kind of thing.
+   *
+   * This is the identity invariant at its most load-bearing: the object keeps
+   * the id it was captured with, the Fragment body survives, and every
+   * composition already referencing it now shows a Character without anything
+   * being moved or recreated. Adding a kind the object already has returns the
+   * representation that is already there, so the gesture is idempotent.
+   */
+  representObject(input: RepresentObjectInput): Promise<WriteResult<Representation>>;
+
+  /** Edits the name and mechanical sheet. Never touches claims. */
+  editRepresentation(input: EditRepresentationInput): Promise<WriteResult<Representation>>;
+
+  /**
+   * Asserts a narrative attribute.
+   *
+   * With no story position this replaces the object's current claim of that
+   * kind — the ordinary case, where a GM is correcting themselves rather than
+   * recording change over time. Given a story position it appends, because two
+   * claims about allegiance at different points in the story are both true.
+   */
+  setClaim(input: SetClaimInput): Promise<WriteResult<Claim>>;
+
+  /** Retires a claim. Archival, not deletion — provenance survives. */
+  removeClaim(input: RemoveClaimInput): Promise<WriteResult<ClaimId>>;
 }
+
+export type RepresentObjectInput = Readonly<{
+  objectId: WorldObjectId;
+  representationId: RepresentationId;
+  kind: RepresentationKind;
+  label: string | null;
+}>;
+
+export type EditRepresentationInput = Readonly<{
+  representationId: RepresentationId;
+  label: string | null;
+  fields: FieldValues;
+  /** The version the editor last saw. A mismatch is reported, never overwritten. */
+  observedVersion: number;
+}>;
+
+export type SetClaimInput = Readonly<{
+  subjectId: WorldObjectId;
+  claimId: ClaimId;
+  claimKind: string;
+  value: string;
+  /** Omitted means "no story position", which replaces rather than appends. */
+  story?: StoryPosition;
+}>;
+
+export type RemoveClaimInput = Readonly<{
+  claimId: ClaimId;
+}>;
 
 export type CaptureCardInput = Readonly<{
   compositionId: CompositionId;

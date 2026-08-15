@@ -4,15 +4,23 @@ import { revalidatePath } from "next/cache";
 
 import {
   asCardId,
+  asClaimId,
   asCompositionId,
+  asRepresentationId,
   asWorldId,
   asWorldObjectId,
   type CardId,
+  type Claim,
+  type ClaimId,
   type CompositionSummary,
-  type DeskCard
+  type DeskCard,
+  type FieldValues,
+  type Representation,
+  type RepresentationKind
 } from "@/lib/world/model";
 import type { WriteResult } from "@/lib/world/repository";
 import { deskRepository } from "@/lib/world/store";
+import { REPRESENTATION_KINDS } from "@/lib/world/templates";
 
 /**
  * The server-action boundary.
@@ -67,6 +75,68 @@ function label(value: unknown, fallback: string): string {
   if (typeof value !== "string") throw new InvalidInput("name must be text");
   const trimmed = value.trim().replace(/\s+/g, " ").slice(0, 120);
   return trimmed === "" ? fallback : trimmed;
+}
+
+/** A name that has not been given yet is null, not an empty string. */
+function optionalLabel(value: unknown): string | null {
+  if (typeof value !== "string") throw new InvalidInput("name must be text");
+  const trimmed = value.trim().replace(/\s+/g, " ").slice(0, 200);
+  return trimmed === "" ? null : trimmed;
+}
+
+function representationKind(value: unknown): RepresentationKind {
+  if (typeof value !== "string" || !REPRESENTATION_KINDS.includes(value as RepresentationKind)) {
+    throw new InvalidInput("that is not a kind of thing Relic knows about");
+  }
+  return value as RepresentationKind;
+}
+
+function claimKind(value: unknown): string {
+  if (typeof value !== "string") throw new InvalidInput("claim kind must be text");
+  const trimmed = value.trim().slice(0, 120);
+  if (trimmed === "") throw new InvalidInput("a claim needs something to be about");
+  return trimmed;
+}
+
+function claimValue(value: unknown): string {
+  if (typeof value !== "string") throw new InvalidInput("a claim must be text");
+  const trimmed = value.trim().slice(0, 4000);
+  if (trimmed === "") throw new InvalidInput("a claim needs a value");
+  return trimmed;
+}
+
+/**
+ * The mechanical sheet, sanitised.
+ *
+ * Only strings and finite numbers, only sane key shapes, and a hard cap on
+ * size — the browser is handing over a free-form object, and it reaches a jsonb
+ * column.
+ */
+function fieldValues(value: unknown): FieldValues {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new InvalidInput("fields must be an object");
+  }
+  const entries = Object.entries(value as Record<string, unknown>);
+  if (entries.length > 120) throw new InvalidInput("too many fields");
+
+  const out: Record<string, string | number> = {};
+  for (const [key, raw] of entries) {
+    if (!/^[A-Za-z0-9_-]{1,60}$/.test(key)) {
+      throw new InvalidInput(`${key} is not a valid field`);
+    }
+    if (typeof raw === "number") {
+      if (!Number.isFinite(raw)) throw new InvalidInput(`${key} must be a finite number`);
+      out[key] = raw;
+    } else if (typeof raw === "string") {
+      const trimmed = raw.slice(0, 2_000);
+      // An empty field is unset, not the empty string. Keeps the sheet honest
+      // about the difference between "zero" and "nobody has said".
+      if (trimmed.trim() !== "") out[key] = trimmed;
+    } else if (raw !== null && raw !== undefined) {
+      throw new InvalidInput(`${key} must be text or a number`);
+    }
+  }
+  return out;
 }
 
 export type ActionResult<T> =
@@ -221,4 +291,69 @@ export async function removeCardsAction(raw: {
       cardIds: raw.cardIds.map((value) => asCardId(id(value, "cardId")))
     });
   });
+}
+
+// Representations and claims -------------------------------------------------
+
+/**
+ * The browser proposes a kind and a name. It does not propose truth, version,
+ * or provenance — those are decided below this line, as everything that grants
+ * authority must be.
+ */
+export async function representObjectAction(raw: {
+  objectId: string;
+  representationId: string;
+  kind: string;
+  label: string;
+}): Promise<ActionResult<Representation>> {
+  return run(() =>
+    deskRepository().representObject({
+      objectId: asWorldObjectId(id(raw.objectId, "objectId")),
+      representationId: asRepresentationId(id(raw.representationId, "representationId")),
+      kind: representationKind(raw.kind),
+      label: optionalLabel(raw.label)
+    })
+  );
+}
+
+export async function editRepresentationAction(raw: {
+  representationId: string;
+  label: string;
+  fields: Record<string, unknown>;
+  observedVersion: number;
+}): Promise<ActionResult<Representation>> {
+  return run(() =>
+    deskRepository().editRepresentation({
+      representationId: asRepresentationId(id(raw.representationId, "representationId")),
+      label: optionalLabel(raw.label),
+      fields: fieldValues(raw.fields),
+      observedVersion: version(raw.observedVersion, "observedVersion")
+    })
+  );
+}
+
+export async function setClaimAction(raw: {
+  subjectId: string;
+  claimId: string;
+  claimKind: string;
+  value: string;
+}): Promise<ActionResult<Claim>> {
+  return run(() =>
+    deskRepository().setClaim({
+      subjectId: asWorldObjectId(id(raw.subjectId, "subjectId")),
+      claimId: asClaimId(id(raw.claimId, "claimId")),
+      claimKind: claimKind(raw.claimKind),
+      value: claimValue(raw.value)
+    })
+  );
+}
+
+export async function removeClaimAction(raw: {
+  claimId: string;
+}): Promise<ActionResult<ClaimId>> {
+  return run(() =>
+    deskRepository().removeClaim({
+      claimId: asClaimId(id(raw.claimId, "claimId"))
+    })
+  );
 }

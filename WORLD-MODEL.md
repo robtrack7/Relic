@@ -16,9 +16,15 @@ A Fragment may later gain richer representations without conversion, duplication
 
 ## Representation
 
-A useful way to understand or edit a World Object: Character, Place, Faction, Thread, Event, Artifact, Note, or another deliberate domain view.
+A useful way to understand or edit a World Object: Character, Place, Faction, Thread, Event, Artifact, Source, Note, or another deliberate domain view.
 
 Representations describe the same object; they are not separate copies of it.
+
+A representation may carry a **mechanical sheet** — the rules data a game cares
+about, such as ability scores. That is not a truth unit: nobody disputes a
+Dexterity score or cites a source for it, and it does not change because of what
+happened in the fiction. Narrative attributes that *do* — occupation, allegiance,
+location, status — are Claims.
 
 ## Truth units
 
@@ -45,6 +51,17 @@ Ink Character may hold disputed ones.
 
 Do not put a truth column on a World Object. Truth belongs to the addressable
 unit that asserts something.
+
+### Claims are assertions, not cells
+
+A claim is something asserted at a point in story time, not a mutable field. Two
+claims of the same kind about the same subject may both be true at different
+story positions, and the value Relic shows is a projection: the latest claim at
+or before the position being viewed.
+
+Correcting a claim replaces it; recording that the world changed appends a new
+one. Never enforce one claim per subject per kind — that constraint is the
+temporal axis being quietly removed.
 
 ## Story time
 

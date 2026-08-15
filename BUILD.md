@@ -14,7 +14,7 @@ Build **vertical slices**, not administrative phases. Prefer visible product pro
 4. ~~Persist World Objects and loose Fragments.~~ **Done** — capture already creates a World Object with a Fragment body; the card is only a reference plus layout.
 5. ~~Save and reopen Boards as reference-only compositions.~~ **Done** — a Board is a sibling composition of the Desk at `/c/[compositionId]`; selected cards are *referenced* onto it, never moved or copied.
 6. ~~Move storage to Supabase behind the existing port.~~ **Done** — Postgres via the local Supabase stack, same five tables, no new features. The suite is the proof: the same specification, a new engine.
-7. **Representations, typed Cards, and claims.** The entity kinds a TTRPG actually needs — Character, Place, Faction, Thread, Event, Artifact, Source, Note — as representations of one identity, with structured fields where the game cares (ability scores, statblocks) and user-assembled templates where we have not provided one. Claims become the addressable truth unit, and carry a story position from day one.
+7. ~~Representations, typed Cards, and claims.~~ **Done** — eight kinds as representations of one identity, a mechanical sheet for what the rules care about, claims as the addressable truth unit carrying a story position, and a contextual surface to edit both.
 8. Add Focus and progressively deepen/widen objects/cards without identity churn.
 9. Add Ink, provenance, and deliberate truth editing.
 10. Add Library/search and pull existing material into the Desk.
@@ -64,6 +64,48 @@ Thread membership as first-class structures — not the lens.
 **Fitting never magnifies.** A composition holding one card opens at its natural size. Filling the screen with a single card at 400% was worse than empty space.
 
 **The visual language is warm ivory, near-black ink, and one restrained orange**, per the `relic-ui` skill. Sans for chrome, serif for narrative material, mono for provenance and system metadata. Pencil is drawn with an interrupted edge — provisional, not disabled — and selection changes colour and lift but never border *style*, so a selected Pencil card cannot start reading as established.
+
+## Decisions the Representations slice settled
+
+**A representation is a way of seeing an object, not a new record.** Deepening a
+Fragment into a Character adds a row keyed to the object that was already there.
+The id survives, the Fragment body survives underneath, and every composition
+already referencing it shows a Character without anything being moved or
+recreated. `unique (object_id, kind)` means one Character view of a thing, not
+two — an object may still hold several different kinds, because a Place that is
+also a Faction's seat is one identity seen two ways.
+
+**The sheet and the claims are different things, and the line is worth stating.**
+A representation's `fields` hold the mechanical sheet — ability scores, armour
+class, level. Rules data: nobody disputes a Dexterity score, nobody cites a
+source for it, and it does not change because of what happened in the fiction.
+Claims hold narrative assertions — occupation, allegiance, location, status —
+which *are* contested, sourced, and temporal. The test: if it would ever appear
+in a sentence beginning "we believe this because…", it is a claim. Putting a
+statblock in claims would drown the truth system in bookkeeping; putting
+allegiance in a JSON blob would make it unciteable and untemporal.
+
+**Claims are append-only assertions, not mutable cells.** There is deliberately
+no `unique (subject_id, claim_kind)`. Mara's allegiance before the cathedral and
+after it are two claims, both true, at different story positions — and the value
+Relic shows is a projection, the latest claim at or before the position being
+viewed. This is the whole reason story position exists before anything reads it:
+a schema assuming one current value per fact would need rewriting to gain a
+temporal axis, and this one only needs a query.
+
+The distinction is in the write path already. `setClaim` with no story position
+*replaces* — a GM correcting themselves should not leave two contradictions
+standing at the same moment. With a story position it *appends*, because that is
+the world changing rather than the record being fixed.
+
+**Built-in templates live in TypeScript; the `templates` table is for the GM's
+own.** Built-ins will churn constantly while the product finds its shape, and
+editing a constant beats writing a migration to rename a field. A row in that
+table is always somebody's own template.
+
+**Nothing on this path writes Ink.** A claim asserted by hand is Pencil with
+`gm_assertion` provenance. Establishing Ink is step 9 and needs its own
+deliberate, previewed action.
 
 ## Decisions the Postgres slice settled
 

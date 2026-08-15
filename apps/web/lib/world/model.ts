@@ -19,6 +19,9 @@ export type WorldObjectId = Branded<"world-object">;
 export type FragmentId = Branded<"fragment">;
 export type CompositionId = Branded<"composition">;
 export type CardId = Branded<"card">;
+export type RepresentationId = Branded<"representation">;
+export type ClaimId = Branded<"claim">;
+export type TemplateId = Branded<"template">;
 
 /** Only at a trust boundary — a store row, a server action input, or a test. */
 export const asWorldId = (v: string) => v as WorldId;
@@ -26,6 +29,9 @@ export const asWorldObjectId = (v: string) => v as WorldObjectId;
 export const asFragmentId = (v: string) => v as FragmentId;
 export const asCompositionId = (v: string) => v as CompositionId;
 export const asCardId = (v: string) => v as CardId;
+export const asRepresentationId = (v: string) => v as RepresentationId;
+export const asClaimId = (v: string) => v as ClaimId;
+export const asTemplateId = (v: string) => v as TemplateId;
 
 export type Lifecycle = "active" | "archived" | "deleted";
 
@@ -75,6 +81,100 @@ export type WorldObject = Readonly<{
   fragment: Fragment | null;
 }>;
 
+/**
+ * A way of understanding a World Object — never a separate record.
+ *
+ * Deepening a Fragment into a Character adds one of these to the object that
+ * was already there. The identity does not change and the Fragment survives
+ * underneath.
+ */
+export type RepresentationKind =
+  | "character"
+  | "place"
+  | "faction"
+  | "artifact"
+  | "event"
+  | "thread"
+  | "source"
+  | "note";
+
+export type FieldKind = "text" | "longtext" | "number";
+
+/** One row of a mechanical sheet: rules data, not an assertion about the world. */
+export type FieldDef = Readonly<{
+  key: string;
+  label: string;
+  kind: FieldKind;
+  group?: string;
+}>;
+
+/** One narrative attribute a template suggests asserting. */
+export type ClaimDef = Readonly<{ key: string; label: string }>;
+
+export type Template = Readonly<{
+  kind: RepresentationKind;
+  name: string;
+  /** Asked when the representation is first added and has no name yet. */
+  labelPrompt: string;
+  fields: readonly FieldDef[];
+  claims: readonly ClaimDef[];
+}>;
+
+/** Sheet values, keyed by `FieldDef.key`. Absent means unset, never zero. */
+export type FieldValues = Readonly<Record<string, string | number>>;
+
+export type Representation = Readonly<{
+  id: RepresentationId;
+  objectId: WorldObjectId;
+  kind: RepresentationKind;
+  label: string | null;
+  templateId: TemplateId | null;
+  fields: FieldValues;
+  version: number;
+}>;
+
+/**
+ * How precisely a claim is placed in story time.
+ *
+ * `unknown` is a real answer and the default. Relic preserves
+ * "sometime that winter" rather than inventing a date for it.
+ */
+export type StoryPrecision =
+  | "exact"
+  | "day"
+  | "month"
+  | "year"
+  | "relative"
+  | "unknown";
+
+export type StoryPosition = Readonly<{
+  /** Stable chronological ordering. Null while nothing has placed it. */
+  order: number | null;
+  precision: StoryPrecision;
+  /** What to show a human: "before Session 4", "the night of the fire". */
+  label: string | null;
+}>;
+
+/**
+ * A narrative assertion about a World Object.
+ *
+ * Truth lives here, not on the object: a Pencil Character may hold an
+ * established claim, and an Ink Character may hold a disputed one.
+ */
+export type Claim = Readonly<{
+  id: ClaimId;
+  subjectId: WorldObjectId;
+  /** The attribute asserted, or `assertion` for a free sentence. */
+  claimKind: string;
+  value: string;
+  truthState: TruthState;
+  provenance: Provenance;
+  story: StoryPosition;
+  version: number;
+}>;
+
+export const FREE_ASSERTION = "assertion";
+
 export type CompositionKind = "desk" | "board" | "prep" | "session";
 
 /** Screen-independent placement, in world coordinates. */
@@ -119,7 +219,22 @@ export type DeskCard = Readonly<{
   cardVersion: number;
   /** Version of the fragment — bumped by edits to the body. */
   bodyVersion: number;
+  /**
+   * How this object is currently understood, if it has been deepened at all.
+   * Null is the ordinary state of a captured thought and not a lesser one.
+   */
+  representation: Representation | null;
+  /** Narrative assertions about the object, at the current story position. */
+  claims: readonly Claim[];
 }>;
+
+/** What a card shows as its name, falling back through what it actually has. */
+export function cardTitle(card: DeskCard): string {
+  const label = card.representation?.label?.trim();
+  if (label) return label;
+  const firstLine = card.body.trim().split("\n")[0]?.trim() ?? "";
+  return firstLine;
+}
 
 export type DeskView = Readonly<{
   worldId: WorldId;
