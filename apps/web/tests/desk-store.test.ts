@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { randomUUID } from "node:crypto";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
 import {
   asCardId,
@@ -9,14 +9,30 @@ import {
   asWorldObjectId,
   emptyLayoutAt
 } from "@/lib/world/model";
-import { SqliteDeskRepository } from "@/lib/world/sqlite-store";
+import type { DeskRepository } from "@/lib/world/repository";
+import { PostgresDeskRepository } from "@/lib/world/postgres-store";
+import { closeDb, db } from "@/lib/world/db";
 
-const WORLD = asWorldId("00000000-0000-4000-8000-0000000000aa");
+/**
+ * Isolation without truncation or rollback: every test works in a world of its
+ * own. Everything in the schema is world-scoped, so tests cannot see each other
+ * and files can run in parallel against one database.
+ *
+ * Rolling everything back instead would be worse — the suite would never
+ * exercise a real COMMIT, and committing at the wrong moment is precisely the
+ * failure mode Postgres introduces.
+ */
+let WORLD = asWorldId(randomUUID());
 
-let repo: SqliteDeskRepository;
+let repo: DeskRepository;
 
 beforeEach(() => {
-  repo = SqliteDeskRepository.open(":memory:");
+  WORLD = asWorldId(randomUUID());
+  repo = PostgresDeskRepository.open(db());
+});
+
+afterAll(async () => {
+  await closeDb();
 });
 
 async function deskWithCard(body = "A rumour about the harbour", x = 40, y = 90) {
@@ -29,6 +45,16 @@ async function deskWithCard(body = "A rumour about the harbour", x = 40, y = 90)
     layout: emptyLayoutAt(x, y)
   });
   return { desk, card };
+}
+
+async function deskAndBoard() {
+  const desk = await repo.openDesk(WORLD);
+  const board = await repo.createBoard({
+    worldId: WORLD,
+    compositionId: asCompositionId(randomUUID()),
+    name: "The Drowned Coast"
+  });
+  return { desk, board };
 }
 
 describe("opening a desk", () => {
@@ -218,16 +244,6 @@ describe("one intent, one change set", () => {
 });
 
 describe("boards are compositions of the same world", () => {
-  async function deskAndBoard() {
-    const desk = await repo.openDesk(WORLD);
-    const board = await repo.createBoard({
-      worldId: WORLD,
-      compositionId: asCompositionId(randomUUID()),
-      name: "The Drowned Coast"
-    });
-    return { desk, board };
-  }
-
   it("lists the desk and every board of the world", async () => {
     const { board } = await deskAndBoard();
     const workspace = await repo.openWorld(WORLD);
@@ -329,7 +345,7 @@ describe("boards are compositions of the same world", () => {
 
   it("refuses to reference an object from another world", async () => {
     const { board } = await deskAndBoard();
-    const other = asWorldId("00000000-0000-4000-8000-0000000000ff");
+    const other = asWorldId(randomUUID());
     const elsewhere = await repo.openDesk(other);
     const stranger = await repo.captureCard({
       compositionId: elsewhere.compositionId,
@@ -368,7 +384,7 @@ describe("boards are compositions of the same world", () => {
 
     await repo.removeCards({ compositionId: desk.compositionId, cardIds: [onDesk.cardId] });
 
-    expect(repo.objectLifecycle(onDesk.objectId)).toBe("active");
+    expect(await repo.objectLifecycle(onDesk.objectId)).toBe("active");
     expect((await repo.openComposition(board.compositionId))?.cards[0]?.body).toBe("still wanted");
   });
 });
@@ -386,7 +402,7 @@ describe("removal", () => {
     expect((await repo.openDesk(WORLD)).cards).toEqual([]);
 
     // Archived, not destroyed: the identity survives losing its last card.
-    expect(repo.objectLifecycle(card.objectId)).toBe("archived");
+    expect(await repo.objectLifecycle(card.objectId)).toBe("archived");
   });
 
   it("ignores cards that are already gone rather than failing the gesture", async () => {
@@ -397,5 +413,80 @@ describe("removal", () => {
       cardIds: [card.cardId, asCardId(randomUUID())]
     });
     expect(again.state).toBe("ok");
+  });
+});
+
+/**
+ * These could not be written against the old store: SQLite held one
+ * whole-database write lock, so two writers could never actually interleave and
+ * every "stale version" test was really a sequential simulation of one.
+ *
+ * Postgres does run them at once, which is why the store takes explicit row
+ * locks. Without them both writers read the same version, both pass their
+ * optimistic check, and the second silently lands on top of the first.
+ *
+ * A caveat worth knowing before trusting the first test below: whether two
+ * `Promise.all` calls genuinely interleave is up to the pool and the event
+ * loop, so it does not *reliably* reproduce a lost update. It asserts the
+ * invariant that a lost update would break, which is worth having, but the
+ * lock's correctness was established separately — see BUILD.md.
+ *
+ * The second test is deterministic: its race is across two compositions, so no
+ * per-card lock can mask it.
+ */
+describe("two writers at once", () => {
+  it("advances the version exactly once per winning move", async () => {
+    const { desk, card } = await deskWithCard();
+
+    const move = (x: number) =>
+      repo.moveCards({
+        compositionId: desk.compositionId,
+        bringToFront: false,
+        moves: [{ cardId: card.cardId, x, y: 0, observedCardVersion: card.cardVersion }]
+      });
+
+    const results = await Promise.all([move(100), move(200)]);
+    const winners = results.filter((r) => r.state === "ok");
+
+    // Both observed the same version, so at most one may win.
+    expect(winners).toHaveLength(1);
+    expect(results.filter((r) => r.state === "conflict")).toHaveLength(1);
+
+    // The surviving position is one writer's, never a blend — and the version
+    // advanced once, not twice. Two bumps would mean both writes landed.
+    const after = (await repo.openDesk(WORLD)).cards[0];
+    expect([100, 200]).toContain(after?.layout.x);
+    expect(after?.cardVersion).toBe(card.cardVersion + 1);
+  });
+
+  it("archives an object when its last two references are removed at once", async () => {
+    const { desk, board } = await deskAndBoard();
+    const onDesk = await repo.captureCard({
+      compositionId: desk.compositionId,
+      cardId: asCardId(randomUUID()),
+      objectId: asWorldObjectId(randomUUID()),
+      body: "wanted by two boards at once",
+      layout: emptyLayoutAt(0, 0)
+    });
+    const placed = await repo.referenceObjects({
+      compositionId: board.compositionId,
+      placements: [
+        { cardId: asCardId(randomUUID()), objectId: onDesk.objectId, layout: emptyLayoutAt(0, 0) }
+      ]
+    });
+    if (placed.state !== "ok") throw new Error("setup failed");
+
+    // Each remover sees one other reference alive. Without a lock on the object
+    // they would both conclude "not the last one" and it would survive with no
+    // references at all.
+    await Promise.all([
+      repo.removeCards({ compositionId: desk.compositionId, cardIds: [onDesk.cardId] }),
+      repo.removeCards({
+        compositionId: board.compositionId,
+        cardIds: [placed.data[0]!.cardId]
+      })
+    ]);
+
+    expect(await repo.objectLifecycle(onDesk.objectId)).toBe("archived");
   });
 });

@@ -18,9 +18,13 @@ Uncommitted V1 files (the newest V2 migration work) are not in history — read 
 
 **`apps/web/lib/v2/types.ts`** (uncommitted in V1). The best artifact of the migration. It already models opaque IDs, lifecycle, visibility, truth state, provenance, representations, and — importantly — `V2CompositionProjection` / `V2CompositionItemReference`, which get the composition-owns-layout-not-truth seam right. Take the shapes. Leave the `V2*` prefix; in V2 these are just the domain.
 
-**`apps/web/lib/v2/server.ts`** (uncommitted). Server-side repository boundary: routes pass opaque IDs, the server re-resolves scope with the authenticated actor. The *pattern* is right and should survive. Its Supabase specifics belong to the auth slice, not to slice 1.
+**`apps/web/lib/v2/server.ts`** (uncommitted). Server-side repository boundary: routes pass opaque IDs, the server re-resolves scope with the authenticated actor. The *pattern* is right and should survive. **Wanted at build step 6** — this is the shape the Supabase implementation of `DeskRepository` should take.
 
-**`supabase/migrations/20260813*_v2_*.sql`** (uncommitted, 7 files). Real thinking about world objects, claims, events, compositions, change sets, and a one-writer gate. Read them when designing the durable schema. Do not replay them — they chain onto 70 prior V1 migrations and drag the whole V1 schema with them.
+**`supabase/migrations/20260813*_v2_*.sql`** (uncommitted, 7 files). Real thinking about world objects, claims, events, compositions, change sets, and a one-writer gate. **Wanted at build steps 6–7** when designing the durable schema. Do not replay them — they chain onto 70 prior V1 migrations and drag the whole V1 schema with them. Take the table thinking and the RLS shape; write fresh migrations.
+
+**Supabase client, auth, and RLS setup generally.** Proven and worth reusing wholesale where it is not V1-schema-specific: client construction, session handling, the service/anon key split, and the policy idioms. Read before writing any of it again.
+
+**The Librarian runtime** — context assembly, provider abstraction, streaming, tool-call plumbing. Genuinely solved in V1 and expensive to redo. **Wanted at build steps 11–12.** Take the runtime; leave `services/litellm/` operator tooling and the hosted-gate scripts unless a provider decision actually needs them. What V2 changes is the *tool surface*: typed semantic intents, not UI JSON — see `BUILD.md`.
 
 **`apps/web/lib/stage-*.ts`.** Browser-side Stage recovery. Genuinely hard problem, already solved. Revisit at the Stage slice.
 
@@ -34,7 +38,7 @@ Uncommitted V1 files (the newest V2 migration work) are not in history — read 
 - `components/relic-draft/` and the deleted Claude Design exports.
 - Migration adapters, backfill writers, one-writer cutover flags, and dual-write seams. That machinery existed to transform V1 in place. V2 is not doing that.
 - The V1 route hierarchy (`workspace → world → saga` path segments) as-is. The *scoping idea* is sound; the URL and loader shape should be redecided when V2 has multi-tenancy.
-- `services/litellm/`, the phase-E/F/G smoke scripts, and the hosted-gate operator tooling. Revisit only when the Librarian slice needs a provider.
+- `services/litellm/`, the phase-E/F/G smoke scripts, and the hosted-gate operator tooling. Revisit only when a provider decision needs them — the Librarian runtime itself is worth taking, this operator layer is not.
 
 ## Rule
 

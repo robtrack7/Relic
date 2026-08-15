@@ -5,6 +5,7 @@ import type {
   DeskCard,
   DeskView,
   Layout,
+  Lifecycle,
   Workspace,
   WorldId,
   WorldObjectId
@@ -13,9 +14,9 @@ import type {
 /**
  * The port every Desk read and write goes through.
  *
- * There is exactly one implementation today (local SQLite, for development).
- * When Relic grows accounts and hosting, a Postgres implementation lands
- * behind this same interface and nothing above it changes.
+ * Implemented today by Postgres, via the local Supabase stack in development.
+ * Callers resolve it through `deskRepository()` in `@/lib/world/store` and see
+ * this interface, never a concrete class.
  *
  * Every method here is one *semantic intent* and commits as one operation.
  * That is the change-set invariant in WORLD-MODEL.md made structural: a
@@ -65,6 +66,14 @@ export interface DeskRepository {
    * ordinary gesture.
    */
   removeCards(input: RemoveCardsInput): Promise<WriteResult<readonly CardId[]>>;
+
+  /**
+   * Lifecycle of an identity, independent of any composition referencing it.
+   *
+   * On the port because "archived, not destroyed" is a promise `removeCards`
+   * makes, and this is the only way to observe that it kept it.
+   */
+  objectLifecycle(objectId: WorldObjectId): Promise<Lifecycle | null>;
 }
 
 export type CaptureCardInput = Readonly<{

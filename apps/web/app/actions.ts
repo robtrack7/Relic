@@ -12,7 +12,7 @@ import {
   type DeskCard
 } from "@/lib/world/model";
 import type { WriteResult } from "@/lib/world/repository";
-import { deskRepository } from "@/lib/world/sqlite-store";
+import { deskRepository } from "@/lib/world/store";
 
 /**
  * The server-action boundary.

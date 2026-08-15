@@ -36,6 +36,45 @@ Truth is primarily:
 
 Authorship, provenance, visibility, truth, and lifecycle remain separate concerns.
 
+### Maturity is not truth
+
+A World Object carries **maturity** — Pencil while unsettled, Ink once
+substantially settled. A truth unit carries **truth**. They are different axes
+and neither implies the other: a Pencil Character may hold established claims, an
+Ink Character may hold disputed ones.
+
+Do not put a truth column on a World Object. Truth belongs to the addressable
+unit that asserts something.
+
+## Story time
+
+**Identity is permanent. State is temporal. Presentation is projected.**
+
+Mara in Session 4 and Mara now are the same identity at two story positions.
+Meaningful change is retained, not overwritten.
+
+Two clocks, never conflated:
+
+- **Story time** — when something was true in the fiction.
+- **Transaction time** — when Relic recorded or corrected it.
+
+A retcon entered today may change what was true years earlier while the audit
+still records that the edit happened today.
+
+Relic keeps a fast **Now projection** for Desk, Library, Stage, and ordinary
+Librarian work, with story history retained beneath it. This is *not* event
+sourcing — Now is materialized, and historical state is reconstructed only when
+asked.
+
+Only narratively meaningful state is temporal: location, status, office,
+allegiance, holder, significant conditions and goals, relationships, and
+character knowledge. Story position tolerates uncertainty — `before Session 4` is
+a valid position and must not be resolved into an invented date.
+
+Deep guidance lives in
+[`.claude/skills/relic-ux/references/temporal-chronicle.md`](.claude/skills/relic-ux/references/temporal-chronicle.md).
+Read it before schema work in this area.
+
 ## Source and provenance
 
 Important world assertions should retain why Relic believes them: source material, author, session evidence, Librarian inference, or deliberate GM action.
@@ -58,4 +97,4 @@ One semantic user or Librarian intent should commit as one coherent operation an
 
 Prefer the simplest data model that preserves:
 
-**stable identity, intentional truth, provenance, scope, reversibility, and one world seen through many views.**
+**stable identity, intentional truth, provenance, scope, reversibility, story time, and one world seen through many views.**

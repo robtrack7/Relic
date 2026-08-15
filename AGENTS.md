@@ -14,16 +14,34 @@ Read these first. They are short on purpose and they are the north star:
 | [`WORLD-MODEL.md`](WORLD-MODEL.md) | Identity, Fragments, Representations, Ink/Pencil, provenance, composition, change sets |
 | [`AI.md`](AI.md) | What the Librarian knows, what it may do, what it may never do |
 | [`BUILD.md`](BUILD.md) | Build order, working style, validation levels |
-| [`docs/reference/Relic UI — Core Skill.md`](docs/reference/Relic%20UI%20%E2%80%94%20Core%20Skill.md) | The look and feel: north star, core laws, palette, typography, decision test |
 
-The UI core skill is direction, not reference — read it before any user-facing
-design or interaction decision. Its companion
-[`visual-language.md`](docs/reference/visual-language.md) goes deeper on Cards,
-spatial behaviour, the Librarian carriage, Stage, and density; read that one only
-when the decision needs it. `docs/reference/UI Concept Direction/` holds concept
-renders of where this is going.
+## The design skills
 
-Everything else under `docs/reference/` is **reference, not required reading**. Consult it when you need it; do not read it per task.
+Two skills carry the look, feel, and interaction semantics. They are direction,
+not reference — consult the matching one before user-facing work:
+
+| Skill | Owns |
+| --- | --- |
+| [`.claude/skills/relic-ui/`](.claude/skills/relic-ui/SKILL.md) | Visual language, tokens, card and component contracts, canvas feel, motion |
+| [`.claude/skills/relic-ux/`](.claude/skills/relic-ux/SKILL.md) | Interaction semantics, state, attention, authority, temporal behaviour, flow |
+
+Claude Code loads them automatically when the work matches. Codex and other
+agents should read the `SKILL.md` directly. Each has a `references/` directory —
+load **one** file when the decision needs that depth, never the tree.
+
+**Proportionality outranks both skills.** They contain laws, tests, and review
+checklists. Those exist for contested or expensive-to-reverse decisions. A
+mechanical edit gets none of them; ordinary slice work gets a skim and a build;
+only a durable decision earns the full apparatus. Never run both skills'
+checklists on one change. Re-reading a section without changing your answer means
+deliberation is over — build the thing.
+
+Where a skill and a root direction file disagree, the root file wins, and the
+disagreement is worth fixing rather than routing around.
+
+Everything else under `docs/reference/` is **reference, not required reading** —
+including [`Relic V2 — Chronicle & Temporal World Model.md`](docs/reference/Relic%20V2%20%E2%80%94%20Chronicle%20%26%20Temporal%20World%20Model.md)
+and `UI Concept Direction/`. Consult it when you need it; do not read it per task.
 
 ## Durable invariants
 
@@ -36,6 +54,7 @@ These are the things that are expensive to get wrong. Everything else is ordinar
 5. **One intent, one change set.** A semantic user or Librarian intent commits as one coherent operation and, where practical, undoes as one.
 6. **Truth cues are never colour alone.** Ink, Pencil, disputed, and hidden states read through text plus shape or icon.
 7. **Workflow parity on narrow screens.** Not canvas parity — every core path stays usable without pointer-dependent spatial manipulation.
+8. **Identity is permanent, state is temporal, presentation is projected.** Story time and transaction time are separate clocks. Meaningful state change is retained, not overwritten; the present is a projection, not the only state stored.
 
 If a change would break one of these, stop and escalate. If it would not, decide it yourself.
 
@@ -85,6 +104,14 @@ Node 22+ and `pnpm@10.11.0`. `pnpm` is not on PATH on this host; call it through
 npx pnpm@10.11.0 install
 ```
 
+The world lives in Postgres, served locally by Supabase. Start it before `dev`
+or `test` — both fail with an instruction if it is not running. Relic uses the
+544xx port block, because V1's local stack holds 543xx on the build machine.
+
+```bash
+npx supabase start
+```
+
 ```bash
 npx pnpm@10.11.0 dev
 ```
@@ -105,10 +132,12 @@ npx pnpm@10.11.0 build
 
 ```
 VISION/PRODUCT/INTERACTION/WORLD-MODEL/AI/BUILD.md   product direction
+.claude/skills/          relic-ui and relic-ux — the design contract
+supabase/migrations/     the durable schema
 apps/web/                Next.js App Router client (the whole product today)
   app/                   routes and server actions
   components/desk/       canvas, cards, selection, editing
-  lib/world/             World Object + composition domain and repository port
+  lib/world/             World Object + composition domain, repository port, Postgres store
   lib/desk/              canvas math, viewport, interaction state
   tests/                 vitest
 docs/reference/          long-form vision, precedents, V1 quarry index

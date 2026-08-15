@@ -1,6 +1,6 @@
 import { DeskSurface } from "@/components/desk/desk-surface";
 import { asWorldId } from "@/lib/world/model";
-import { deskRepository } from "@/lib/world/sqlite-store";
+import { deskRepository } from "@/lib/world/store";
 
 /**
  * One world, until Relic grows accounts. The Desk is the world's home

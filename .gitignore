@@ -36,6 +36,7 @@ Thumbs.db
 # Agent tool local state
 .claude/*
 !.claude/agents/
+!.claude/skills/
 .codex/*
 !.codex/agents/
 .playwright-mcp/

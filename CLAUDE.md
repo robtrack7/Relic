@@ -27,6 +27,15 @@ Dispatch a specialist with: the objective, the slice boundary, the invariants th
 
 Claude Code loads `.claude/agents/` at session start. An agent added mid-session is not dispatchable by name until reload; fall back to a general-purpose agent told to read the matching `.claude/agents/*.md` first.
 
+## Design skills
+
+`relic-ui` and `relic-ux` live in `.claude/skills/` and load automatically when
+the work matches. They are the authority on look, feel, and interaction
+semantics — but they are references, not gates. `AGENTS.md` § The design skills
+states the proportionality rule; it applies to you and to every specialist you
+dispatch. Pass the *relevant* laws to a specialist rather than telling it to read
+a skill and report back.
+
 ## Tooling notes
 
 - Windows host. PowerShell is primary; Bash (Git Bash) is available. Each needs its own syntax.

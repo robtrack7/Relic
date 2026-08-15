@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { DeskSurface } from "@/components/desk/desk-surface";
 import { asCompositionId } from "@/lib/world/model";
-import { deskRepository } from "@/lib/world/sqlite-store";
+import { deskRepository } from "@/lib/world/store";
 
 export const dynamic = "force-dynamic";
 
