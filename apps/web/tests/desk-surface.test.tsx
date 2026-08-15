@@ -70,7 +70,8 @@ beforeEach(() => {
       layout: { x: input.x, y: input.y, width: input.width, height: input.height },
       z: 1,
       body: input.body,
-      truthState: "pencil",
+      maturity: "pencil",
+      settled: null,
       cardVersion: 1,
       bodyVersion: 1
     }

@@ -4,13 +4,14 @@ import { useEffect, useRef } from "react";
 
 import {
   cardTitle,
+  disputedClaims,
   FREE_ASSERTION,
   type DeskCard as DeskCardModel
 } from "@/lib/world/model";
 import { claimBudget, type Tier } from "@/lib/desk/zoom";
 import { builtInTemplate } from "@/lib/world/templates";
 
-import { TruthCue } from "./truth";
+import { ContestedCue, MaturityCue } from "./truth";
 import styles from "./desk.module.css";
 
 type Props = {
@@ -89,7 +90,10 @@ export function DeskCard({
   return (
     <article
       className={styles.card}
-      data-truth={card.truthState}
+      // The edge carries maturity — how settled the thing is. It deliberately
+      // does not carry truth: a Pencil card may hold established claims, and an
+      // Ink one may hold disputed claims, and each claim says so for itself.
+      data-maturity={card.maturity}
       data-selected={selected || undefined}
       data-editing={editing || undefined}
       style={{
@@ -192,7 +196,11 @@ export function DeskCard({
       )}
 
       <footer className={styles.cardFooter}>
-        <TruthCue state={card.truthState} />
+        <MaturityCue state={card.maturity} />
+        {/* An unresolved dispute is the thing a GM most needs to see before it
+            comes up at the table, and it would otherwise stay hidden until the
+            object was opened. */}
+        <ContestedCue count={disputedClaims(card).length} />
       </footer>
     </article>
   );

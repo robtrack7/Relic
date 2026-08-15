@@ -17,7 +17,7 @@ Build **vertical slices**, not administrative phases. Prefer visible product pro
 7. ~~Representations, typed Cards, and claims.~~ **Done** — eight kinds as representations of one identity, a mechanical sheet for what the rules care about, claims as the addressable truth unit carrying a story position, and a contextual surface to edit both.
 8. ~~Add Focus and progressively deepen/widen objects/cards without identity churn.~~ **Done** — semantic zoom tiers, Focus as a second deliberate stage after selection, and the entity surface beside the canvas rather than over it.
 9. ~~Relationship assertions.~~ **Done** — a claim whose value is another World Object, both directions of a neighbourhood on every card, and Focus that reveals what an object is connected to instead of only suppressing everything else.
-10. Add Ink, provenance, and deliberate truth editing.
+10. ~~Add Ink, provenance, and deliberate truth editing.~~ **Done** — maturity and truth separated onto the axes they belong to, one method as the only door to Ink, a previewed act that establishes, and every ruling attributed.
 11. Add Library/search and pull existing material into the Desk.
 12. Make the Librarian understand current Board, focus, and selection.
 13. Let the Librarian manipulate the workspace and create Pencil material.
@@ -52,7 +52,7 @@ Thread membership as first-class structures — not the lens.
 
 **A write conflict returns the whole composition.** Callers reconcile by replacing what they hold, so a partial list would read as "the Desk now contains only these" and silently drop the rest.
 
-**Capture produces Pencil, always.** Nothing on the capture or edit path can write `ink`. Establishing Ink is step 10 and needs its own deliberate, previewed action.
+**Capture produces Pencil, always.** Nothing on the capture or edit path can write `ink`. ~~Establishing Ink is step 10 and needs its own deliberate, previewed action.~~ **Landed at step 10** — and the rule is no longer a convention the write paths observe: they name no settling author, and the database refuses Ink without one.
 
 ## Decisions the Boards slice settled
 
@@ -130,6 +130,67 @@ the thread brings the thing to you, and Focus never leaves what you were reading
 receded. A neighbour keeps full weight and a quiet ring; only genuinely
 unrelated material dims. Focus stopped being a uniform dimming of the world the
 moment Relic could say what "related" meant.
+
+## Decisions the Ink slice settled
+
+**Maturity and truth are two axes, and the schema now says so.** How settled a
+thing is belongs to the World Object; whether an assertion is believed belongs
+to the claim. `fragments.truth_state` had been doing the first job under the
+second name, and the card was drawing it as the object's truth — which told the
+GM something false, because a Pencil Character holding an established occupation
+and an Ink Character holding a disputed alibi are both ordinary. They are
+different words, different marks, and different columns.
+
+**One method is the only door to Ink.** `settleTruth` establishes; every other
+write path produces Pencil. That concentration is the whole point: "Ink is
+deliberate" stops being a rule each future write has to remember and becomes a
+property of the one place that can do it. Three things are enforced there rather
+than asked of callers — only the GM may establish, the claims must belong to the
+subject, and the settlement commits as one change set.
+
+**The rule is backed by the database, not only by the store.**
+`claims_ink_is_deliberate` refuses any Ink row with no settling author recorded,
+and `world_objects_ink_is_deliberate` does the same for maturity. No other write
+names an author, so none of them *can* establish. A future path that forgets the
+invariant fails loudly on its first insert instead of quietly establishing truth.
+*Which* actors may establish stays in the store, because that is a judgment about
+actors and it will grow roles; the row-level rule stays "somebody deliberate".
+
+**Establishment is previewed, and the preview is versioned.** The sheet lists
+exactly what is about to become Ink, one line per thing, and sends the version of
+each claim as it was shown. A claim that moved underneath produces a conflict
+rather than establishing wording nobody looked at. Object maturity carries no
+version deliberately — it is a judgment about a whole thing, and it does not go
+stale because one assertion changed beneath it.
+
+**Every ruling is attributed, including the ones that unsettle.** `truth_by` and
+`truth_at` record the last deliberate act on a state, not merely establishment.
+Disputing something and withdrawing it are decisions, and "why did Relic stop
+believing this" is asked as often as the other question. They sit alongside the
+original provenance rather than replacing it, so "inferred by the Librarian ·
+established by you" survives as two facts.
+
+**Revising an established claim returns it to Pencil.** Correcting the wording
+is a new assertion, and nobody has yet decided the new words are so. The
+inspector makes established text read-only until a deliberate `Revise`, because
+a blur handler that quietly rewrote Ink would break the invariant every time a
+GM tabbed through the panel.
+
+**Settling is the one Desk gesture that is not optimistic.** Everything else
+paints first and writes behind, because a thought cannot wait for a round trip.
+Truth can: it arrives through a confirmed act, and a card that read Ink for two
+hundred milliseconds before the server refused would be the interface lying
+about the world.
+
+**`WriteResult` gained `refused`.** A refusal is not a missing row and not
+malformed input — the request was well formed, everything existed, and Relic
+declined. A truth system needs to be able to say that, and reporting "the
+Librarian may not establish Ink" as an error would hide a decision behind a
+failure.
+
+**Full truth history waits for Chronicle.** One last-ruling record answers "why
+do we believe this" today. A transition log is Chronicle's shape, and building
+it here would mean building it against a world with no sessions in it.
 
 ## Decisions the Representations slice settled
 
@@ -238,10 +299,13 @@ with them.
 
 **Maturity and truth are different axes.** A World Object has maturity — Pencil
 while unsettled, Ink once settled. A claim has truth — Ink, Pencil, or disputed.
-Neither implies the other. No truth column goes on a World Object. Today
+Neither implies the other. No truth column goes on a World Object. ~~Today
 `truthState` sits on the Fragment, which is a truth unit, so the current schema is
-already on the right side of this; step 7 generalises Fragment into claims rather
-than lifting truth up onto the object.
+already on the right side of this.~~ **Corrected at step 10** — it was not. There
+is one Fragment per object, so that column was already per-object, and a
+Fragment's prose is unclassified material whose settledness is exactly maturity.
+It was maturity wearing the name of truth, and the card was rendering it as
+though the object had a truth state. It now lives on `world_objects.maturity`.
 
 **Claims carry story position from the first migration.** Every view can show
 only Now for a long time. The columns still exist. See the build-order note above.

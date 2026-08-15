@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useRef } from "react";
 
 import { EMPTY_SELECTION, only, toggle, type Selection } from "@/lib/desk/selection";
-import { cardTitle, type CardId, type DeskCard } from "@/lib/world/model";
+import { cardTitle, disputedClaims, type CardId, type DeskCard } from "@/lib/world/model";
 
-import { TruthCue } from "./truth";
+import { ContestedCue, MaturityCue } from "./truth";
 import type { DeskStore } from "./use-desk";
 import styles from "./desk.module.css";
 
@@ -79,7 +79,7 @@ export function DeskStack({
             <li
               key={card.cardId}
               className={styles.stackItem}
-              data-truth={card.truthState}
+              data-maturity={card.maturity}
               data-selected={selected || undefined}
               data-focused={focusId === card.cardId || undefined}
               // The same attention model without the canvas: what the focused
@@ -132,7 +132,8 @@ export function DeskStack({
               )}
 
               <div className={styles.stackActions}>
-                <TruthCue state={card.truthState} />
+                <MaturityCue state={card.maturity} />
+                <ContestedCue count={disputedClaims(card).length} />
                 {/* Workflow parity, not canvas parity: deepening must be
                     reachable without a pointer gesture. */}
                 <button

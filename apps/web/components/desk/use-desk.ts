@@ -13,6 +13,7 @@ import {
   representObjectAction,
   searchObjectsAction,
   setClaimAction,
+  settleTruthAction,
   type ActionResult
 } from "@/app/actions";
 import {
@@ -29,8 +30,10 @@ import {
   type FieldValues,
   type Layout,
   type Link,
+  type Maturity,
   type ObjectRef,
   type RepresentationKind,
+  type TruthState,
   type WorldObjectId
 } from "@/lib/world/model";
 
@@ -138,6 +141,11 @@ export function useDesk(initial: DeskView) {
         case "missing":
           setSync({ kind: "problem", message: "That card is no longer on this Desk." });
           return;
+        // Relic declined, and said why. Shown as it was given: a refusal is a
+        // statement about the world's rules, not a malfunction to apologise for.
+        case "refused":
+          setSync({ kind: "problem", message: result.reason });
+          return;
         case "invalid":
         case "failed":
           setSync({ kind: "problem", message: result.message });
@@ -182,7 +190,11 @@ export function useDesk(initial: DeskView) {
           layout,
           z: topZ() + 1,
           body,
-          truthState: "pencil",
+          // Capture produces Pencil and nothing else. Even guessing otherwise
+          // here would be wrong: this is the client's picture of a write it has
+          // not made yet, and it may not depict established truth.
+          maturity: "pencil",
+          settled: null,
           cardVersion: 1,
           bodyVersion: 1,
           // A captured thought has not been deepened into anything yet, and
@@ -595,6 +607,81 @@ export function useDesk(initial: DeskView) {
     [absorb, compositionId, enqueue]
   );
 
+  /**
+   * Settles truth: establishes, disputes, or withdraws.
+   *
+   * The one gesture in the Desk that is **not** optimistic, and deliberately
+   * so. Everything else here paints first and writes behind, because a thought
+   * cannot wait for a round trip. Truth can: it arrives through a previewed,
+   * confirmed act, and a card that showed Ink for two hundred milliseconds
+   * before the server refused would be the interface lying about the world.
+   * Nothing reads as established until it is.
+   *
+   * Versions come from what this client holds, not from the caller. They are
+   * concurrency tokens — the whole point is that they describe what the GM was
+   * actually looking at when they decided.
+   */
+  const settle = useCallback(
+    (
+      objectId: WorldObjectId,
+      intent: {
+        maturity?: Maturity | null;
+        claims?: readonly { claimId: ClaimId; truth: TruthState }[];
+      }
+    ) => {
+      enqueue(async () => {
+        const subject = cardsRef.current.find((card) => card.objectId === objectId);
+        if (!subject) return;
+
+        const claims = (intent.claims ?? []).flatMap((wanted) => {
+          const known = subject.claims.find((claim) => claim.id === wanted.claimId);
+          return known
+            ? [{ ...wanted, claimId: wanted.claimId as string, observedVersion: known.version }]
+            : [];
+        });
+
+        if (claims.length === 0 && (intent.maturity ?? null) === null) return;
+
+        const result = await settleTruthAction({
+          objectId,
+          maturity: intent.maturity ?? null,
+          claims
+        });
+
+        absorb(result, (settled) => {
+          const ruled = new Map(settled.claims.map((claim) => [claim.id as string, claim]));
+          setCards((cards) =>
+            cards.map((card) => {
+              // Maturity belongs to the object, so every card referencing it
+              // changes — one identity, not one placement.
+              const isSubject = card.objectId === objectId;
+              const next = isSubject
+                ? {
+                    ...card,
+                    maturity: settled.maturity,
+                    settled: settled.settled,
+                    claims: card.claims.map((claim) => ruled.get(claim.id) ?? claim)
+                  }
+                : card;
+
+              // A relationship's truth is visible from the far end too, and a
+              // link nobody updated would go on calling an established edge
+              // provisional.
+              return {
+                ...next,
+                links: next.links.map((link) => {
+                  const claim = ruled.get(link.claimId);
+                  return claim ? { ...link, truthState: claim.truthState } : link;
+                })
+              };
+            })
+          );
+        });
+      });
+    },
+    [absorb, enqueue]
+  );
+
   const retract = useCallback(
     (objectId: WorldObjectId, claimId: ClaimId) => {
       setCards((cards) =>
@@ -654,6 +741,7 @@ export function useDesk(initial: DeskView) {
     represent,
     editSheet,
     assert,
+    settle,
     retract,
     pullIn,
     findObjects,

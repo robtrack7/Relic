@@ -22,10 +22,12 @@ import {
   type DeskView,
   type Lifecycle,
   type Link,
+  type Maturity,
   type ObjectRef,
   type ProvenanceKind,
   type Representation,
   type RepresentationKind,
+  type Settlement,
   type StoryPosition,
   type TruthState,
   type Workspace,
@@ -36,6 +38,7 @@ import {
   conflict,
   missing,
   ok,
+  refused,
   type CaptureCardInput,
   type CreateBoardInput,
   type DeskRepository,
@@ -48,6 +51,8 @@ import {
   type RepresentObjectInput,
   type SearchObjectsInput,
   type SetClaimInput,
+  type SettleTruthInput,
+  type Settled,
   type WriteResult
 } from "@/lib/world/repository";
 
@@ -100,7 +105,9 @@ type CardRow = {
   z: number;
   card_version: number;
   body: string;
-  truth_state: string;
+  maturity: string;
+  settled_by: string | null;
+  settled_at: string | Date | null;
   body_version: number;
 };
 
@@ -108,21 +115,35 @@ type CardRow = {
  * The card projection, as a composable fragment rather than a string constant.
  * Interpolating a plain string into a tagged template would send the whole
  * SELECT as a bind parameter.
+ *
+ * Maturity comes off the object, not the Fragment. The Fragment holds prose and
+ * nothing else — how settled the thing is belongs to the thing.
  */
 const cardSelect = (sql: Sql) => sql`
   select
-    ci.id         as card_id,
-    ci.object_id  as object_id,
+    ci.id          as card_id,
+    ci.object_id   as object_id,
     ci.x, ci.y, ci.width, ci.height, ci.z,
-    ci.version    as card_version,
-    f.body        as body,
-    f.truth_state as truth_state,
-    f.version     as body_version
+    ci.version     as card_version,
+    f.body         as body,
+    wo.maturity    as maturity,
+    wo.settled_by  as settled_by,
+    wo.settled_at  as settled_at,
+    f.version      as body_version
   from composition_items ci
   join world_objects wo on wo.id = ci.object_id
   join fragments f on f.object_id = ci.object_id
   where ci.lifecycle = 'active' and wo.lifecycle = 'active'
 `;
+
+const asTimestamp = (value: string | Date): string =>
+  value instanceof Date ? value.toISOString() : String(value);
+
+/** Who settled something and when, or null where nothing has been settled. */
+function toSettlement(by: string | null, at: string | Date | null): Settlement | null {
+  if (by === null || at === null) return null;
+  return { by: by as AuthorKind, at: asTimestamp(at) };
+}
 
 type RepresentationRow = {
   id: string;
@@ -141,6 +162,8 @@ type ClaimRow = {
   value: string;
   object_value: string | null;
   truth_state: string;
+  truth_by: string | null;
+  truth_at: string | Date | null;
   authored_by: string;
   provenance: string;
   recorded_at: string | Date;
@@ -151,8 +174,9 @@ type ClaimRow = {
 };
 
 const claimColumns = (sql: Sql) => sql`
-  id, subject_id, claim_kind, value, object_value, truth_state, authored_by,
-  provenance, recorded_at, story_order, story_precision, story_label, version
+  id, subject_id, claim_kind, value, object_value, truth_state, truth_by,
+  truth_at, authored_by, provenance, recorded_at, story_order, story_precision,
+  story_label, version
 `;
 
 type ObjectRefRow = {
@@ -217,11 +241,9 @@ function toClaim(row: ClaimRow): Claim {
     provenance: {
       kind: row.provenance as ProvenanceKind,
       authoredBy: row.authored_by as AuthorKind,
-      recordedAt:
-        row.recorded_at instanceof Date
-          ? row.recorded_at.toISOString()
-          : String(row.recorded_at)
+      recordedAt: asTimestamp(row.recorded_at)
     },
+    settled: toSettlement(row.truth_by, row.truth_at),
     story: {
       // bigint arrives as a string from postgres.js; the ordering axis is a
       // number to everything above the store.
@@ -245,7 +267,8 @@ function toDeskCard(
     layout: { x: row.x, y: row.y, width: row.width, height: row.height },
     z: row.z,
     body: row.body,
-    truthState: row.truth_state as TruthState,
+    maturity: row.maturity as Maturity,
+    settled: toSettlement(row.settled_by, row.settled_at),
     cardVersion: row.card_version,
     bodyVersion: row.body_version,
     representation,
@@ -693,19 +716,21 @@ export class PostgresDeskRepository implements DeskRepository {
       const worldId = await this.#lockComposition(tx, input.compositionId);
       if (!worldId) throw new Error("captureCard: composition does not exist");
 
+      // Captured thought is unresolved, so the object is Pencil with no
+      // settlement recorded against it. Nothing on this path may write 'ink' —
+      // and now nothing on it *can*: the insert names no settling author, and
+      // `world_objects_ink_is_deliberate` refuses Ink without one.
       await tx`
         insert into world_objects
-          (id, world_id, lifecycle, version, created_at,
+          (id, world_id, lifecycle, maturity, version, created_at,
            creation_kind, creation_author, creation_recorded_at)
-        values (${input.objectId}, ${worldId}, 'active', 1, ${timestamp},
+        values (${input.objectId}, ${worldId}, 'active', 'pencil', 1, ${timestamp},
                 'gm_capture', 'gm', ${timestamp})
       `;
 
-      // Captured thought is unresolved, so it is Pencil. Nothing on this path
-      // may write 'ink'.
       await tx`
-        insert into fragments (id, object_id, body, truth_state, version, updated_at)
-        values (${randomUUID()}, ${input.objectId}, ${input.body}, 'pencil', 1, ${timestamp})
+        insert into fragments (id, object_id, body, version, updated_at)
+        values (${randomUUID()}, ${input.objectId}, ${input.body}, 1, ${timestamp})
       `;
 
       const z = (await this.#maxZ(tx, input.compositionId)) + 1;
@@ -1027,8 +1052,11 @@ export class PostgresDeskRepository implements DeskRepository {
           -- already carries — truth, provenance, story position — applies to it
           -- unchanged, which is the reason it is not its own table.
           ${target}::uuid,
-          -- A claim asserted by hand is not thereby established. Ink is step 10
-          -- and needs its own deliberate, previewed action.
+          -- A claim asserted by hand is not thereby established. Asserting is
+          -- saying it; establishing is deciding it is so, and that is
+          -- settleTruth and nothing else. No settling author is written here,
+          -- which is what makes claims_ink_is_deliberate refuse this row if
+          -- 'pencil' ever became 'ink' by accident.
           'pencil',
           'gm', 'gm_assertion', ${now()},
           ${story?.order ?? null}, ${story?.precision ?? "unknown"}, ${story?.label ?? null},
@@ -1055,6 +1083,157 @@ export class PostgresDeskRepository implements DeskRepository {
       const row = updated[0];
       if (!row) return missing<ClaimId>();
       return ok(asClaimId(row.id));
+    });
+  }
+
+  // Truth ------------------------------------------------------------------
+
+  /**
+   * The only path in Relic that writes Ink.
+   *
+   * Everything else — capture, body edits, assertions, and whatever the
+   * Librarian becomes — produces Pencil. That is not a convention this method
+   * relies on: no other write names a settling author, and the database refuses
+   * Ink without one. So the rule holds even against a write path that has
+   * forgotten it exists.
+   *
+   * Locks in the global order: `world_objects` first, then `claims`. Nothing
+   * else in this file locks claims, so there is no ordering to violate; stated
+   * anyway because the next thing that touches them will need to know.
+   */
+  async settleTruth(input: SettleTruthInput): Promise<WriteResult<Settled>> {
+    const wantsInk =
+      input.maturity === "ink" || input.claims.some((claim) => claim.truth === "ink");
+
+    // Refused before the transaction opens. Establishment is a GM act by
+    // definition — the Librarian may assert, infer, and propose all it likes,
+    // and none of that is deciding something is so. This is the invariant's
+    // enforcement point, and it is deliberately not a database check: which
+    // actors may establish is a judgment about actors, which will grow roles
+    // and permissions, while the row-level rule stays "somebody deliberate".
+    if (wantsInk && input.author !== "gm") {
+      return refused<Settled>("Only the GM may establish. Ink is a deliberate act.");
+    }
+
+    const at = now();
+    const claimIds = [...new Set(input.claims.map((claim) => claim.claimId as string))].sort();
+
+    return await this.#tx(async (tx) => {
+      const objects = (await tx`
+        select id, maturity, settled_by, settled_at
+          from world_objects
+         where id = ${input.objectId} and lifecycle = 'active'
+         for no key update
+      `) as unknown as {
+        id: string;
+        maturity: string;
+        settled_by: string | null;
+        settled_at: string | Date | null;
+      }[];
+
+      const object = objects[0];
+      if (!object) return missing<Settled>();
+
+      let maturity = object.maturity as Maturity;
+      let settled = toSettlement(object.settled_by, object.settled_at);
+
+      /*
+       * Everything is verified before anything is written — including the
+       * object's maturity, which is why that write waits below rather than
+       * happening here where it was read.
+       *
+       * A confirmed preview is one intent. Settling the object and then
+       * refusing its claims would leave the world in a state nobody chose:
+       * Mara established, her assertions untouched, and the GM told it failed.
+       * Returning from inside a transaction commits, so a refusal that came
+       * after a write would keep the write.
+       */
+      const claimRows = new Map<string, ClaimRow>();
+
+      if (claimIds.length > 0) {
+        const locked = (await tx`
+          select ${claimColumns(tx)}
+            from claims
+           where id = any(${claimIds}::uuid[]) and lifecycle = 'active'
+           order by id
+           for no key update
+        `) as unknown as ClaimRow[];
+
+        for (const row of locked) claimRows.set(row.id, row);
+
+        for (const wanted of input.claims) {
+          const row = claimRows.get(wanted.claimId);
+          if (!row) return missing<Settled>();
+          // Sent ids are not trusted to belong to the subject. Without this, a
+          // caller holding any claim id could establish assertions about an
+          // object it never named — the same seam `referenceObjects` holds
+          // between worlds, one level down.
+          if (row.subject_id !== input.objectId) {
+            return refused<Settled>("That assertion is about something else.");
+          }
+          if (row.version !== wanted.observedVersion) {
+            return conflict<Settled>([]);
+          }
+        }
+      }
+
+      // Verified. From here on the transaction only writes.
+
+      if (input.maturity !== null && input.maturity !== maturity) {
+        // Unsettling is an act too, and it is recorded as one. Clearing the
+        // author on the way back to Pencil would lose the fact that somebody
+        // deliberately withdrew this, which is exactly the kind of thing a GM
+        // returns to a world wanting to know.
+        await tx`
+          update world_objects
+             set maturity = ${input.maturity},
+                 settled_by = ${input.author},
+                 settled_at = ${at},
+                 version = version + 1
+           where id = ${input.objectId}
+        `;
+        maturity = input.maturity;
+        settled = { by: input.author, at };
+      }
+
+      const touched: Claim[] = [];
+
+      for (const wanted of input.claims) {
+        const before = claimRows.get(wanted.claimId)!;
+
+        // A claim already at the truth being asked for is left alone. A preview
+        // where three of six were already established should not bump three
+        // versions and restamp three rulings for saying nothing new.
+        if (before.truth_state === wanted.truth) {
+          touched.push(toClaim(before));
+          continue;
+        }
+
+        const updated = (await tx`
+          update claims
+             set truth_state = ${wanted.truth},
+                 -- Recorded for every ruling, not only for Ink. Disputing
+                 -- something and withdrawing it are deliberate acts, and the
+                 -- question "why does Relic believe this" is asked just as
+                 -- often about a claim that stopped being believed.
+                 truth_by = ${input.author},
+                 truth_at = ${at},
+                 version = version + 1
+           where id = ${wanted.claimId}
+          returning ${claimColumns(tx)}
+        `) as unknown as ClaimRow[];
+
+        const row = updated[0];
+        if (!row) throw new Error("settleTruth: claim vanished inside its own transaction");
+        touched.push(toClaim(row));
+      }
+
+      return ok<Settled>({
+        objectId: input.objectId,
+        maturity,
+        settled,
+        claims: touched
+      });
     });
   }
 

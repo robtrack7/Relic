@@ -285,8 +285,8 @@ describe("maturity and truth are different axes", () => {
 
     const after = (await repo.openDesk(WORLD)).cards[0];
     // The object is still unsettled; the claim about it is a separate question.
-    // Neither state is derived from the other.
-    expect(after?.truthState).toBe("pencil");
+    // Neither state is derived from the other — one is maturity, one is truth.
+    expect(after?.maturity).toBe("pencil");
     expect(after?.claims[0]?.truthState).toBe("pencil");
     expect(after?.representation?.kind).toBe("character");
   });

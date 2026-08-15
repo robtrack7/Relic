@@ -36,11 +36,25 @@ export const asTemplateId = (v: string) => v as TemplateId;
 export type Lifecycle = "active" | "archived" | "deleted";
 
 /**
+ * Whether Relic believes an assertion.
+ *
  * Ink is deliberately established. Pencil is provisional, inferred, or simply
- * not yet resolved. Captured thought starts as Pencil — capture is not an act
- * of establishment, and nothing here may promote it.
+ * not yet resolved. Disputed is explicitly contested. Captured thought starts
+ * as Pencil — capture is not an act of establishment, and only `settleTruth`
+ * may promote it.
+ *
+ * This belongs to a **claim**, never to an object.
  */
 export type TruthState = "ink" | "pencil" | "disputed";
+
+/**
+ * How settled a World Object is. **Not** truth, and the difference is load
+ * bearing: a Pencil Character may hold an established claim about their
+ * occupation, and an Ink Character may hold a disputed one about what they did
+ * at the cathedral. Neither state implies the other and neither may be rendered
+ * as the other.
+ */
+export type Maturity = "pencil" | "ink";
 
 export type AuthorKind = "gm" | "player" | "librarian" | "system";
 
@@ -58,15 +72,37 @@ export type Provenance = Readonly<{
 }>;
 
 /**
+ * The last deliberate ruling on a state: who, and when.
+ *
+ * Covers establishing, disputing, and withdrawing alike — all three are acts,
+ * and a GM returning to a world asks about the third as often as the first.
+ * Read it alongside the state it belongs to: the same record means "established
+ * by you in August" on an Ink claim and "disputed by you in August" on a
+ * contested one.
+ *
+ * Separate from `Provenance`, which says how the material arrived. "The
+ * Librarian inferred this from Session 4; the GM established it in August" is
+ * two facts, and only both together answer why Relic believes something.
+ *
+ * Null while nobody has ruled, which is the ordinary state of captured thought.
+ */
+export type Settlement = Readonly<{
+  by: AuthorKind;
+  at: string;
+}>;
+
+/**
  * The lightest state of a World Object: captured thought before classification.
  * A Fragment can later be joined by richer representations without the object
  * changing identity.
+ *
+ * The Fragment carries no truth of its own. Its prose is unclassified creative
+ * material, and how settled that is belongs to the object's maturity.
  */
 export type Fragment = Readonly<{
   id: FragmentId;
   objectId: WorldObjectId;
   body: string;
-  truthState: TruthState;
   version: number;
   updatedAt: string;
 }>;
@@ -75,6 +111,9 @@ export type WorldObject = Readonly<{
   id: WorldObjectId;
   worldId: WorldId;
   lifecycle: Lifecycle;
+  maturity: Maturity;
+  /** Why Relic believes this thing is settled. Null while it is not. */
+  settled: Settlement | null;
   version: number;
   createdAt: string;
   creation: Provenance;
@@ -187,12 +226,23 @@ export type Claim = Readonly<{
    */
   objectValue: WorldObjectId | null;
   truthState: TruthState;
+  /** How this assertion arrived. */
   provenance: Provenance;
+  /**
+   * Who last set its truth, and when. Null while nobody has — a claim asserted
+   * by hand is Pencil, and being asserted is not being established.
+   */
+  settled: Settlement | null;
   story: StoryPosition;
   version: number;
 }>;
 
 export const FREE_ASSERTION = "assertion";
+
+/** Claims of this object that are explicitly contested. */
+export function disputedClaims(card: DeskCard): readonly Claim[] {
+  return card.claims.filter((claim) => claim.truthState === "disputed");
+}
 
 /** Just enough of a World Object to name it and point at it. */
 export type ObjectRef = Readonly<{
@@ -257,7 +307,13 @@ export type DeskCard = Readonly<{
   layout: Layout;
   z: number;
   body: string;
-  truthState: TruthState;
+  /**
+   * How settled the object is — not whether anything about it is true. What is
+   * true is on the claims, each carrying its own truth.
+   */
+  maturity: Maturity;
+  /** Who settled it, and when. Null while it is still Pencil. */
+  settled: Settlement | null;
   /** Version of the composition item — bumped by move/resize. */
   cardVersion: number;
   /** Version of the fragment — bumped by edits to the body. */

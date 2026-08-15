@@ -420,13 +420,25 @@
 }
 
 /*
+ * The edge carries **maturity** — how settled the thing is — and nothing else.
+ * Whether any particular assertion about it is believed is a property of that
+ * assertion, and each claim says so for itself.
+ *
  * Pencil is provisional, not disabled. An interrupted edge says "not settled"
  * in shape, so the state survives without colour and without dimming the text
  * to the point of looking inert.
  */
-.card[data-truth="pencil"] {
+.card[data-maturity="pencil"] {
   border-style: dashed;
   border-color: var(--rule-strong);
+}
+
+/* Ink is unremarkable on purpose: a settled thing should look like the world
+   simply is this way. It reads as established by being the quiet, solid,
+   fully-drawn one — not by being decorated. */
+.card[data-maturity="ink"] {
+  border-style: solid;
+  border-color: var(--ink-faint);
 }
 
 .card:hover {
@@ -504,6 +516,36 @@
   color: var(--ink-faint);
 }
 
+/* Established material carries its full weight. The word and the mark already
+   say which state this is; the contrast only agrees with them. */
+.truth[data-maturity="ink"] {
+  color: var(--ink-quiet);
+}
+
+/* Dropped at far zoom, where the mark alone carries the state. */
+.truthLabel {
+  display: inline;
+}
+
+/*
+ * Something about this object is contested.
+ *
+ * On the card because an unresolved dispute is what a GM needs to see *before*
+ * it arrives at the table. Orange is Relic's one signal colour and this is a
+ * legitimate call on it — but the word and the mark carry the meaning, and the
+ * cue reads identically in greyscale.
+ */
+.contested {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--orange-deep);
+}
+
 /* ----------------------------------------------------------------- stack -- */
 
 .stack {
@@ -541,8 +583,14 @@
   padding: 12px 14px 8px;
 }
 
-.stackItem[data-truth="pencil"] {
+/* The same distinction the canvas draws, in a list. Maturity, not truth. */
+.stackItem[data-maturity="pencil"] {
   border-style: dashed;
+}
+
+.stackItem[data-maturity="ink"] {
+  border-style: solid;
+  border-color: var(--ink-faint);
 }
 
 .stackItem[data-selected] {
@@ -893,11 +941,15 @@
   background: var(--card-raised);
 }
 
-/* Truth reads through text, never colour alone. */
+/* Truth reads through a word and a mark, never colour alone. */
 .claimTruth {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-family: var(--mono);
   font-size: 8px;
   letter-spacing: 0.08em;
+  white-space: nowrap;
   color: var(--ink-faint);
 }
 
@@ -907,6 +959,231 @@
 
 .claimTruth[data-truth="disputed"] {
   color: var(--orange-deep);
+}
+
+/* ------------------------------------------------------------- truth -- */
+
+/*
+ * Maturity, and the way to change it, directly under the object's name —
+ * because it is a property of the thing rather than of anything asserted about
+ * it. `Establish…` opens a preview. Nothing here establishes on click.
+ */
+.truthBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.truthAction,
+.truthActionStrong {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-control);
+  padding: 2px 7px;
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-quiet);
+  white-space: nowrap;
+}
+
+.truthAction:hover {
+  border-color: var(--ink-faint);
+  color: var(--ink);
+}
+
+/* The act that establishes is the only one wearing the signal colour, and it
+   wears it as an edge rather than a fill — a deliberate act, not an alarm. */
+.truthActionStrong {
+  border-color: var(--orange-edge);
+  color: var(--orange-deep);
+}
+
+.truthActionStrong:hover {
+  border-color: var(--orange);
+  background: var(--orange-wash);
+}
+
+.truthBar .truthActionStrong {
+  margin-left: auto;
+}
+
+/* One claim and everything known about it: the assertion, why Relic believes
+   it, and what may be decided. */
+.claimBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.claimMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  /* Aligned under the value rather than the label, so the record reads as
+     belonging to the assertion above it. */
+  padding-left: 80px;
+  min-height: 15px;
+}
+
+/* Provenance is metadata, so it is mono and quiet — an accession record, not
+   a sentence competing with the claim it describes. */
+.provenance {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+}
+
+/* What was decided reads a shade louder than how it arrived. Both matter; only
+   one of them is a ruling. */
+.provenanceRuling {
+  color: var(--ink-quiet);
+}
+
+/*
+ * Contextual, not resident. The controls appear on hover and whenever anything
+ * in the claim has keyboard focus, so they are reachable by tabbing and absent
+ * while the GM is reading.
+ */
+.claimActions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.claimBlock:hover .claimActions,
+.claimBlock:focus-within .claimActions {
+  opacity: 1;
+}
+
+@media (pointer: coarse) {
+  /* Nothing to hover with. Truth controls are not an advanced feature. */
+  .claimActions {
+    opacity: 1;
+  }
+}
+
+/* Established text is not edited by landing in the field. It reads as settled
+   rather than as disabled — full contrast, no interruption in the edge. */
+.inspectorInput[data-locked] {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink);
+  cursor: default;
+}
+
+.claimHint {
+  margin: 2px 0 0 80px;
+  font-family: var(--sans);
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--orange-deep);
+}
+
+/* ------------------------------------------------------- establish -- */
+
+.establishNote {
+  margin: 4px 0 0;
+  font-family: var(--sans);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ink-quiet);
+}
+
+.establishList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.establishRow {
+  display: grid;
+  grid-template-columns: auto 68px 1fr;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.establishRow:hover {
+  background: var(--paper);
+}
+
+.establishRow input {
+  accent-color: var(--orange);
+  cursor: pointer;
+}
+
+.establishKind {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  overflow-wrap: anywhere;
+}
+
+.establishValue {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-family: var(--serif);
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+/* What establishing this would mean, said where the decision is made. */
+.establishMeaning {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--ink-faint);
+}
+
+.establishActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+}
+
+.establishConfirm {
+  border: 1px solid var(--orange);
+  border-radius: var(--radius-control);
+  padding: 5px 11px;
+  background: var(--orange);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--card-raised);
+}
+
+.establishConfirm:hover:not(:disabled) {
+  background: var(--orange-deep);
+  border-color: var(--orange-deep);
+}
+
+.establishConfirm:disabled {
+  border-color: var(--rule-strong);
+  background: var(--paper);
+  color: var(--ink-faint);
+  cursor: default;
 }
 
 /* Holds the input and whatever offers to turn its text into an identity. */
@@ -1144,7 +1421,9 @@
   padding-top: 0;
 }
 
-.card[data-tier="far"] .truth span:last-child {
+/* The word goes; the mark stays. At this distance the shape is the whole
+   answer, and `Pencil` spelled out is just occupied space. */
+.card[data-tier="far"] .truthLabel {
   display: none;
 }
 

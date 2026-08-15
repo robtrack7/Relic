@@ -15,11 +15,13 @@ import {
   type CompositionSummary,
   type DeskCard,
   type FieldValues,
+  type Maturity,
   type ObjectRef,
   type Representation,
-  type RepresentationKind
+  type RepresentationKind,
+  type TruthState
 } from "@/lib/world/model";
-import type { WriteResult } from "@/lib/world/repository";
+import type { Settled, WriteResult } from "@/lib/world/repository";
 import { deskRepository } from "@/lib/world/store";
 import { REPRESENTATION_KINDS } from "@/lib/world/templates";
 
@@ -144,17 +146,24 @@ export type ActionResult<T> =
   | { state: "ok"; data: T }
   | { state: "missing" }
   | { state: "conflict"; current: readonly DeskCard[] }
+  /** Well formed, everything exists, and Relic declined. A rule, not an error. */
+  | { state: "refused"; reason: string }
   | { state: "invalid"; message: string }
   | { state: "failed"; message: string };
 
 async function run<T>(work: () => Promise<WriteResult<T>>): Promise<ActionResult<T>> {
   try {
     const result = await work();
-    return result.state === "ok"
-      ? { state: "ok", data: result.data }
-      : result.state === "conflict"
-        ? { state: "conflict", current: result.current }
-        : { state: "missing" };
+    switch (result.state) {
+      case "ok":
+        return { state: "ok", data: result.data };
+      case "conflict":
+        return { state: "conflict", current: result.current };
+      case "refused":
+        return { state: "refused", reason: result.reason };
+      case "missing":
+        return { state: "missing" };
+    }
   } catch (error) {
     if (error instanceof InvalidInput) {
       return { state: "invalid", message: error.message };
@@ -404,4 +413,55 @@ export async function removeClaimAction(raw: {
       claimId: asClaimId(id(raw.claimId, "claimId"))
     })
   );
+}
+
+// Truth ----------------------------------------------------------------------
+
+function truthState(value: unknown): TruthState {
+  if (value !== "ink" && value !== "pencil" && value !== "disputed") {
+    throw new InvalidInput("that is not a truth state");
+  }
+  return value;
+}
+
+function maturity(value: unknown): Maturity | null {
+  if (value === null || value === undefined) return null;
+  if (value !== "ink" && value !== "pencil") {
+    throw new InvalidInput("that is not a maturity");
+  }
+  return value;
+}
+
+/**
+ * Settles truth. The one action that can establish Ink.
+ *
+ * The browser says *what* to settle and to what. It does not say **who** — the
+ * author is supplied here, and today it is always the GM because the GM is the
+ * only actor at a keyboard. That is the point of the parameter existing at all:
+ * when the Librarian gains the ability to call into the world at step 13, it
+ * will pass `librarian` from the server and be refused by the store. Letting
+ * the browser name the author would make the whole invariant a form field.
+ */
+export async function settleTruthAction(raw: {
+  objectId: string;
+  maturity?: string | null;
+  claims?: readonly { claimId: string; truth: string; observedVersion: number }[];
+}): Promise<ActionResult<Settled>> {
+  return run(() => {
+    const claims = raw.claims ?? [];
+    if (!Array.isArray(claims) || claims.length > MAX_BATCH) {
+      throw new InvalidInput("too many assertions in one settlement");
+    }
+
+    return deskRepository().settleTruth({
+      objectId: asWorldObjectId(id(raw.objectId, "objectId")),
+      maturity: maturity(raw.maturity),
+      claims: claims.map((claim) => ({
+        claimId: asClaimId(id(claim.claimId, "claimId")),
+        truth: truthState(claim.truth),
+        observedVersion: version(claim.observedVersion, "observedVersion")
+      })),
+      author: "gm"
+    });
+  });
 }

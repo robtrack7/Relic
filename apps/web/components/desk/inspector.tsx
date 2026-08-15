@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   cardTitle,
+  type Claim,
   type ClaimDef,
   type DeskCard,
   type FieldValues,
@@ -13,25 +14,29 @@ import {
 } from "@/lib/world/model";
 import { builtInTemplate, groupFields, REPRESENTATION_KINDS } from "@/lib/world/templates";
 
+import { MaturityCue, ProvenanceLine, TruthMark } from "./truth";
 import type { DeskStore } from "./use-desk";
 import styles from "./desk.module.css";
 
 /**
- * The contextual surface for one selected object.
+ * The contextual surface for one focused object.
  *
  * Selection deepens; it does not depart. This emerges beside the canvas rather
  * than navigating anywhere, and the Board stays visible and interactive behind
  * it — expanding Mara, not opening Character Administration.
  *
- * It edits two different things and keeps the difference visible, because the
- * difference is the model:
+ * It edits three different things and keeps the differences visible, because
+ * the differences are the model:
  *
  *   the **sheet** is rules data — ability scores, armour class. Typing in it is
  *   an edit;
  *
  *   the **claims** are assertions about the world — occupation, allegiance.
  *   Typing in one records that Relic now believes something, with provenance
- *   attached, as Pencil until somebody deliberately establishes it.
+ *   attached, as Pencil;
+ *
+ *   **truth** is what Relic has decided. Nothing typed anywhere becomes Ink.
+ *   Establishing is its own previewed act, and it lives behind `Establish…`.
  */
 export function Inspector({
   card,
@@ -45,10 +50,28 @@ export function Inspector({
   /** Deepen into something this object is connected to. */
   onFollow: (link: Link) => void;
 }) {
+  const [settling, setSettling] = useState(false);
+
+  // Moving to another object leaves the settlement behind. A preview belongs to
+  // the thing it was previewing, and carrying it across would offer to
+  // establish one object's claims while showing another's name.
+  useEffect(() => setSettling(false), [card.objectId]);
+
+  if (settling) {
+    return <EstablishSheet card={card} store={store} onDone={() => setSettling(false)} />;
+  }
+
   const representation = card.representation;
 
   if (!representation) {
-    return <Deepen card={card} store={store} onClose={onClose} />;
+    return (
+      <Deepen
+        card={card}
+        store={store}
+        onClose={onClose}
+        onEstablish={() => setSettling(true)}
+      />
+    );
   }
 
   const template = builtInTemplate(representation.kind);
@@ -61,6 +84,7 @@ export function Inspector({
           <CloseFocus onClose={onClose} />
         </div>
         <NameField card={card} store={store} />
+        <TruthBar card={card} store={store} onEstablish={() => setSettling(true)} />
       </header>
 
       {template.claims.length > 0 ? (
@@ -68,7 +92,7 @@ export function Inspector({
           <h4 className={styles.inspectorHeading}>
             About
             {/* Naming the epistemics where they are edited, not in a tooltip. */}
-            <span className={styles.inspectorNote}>asserted, sourced, Pencil</span>
+            <span className={styles.inspectorNote}>asserted, sourced, ruled on</span>
           </h4>
           {template.claims.map((def) => (
             <ClaimField key={def.key} card={card} store={store} def={def} />
@@ -87,6 +111,197 @@ export function Inspector({
           <SheetFields card={card} store={store} />
         </section>
       ) : null}
+    </aside>
+  );
+}
+
+/** Claims that could still be established: everything not already Ink. */
+function establishable(card: DeskCard): readonly Claim[] {
+  return card.claims.filter((claim) => claim.truthState !== "ink");
+}
+
+/**
+ * How settled this object is, and the way to change it.
+ *
+ * Maturity sits under the name because it is a property of the thing, not of
+ * any assertion about it — and the control that changes it is a button that
+ * opens a preview, never a toggle that establishes on click. Ink requires
+ * seeing what is about to become Ink.
+ */
+function TruthBar({
+  card,
+  store,
+  onEstablish
+}: {
+  card: DeskCard;
+  store: DeskStore;
+  onEstablish: () => void;
+}) {
+  const nothingLeft = card.maturity === "ink" && establishable(card).length === 0;
+
+  return (
+    <div className={styles.truthBar}>
+      <MaturityCue state={card.maturity} />
+
+      {card.maturity === "ink" ? (
+        <button
+          type="button"
+          className={styles.truthAction}
+          onClick={() => store.settle(card.objectId, { maturity: "pencil" })}
+          title="Return this to Pencil. What it says is kept; it stops being settled."
+        >
+          Unsettle
+        </button>
+      ) : null}
+
+      {nothingLeft ? (
+        <span className={styles.inspectorNote}>everything here is established</span>
+      ) : (
+        <button type="button" className={styles.truthActionStrong} onClick={onEstablish}>
+          Establish…
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The previewed act that establishes Ink.
+ *
+ * Invariant, stated plainly: Ink is established only by an explicit, previewed
+ * GM action. So this shows exactly what is about to become established, one
+ * line per thing, and commits the lot as a single change set — establishing an
+ * object and the four claims beside it is one intent, not five.
+ *
+ * It only ever promotes. Withdrawing is about one thing at a time and belongs
+ * beside that thing, where the GM can see what they are pulling back.
+ */
+function EstablishSheet({
+  card,
+  store,
+  onDone
+}: {
+  card: DeskCard;
+  store: DeskStore;
+  onDone: () => void;
+}) {
+  const pending = useMemo(() => establishable(card), [card]);
+  const canSettleObject = card.maturity !== "ink";
+
+  const [object, setObject] = useState(canSettleObject);
+  // Contested claims start unticked. Establishing something Relic has been told
+  // is disputed should take one more deliberate act than establishing something
+  // merely unresolved.
+  const [chosen, setChosen] = useState<ReadonlySet<string>>(
+    () => new Set(pending.filter((c) => c.truthState === "pencil").map((c) => c.id as string))
+  );
+
+  const title = cardTitle(card) || "this";
+  const kind = card.representation ? builtInTemplate(card.representation.kind).name : "Fragment";
+  const count = (object ? 1 : 0) + chosen.size;
+
+  const toggle = (id: string) =>
+    setChosen((was) => {
+      const next = new Set(was);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const confirm = () => {
+    store.settle(card.objectId, {
+      maturity: object ? "ink" : null,
+      claims: pending
+        .filter((claim) => chosen.has(claim.id))
+        .map((claim) => ({ claimId: claim.id, truth: "ink" as const }))
+    });
+    onDone();
+  };
+
+  return (
+    <aside className={styles.inspector} aria-label={`Establish ${title}`}>
+      <header className={styles.inspectorHead}>
+        <div className={styles.inspectorTop}>
+          <span className={styles.kindMark}>Establish</span>
+          <CloseFocus onClose={onDone} />
+        </div>
+        <p className={styles.inspectorLead}>{title}</p>
+        <p className={styles.establishNote}>
+          Ink is what this world can be built on. Nothing below changes until you
+          confirm, and everything you confirm is recorded as yours.
+        </p>
+      </header>
+
+      <section className={styles.inspectorSection}>
+        <h4 className={styles.inspectorHeading}>
+          Becoming Ink
+          <span className={styles.inspectorNote}>{count} selected</span>
+        </h4>
+
+        <ul className={styles.establishList}>
+          {canSettleObject ? (
+            <li>
+              <label className={styles.establishRow}>
+                <input
+                  type="checkbox"
+                  checked={object}
+                  onChange={(event) => setObject(event.target.checked)}
+                />
+                <span className={styles.establishKind}>the {kind.toLowerCase()}</span>
+                <span className={styles.establishValue}>
+                  {title}
+                  <span className={styles.establishMeaning}>
+                    settled enough to build on
+                  </span>
+                </span>
+              </label>
+            </li>
+          ) : null}
+
+          {pending.map((claim) => (
+            <li key={claim.id}>
+              <label className={styles.establishRow}>
+                <input
+                  type="checkbox"
+                  checked={chosen.has(claim.id)}
+                  onChange={() => toggle(claim.id)}
+                />
+                <span className={styles.establishKind}>{claim.claimKind}</span>
+                <span className={styles.establishValue}>
+                  {claim.value}
+                  {/* Contested material says so here, where the decision is
+                      being made — establishing a disputed claim is resolving
+                      the dispute, and the GM should know that is what they are
+                      doing. */}
+                  {claim.truthState === "disputed" ? (
+                    <span className={styles.establishMeaning}>
+                      contested — establishing settles it
+                    </span>
+                  ) : null}
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
+
+        {!canSettleObject && pending.length === 0 ? (
+          <p className={styles.inspectorLead}>There is nothing left to establish here.</p>
+        ) : null}
+      </section>
+
+      <div className={styles.establishActions}>
+        <button type="button" className={styles.truthAction} onClick={onDone}>
+          Cancel
+        </button>
+        <button
+          type="button"
+          className={styles.establishConfirm}
+          disabled={count === 0}
+          onClick={confirm}
+        >
+          Establish {count === 1 ? "1 thing" : `${count} things`}
+        </button>
+      </div>
     </aside>
   );
 }
@@ -149,11 +364,13 @@ function Connections({
 function Deepen({
   card,
   store,
-  onClose
+  onClose,
+  onEstablish
 }: {
   card: DeskCard;
   store: DeskStore;
   onClose: () => void;
+  onEstablish: () => void;
 }) {
   return (
     <aside className={styles.inspector} aria-label="Give this a kind">
@@ -165,6 +382,10 @@ function Deepen({
         <p className={styles.inspectorLead}>
           {cardTitle(card) || "An unwritten thought"}
         </p>
+        {/* A Fragment can be settled without ever becoming a kind of thing. A
+            note that is simply true is real world material, and demanding it be
+            classified first would be structure blocking thought. */}
+        <TruthBar card={card} store={store} onEstablish={onEstablish} />
       </header>
 
       <section className={styles.inspectorSection}>
@@ -254,6 +475,16 @@ function ClaimField({
   const existing = card.claims.find((claim) => claim.claimKind === def.key);
   const [draft, setDraft] = useState(existing?.value ?? "");
   const settled = useRef(existing?.value ?? "");
+  /**
+   * Established truth is not edited by landing in a field.
+   *
+   * "Ink is never silently rewritten" is an invariant, and a blur handler that
+   * quietly rewrote an established claim would break it every time a GM tabbed
+   * through the panel. So an Ink claim is read-only until a deliberate act
+   * unlocks it — and revising it returns it to Pencil, because the words have
+   * changed and nobody has yet decided the new ones are so.
+   */
+  const [revising, setRevising] = useState(false);
 
   useEffect(() => {
     const incoming = existing?.value ?? "";
@@ -262,6 +493,8 @@ function ClaimField({
       setDraft(incoming);
     }
   }, [existing?.value]);
+
+  useEffect(() => setRevising(false), [card.objectId, existing?.id]);
 
   /**
    * Commits what was typed.
@@ -282,44 +515,140 @@ function ClaimField({
       return;
     }
     store.assert(card.objectId, def.key, next, link ?? null);
+    setRevising(false);
   };
 
   const bound = existing?.objectValue != null;
+  const locked = existing?.truthState === "ink" && !revising;
 
   return (
-    <div className={styles.inspectorField}>
-      <span className={styles.inspectorLabel} id={`claim-${def.key}`}>
-        {def.label}
-      </span>
+    <div className={styles.claimBlock}>
+      <div className={styles.inspectorField}>
+        <span className={styles.inspectorLabel} id={`claim-${def.key}`}>
+          {def.label}
+        </span>
 
-      <div className={styles.claimEntry}>
-        <input
-          className={styles.inspectorInput}
-          value={draft}
-          aria-labelledby={`claim-${def.key}`}
-          data-linked={bound || undefined}
-          onChange={(event) => setDraft(event.target.value)}
-          onBlur={() => commit(draft)}
-          onKeyDown={(event) => {
-            event.stopPropagation();
-            if (event.key === "Enter") event.currentTarget.blur();
-          }}
-        />
-        {def.relational ? (
-          <Suggestions
-            query={draft}
-            subject={card.objectId}
-            store={store}
-            bound={bound}
-            onPick={(ref) => {
-              setDraft(ref.label);
-              commit(ref.label, ref);
+        <div className={styles.claimEntry}>
+          <input
+            className={styles.inspectorInput}
+            value={draft}
+            aria-labelledby={`claim-${def.key}`}
+            data-linked={bound || undefined}
+            data-locked={locked || undefined}
+            readOnly={locked}
+            title={locked ? "Established. Revise to change what it says." : undefined}
+            onChange={(event) => setDraft(event.target.value)}
+            onBlur={() => commit(draft)}
+            onKeyDown={(event) => {
+              event.stopPropagation();
+              if (event.key === "Enter") event.currentTarget.blur();
             }}
           />
-        ) : null}
+          {def.relational && !locked ? (
+            <Suggestions
+              query={draft}
+              subject={card.objectId}
+              store={store}
+              bound={bound}
+              onPick={(ref) => {
+                setDraft(ref.label);
+                commit(ref.label, ref);
+              }}
+            />
+          ) : null}
+        </div>
+
+        {existing ? <TruthMark state={existing.truthState} /> : null}
       </div>
 
-      {existing ? <TruthMark state={existing.truthState} /> : null}
+      {existing ? (
+        <div className={styles.claimMeta}>
+          <ProvenanceLine
+            provenance={existing.provenance}
+            settled={existing.settled}
+            truth={existing.truthState}
+          />
+          <ClaimActions
+            claim={existing}
+            store={store}
+            objectId={card.objectId}
+            revising={revising}
+            onRevise={() => setRevising(true)}
+          />
+        </div>
+      ) : null}
+
+      {revising ? (
+        <p className={styles.claimHint}>
+          Changing what this says returns it to Pencil. Establish it again when you
+          mean it.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * What can be decided about one assertion.
+ *
+ * Contextual rather than resident: revealed on hover and whenever anything in
+ * the row has keyboard focus, so the controls are reachable without a pointer
+ * and absent while the GM is reading. Every state offers exactly two moves, and
+ * none of them fires without being aimed at.
+ */
+function ClaimActions({
+  claim,
+  store,
+  objectId,
+  revising,
+  onRevise
+}: {
+  claim: Claim;
+  store: DeskStore;
+  objectId: WorldObjectId;
+  revising: boolean;
+  onRevise: () => void;
+}) {
+  const rule = (truth: Claim["truthState"]) =>
+    store.settle(objectId, { claims: [{ claimId: claim.id, truth }] });
+
+  return (
+    <div className={styles.claimActions}>
+      {claim.truthState === "ink" ? (
+        <>
+          {!revising ? (
+            <button type="button" className={styles.truthAction} onClick={onRevise}>
+              Revise
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className={styles.truthAction}
+            onClick={() => rule("pencil")}
+            title="Stop treating this as established. What it says is kept."
+          >
+            Withdraw
+          </button>
+        </>
+      ) : (
+        <>
+          <button
+            type="button"
+            className={styles.truthActionStrong}
+            onClick={() => rule("ink")}
+            title="Establish this. Recorded as yours."
+          >
+            Establish
+          </button>
+          <button
+            type="button"
+            className={styles.truthAction}
+            onClick={() => rule(claim.truthState === "disputed" ? "pencil" : "disputed")}
+          >
+            {claim.truthState === "disputed" ? "Undispute" : "Dispute"}
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -410,14 +739,6 @@ function Suggestions({
         </div>
       ) : null}
     </div>
-  );
-}
-
-function TruthMark({ state }: { state: DeskCard["truthState"] }) {
-  return (
-    <span className={styles.claimTruth} data-truth={state}>
-      {state === "ink" ? "INK" : state === "disputed" ? "DISPUTED" : "PENCIL"}
-    </span>
   );
 }
 

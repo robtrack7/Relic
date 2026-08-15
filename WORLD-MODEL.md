@@ -14,6 +14,10 @@ The lightest starting state of an object: captured thought before classification
 
 A Fragment may later gain richer representations without conversion, duplication, or identity replacement.
 
+A Fragment carries no truth of its own. Its prose is unclassified creative
+material, and how settled that is belongs to the object's **maturity**. Truth is
+for things that assert something.
+
 ## Representation
 
 A useful way to understand or edit a World Object: Character, Place, Faction, Thread, Event, Artifact, Source, Note, or another deliberate domain view.
@@ -116,6 +120,27 @@ Read it before schema work in this area.
 Important world assertions should retain why Relic believes them: source material, author, session evidence, Librarian inference, or deliberate GM action.
 
 Pencil may change when its evidence changes. Ink must never be silently rewritten by inference.
+
+Two records, kept apart because they answer different questions: **how the
+material arrived**, and **what was last decided about it**. "The Librarian
+inferred this from Session 4; the GM established it in August" is two facts, and
+collapsing them loses the one that matters. The second covers withdrawal and
+dispute as well as establishment — deciding to stop believing something is a
+decision, and a GM returning to a world asks about it just as often.
+
+### Establishing is one act, in one place
+
+Ink is reached only through a deliberate, previewed act, and only by the GM. The
+Librarian may assert, infer and propose; none of that is deciding something is
+so.
+
+Concentrate that act in a single write path rather than spreading a rule across
+every path that could otherwise reach the column, and make the storage layer
+refuse Ink that carries no record of who established it. Then the invariant
+survives a write path that has forgotten it exists.
+
+Correcting what an established assertion *says* returns it to Pencil. The words
+have changed and nobody has yet decided the new ones are true.
 
 ## Composition
 

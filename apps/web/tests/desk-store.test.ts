@@ -82,7 +82,9 @@ describe("capture", () => {
 
   it("captures Pencil, never Ink", async () => {
     const { card } = await deskWithCard();
-    expect(card.truthState).toBe("pencil");
+    expect(card.maturity).toBe("pencil");
+    // Nothing was settled, so nothing claims to have been.
+    expect(card.settled).toBeNull();
   });
 
   it("stacks each new card above the last", async () => {

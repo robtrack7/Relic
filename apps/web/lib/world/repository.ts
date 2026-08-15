@@ -1,4 +1,5 @@
 import type {
+  AuthorKind,
   CardId,
   Claim,
   ClaimId,
@@ -9,11 +10,14 @@ import type {
   FieldValues,
   Layout,
   Lifecycle,
+  Maturity,
   ObjectRef,
   Representation,
   RepresentationId,
   RepresentationKind,
+  Settlement,
   StoryPosition,
+  TruthState,
   Workspace,
   WorldId,
   WorldObjectId
@@ -111,6 +115,32 @@ export interface DeskRepository {
   removeClaim(input: RemoveClaimInput): Promise<WriteResult<ClaimId>>;
 
   /**
+   * Settles truth deliberately. **The only path in Relic that writes Ink.**
+   *
+   * Every other write — capture, edit, assertion, and whatever the Librarian
+   * grows into — produces Pencil and cannot do otherwise. Concentrating
+   * establishment in one method is what makes "Ink is deliberate" checkable
+   * rather than a rule every future write path has to remember.
+   *
+   * Three things are enforced here rather than asked of callers:
+   *
+   *   only the GM may establish. Ink requested by the Librarian, a player, or a
+   *   system process is `refused` — the Librarian may propose, and proposing is
+   *   `setClaim`;
+   *
+   *   the claims must belong to the subject, so a caller cannot establish
+   *   somebody else's assertions by sending their ids;
+   *
+   *   the whole settlement commits as one change set. Establishing an object
+   *   and the six claims previewed alongside it is one intent, and either all
+   *   of it happens or none of it does.
+   *
+   * Unsettling — back to Pencil, or into dispute — goes through the same method
+   * and the same transaction, because it is the same kind of act.
+   */
+  settleTruth(input: SettleTruthInput): Promise<WriteResult<Settled>>;
+
+  /**
    * Objects of a world that could stand at the other end of a relationship.
    *
    * A read, not a write, and the only place Relic offers identities the current
@@ -162,6 +192,48 @@ export type SetClaimInput = Readonly<{
 
 export type RemoveClaimInput = Readonly<{
   claimId: ClaimId;
+}>;
+
+export type ClaimSettlement = Readonly<{
+  claimId: ClaimId;
+  truth: TruthState;
+  /**
+   * The version the GM was shown when they decided.
+   *
+   * Ink is established by a *previewed* action, so establishing a claim whose
+   * wording changed underneath would establish something nobody looked at. A
+   * mismatch is reported, never resolved by guessing.
+   */
+  observedVersion: number;
+}>;
+
+export type SettleTruthInput = Readonly<{
+  objectId: WorldObjectId;
+  /**
+   * The object's maturity, or null to leave it alone.
+   *
+   * Deliberately carries no observed version. Maturity is a two-state judgment
+   * about a whole thing — "this is settled enough to rely on" — and it does not
+   * become stale because a claim moved underneath it. Claim truth does, and
+   * that is where the check lives.
+   */
+  maturity: Maturity | null;
+  /** Claims of `objectId`. Any that are not are refused, not skipped. */
+  claims: readonly ClaimSettlement[];
+  /**
+   * Who is settling. Refused if anyone but the GM asks for Ink — the Librarian
+   * may never establish, and this is where that is decided.
+   */
+  author: AuthorKind;
+}>;
+
+/** What the settlement left behind, for the caller to render without refetching. */
+export type Settled = Readonly<{
+  objectId: WorldObjectId;
+  maturity: Maturity;
+  settled: Settlement | null;
+  /** Every claim that was touched, as it now stands. */
+  claims: readonly Claim[];
 }>;
 
 export type CaptureCardInput = Readonly<{
@@ -223,14 +295,24 @@ export type RemoveCardsInput = Readonly<{
  * that clashed. A caller reconciles by replacing what it holds, so a partial
  * list here would read as "the Desk now contains only these" and quietly drop
  * everything else.
+ *
+ * `refused` is not `missing` and not `invalid`. The request was well formed and
+ * everything it named exists — Relic declined to do it. The truth system needs
+ * this: "the Librarian may not establish Ink" is a rule of the world, and
+ * reporting it as a malformed request would hide a decision behind a error.
  */
 export type WriteResult<T> =
   | Readonly<{ state: "ok"; data: T }>
   | Readonly<{ state: "missing" }>
+  | Readonly<{ state: "refused"; reason: string }>
   | Readonly<{ state: "conflict"; current: readonly DeskCard[] }>;
 
 export const ok = <T>(data: T): WriteResult<T> => ({ state: "ok", data });
 export const missing = <T>(): WriteResult<T> => ({ state: "missing" });
+export const refused = <T>(reason: string): WriteResult<T> => ({
+  state: "refused",
+  reason
+});
 export const conflict = <T>(current: readonly DeskCard[]): WriteResult<T> => ({
   state: "conflict",
   current
