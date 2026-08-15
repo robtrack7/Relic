@@ -1,0 +1,18 @@
+{
+  "name": "relic",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "dev": "pnpm --filter @relic/web dev",
+    "build": "pnpm --filter @relic/web build",
+    "start": "pnpm --filter @relic/web start",
+    "lint": "pnpm --filter @relic/web lint",
+    "test": "pnpm --filter @relic/web test",
+    "test:e2e": "pnpm --filter @relic/web test:e2e"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

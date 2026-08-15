@@ -1,0 +1,414 @@
+.shell {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100dvh;
+  background: var(--desk-void);
+}
+
+/* ---------------------------------------------------------------- chrome -- */
+
+.chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--edge);
+  background: linear-gradient(var(--surface), var(--desk-ground));
+}
+
+.identity {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+
+.wordmark {
+  font-family: var(--serif);
+  font-size: 22px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.deskName {
+  font-size: 13px;
+  color: var(--text-quiet);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chromeActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.primaryAction,
+.ghostAction {
+  padding: 6px 12px;
+  white-space: nowrap;
+  border-radius: var(--radius);
+  border: 1px solid var(--edge-strong);
+  background: var(--surface-raised);
+  color: var(--text);
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.primaryAction {
+  border-color: var(--brass-quiet);
+}
+
+.primaryAction:hover,
+.ghostAction:hover {
+  border-color: var(--brass);
+  background: var(--surface);
+}
+
+.ghostAction[aria-pressed="true"] {
+  border-color: var(--brass);
+}
+
+.syncBadge {
+  font-size: 12px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  min-width: 4.5em;
+  text-align: right;
+}
+
+.syncBadge[data-state="saving"] {
+  color: var(--text-quiet);
+}
+
+.problem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 46ch;
+  padding: 5px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--alarm);
+  background: rgba(201, 127, 87, 0.12);
+  color: var(--text);
+  font-size: 12px;
+  text-align: left;
+}
+
+.main {
+  position: relative;
+  min-height: 0;
+}
+
+.statusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 16px;
+  border-top: 1px solid var(--edge);
+  background: var(--desk-ground);
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.hints {
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- canvas -- */
+
+.canvasFrame {
+  position: relative;
+  height: 100%;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background-color: var(--desk-ground);
+  background-image: radial-gradient(circle, var(--desk-dot) 1px, transparent 1.2px);
+  touch-action: none;
+  cursor: default;
+  outline: none;
+}
+
+.canvas[data-panning] {
+  cursor: grab;
+}
+
+.canvas::after {
+  /* A faint vignette. Atmosphere, not information. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 50% 40%,
+    transparent 40%,
+    rgba(0, 0, 0, 0.42) 100%
+  );
+}
+
+.world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.emptyDesk {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  color: var(--text-faint);
+  font-family: var(--serif);
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  text-align: center;
+}
+
+.marquee {
+  position: absolute;
+  border: 1px solid var(--brass);
+  background: rgba(194, 160, 90, 0.08);
+  pointer-events: none;
+}
+
+.viewControls {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.viewControls button {
+  min-width: 34px;
+  padding: 5px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-quiet);
+  font-size: 13px;
+}
+
+.viewControls button:hover {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.viewControls button + button {
+  border-left: 1px solid var(--edge);
+}
+
+.zoomLevel {
+  font-family: var(--mono);
+  font-size: 11px;
+  min-width: 56px;
+}
+
+/* ------------------------------------------------------------------ card -- */
+
+.card {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 15px 9px;
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius);
+  background: linear-gradient(var(--surface-raised), var(--surface));
+  box-shadow: var(--shadow-card);
+  cursor: default;
+  outline: none;
+  /* Dragging a card must not smear a text selection across its body. */
+  user-select: none;
+  transition: border-color 100ms ease, box-shadow 120ms ease;
+}
+
+.card[data-editing] {
+  user-select: text;
+}
+
+.card:hover {
+  border-color: #554836;
+}
+
+.card[data-selected] {
+  border-color: var(--brass);
+  box-shadow: var(--shadow-card), 0 0 0 1px var(--brass-quiet);
+}
+
+.card[data-editing] {
+  border-color: var(--brass);
+  cursor: text;
+}
+
+.card:focus-visible {
+  border-color: var(--brass);
+  box-shadow: var(--shadow-card), 0 0 0 2px var(--brass);
+}
+
+.cardBody {
+  flex: 1;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.42;
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cardBody[data-empty] {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.cardEditor {
+  flex: 1;
+  min-height: 96px;
+  resize: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.42;
+  outline: none;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--edge);
+  padding-top: 6px;
+}
+
+.truth {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* ----------------------------------------------------------------- stack -- */
+
+.stack {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--desk-ground);
+  padding: 16px;
+}
+
+.emptyStack {
+  margin: 48px auto;
+  max-width: 30ch;
+  text-align: center;
+  color: var(--text-faint);
+  font-family: var(--serif);
+  font-size: 18px;
+}
+
+.stackList {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stackItem {
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius);
+  background: linear-gradient(var(--surface-raised), var(--surface));
+  padding: 12px 14px 8px;
+}
+
+.stackItem[data-selected] {
+  border-color: var(--brass);
+}
+
+.stackBody,
+.stackEditor {
+  display: block;
+  width: 100%;
+  min-height: 64px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.42;
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.stackBody[data-empty] {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.stackEditor {
+  resize: vertical;
+  outline: none;
+}
+
+.stackActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--edge);
+}
+
+.stackActions .truth {
+  margin-right: auto;
+}
+
+.stackActions button {
+  border: 0;
+  background: transparent;
+  color: var(--text-quiet);
+  font-size: 12px;
+  padding: 4px 2px;
+  min-height: 32px;
+}
+
+.stackActions button:hover {
+  color: var(--brass);
+}
+
+@media (max-width: 720px) {
+  .hints {
+    display: none;
+  }
+
+  .wordmark {
+    font-size: 18px;
+  }
+}

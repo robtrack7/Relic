@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+dist/
+build/
+coverage/
+out/
+test-results/
+playwright-report/
+*.tsbuildinfo
+
+# Local data (development desk store)
+.relic-data/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vs/
+.vscode/*
+!.vscode/extensions.json
+
+# Agent tool local state
+.claude/*
+!.claude/agents/
+.codex/*
+!.codex/agents/
+.playwright-mcp/
+.playwright-cli/
+/.tmp/
