@@ -124,8 +124,28 @@ export type DeskCard = Readonly<{
 export type DeskView = Readonly<{
   worldId: WorldId;
   compositionId: CompositionId;
+  kind: CompositionKind;
   name: string | null;
   cards: readonly DeskCard[];
+}>;
+
+/**
+ * Enough of a composition to name it and switch to it, without loading what it
+ * holds. The count is of references, not of world content — two compositions
+ * counting the same object are both telling the truth.
+ */
+export type CompositionSummary = Readonly<{
+  compositionId: CompositionId;
+  kind: CompositionKind;
+  name: string;
+  cardCount: number;
+}>;
+
+/** Every composition of one world, for the switcher. */
+export type Workspace = Readonly<{
+  worldId: WorldId;
+  name: string | null;
+  compositions: readonly CompositionSummary[];
 }>;
 
 export const DEFAULT_CARD_WIDTH = 260;

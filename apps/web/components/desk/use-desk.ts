@@ -6,6 +6,7 @@ import {
   captureCardAction,
   editCardBodyAction,
   moveCardsAction,
+  referenceObjectsAction,
   removeCardsAction,
   type ActionResult
 } from "@/app/actions";
@@ -322,6 +323,47 @@ export function useDesk(initial: DeskView) {
     [absorb, compositionId, enqueue]
   );
 
+  /**
+   * References the selected objects from another composition.
+   *
+   * Nothing leaves this composition and nothing is copied: the target gets its
+   * own cards pointing at the same World Objects, keeping the arrangement they
+   * had here so a cluster arrives as a cluster.
+   */
+  const referenceInto = useCallback(
+    (target: CompositionId, ids: readonly CardId[]) => {
+      if (ids.length === 0 || target === compositionId) return;
+      const wanted = new Set<string>(ids);
+      const placements = cardsRef.current
+        .filter((card) => wanted.has(card.cardId))
+        .map((card) => ({
+          cardId: crypto.randomUUID(),
+          objectId: card.objectId as string,
+          x: Math.round(card.layout.x),
+          y: Math.round(card.layout.y),
+          width: card.layout.width,
+          height: card.layout.height
+        }));
+      if (placements.length === 0) return;
+
+      enqueue(async () => {
+        const result = await referenceObjectsAction({ compositionId: target, placements });
+        // A conflict here concerns the *target* composition, which this store
+        // does not hold, so reconciling against it would replace this Desk with
+        // another one's cards. Only report the outcome.
+        if (result.state === "ok") return;
+        setSync({
+          kind: "problem",
+          message:
+            result.state === "missing"
+              ? "That board is no longer part of this world."
+              : "Those cards could not be added to the board."
+        });
+      });
+    },
+    [compositionId, enqueue]
+  );
+
   const dismissProblem = useCallback(() => setSync({ kind: "settled" }), []);
 
   const byId = useMemo(() => {
@@ -341,6 +383,7 @@ export function useDesk(initial: DeskView) {
     nudge,
     commitMove,
     remove,
+    referenceInto,
     dismissProblem
   };
 }

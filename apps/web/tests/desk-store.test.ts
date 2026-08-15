@@ -2,7 +2,13 @@
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { asCardId, asWorldId, asWorldObjectId, emptyLayoutAt } from "@/lib/world/model";
+import {
+  asCardId,
+  asCompositionId,
+  asWorldId,
+  asWorldObjectId,
+  emptyLayoutAt
+} from "@/lib/world/model";
 import { SqliteDeskRepository } from "@/lib/world/sqlite-store";
 
 const WORLD = asWorldId("00000000-0000-4000-8000-0000000000aa");
@@ -208,6 +214,162 @@ describe("one intent, one change set", () => {
       observedBodyVersion: 1
     });
     expect(result.state).toBe("missing");
+  });
+});
+
+describe("boards are compositions of the same world", () => {
+  async function deskAndBoard() {
+    const desk = await repo.openDesk(WORLD);
+    const board = await repo.createBoard({
+      worldId: WORLD,
+      compositionId: asCompositionId(randomUUID()),
+      name: "The Drowned Coast"
+    });
+    return { desk, board };
+  }
+
+  it("lists the desk and every board of the world", async () => {
+    const { board } = await deskAndBoard();
+    const workspace = await repo.openWorld(WORLD);
+
+    expect(workspace.compositions.map((c) => c.kind)).toEqual(["desk", "board"]);
+    expect(workspace.compositions[1]?.compositionId).toBe(board.compositionId);
+  });
+
+  it("reopens a board with only what was put on it", async () => {
+    const { desk, board } = await deskAndBoard();
+    const card = await repo.captureCard({
+      compositionId: desk.compositionId,
+      cardId: asCardId(randomUUID()),
+      objectId: asWorldObjectId(randomUUID()),
+      body: "The bells vanished during the storm",
+      layout: emptyLayoutAt(0, 0)
+    });
+
+    const reopened = await repo.openComposition(board.compositionId);
+    expect(reopened?.kind).toBe("board");
+    expect(reopened?.name).toBe("The Drowned Coast");
+    expect(reopened?.cards).toEqual([]);
+
+    // ...and the object it does not hold is still on the Desk.
+    expect((await repo.openDesk(WORLD)).cards[0]?.cardId).toBe(card.cardId);
+  });
+
+  it("references one object from two compositions without copying it", async () => {
+    const { desk, board } = await deskAndBoard();
+    const onDesk = await repo.captureCard({
+      compositionId: desk.compositionId,
+      cardId: asCardId(randomUUID()),
+      objectId: asWorldObjectId(randomUUID()),
+      body: "The harbour master lies",
+      layout: emptyLayoutAt(10, 20)
+    });
+
+    const placed = await repo.referenceObjects({
+      compositionId: board.compositionId,
+      placements: [
+        { cardId: asCardId(randomUUID()), objectId: onDesk.objectId, layout: emptyLayoutAt(10, 20) }
+      ]
+    });
+    expect(placed.state).toBe("ok");
+    if (placed.state !== "ok") return;
+
+    const onBoard = placed.data[0];
+    expect(onBoard?.objectId).toBe(onDesk.objectId);
+    expect(onBoard?.cardId).not.toBe(onDesk.cardId);
+
+    // Editing through the board is editing the one Fragment.
+    await repo.editCardBody({
+      compositionId: board.compositionId,
+      cardId: onBoard!.cardId,
+      body: "The harbour master is bought",
+      observedBodyVersion: onBoard!.bodyVersion
+    });
+    expect((await repo.openDesk(WORLD)).cards[0]?.body).toBe("The harbour master is bought");
+
+    // Moving on the board moves nothing on the desk.
+    await repo.moveCards({
+      compositionId: board.compositionId,
+      bringToFront: true,
+      moves: [
+        { cardId: onBoard!.cardId, x: 900, y: 900, observedCardVersion: onBoard!.cardVersion }
+      ]
+    });
+    expect((await repo.openDesk(WORLD)).cards[0]?.layout).toMatchObject({ x: 10, y: 20 });
+    expect(
+      (await repo.openComposition(board.compositionId))?.cards[0]?.layout
+    ).toMatchObject({ x: 900, y: 900 });
+  });
+
+  it("referencing the same object twice returns the card that is already there", async () => {
+    const { desk, board } = await deskAndBoard();
+    const onDesk = await repo.captureCard({
+      compositionId: desk.compositionId,
+      cardId: asCardId(randomUUID()),
+      objectId: asWorldObjectId(randomUUID()),
+      body: "",
+      layout: emptyLayoutAt(0, 0)
+    });
+
+    const place = () =>
+      repo.referenceObjects({
+        compositionId: board.compositionId,
+        placements: [
+          { cardId: asCardId(randomUUID()), objectId: onDesk.objectId, layout: emptyLayoutAt(0, 0) }
+        ]
+      });
+
+    const first = await place();
+    const second = await place();
+    expect(second.state).toBe("ok");
+    if (first.state !== "ok" || second.state !== "ok") return;
+    expect(second.data[0]?.cardId).toBe(first.data[0]?.cardId);
+    expect((await repo.openComposition(board.compositionId))?.cards).toHaveLength(1);
+  });
+
+  it("refuses to reference an object from another world", async () => {
+    const { board } = await deskAndBoard();
+    const other = asWorldId("00000000-0000-4000-8000-0000000000ff");
+    const elsewhere = await repo.openDesk(other);
+    const stranger = await repo.captureCard({
+      compositionId: elsewhere.compositionId,
+      cardId: asCardId(randomUUID()),
+      objectId: asWorldObjectId(randomUUID()),
+      body: "belongs to another world",
+      layout: emptyLayoutAt(0, 0)
+    });
+
+    const result = await repo.referenceObjects({
+      compositionId: board.compositionId,
+      placements: [
+        { cardId: asCardId(randomUUID()), objectId: stranger.objectId, layout: emptyLayoutAt(0, 0) }
+      ]
+    });
+
+    expect(result.state).toBe("missing");
+    expect((await repo.openComposition(board.compositionId))?.cards).toEqual([]);
+  });
+
+  it("keeps the object alive while any composition still references it", async () => {
+    const { desk, board } = await deskAndBoard();
+    const onDesk = await repo.captureCard({
+      compositionId: desk.compositionId,
+      cardId: asCardId(randomUUID()),
+      objectId: asWorldObjectId(randomUUID()),
+      body: "still wanted",
+      layout: emptyLayoutAt(0, 0)
+    });
+    await repo.referenceObjects({
+      compositionId: board.compositionId,
+      placements: [
+        { cardId: asCardId(randomUUID()), objectId: onDesk.objectId, layout: emptyLayoutAt(0, 0) }
+      ]
+    });
+
+    await repo.removeCards({ compositionId: desk.compositionId, cardIds: [onDesk.cardId] });
+
+    expect(repo.objectLifecycle(onDesk.objectId)).toBe("active");
+    expect((await repo.openComposition(board.compositionId))?.cards[0]?.body).toBe("still wanted");
   });
 });
 

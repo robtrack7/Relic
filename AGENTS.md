@@ -14,8 +14,16 @@ Read these first. They are short on purpose and they are the north star:
 | [`WORLD-MODEL.md`](WORLD-MODEL.md) | Identity, Fragments, Representations, Ink/Pencil, provenance, composition, change sets |
 | [`AI.md`](AI.md) | What the Librarian knows, what it may do, what it may never do |
 | [`BUILD.md`](BUILD.md) | Build order, working style, validation levels |
+| [`docs/reference/Relic UI — Core Skill.md`](docs/reference/Relic%20UI%20%E2%80%94%20Core%20Skill.md) | The look and feel: north star, core laws, palette, typography, decision test |
 
-Everything under `docs/reference/` is **reference, not required reading**. Consult it when you need it; do not read it per task.
+The UI core skill is direction, not reference — read it before any user-facing
+design or interaction decision. Its companion
+[`visual-language.md`](docs/reference/visual-language.md) goes deeper on Cards,
+spatial behaviour, the Librarian carriage, Stage, and density; read that one only
+when the decision needs it. `docs/reference/UI Concept Direction/` holds concept
+renders of where this is going.
+
+Everything else under `docs/reference/` is **reference, not required reading**. Consult it when you need it; do not read it per task.
 
 ## Durable invariants
 

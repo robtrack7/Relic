@@ -6,13 +6,17 @@ import { DatabaseSync } from "node:sqlite";
 import {
   asCardId,
   asCompositionId,
+  asWorldId,
   asWorldObjectId,
   type CardId,
   type CompositionId,
+  type CompositionKind,
+  type CompositionSummary,
   type DeskCard,
   type DeskView,
   type Lifecycle,
   type TruthState,
+  type Workspace,
   type WorldId,
   type WorldObjectId
 } from "@/lib/world/model";
@@ -21,9 +25,11 @@ import {
   missing,
   ok,
   type CaptureCardInput,
+  type CreateBoardInput,
   type DeskRepository,
   type EditBodyInput,
   type MoveCardsInput,
+  type ReferenceObjectsInput,
   type RemoveCardsInput,
   type WriteResult
 } from "@/lib/world/repository";
@@ -94,6 +100,13 @@ create index if not exists composition_items_by_composition
 
 create index if not exists composition_items_by_object
   on composition_items (object_id, lifecycle);
+
+-- One object appears at most once on any one composition. Across compositions
+-- it may appear freely — that is the whole point of a reference. Two cards for
+-- the same object on the same Board would only make "which one am I editing"
+-- ambiguous, and there is nothing to distinguish them by.
+create unique index if not exists composition_items_one_active_reference
+  on composition_items (composition_id, object_id) where lifecycle = 'active';
 `;
 
 type CardRow = {
@@ -203,8 +216,9 @@ export class SqliteDeskRepository implements DeskRepository {
     return row?.top ?? 0;
   }
 
-  async openDesk(worldId: WorldId): Promise<DeskView> {
-    const compositionId = this.#transaction(() => {
+  /** Creates the world and its Desk on first visit. Idempotent. */
+  #ensureDesk(worldId: WorldId): CompositionId {
+    return this.#transaction(() => {
       this.#db
         .prepare("insert or ignore into worlds (id, name, created_at) values (?, ?, ?)")
         .run(worldId, "Untitled world", now());
@@ -225,13 +239,160 @@ export class SqliteDeskRepository implements DeskRepository {
         .run(id, worldId, "Desk", now());
       return asCompositionId(id);
     });
+  }
 
+  async openDesk(worldId: WorldId): Promise<DeskView> {
+    const compositionId = this.#ensureDesk(worldId);
     return {
       worldId,
       compositionId,
+      kind: "desk",
       name: "Desk",
       cards: this.#cardsOf(compositionId)
     };
+  }
+
+  async openWorld(worldId: WorldId): Promise<Workspace> {
+    this.#ensureDesk(worldId);
+
+    const world = this.#db
+      .prepare("select name from worlds where id = ?")
+      .get(worldId) as unknown as { name: string | null } | undefined;
+
+    const rows = this.#db
+      .prepare(
+        `select c.id, c.kind, c.name,
+                (select count(*) from composition_items ci
+                   join world_objects wo on wo.id = ci.object_id
+                  where ci.composition_id = c.id
+                    and ci.lifecycle = 'active'
+                    and wo.lifecycle = 'active') as card_count
+           from compositions c
+          where c.world_id = ?
+          order by case c.kind when 'desk' then 0 else 1 end, c.rowid asc`
+      )
+      .all(worldId) as unknown as {
+      id: string;
+      kind: string;
+      name: string | null;
+      card_count: number;
+    }[];
+
+    return {
+      worldId,
+      name: world?.name ?? null,
+      compositions: rows.map((row) => ({
+        compositionId: asCompositionId(row.id),
+        kind: row.kind as CompositionKind,
+        name: row.name ?? "Untitled",
+        cardCount: row.card_count
+      }))
+    };
+  }
+
+  async openComposition(compositionId: CompositionId): Promise<DeskView | null> {
+    const row = this.#db
+      .prepare("select world_id, kind, name from compositions where id = ?")
+      .get(compositionId) as unknown as
+      | { world_id: string; kind: string; name: string | null }
+      | undefined;
+    if (!row) return null;
+
+    return {
+      worldId: asWorldId(row.world_id),
+      compositionId,
+      kind: row.kind as CompositionKind,
+      name: row.name,
+      cards: this.#cardsOf(compositionId)
+    };
+  }
+
+  async createBoard(input: CreateBoardInput): Promise<CompositionSummary> {
+    return this.#transaction(() => {
+      const world = this.#db
+        .prepare("select id from worlds where id = ?")
+        .get(input.worldId) as unknown as { id: string } | undefined;
+      if (!world) throw new Error("createBoard: world does not exist");
+
+      this.#db
+        .prepare(
+          "insert into compositions (id, world_id, kind, name, version, created_at) values (?, ?, 'board', ?, 1, ?)"
+        )
+        .run(input.compositionId, input.worldId, input.name, now());
+
+      return {
+        compositionId: input.compositionId,
+        kind: "board" as const,
+        name: input.name,
+        cardCount: 0
+      };
+    });
+  }
+
+  async referenceObjects(
+    input: ReferenceObjectsInput
+  ): Promise<WriteResult<readonly DeskCard[]>> {
+    if (input.placements.length === 0) return ok([]);
+
+    return this.#transaction(() => {
+      const target = this.#db
+        .prepare("select world_id from compositions where id = ?")
+        .get(input.compositionId) as unknown as { world_id: string } | undefined;
+      if (!target) return missing<readonly DeskCard[]>();
+
+      let z = this.#maxZ(input.compositionId);
+      const placed: DeskCard[] = [];
+
+      for (const placement of input.placements) {
+        // An object may only be referenced by compositions of its own world.
+        // This is the tenancy seam: it is checked here, in the store, not in
+        // the caller that happens to know both ids.
+        const object = this.#db
+          .prepare("select world_id, lifecycle from world_objects where id = ?")
+          .get(placement.objectId) as unknown as
+          | { world_id: string; lifecycle: string }
+          | undefined;
+        if (!object || object.world_id !== target.world_id) {
+          return missing<readonly DeskCard[]>();
+        }
+        if (object.lifecycle !== "active") continue;
+
+        // Already on this composition: referencing it again is a no-op that
+        // returns what is already there, so a repeated gesture is harmless.
+        const existing = this.#db
+          .prepare(
+            `${CARD_SELECT} and ci.composition_id = ? and ci.object_id = ?`
+          )
+          .get(input.compositionId, placement.objectId) as unknown as CardRow | undefined;
+        if (existing) {
+          placed.push(toDeskCard(existing));
+          continue;
+        }
+
+        this.#db
+          .prepare(
+            `insert into composition_items
+               (id, composition_id, object_id, x, y, width, height, z, version, lifecycle)
+             values (?, ?, ?, ?, ?, ?, ?, ?, 1, 'active')`
+          )
+          .run(
+            placement.cardId,
+            input.compositionId,
+            placement.objectId,
+            placement.layout.x,
+            placement.layout.y,
+            placement.layout.width,
+            placement.layout.height,
+            ++z
+          );
+
+        const row = this.#cardById(input.compositionId, placement.cardId);
+        if (!row) throw new Error("referenceObjects: card vanished inside its own transaction");
+        placed.push(toDeskCard(row));
+      }
+
+      return ok<readonly DeskCard[]>(placed);
+    });
   }
 
   async captureCard(input: CaptureCardInput): Promise<DeskCard> {

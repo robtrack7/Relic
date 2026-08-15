@@ -43,6 +43,8 @@ const WHEEL_ZOOM_SENSITIVITY = 0.0022;
 
 type Props = {
   store: DeskStore;
+  /** What this composition calls itself when it is empty. */
+  surfaceName: string;
   selection: Selection;
   onSelectionChange: (selection: Selection) => void;
   editing: CardId | null;
@@ -51,6 +53,7 @@ type Props = {
 
 export function DeskCanvas({
   store,
+  surfaceName,
   selection,
   onSelectionChange,
   editing,
@@ -409,8 +412,8 @@ export function DeskCanvas({
 
         {cards.length === 0 ? (
           <p className={styles.emptyDesk}>
-            An empty desk. <strong>Double-click</strong> anywhere, or press <kbd>N</kbd>, to
-            begin.
+            An empty {surfaceName}. <strong>Double-click</strong> anywhere, or press <kbd>N</kbd>,
+            to begin.
           </p>
         ) : null}
       </div>

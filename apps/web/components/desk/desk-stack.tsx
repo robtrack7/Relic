@@ -5,11 +5,14 @@ import { useEffect, useMemo, useRef } from "react";
 import { EMPTY_SELECTION, only, toggle, type Selection } from "@/lib/desk/selection";
 import type { CardId } from "@/lib/world/model";
 
+import { TruthCue } from "./truth";
 import type { DeskStore } from "./use-desk";
 import styles from "./desk.module.css";
 
 type Props = {
   store: DeskStore;
+  /** What this composition calls itself when it is empty. */
+  surfaceName: string;
   selection: Selection;
   onSelectionChange: (selection: Selection) => void;
   editing: CardId | null;
@@ -25,6 +28,7 @@ type Props = {
  */
 export function DeskStack({
   store,
+  surfaceName,
   selection,
   onSelectionChange,
   editing,
@@ -47,7 +51,7 @@ export function DeskStack({
     <div className={styles.stack}>
       {ordered.length === 0 ? (
         <p className={styles.emptyStack}>
-          An empty desk. Use <strong>New card</strong> to begin.
+          An empty {surfaceName}. Use <strong>New card</strong> to begin.
         </p>
       ) : null}
 
@@ -56,7 +60,12 @@ export function DeskStack({
           const selected = selection.has(card.cardId);
           const isEditing = editing === card.cardId;
           return (
-            <li key={card.cardId} className={styles.stackItem} data-selected={selected || undefined}>
+            <li
+              key={card.cardId}
+              className={styles.stackItem}
+              data-truth={card.truthState}
+              data-selected={selected || undefined}
+            >
               {isEditing ? (
                 <textarea
                   ref={editor}
@@ -94,9 +103,7 @@ export function DeskStack({
               )}
 
               <div className={styles.stackActions}>
-                <span className={styles.truth}>
-                  <span aria-hidden="true">✎</span> Pencil
-                </span>
+                <TruthCue state={card.truthState} />
                 <button type="button" onClick={() => onEditingChange(card.cardId)}>
                   Edit
                 </button>

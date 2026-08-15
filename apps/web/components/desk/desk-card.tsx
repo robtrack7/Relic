@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 
 import type { DeskCard as DeskCardModel } from "@/lib/world/model";
+
+import { TruthCue } from "./truth";
 import styles from "./desk.module.css";
 
 type Props = {
@@ -14,17 +16,6 @@ type Props = {
   onBodyChange: (body: string) => void;
   onEndEdit: () => void;
 };
-
-/**
- * Truth state reads through a word and a mark, never through colour alone —
- * a GM must be able to tell established world truth from provisional material
- * without relying on hue.
- */
-const TRUTH_MARK = {
-  pencil: { label: "Pencil", glyph: "✎" },
-  ink: { label: "Ink", glyph: "◆" },
-  disputed: { label: "Disputed", glyph: "≠" }
-} as const;
 
 export function DeskCard({
   card,
@@ -45,12 +36,12 @@ export function DeskCard({
     node.setSelectionRange(node.value.length, node.value.length);
   }, [editing]);
 
-  const mark = TRUTH_MARK[card.truthState];
   const summary = card.body.trim();
 
   return (
     <article
       className={styles.card}
+      data-truth={card.truthState}
       data-selected={selected || undefined}
       data-editing={editing || undefined}
       style={{
@@ -102,9 +93,7 @@ export function DeskCard({
       )}
 
       <footer className={styles.cardFooter}>
-        <span className={styles.truth} aria-label={`Truth state: ${mark.label}`}>
-          <span aria-hidden="true">{mark.glyph}</span> {mark.label}
-        </span>
+        <TruthCue state={card.truthState} />
       </footer>
     </article>
   );

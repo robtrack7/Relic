@@ -1,18 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { EMPTY_SELECTION, only, type Selection } from "@/lib/desk/selection";
-import type { CardId, DeskView } from "@/lib/world/model";
+import type { CardId, DeskView, Workspace } from "@/lib/world/model";
 
 import { DeskCanvas } from "./desk-canvas";
 import { DeskStack } from "./desk-stack";
-import { useDesk } from "./use-desk";
+import { useDesk, type DeskStore } from "./use-desk";
+import { WorldBar } from "./world-bar";
 import styles from "./desk.module.css";
 
 type Arrangement = "canvas" | "stack";
 
-export function DeskSurface({ initial }: { initial: DeskView }) {
+export function DeskSurface({
+  workspace,
+  initial
+}: {
+  workspace: Workspace;
+  initial: DeskView;
+}) {
   const store = useDesk(initial);
   const [selection, setSelection] = useState<Selection>(EMPTY_SELECTION);
   const [editing, setEditing] = useState<CardId | null>(null);
@@ -28,6 +35,7 @@ export function DeskSurface({ initial }: { initial: DeskView }) {
   }, []);
 
   const arrangement: Arrangement = override ?? (narrow ? "stack" : "canvas");
+  const surfaceName = initial.kind === "desk" ? "desk" : initial.kind;
 
   const captureFromChrome = () => {
     // Placed just below the newest card so the stack view stays readable and
@@ -42,7 +50,7 @@ export function DeskSurface({ initial }: { initial: DeskView }) {
       <header className={styles.chrome}>
         <div className={styles.identity}>
           <span className={styles.wordmark}>Relic</span>
-          <span className={styles.deskName}>{initial.name ?? "Desk"}</span>
+          <WorldBar workspace={workspace} active={initial.compositionId} />
         </div>
 
         <div className={styles.chromeActions}>
@@ -65,6 +73,7 @@ export function DeskSurface({ initial }: { initial: DeskView }) {
         {arrangement === "canvas" ? (
           <DeskCanvas
             store={store}
+            surfaceName={surfaceName}
             selection={selection}
             onSelectionChange={setSelection}
             editing={editing}
@@ -73,6 +82,7 @@ export function DeskSurface({ initial }: { initial: DeskView }) {
         ) : (
           <DeskStack
             store={store}
+            surfaceName={surfaceName}
             selection={selection}
             onSelectionChange={setSelection}
             editing={editing}
@@ -82,10 +92,22 @@ export function DeskSurface({ initial }: { initial: DeskView }) {
       </main>
 
       <footer className={styles.statusBar}>
-        <span>
+        <span className={styles.tally}>
           {store.cards.length} {store.cards.length === 1 ? "card" : "cards"}
           {selection.size > 0 ? ` · ${selection.size} selected` : ""}
         </span>
+
+        {/* Contextual: the way to another composition appears once there is
+            something to send, and goes away again afterwards. */}
+        {selection.size > 0 ? (
+          <SendToComposition
+            workspace={workspace}
+            store={store}
+            selection={selection}
+            here={initial.compositionId}
+          />
+        ) : null}
+
         {arrangement === "canvas" ? (
           <span className={styles.hints}>
             Double-click to capture · Space or middle-drag to pan · Ctrl+wheel to zoom ·
@@ -99,7 +121,74 @@ export function DeskSurface({ initial }: { initial: DeskView }) {
   );
 }
 
-function SyncBadge({ store }: { store: ReturnType<typeof useDesk> }) {
+/**
+ * Places the selected objects on another composition of the same world.
+ *
+ * The wording is deliberate: the cards are *referenced*, not moved or copied.
+ * The same world material ends up visible in two places at once, which is the
+ * point of a Board.
+ */
+function SendToComposition({
+  workspace,
+  store,
+  selection,
+  here
+}: {
+  workspace: Workspace;
+  store: DeskStore;
+  selection: Selection;
+  here: DeskView["compositionId"];
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapper = useRef<HTMLDivElement>(null);
+  const elsewhere = workspace.compositions.filter((c) => c.compositionId !== here);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: Event) => {
+      if (!wrapper.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [open]);
+
+  if (elsewhere.length === 0) return null;
+
+  return (
+    <div className={styles.sendTo} ref={wrapper}>
+      <button
+        type="button"
+        className={styles.sendToButton}
+        aria-expanded={open}
+        onClick={() => setOpen((was) => !was)}
+      >
+        Add {selection.size === 1 ? "card" : `${selection.size} cards`} to…
+      </button>
+
+      {open ? (
+        <div className={styles.sendToMenu} role="menu">
+          {elsewhere.map((composition) => (
+            <button
+              key={composition.compositionId}
+              type="button"
+              role="menuitem"
+              className={styles.switcherItem}
+              aria-label={composition.name}
+              onClick={() => {
+                store.referenceInto(composition.compositionId, [...selection]);
+                setOpen(false);
+              }}
+            >
+              <span className={styles.switcherName}>{composition.name}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SyncBadge({ store }: { store: DeskStore }) {
   const { sync, dismissProblem } = store;
 
   if (sync.kind === "problem") {

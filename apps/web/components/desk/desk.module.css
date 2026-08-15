@@ -2,7 +2,7 @@
   display: grid;
   grid-template-rows: auto 1fr auto;
   height: 100dvh;
-  background: var(--desk-void);
+  background: var(--paper-deep);
 }
 
 /* ---------------------------------------------------------------- chrome -- */
@@ -12,32 +12,171 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--edge);
-  background: linear-gradient(var(--surface), var(--desk-ground));
+  padding: 0 16px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--card);
 }
 
 .identity {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  align-items: center;
+  gap: 14px;
   min-width: 0;
 }
 
 .wordmark {
-  font-family: var(--serif);
-  font-size: 22px;
-  letter-spacing: 0.14em;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--text);
+  color: var(--ink);
 }
 
-.deskName {
+/* ------------------------------------------------------------ world bar -- */
+
+.worldBar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.worldName {
   font-size: 13px;
-  color: var(--text-quiet);
+  color: var(--ink-quiet);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.trailMark {
+  color: var(--ink-faint);
+  font-size: 12px;
+}
+
+.compositionButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.compositionButton:hover,
+.compositionButton[aria-expanded="true"] {
+  border-color: var(--rule-strong);
+  background: var(--paper);
+}
+
+.switcher {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 260px;
+  padding: 6px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--card-raised);
+  box-shadow: var(--lift-raised);
+}
+
+.switcherHeading {
+  margin: 4px 8px 6px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.switcherItem {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  text-align: left;
+}
+
+.switcherItem:hover {
+  background: var(--orange-wash);
+}
+
+.switcherItem[data-current] {
+  color: var(--orange-deep);
+  font-weight: 500;
+}
+
+.switcherName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.switcherCount {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.switcherAdd {
+  width: 100%;
+  margin-top: 4px;
+  padding: 7px 8px;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-quiet);
+  font-size: 13px;
+  text-align: left;
+}
+
+.switcherAdd:hover {
+  color: var(--orange-deep);
+}
+
+.namingRow {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
+}
+
+.nameField {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-control);
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.nameField:focus {
+  outline: none;
+  border-color: var(--orange);
 }
 
 .chromeActions {
@@ -48,39 +187,42 @@
 
 .primaryAction,
 .ghostAction {
-  padding: 6px 12px;
+  padding: 5px 12px;
   white-space: nowrap;
-  border-radius: var(--radius);
-  border: 1px solid var(--edge-strong);
-  background: var(--surface-raised);
-  color: var(--text);
-  transition: border-color 120ms ease, background 120ms ease;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--rule-strong);
+  background: var(--card-raised);
+  color: var(--ink);
+  font-size: 13px;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
 }
 
 .primaryAction {
-  border-color: var(--brass-quiet);
+  border-color: var(--orange);
+  color: var(--orange-deep);
 }
 
-.primaryAction:hover,
+.primaryAction:hover {
+  background: var(--orange-wash);
+}
+
 .ghostAction:hover {
-  border-color: var(--brass);
-  background: var(--surface);
+  border-color: var(--ink-faint);
 }
 
 .ghostAction[aria-pressed="true"] {
-  border-color: var(--brass);
+  border-color: var(--orange);
+  color: var(--orange-deep);
 }
 
 .syncBadge {
-  font-size: 12px;
-  color: var(--text-faint);
-  font-variant-numeric: tabular-nums;
-  min-width: 4.5em;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  min-width: 5em;
   text-align: right;
-}
-
-.syncBadge[data-state="saving"] {
-  color: var(--text-quiet);
 }
 
 .problem {
@@ -88,11 +230,11 @@
   align-items: center;
   gap: 6px;
   max-width: 46ch;
-  padding: 5px 10px;
-  border-radius: var(--radius);
-  border: 1px solid var(--alarm);
-  background: rgba(201, 127, 87, 0.12);
-  color: var(--text);
+  padding: 4px 10px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--orange);
+  background: var(--orange-wash);
+  color: var(--ink);
   font-size: 12px;
   text-align: left;
 }
@@ -107,18 +249,52 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 6px 16px;
-  border-top: 1px solid var(--edge);
-  background: var(--desk-ground);
-  color: var(--text-faint);
+  padding: 5px 16px;
+  border-top: 1px solid var(--rule);
+  background: var(--card);
+  color: var(--ink-faint);
   font-size: 12px;
 }
 
+.tally {
+  flex: none;
+  white-space: nowrap;
+}
+
 .hints {
+  flex: 1;
   text-align: right;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.sendTo {
+  position: relative;
+  flex: none;
+}
+
+.sendToButton {
+  padding: 2px 9px;
+  border: 1px solid var(--orange);
+  border-radius: var(--radius-control);
+  background: var(--orange-wash);
+  color: var(--orange-deep);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.sendToMenu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 200px;
+  padding: 6px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--card-raised);
+  box-shadow: var(--lift-raised);
 }
 
 /* ---------------------------------------------------------------- canvas -- */
@@ -132,8 +308,10 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background-color: var(--desk-ground);
-  background-image: radial-gradient(circle, var(--desk-dot) 1px, transparent 1.2px);
+  background-color: var(--paper);
+  /* The tooth of the paper. Faint enough to read as texture, regular enough
+     to help judge distance while dragging. */
+  background-image: radial-gradient(circle, var(--paper-tooth) 1px, transparent 1.2px);
   touch-action: none;
   cursor: default;
   outline: none;
@@ -144,15 +322,15 @@
 }
 
 .canvas::after {
-  /* A faint vignette. Atmosphere, not information. */
+  /* The desk sits a little lower than its edges. Atmosphere, not information. */
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   background: radial-gradient(
-    120% 90% at 50% 40%,
-    transparent 40%,
-    rgba(0, 0, 0, 0.42) 100%
+    130% 100% at 50% 40%,
+    transparent 55%,
+    rgba(88, 74, 52, 0.07) 100%
   );
 }
 
@@ -170,18 +348,18 @@
   top: 50%;
   transform: translate(-50%, -50%);
   margin: 0;
-  color: var(--text-faint);
+  color: var(--ink-faint);
   font-family: var(--serif);
-  font-size: 18px;
-  letter-spacing: 0.02em;
+  font-size: 19px;
+  letter-spacing: 0.01em;
   pointer-events: none;
   text-align: center;
 }
 
 .marquee {
   position: absolute;
-  border: 1px solid var(--brass);
-  background: rgba(194, 160, 90, 0.08);
+  border: 1px solid var(--orange);
+  background: var(--orange-wash);
   pointer-events: none;
 }
 
@@ -191,34 +369,35 @@
   bottom: 14px;
   display: flex;
   align-items: stretch;
-  border: 1px solid var(--edge-strong);
-  border-radius: var(--radius);
-  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-control);
+  background: var(--card-raised);
+  box-shadow: var(--lift);
   overflow: hidden;
 }
 
 .viewControls button {
-  min-width: 34px;
-  padding: 5px 8px;
+  min-width: 32px;
+  padding: 4px 8px;
   border: 0;
   background: transparent;
-  color: var(--text-quiet);
+  color: var(--ink-quiet);
   font-size: 13px;
 }
 
 .viewControls button:hover {
-  background: var(--surface-raised);
-  color: var(--text);
+  background: var(--orange-wash);
+  color: var(--orange-deep);
 }
 
 .viewControls button + button {
-  border-left: 1px solid var(--edge);
+  border-left: 1px solid var(--rule);
 }
 
 .zoomLevel {
   font-family: var(--mono);
-  font-size: 11px;
-  min-width: 56px;
+  font-size: 10px;
+  min-width: 52px;
 }
 
 /* ------------------------------------------------------------------ card -- */
@@ -227,69 +406,82 @@
   position: absolute;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px 15px 9px;
-  border: 1px solid var(--edge-strong);
+  gap: 10px;
+  padding: 13px 15px 8px;
+  border: 1px solid var(--rule-strong);
   border-radius: var(--radius);
-  background: linear-gradient(var(--surface-raised), var(--surface));
-  box-shadow: var(--shadow-card);
+  background: var(--card);
+  box-shadow: var(--lift);
   cursor: default;
   outline: none;
   /* Dragging a card must not smear a text selection across its body. */
   user-select: none;
-  transition: border-color 100ms ease, box-shadow 120ms ease;
+  transition: border-color 100ms ease, box-shadow 140ms ease, transform 140ms ease;
 }
 
-.card[data-editing] {
-  user-select: text;
+/*
+ * Pencil is provisional, not disabled. An interrupted edge says "not settled"
+ * in shape, so the state survives without colour and without dimming the text
+ * to the point of looking inert.
+ */
+.card[data-truth="pencil"] {
+  border-style: dashed;
+  border-color: var(--rule-strong);
 }
 
 .card:hover {
-  border-color: #554836;
+  border-color: var(--ink-faint);
+  box-shadow: var(--lift-raised);
 }
 
+/* Selection and editing change the colour and the lift, never the border
+   style — the interrupted edge belongs to the truth state, and a selected
+   Pencil card must not start reading as established. */
 .card[data-selected] {
-  border-color: var(--brass);
-  box-shadow: var(--shadow-card), 0 0 0 1px var(--brass-quiet);
+  border-color: var(--orange);
+  box-shadow: var(--lift-raised), 0 0 0 2px var(--orange-edge);
 }
 
 .card[data-editing] {
-  border-color: var(--brass);
+  border-color: var(--orange);
+  background: var(--card-raised);
   cursor: text;
+  user-select: text;
 }
 
 .card:focus-visible {
-  border-color: var(--brass);
-  box-shadow: var(--shadow-card), 0 0 0 2px var(--brass);
+  border-color: var(--orange);
+  box-shadow: var(--lift-raised), 0 0 0 2px var(--orange);
 }
 
 .cardBody {
   flex: 1;
   margin: 0;
+  /* Narrative material is set in serif. Chrome is not. */
   font-family: var(--serif);
-  font-size: 17px;
-  line-height: 1.42;
-  color: var(--text);
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--ink);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .cardBody[data-empty] {
-  color: var(--text-faint);
+  color: var(--ink-faint);
   font-style: italic;
 }
 
 .cardEditor {
   flex: 1;
-  min-height: 96px;
+  min-height: 92px;
   resize: none;
   border: 0;
   padding: 0;
   background: transparent;
-  color: var(--text);
+  color: var(--ink);
   font-family: var(--serif);
-  font-size: 17px;
-  line-height: 1.42;
+  font-size: 16px;
+  line-height: 1.45;
   outline: none;
 }
 
@@ -297,7 +489,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid var(--edge);
+  border-top: 1px solid var(--rule);
   padding-top: 6px;
 }
 
@@ -305,10 +497,11 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-family: var(--mono);
+  font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--ink-faint);
 }
 
 /* ----------------------------------------------------------------- stack -- */
@@ -316,7 +509,8 @@
 .stack {
   height: 100%;
   overflow-y: auto;
-  background: var(--desk-ground);
+  background: var(--paper);
+  background-image: radial-gradient(circle, var(--paper-tooth) 1px, transparent 1.2px);
   padding: 16px;
 }
 
@@ -324,9 +518,9 @@
   margin: 48px auto;
   max-width: 30ch;
   text-align: center;
-  color: var(--text-faint);
+  color: var(--ink-faint);
   font-family: var(--serif);
-  font-size: 18px;
+  font-size: 19px;
 }
 
 .stackList {
@@ -340,35 +534,41 @@
 }
 
 .stackItem {
-  border: 1px solid var(--edge-strong);
+  border: 1px solid var(--rule-strong);
   border-radius: var(--radius);
-  background: linear-gradient(var(--surface-raised), var(--surface));
+  background: var(--card);
+  box-shadow: var(--lift);
   padding: 12px 14px 8px;
 }
 
+.stackItem[data-truth="pencil"] {
+  border-style: dashed;
+}
+
 .stackItem[data-selected] {
-  border-color: var(--brass);
+  border-color: var(--orange);
+  box-shadow: var(--lift), 0 0 0 2px var(--orange-edge);
 }
 
 .stackBody,
 .stackEditor {
   display: block;
   width: 100%;
-  min-height: 64px;
+  min-height: 60px;
   border: 0;
   padding: 0;
   background: transparent;
-  color: var(--text);
+  color: var(--ink);
   font-family: var(--serif);
-  font-size: 17px;
-  line-height: 1.42;
+  font-size: 16px;
+  line-height: 1.45;
   text-align: left;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .stackBody[data-empty] {
-  color: var(--text-faint);
+  color: var(--ink-faint);
   font-style: italic;
 }
 
@@ -383,7 +583,7 @@
   gap: 12px;
   margin-top: 8px;
   padding-top: 6px;
-  border-top: 1px solid var(--edge);
+  border-top: 1px solid var(--rule);
 }
 
 .stackActions .truth {
@@ -393,22 +593,18 @@
 .stackActions button {
   border: 0;
   background: transparent;
-  color: var(--text-quiet);
+  color: var(--ink-quiet);
   font-size: 12px;
   padding: 4px 2px;
   min-height: 32px;
 }
 
 .stackActions button:hover {
-  color: var(--brass);
+  color: var(--orange-deep);
 }
 
 @media (max-width: 720px) {
   .hints {
     display: none;
-  }
-
-  .wordmark {
-    font-size: 18px;
   }
 }

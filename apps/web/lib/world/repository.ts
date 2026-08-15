@@ -1,9 +1,11 @@
 import type {
   CardId,
   CompositionId,
+  CompositionSummary,
   DeskCard,
   DeskView,
   Layout,
+  Workspace,
   WorldId,
   WorldObjectId
 } from "@/lib/world/model";
@@ -22,6 +24,27 @@ import type {
 export interface DeskRepository {
   /** Resolves the world's Desk composition, creating it on first visit. */
   openDesk(worldId: WorldId): Promise<DeskView>;
+
+  /** Every composition of the world, for naming and switching. */
+  openWorld(worldId: WorldId): Promise<Workspace>;
+
+  /** One composition's cards. `null` when the composition does not exist. */
+  openComposition(compositionId: CompositionId): Promise<DeskView | null>;
+
+  /**
+   * Creates an empty Board: another composition of the same world. A Board is
+   * not a container — it holds references and layout, exactly as the Desk does.
+   */
+  createBoard(input: CreateBoardInput): Promise<CompositionSummary>;
+
+  /**
+   * References existing World Objects from another composition.
+   *
+   * This is where stable identity is visible: the object is not copied, and the
+   * new card carries no body of its own. Editing the text through either card
+   * edits the one Fragment; moving either card moves only that composition.
+   */
+  referenceObjects(input: ReferenceObjectsInput): Promise<WriteResult<readonly DeskCard[]>>;
 
   /**
    * Captures a new thought: one World Object with a Fragment body, plus one
@@ -50,6 +73,23 @@ export type CaptureCardInput = Readonly<{
   objectId: WorldObjectId;
   body: string;
   layout: Layout;
+}>;
+
+export type CreateBoardInput = Readonly<{
+  worldId: WorldId;
+  compositionId: CompositionId;
+  name: string;
+}>;
+
+export type ObjectPlacement = Readonly<{
+  cardId: CardId;
+  objectId: WorldObjectId;
+  layout: Layout;
+}>;
+
+export type ReferenceObjectsInput = Readonly<{
+  compositionId: CompositionId;
+  placements: readonly ObjectPlacement[];
 }>;
 
 export type EditBodyInput = Readonly<{

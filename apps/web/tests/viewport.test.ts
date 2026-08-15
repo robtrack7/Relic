@@ -81,9 +81,21 @@ describe("fitting", () => {
     });
   });
 
-  it("never zooms past the limits to frame a speck", () => {
-    const fitted = fitToBounds({ x: 0, y: 0, width: 1, height: 1 }, { width: 1000, height: 800 });
-    expect(fitted.scale).toBe(MAX_SCALE);
+  it("brings distant material into view without magnifying it", () => {
+    // A board holding one card opens at its natural size. Filling the screen
+    // with a single card would be a worse first impression than empty space.
+    const one = fitToBounds({ x: 0, y: 0, width: 260, height: 160 }, { width: 1400, height: 900 });
+    expect(one.scale).toBe(1);
+
+    const speck = fitToBounds({ x: 0, y: 0, width: 1, height: 1 }, { width: 1000, height: 800 });
+    expect(speck.scale).toBe(1);
+    expect(speck.scale).toBeLessThan(MAX_SCALE);
+  });
+
+  it("shrinks to frame content larger than the viewport", () => {
+    const wide = fitToBounds({ x: 0, y: 0, width: 4000, height: 400 }, { width: 1000, height: 800 });
+    expect(wide.scale).toBeLessThan(1);
+    expect(wide.scale).toBeGreaterThan(MIN_SCALE);
   });
 });
 

@@ -101,8 +101,11 @@ export function fitToBounds(
   }
   const usableWidth = Math.max(1, size.width - padding * 2);
   const usableHeight = Math.max(1, size.height - padding * 2);
+  // Fitting brings distant material into view; it never magnifies. A board
+  // holding one card should open at its natural size, not fill the screen
+  // with a single card at 400%.
   const scale = clampScale(
-    Math.min(usableWidth / bounds.width, usableHeight / bounds.height)
+    Math.min(1, usableWidth / bounds.width, usableHeight / bounds.height)
   );
   const centre = {
     x: bounds.x + bounds.width / 2,

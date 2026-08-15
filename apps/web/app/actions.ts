@@ -1,10 +1,14 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import {
   asCardId,
   asCompositionId,
+  asWorldId,
   asWorldObjectId,
   type CardId,
+  type CompositionSummary,
   type DeskCard
 } from "@/lib/world/model";
 import type { WriteResult } from "@/lib/world/repository";
@@ -57,6 +61,12 @@ function version(value: unknown, field: string): number {
 function body(value: unknown): string {
   if (typeof value !== "string") throw new InvalidInput("body must be text");
   return value.slice(0, MAX_BODY);
+}
+
+function label(value: unknown, fallback: string): string {
+  if (typeof value !== "string") throw new InvalidInput("name must be text");
+  const trimmed = value.trim().replace(/\s+/g, " ").slice(0, 120);
+  return trimmed === "" ? fallback : trimmed;
 }
 
 export type ActionResult<T> =
@@ -145,6 +155,56 @@ export async function moveCardsAction(raw: {
         observedCardVersion: version(move.observedCardVersion, "observedCardVersion")
       }))
     });
+  });
+}
+
+export async function createBoardAction(raw: {
+  worldId: string;
+  compositionId: string;
+  name: string;
+}): Promise<ActionResult<CompositionSummary>> {
+  return run(async () => {
+    const board = await deskRepository().createBoard({
+      worldId: asWorldId(id(raw.worldId, "worldId")),
+      compositionId: asCompositionId(id(raw.compositionId, "compositionId")),
+      name: label(raw.name, "Untitled board")
+    });
+    // The switcher is rendered on the server, so a new Board has to reach it.
+    revalidatePath("/", "layout");
+    return { state: "ok", data: board };
+  });
+}
+
+export async function referenceObjectsAction(raw: {
+  compositionId: string;
+  placements: readonly {
+    cardId: string;
+    objectId: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }[];
+}): Promise<ActionResult<readonly DeskCard[]>> {
+  return run(async () => {
+    if (!Array.isArray(raw.placements) || raw.placements.length > MAX_BATCH) {
+      throw new InvalidInput("too many cards in one placement");
+    }
+    const result = await deskRepository().referenceObjects({
+      compositionId: asCompositionId(id(raw.compositionId, "compositionId")),
+      placements: raw.placements.map((placement) => ({
+        cardId: asCardId(id(placement.cardId, "cardId")),
+        objectId: asWorldObjectId(id(placement.objectId, "objectId")),
+        layout: {
+          x: coordinate(placement.x, "x"),
+          y: coordinate(placement.y, "y"),
+          width: extent(placement.width, "width"),
+          height: extent(placement.height, "height")
+        }
+      }))
+    });
+    revalidatePath("/", "layout");
+    return result;
   });
 }
 
