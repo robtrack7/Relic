@@ -3,11 +3,20 @@
 import { useEffect, useMemo, useRef } from "react";
 
 import { EMPTY_SELECTION, only, toggle, type Selection } from "@/lib/desk/selection";
-import type { CardId } from "@/lib/world/model";
+import { cardTitle, type CardId, type DeskCard } from "@/lib/world/model";
 
 import { TruthCue } from "./truth";
 import type { DeskStore } from "./use-desk";
 import styles from "./desk.module.css";
+
+/** A represented object leads with its name; a Fragment leads with its text. */
+function stackTitle(card: DeskCard): string {
+  if (card.representation) {
+    const name = cardTitle(card);
+    return name === "" ? `Unnamed ${card.representation.kind}` : name;
+  }
+  return card.body.trim() === "" ? "Empty card" : card.body;
+}
 
 type Props = {
   store: DeskStore;
@@ -17,6 +26,8 @@ type Props = {
   onSelectionChange: (selection: Selection) => void;
   editing: CardId | null;
   onEditingChange: (cardId: CardId | null) => void;
+  focusId: CardId | null;
+  onFocusChange: (cardId: CardId | null) => void;
 };
 
 /**
@@ -32,7 +43,9 @@ export function DeskStack({
   selection,
   onSelectionChange,
   editing,
-  onEditingChange
+  onEditingChange,
+  focusId,
+  onFocusChange
 }: Props) {
   const editor = useRef<HTMLTextAreaElement>(null);
 
@@ -96,14 +109,29 @@ export function DeskStack({
                       event.shiftKey ? toggle(selection, card.cardId) : only(card.cardId)
                     );
                   }}
-                  onDoubleClick={() => onEditingChange(card.cardId)}
+                  onDoubleClick={() => {
+                    onSelectionChange(only(card.cardId));
+                    onFocusChange(card.cardId);
+                  }}
                 >
-                  {card.body.trim() === "" ? "Empty card" : card.body}
+                  {stackTitle(card)}
                 </button>
               )}
 
               <div className={styles.stackActions}>
                 <TruthCue state={card.truthState} />
+                {/* Workflow parity, not canvas parity: deepening must be
+                    reachable without a pointer gesture. */}
+                <button
+                  type="button"
+                  aria-pressed={focusId === card.cardId}
+                  onClick={() => {
+                    onSelectionChange(only(card.cardId));
+                    onFocusChange(focusId === card.cardId ? null : card.cardId);
+                  }}
+                >
+                  Open
+                </button>
                 <button type="button" onClick={() => onEditingChange(card.cardId)}>
                   Edit
                 </button>

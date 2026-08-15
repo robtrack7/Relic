@@ -7,6 +7,7 @@ import {
   FREE_ASSERTION,
   type DeskCard as DeskCardModel
 } from "@/lib/world/model";
+import { claimBudget, type Tier } from "@/lib/desk/zoom";
 import { builtInTemplate } from "@/lib/world/templates";
 
 import { TruthCue } from "./truth";
@@ -14,9 +15,16 @@ import styles from "./desk.module.css";
 
 type Props = {
   card: DeskCardModel;
+  /** How much of itself this card should show at the current scale. */
+  tier?: Tier;
   selected: boolean;
   editing: boolean;
+  /** This is the object being deepened into. */
+  focused?: boolean;
+  /** Something else is. Recede without leaving. */
+  receded?: boolean;
   onPointerDown: (event: React.PointerEvent<HTMLElement>) => void;
+  onOpen?: () => void;
   onRequestEdit: () => void;
   onBodyChange: (body: string) => void;
   onEndEdit: () => void;
@@ -24,9 +32,13 @@ type Props = {
 
 export function DeskCard({
   card,
+  tier = "mid",
   selected,
   editing,
+  focused = false,
+  receded = false,
   onPointerDown,
+  onOpen,
   onRequestEdit,
   onBodyChange,
   onEndEdit
@@ -51,15 +63,25 @@ export function DeskCard({
    * and its assertions, or bare text on paper — never a different wrapper or
    * decoration.
    */
+  const budget = claimBudget(tier);
+
   const standing = representation
-    ? card.claims.filter((claim) => claim.claimKind !== FREE_ASSERTION).slice(0, 4)
+    ? card.claims
+        .filter((claim) => claim.claimKind !== FREE_ASSERTION)
+        .slice(0, budget === Number.POSITIVE_INFINITY ? undefined : budget)
     : [];
 
-  const sheet = representation
-    ? builtInTemplate(representation.kind).fields.filter(
-        (field) => representation.fields[field.key] !== undefined
-      )
-    : [];
+  // The sheet is figures, which stay readable when small — but at far zoom the
+  // question is "what is over there", and a row of numbers does not answer it.
+  const sheet =
+    representation && tier !== "far"
+      ? builtInTemplate(representation.kind).fields.filter(
+          (field) => representation.fields[field.key] !== undefined
+        )
+      : [];
+
+  // Prose is the first thing to go and the last to come back.
+  const showsBody = tier === "near" || !representation;
 
   return (
     <article
@@ -77,6 +99,9 @@ export function DeskCard({
       tabIndex={editing ? -1 : 0}
       aria-selected={selected}
       data-kind={representation?.kind}
+      data-tier={tier}
+      data-focused={focused || undefined}
+      data-receded={receded || undefined}
       aria-label={
         representation
           ? `${representation.kind}: ${title === "" ? "unnamed" : title}`
@@ -87,7 +112,10 @@ export function DeskCard({
       onPointerDown={onPointerDown}
       onDoubleClick={(event) => {
         event.stopPropagation();
-        onRequestEdit();
+        // Deeper intent opens the entity surface. Enter still edits inline,
+        // which is the fast path capture depends on.
+        if (onOpen) onOpen();
+        else onRequestEdit();
       }}
       onKeyDown={(event) => {
         if (editing) return;
@@ -149,7 +177,9 @@ export function DeskCard({
             </ul>
           ) : null}
 
-          {summary === "" ? null : <p className={styles.cardNote}>{summary}</p>}
+          {showsBody && summary !== "" ? (
+            <p className={styles.cardNote}>{summary}</p>
+          ) : null}
         </>
       ) : (
         <p className={styles.cardBody} data-empty={summary === "" || undefined}>

@@ -25,11 +25,19 @@ import styles from "./desk.module.css";
  *   Typing in one records that Relic now believes something, with provenance
  *   attached, as Pencil until somebody deliberately establishes it.
  */
-export function Inspector({ card, store }: { card: DeskCard; store: DeskStore }) {
+export function Inspector({
+  card,
+  store,
+  onClose
+}: {
+  card: DeskCard;
+  store: DeskStore;
+  onClose: () => void;
+}) {
   const representation = card.representation;
 
   if (!representation) {
-    return <Deepen card={card} store={store} />;
+    return <Deepen card={card} store={store} onClose={onClose} />;
   }
 
   const template = builtInTemplate(representation.kind);
@@ -37,7 +45,10 @@ export function Inspector({ card, store }: { card: DeskCard; store: DeskStore })
   return (
     <aside className={styles.inspector} aria-label={`${representation.kind} details`}>
       <header className={styles.inspectorHead}>
-        <span className={styles.kindMark}>{template.name}</span>
+        <div className={styles.inspectorTop}>
+          <span className={styles.kindMark}>{template.name}</span>
+          <CloseFocus onClose={onClose} />
+        </div>
         <NameField card={card} store={store} />
       </header>
 
@@ -68,11 +79,22 @@ export function Inspector({ card, store }: { card: DeskCard; store: DeskStore })
 }
 
 /** The one gesture that turns captured thought into a kind of thing. */
-function Deepen({ card, store }: { card: DeskCard; store: DeskStore }) {
+function Deepen({
+  card,
+  store,
+  onClose
+}: {
+  card: DeskCard;
+  store: DeskStore;
+  onClose: () => void;
+}) {
   return (
     <aside className={styles.inspector} aria-label="Give this a kind">
       <header className={styles.inspectorHead}>
-        <span className={styles.kindMark}>Fragment</span>
+        <div className={styles.inspectorTop}>
+          <span className={styles.kindMark}>Fragment</span>
+          <CloseFocus onClose={onClose} />
+        </div>
         <p className={styles.inspectorLead}>
           {cardTitle(card) || "An unwritten thought"}
         </p>
@@ -100,6 +122,21 @@ function Deepen({ card, store }: { card: DeskCard; store: DeskStore }) {
         </div>
       </section>
     </aside>
+  );
+}
+
+/** Leaving Focus must not require knowing that Escape does it. */
+function CloseFocus({ onClose }: { onClose: () => void }) {
+  return (
+    <button
+      type="button"
+      className={styles.inspectorClose}
+      onClick={onClose}
+      aria-label="Close"
+      title="Close (Esc)"
+    >
+      ×
+    </button>
   );
 }
 

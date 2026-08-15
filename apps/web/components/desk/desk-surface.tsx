@@ -24,6 +24,7 @@ export function DeskSurface({
   const store = useDesk(initial);
   const [selection, setSelection] = useState<Selection>(EMPTY_SELECTION);
   const [editing, setEditing] = useState<CardId | null>(null);
+  const [focusId, setFocusId] = useState<CardId | null>(null);
   const [narrow, setNarrow] = useState(false);
   const [override, setOverride] = useState<Arrangement | null>(null);
 
@@ -39,14 +40,21 @@ export function DeskSurface({
   const surfaceName = initial.kind === "desk" ? "desk" : initial.kind;
 
   /*
-   * One selected card deepens. Several is an arrangement gesture, not an
-   * inspection one — the inspector would have to pick a subject, and picking
-   * one arbitrarily is worse than staying out of the way.
+   * Focus is one piece of state, not two.
+   *
+   * Selection is not focus: clicking a card reveals what can be done with it,
+   * and a further deliberate act — double-click, or the control that appears —
+   * deepens into it. That second stage is what opens the entity surface *and*
+   * what makes the rest of the world recede, because they are the same idea
+   * seen from the panel and from the canvas.
    */
-  const focused =
-    selection.size === 1 && editing === null
-      ? (store.byId.get([...selection][0] as string) ?? null)
-      : null;
+  const focused = focusId === null ? null : (store.byId.get(focusId) ?? null);
+
+  // A focused card that is removed, or a composition that changes underneath,
+  // must not leave the surface open on nothing.
+  useEffect(() => {
+    if (focusId !== null && !store.byId.has(focusId)) setFocusId(null);
+  }, [focusId, store.byId]);
 
   const captureFromChrome = () => {
     // Placed just below the newest card so the stack view stays readable and
@@ -89,6 +97,8 @@ export function DeskSurface({
             onSelectionChange={setSelection}
             editing={editing}
             onEditingChange={setEditing}
+            focusId={focusId}
+            onFocusChange={setFocusId}
           />
         ) : (
           <DeskStack
@@ -98,12 +108,16 @@ export function DeskSurface({
             onSelectionChange={setSelection}
             editing={editing}
             onEditingChange={setEditing}
+            focusId={focusId}
+            onFocusChange={setFocusId}
           />
         )}
 
         {/* Emerges from selection, beside the canvas rather than over it: the
             surrounding world stays perceptible while one object deepens. */}
-        {focused ? <Inspector card={focused} store={store} /> : null}
+        {focused ? (
+          <Inspector card={focused} store={store} onClose={() => setFocusId(null)} />
+        ) : null}
       </main>
 
       <footer className={styles.statusBar}>

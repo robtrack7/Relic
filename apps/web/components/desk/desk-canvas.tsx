@@ -26,6 +26,7 @@ import {
   within,
   type Selection
 } from "@/lib/desk/selection";
+import { tierFor, type Tier } from "@/lib/desk/zoom";
 import type { CardId } from "@/lib/world/model";
 
 import { DeskCard } from "./desk-card";
@@ -49,6 +50,9 @@ type Props = {
   onSelectionChange: (selection: Selection) => void;
   editing: CardId | null;
   onEditingChange: (cardId: CardId | null) => void;
+  /** The card being deepened into, if any. Focus is a second, deliberate stage. */
+  focusId: CardId | null;
+  onFocusChange: (cardId: CardId | null) => void;
 };
 
 export function DeskCanvas({
@@ -57,7 +61,9 @@ export function DeskCanvas({
   selection,
   onSelectionChange,
   editing,
-  onEditingChange
+  onEditingChange,
+  focusId,
+  onFocusChange
 }: Props) {
   const surface = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState<Viewport>(IDENTITY_VIEWPORT);
@@ -290,7 +296,21 @@ export function DeskCanvas({
       const ids = [...selection];
 
       if (event.key === "Escape") {
+        // Leave the deepest thing first. Escaping out of Focus and out of the
+        // selection at once would lose the place the reader was in.
+        if (focusId !== null) {
+          onFocusChange(null);
+          return;
+        }
         onSelectionChange(EMPTY_SELECTION);
+        return;
+      }
+      if (event.key.toLowerCase() === "f" && !event.metaKey && !event.ctrlKey) {
+        const sole = soleMember(selection);
+        if (sole) {
+          event.preventDefault();
+          onFocusChange(focusId === sole ? null : sole);
+        }
         return;
       }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") {
@@ -337,10 +357,30 @@ export function DeskCanvas({
         commitNudgeSoon(ids);
       }
     },
-    [captureAt, commitNudgeSoon, onEditingChange, onSelectionChange, selection, size, store]
+    [
+      captureAt,
+      commitNudgeSoon,
+      focusId,
+      onEditingChange,
+      onFocusChange,
+      onSelectionChange,
+      selection,
+      size,
+      store
+    ]
   );
 
   const pitch = useMemo(() => gridStep(viewport.scale), [viewport.scale]);
+
+  /*
+   * Semantic zoom. The tier is state rather than a pure derivation of scale
+   * because hysteresis needs to know where it came from — that is what stops a
+   * card rewriting itself on every frame of a pinch.
+   */
+  const [tier, setTier] = useState<Tier>(() => tierFor(viewport.scale));
+  useEffect(() => {
+    setTier((previous) => tierFor(viewport.scale, previous));
+  }, [viewport.scale]);
 
   const zoom = useCallback(
     (factor: number) => setViewport((current) => zoomAboutCentre(current, size, factor)),
@@ -381,9 +421,19 @@ export function DeskCanvas({
             <DeskCard
               key={card.cardId}
               card={card}
+              tier={tier}
               selected={selection.has(card.cardId)}
               editing={editing === card.cardId}
+              focused={focusId === card.cardId}
+              // Attention suppresses unrelated material: once one object is
+              // being deepened into, the rest of the world recedes without
+              // leaving.
+              receded={focusId !== null && focusId !== card.cardId}
               onPointerDown={onCardPointerDown(card.cardId)}
+              onOpen={() => {
+                onSelectionChange(only(card.cardId));
+                onFocusChange(card.cardId);
+              }}
               onRequestEdit={() => {
                 onSelectionChange(only(card.cardId));
                 onEditingChange(card.cardId);

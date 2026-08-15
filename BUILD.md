@@ -15,26 +15,27 @@ Build **vertical slices**, not administrative phases. Prefer visible product pro
 5. ~~Save and reopen Boards as reference-only compositions.~~ **Done** — a Board is a sibling composition of the Desk at `/c/[compositionId]`; selected cards are *referenced* onto it, never moved or copied.
 6. ~~Move storage to Supabase behind the existing port.~~ **Done** — Postgres via the local Supabase stack, same five tables, no new features. The suite is the proof: the same specification, a new engine.
 7. ~~Representations, typed Cards, and claims.~~ **Done** — eight kinds as representations of one identity, a mechanical sheet for what the rules care about, claims as the addressable truth unit carrying a story position, and a contextual surface to edit both.
-8. Add Focus and progressively deepen/widen objects/cards without identity churn.
-9. Add Ink, provenance, and deliberate truth editing.
-10. Add Library/search and pull existing material into the Desk.
-11. Make the Librarian understand current Board, focus, and selection.
-12. Let the Librarian manipulate the workspace and create Pencil material.
-13. Build Prep as a composition of the same world.
-14. Run that composition through Stage.
-15. Settle session evidence and changes back into the world.
-16. **Chronicle as a Desk lens** — story ordering, Thread currents, the Now line, entity history as-of a past point, retcons.
-17. Migrate one representative real Saga and harden the beta loop.
+8. ~~Add Focus and progressively deepen/widen objects/cards without identity churn.~~ **Done** — semantic zoom tiers, Focus as a second deliberate stage after selection, and the entity surface beside the canvas rather than over it.
+9. **Relationship assertions.** A claim whose value is another World Object. This is what makes "pull the thread" mean anything — Focus can then reveal a neighbourhood instead of only suppressing everything else, and Chronicle later has edges to draw. *Added to the order: `WORLD-MODEL.md` lists relationship assertions as one of the three truth units and the build order never sequenced them.*
+10. Add Ink, provenance, and deliberate truth editing.
+11. Add Library/search and pull existing material into the Desk.
+12. Make the Librarian understand current Board, focus, and selection.
+13. Let the Librarian manipulate the workspace and create Pencil material.
+14. Build Prep as a composition of the same world.
+15. Run that composition through Stage.
+16. Settle session evidence and changes back into the world.
+17. **Chronicle as a Desk lens** — story ordering, Thread currents, the Now line, entity history as-of a past point, retcons.
+18. Migrate one representative real Saga and harden the beta loop.
 
 This order may change when implementation teaches us something. Update it rather than preserving a bad sequence.
 
 ### Why Chronicle is late but the temporal seam is early
 
 Chronicle needs Events with participants, Threads with membership, and sessions
-that actually happened. None of that exists until step 15, so building the lens
+that actually happened. None of that exists until step 16, so building the lens
 sooner means building it against invented content.
 
-What cannot wait is the **shape**. Step 7 lands claims with a story position and
+What cannot wait is the **shape**. Step 7 landed claims with a story position and
 validity from the first migration, even while every view shows only Now. Adding a
 temporal axis to a schema that assumed one current value per fact is the kind of
 change that rewrites everything downstream — so we pay for it once, cheaply, up
@@ -51,7 +52,7 @@ Thread membership as first-class structures — not the lens.
 
 **A write conflict returns the whole composition.** Callers reconcile by replacing what they hold, so a partial list would read as "the Desk now contains only these" and silently drop the rest.
 
-**Capture produces Pencil, always.** Nothing on the capture or edit path can write `ink`. Establishing Ink is step 9 and needs its own deliberate, previewed action.
+**Capture produces Pencil, always.** Nothing on the capture or edit path can write `ink`. Establishing Ink is step 10 and needs its own deliberate, previewed action.
 
 ## Decisions the Boards slice settled
 
@@ -64,6 +65,33 @@ Thread membership as first-class structures — not the lens.
 **Fitting never magnifies.** A composition holding one card opens at its natural size. Filling the screen with a single card at 400% was worse than empty space.
 
 **The visual language is warm ivory, near-black ink, and one restrained orange**, per the `relic-ui` skill. Sans for chrome, serif for narrative material, mono for provenance and system metadata. Pencil is drawn with an interrupted edge — provisional, not disabled — and selection changes colour and lift but never border *style*, so a selected Pencil card cannot start reading as established.
+
+## Decisions the Focus slice settled
+
+**Focus is one piece of state, not two.** Opening the entity surface and making
+the rest of the world recede are the same idea seen from the panel and from the
+canvas, so they are one `focusId`. Two would drift apart.
+
+**Selection is not focus.** Clicking a card reveals what can be done with it;
+a second deliberate act — double-click, `F`, or the `Open` control — deepens into
+it. The entity surface used to appear on any single selection, which skipped a
+stage and made the panel flicker as the selection moved. Escape leaves the
+deepest thing first: Focus, then the selection.
+
+**Double-click deepens; Enter still edits.** Prose editing belongs in the entity
+surface, but the inline editor is the fast path capture depends on, so it keeps
+the keyboard route the hints already advertised.
+
+**Zoom changes information, not size.** Three tiers with hysteresis: far shows a
+kind and a name, mid adds claims and the sheet, near adds the prose underneath.
+The tier is state rather than a pure function of scale, because hysteresis has to
+know which side it came from — otherwise a card sitting on a threshold rewrites
+itself on every frame of a pinch. `tierFor` settles rather than stepping one
+level per call, so fit-to-bounds jumping from 0.2 to 4 lands in the right tier
+immediately instead of one short.
+
+**Recession, not removal.** Unfocused material dims and desaturates but stays in
+place, legible and clickable. Attention suppresses; it does not hide.
 
 ## Decisions the Representations slice settled
 
@@ -104,7 +132,7 @@ editing a constant beats writing a migration to rename a field. A row in that
 table is always somebody's own template.
 
 **Nothing on this path writes Ink.** A claim asserted by hand is Pencil with
-`gm_assertion` provenance. Establishing Ink is step 9 and needs its own
+`gm_assertion` provenance. Establishing Ink is step 10 and needs its own
 deliberate, previewed action.
 
 ## Decisions the Postgres slice settled
@@ -159,7 +187,7 @@ Postgres introduces. The cost is that `pnpm test` leaves test worlds behind;
 
 ## Decisions taken before the schema deepens
 
-**Supabase comes before the durable schema, not after it.** Steps 7–9 write the
+**Supabase comes before the durable schema, not after it.** Steps 7–10 write the
 schema Relic will live with: representations, claims, provenance, story position.
 Designing that against SQLite and again against Postgres is doing the hard part
 twice, and tenancy and RLS are schema-shaped concerns that cannot be bolted on
