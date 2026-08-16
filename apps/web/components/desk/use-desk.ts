@@ -11,7 +11,7 @@ import {
   removeCardsAction,
   removeClaimAction,
   representObjectAction,
-  searchObjectsAction,
+  searchWorldAction,
   setClaimAction,
   settleTruthAction,
   type ActionResult
@@ -28,14 +28,16 @@ import {
   type DeskCard,
   type DeskView,
   type FieldValues,
-  type Layout,
+  type KindFilter,
   type Link,
   type Maturity,
   type ObjectRef,
   type RepresentationKind,
   type TruthState,
+  type WorldEntry,
   type WorldObjectId
 } from "@/lib/world/model";
+import type { Point } from "@/lib/desk/viewport";
 
 /**
  * Desk state and its sync to the server.
@@ -546,45 +548,54 @@ export function useDesk(initial: DeskView) {
   );
 
   /**
-   * Brings an object that is elsewhere in the world onto this composition.
+   * Brings material that is elsewhere in the world onto this composition.
    *
-   * Pulling a thread is literal: following a relationship to something not on
-   * this Desk places it here rather than navigating away from what you were
-   * looking at. It is a reference, so nothing is copied and nothing moves.
+   * Two gestures land here and they are the same act. Following a relationship
+   * to something not on this Desk places it here rather than navigating away
+   * from what you were looking at; retrieving something from the Library does
+   * the same thing from the other direction. Both are references, so nothing is
+   * copied and nothing moves.
+   *
+   * A batch commits as one change set — adding six things from the Library is
+   * one intent, not six — and anything already here is returned rather than
+   * placed twice, so the gesture stays idempotent whichever route reached it.
    */
   const pullIn = useCallback(
-    async (ref: ObjectRef, near: Layout): Promise<CardId | null> => {
-      const already = cardsRef.current.find((card) => card.objectId === ref.objectId);
-      if (already) return already.cardId;
+    async (refs: readonly ObjectRef[], centre: Point): Promise<readonly CardId[]> => {
+      if (refs.length === 0) return [];
 
-      const layout: Layout = {
-        x: Math.round(near.x + near.width + 48),
-        y: Math.round(near.y),
+      const here = new Map(cardsRef.current.map((card) => [card.objectId as string, card.cardId]));
+      const wanted = refs.filter((ref) => !here.has(ref.objectId));
+      const existing = refs.flatMap((ref) => here.get(ref.objectId) ?? []);
+      if (wanted.length === 0) return existing;
+
+      // Deterministic layout, not a guess: a row of up to four, then the next
+      // row, the whole block centred on where the GM is looking.
+      const columns = Math.min(wanted.length, 4);
+      const rows = Math.ceil(wanted.length / columns);
+      const stepX = DEFAULT_CARD_WIDTH + 32;
+      const stepY = DEFAULT_CARD_HEIGHT + 32;
+      const originX = centre.x - ((columns - 1) * stepX) / 2 - DEFAULT_CARD_WIDTH / 2;
+      const originY = centre.y - ((rows - 1) * stepY) / 2 - DEFAULT_CARD_HEIGHT / 2;
+
+      const placements = wanted.map((ref, index) => ({
+        cardId: crypto.randomUUID(),
+        objectId: ref.objectId as string,
+        x: Math.round(originX + (index % columns) * stepX),
+        y: Math.round(originY + Math.floor(index / columns) * stepY),
         width: DEFAULT_CARD_WIDTH,
         height: DEFAULT_CARD_HEIGHT
-      };
+      }));
 
-      // Resolved rather than returned early: the caller usually wants to deepen
-      // into what it just pulled, and Focus is keyed on a card that has to
-      // exist first.
-      const landed: { cardId: CardId | null } = { cardId: null };
+      // Resolved rather than returned early: the caller usually wants to select
+      // or deepen into what it just pulled, and both are keyed on cards that
+      // have to exist first.
+      const landed: { cardIds: readonly CardId[] } = { cardIds: [] };
 
       await enqueue(async () => {
-        const result = await referenceObjectsAction({
-          compositionId,
-          placements: [
-            {
-              cardId: crypto.randomUUID(),
-              objectId: ref.objectId,
-              x: layout.x,
-              y: layout.y,
-              width: layout.width,
-              height: layout.height
-            }
-          ]
-        });
+        const result = await referenceObjectsAction({ compositionId, placements });
         absorb(result, (placed) => {
-          // The server resolves the object's whole state — its representation,
+          // The server resolves each object's whole state — its representation,
           // its claims, and both ends of every relationship it holds. Nothing
           // here is in a position to invent that.
           setCards((current) => [
@@ -598,11 +609,11 @@ export function useDesk(initial: DeskView) {
             });
             savedBodies.current.set(card.cardId, card.body);
           }
-          landed.cardId = placed[0]?.cardId ?? null;
+          landed.cardIds = placed.map((card) => card.cardId);
         });
       });
 
-      return landed.cardId;
+      return [...existing, ...landed.cardIds];
     },
     [absorb, compositionId, enqueue]
   );
@@ -704,18 +715,37 @@ export function useDesk(initial: DeskView) {
   );
 
   /**
-   * Objects of this world that could stand at the other end of a relationship.
+   * The world's index.
    *
-   * Reaches past this composition on purpose: a relationship is a fact about
-   * the world, and only being able to point at what is already on the Desk
-   * would make the Desk the world.
+   * Reaches past this composition on purpose: what a world contains is not what
+   * one Desk is showing, and an index that could only offer what is already in
+   * front of you would make the Desk the world. `compositionId` is passed so
+   * every entry can say whether it is already here — the difference between
+   * retrieving something and revealing it.
    */
-  const findObjects = useCallback(
-    async (query: string, excludeId?: WorldObjectId): Promise<readonly ObjectRef[]> => {
-      const result = await searchObjectsAction({ worldId, query, excludeId });
+  const search = useCallback(
+    async (input: {
+      query: string;
+      kinds?: readonly KindFilter[];
+      maturity?: Maturity | null;
+      include?: "active" | "archived" | "all";
+      excludeId?: WorldObjectId;
+      limit?: number;
+      offset?: number;
+    }): Promise<readonly WorldEntry[]> => {
+      const result = await searchWorldAction({ worldId, compositionId, ...input });
       return result.state === "ok" ? result.data : [];
     },
-    [worldId]
+    [compositionId, worldId]
+  );
+
+  /** The relationship picker's narrower question: what could the other end be? */
+  const findObjects = useCallback(
+    async (query: string, excludeId?: WorldObjectId): Promise<readonly ObjectRef[]> => {
+      const found = await search({ query, excludeId, limit: 8 });
+      return found.map((entry) => entry.ref);
+    },
+    [search]
   );
 
   const dismissProblem = useCallback(() => setSync({ kind: "settled" }), []);
@@ -744,6 +774,7 @@ export function useDesk(initial: DeskView) {
     settle,
     retract,
     pullIn,
+    search,
     findObjects,
     dismissProblem
   };

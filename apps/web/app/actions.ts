@@ -15,11 +15,12 @@ import {
   type CompositionSummary,
   type DeskCard,
   type FieldValues,
+  type KindFilter,
   type Maturity,
-  type ObjectRef,
   type Representation,
   type RepresentationKind,
-  type TruthState
+  type TruthState,
+  type WorldEntry
 } from "@/lib/world/model";
 import type { Settled, WriteResult } from "@/lib/world/repository";
 import { deskRepository } from "@/lib/world/store";
@@ -373,34 +374,66 @@ export async function setClaimAction(raw: {
   });
 }
 
+function kindFilters(value: unknown): readonly KindFilter[] | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (!Array.isArray(value) || value.length > 16) {
+    throw new InvalidInput("that is not a set of kinds");
+  }
+  return value.map((kind) => {
+    if (kind === "unclassified") return kind;
+    return representationKind(kind);
+  });
+}
+
+function include(value: unknown): "active" | "archived" | "all" | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (value !== "active" && value !== "archived" && value !== "all") {
+    throw new InvalidInput("that is not a scope Relic knows about");
+  }
+  return value;
+}
+
 /**
- * Objects that could stand at the other end of a relationship.
+ * The world's index — for the Library, for global search, and for the
+ * relationship picker, which are the same question with different filters.
  *
  * A read rather than a write, so it does not go through `run` — but the world
  * is still re-resolved from an opaque id here, and the query is treated as
  * text, never as a fragment of anything.
  */
-export async function searchObjectsAction(raw: {
+export async function searchWorldAction(raw: {
   worldId: string;
   query: string;
+  kinds?: readonly string[];
+  maturity?: string | null;
+  include?: string;
   excludeId?: string;
+  compositionId?: string;
   limit?: number;
-}): Promise<ActionResult<readonly ObjectRef[]>> {
+  offset?: number;
+}): Promise<ActionResult<readonly WorldEntry[]>> {
   try {
-    const results = await deskRepository().searchObjects({
+    const results = await deskRepository().searchWorld({
       worldId: asWorldId(id(raw.worldId, "worldId")),
       query: typeof raw.query === "string" ? raw.query.slice(0, 200) : "",
+      kinds: kindFilters(raw.kinds),
+      maturity: maturity(raw.maturity),
+      include: include(raw.include),
       excludeId: raw.excludeId
         ? asWorldObjectId(id(raw.excludeId, "excludeId"))
         : undefined,
-      limit: typeof raw.limit === "number" ? raw.limit : undefined
+      compositionId: raw.compositionId
+        ? asCompositionId(id(raw.compositionId, "compositionId"))
+        : undefined,
+      limit: typeof raw.limit === "number" ? raw.limit : undefined,
+      offset: typeof raw.offset === "number" ? raw.offset : undefined
     });
     return { state: "ok", data: results };
   } catch (error) {
     if (error instanceof InvalidInput) {
       return { state: "invalid", message: error.message };
     }
-    console.error("[relic] object search failed", error);
+    console.error("[relic] world search failed", error);
     return { state: "failed", message: "Relic could not search this world." };
   }
 }

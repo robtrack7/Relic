@@ -18,7 +18,10 @@ Build **vertical slices**, not administrative phases. Prefer visible product pro
 8. ~~Add Focus and progressively deepen/widen objects/cards without identity churn.~~ **Done** — semantic zoom tiers, Focus as a second deliberate stage after selection, and the entity surface beside the canvas rather than over it.
 9. ~~Relationship assertions.~~ **Done** — a claim whose value is another World Object, both directions of a neighbourhood on every card, and Focus that reveals what an object is connected to instead of only suppressing everything else.
 10. ~~Add Ink, provenance, and deliberate truth editing.~~ **Done** — maturity and truth separated onto the axes they belong to, one method as the only door to Ink, a previewed act that establishes, and every ruling attributed.
-11. Add Library/search and pull existing material into the Desk.
+11. ~~Add Library/search and pull existing material into the Desk.~~ **Done** — one
+    ranked index behind global search, the Library, and the relationship picker;
+    retrieval that brings a thing to the composition you are on rather than
+    taking you to it; and a way back for material that was cleared off the Desk.
 12. Make the Librarian understand current Board, focus, and selection.
 13. Let the Librarian manipulate the workspace and create Pencil material.
 14. Build Prep as a composition of the same world.
@@ -191,6 +194,57 @@ failure.
 **Full truth history waits for Chronicle.** One last-ruling record answers "why
 do we believe this" today. A transition log is Chronicle's shape, and building
 it here would mean building it against a world with no sessions in it.
+
+## Decisions the Library slice settled
+
+**One index read, not two.** `searchWorld` serves global search, the Library, and
+the relationship picker, because they are one question asked with different
+filters. The picker's need is a strict subset of the Library's — a second method
+would have drifted, and the one that drifted would have been the one that could
+not find something. Its tests moved with it: what "finding the other end" does is
+now specified once, in `library.test.ts`.
+
+**Searching ranks; it does not merely match.** An exact name beats a prefix, a
+prefix beats a name containing the query, and any name beats a mention in prose.
+A GM typing "mara" means the person called Mara, not the seventh Fragment that
+mentions her. Matching reaches *every* representation's label rather than the one
+a card happens to show, so a Place called "The Quay" that is also a Faction called
+"Quay Wardens" answers to both. With no query this is a browse, ordered by name —
+an index reads alphabetically, not by whatever was touched last.
+
+**Retrieval never navigates.** Search brings the thing to the composition you are
+already on, exactly as following a relationship does. This is the same gesture
+from the other direction, so it is the same code: `pullIn` takes a batch, commits
+as one change set, and returns what is already here rather than placing it twice.
+
+**`cardHere` is the one composition-shaped fact on a world entry**, and it earns
+its place. It is the difference between bringing something in and revealing what
+is already in front of you. Referencing twice is already idempotent in the store,
+so this is not about correctness — an interface that offered to "add" what the GM
+is looking at would be misdescribing their world.
+
+**Archived material is reachable, and pulling it back restores it.**
+`removeCards` archives an object that loses its last reference, and until now
+nothing could reach it again. The Library is that route, and `referenceObjects`
+now restores rather than silently skipping — "archived, not destroyed" is only a
+true promise if there is a way back. The restore happens *after* the composition
+item is inserted, because the global lock order is `composition_items` →
+`world_objects` and `removeCards` takes them in that order to decide the opposite
+question.
+
+**The Library is a surface over the composition, not a route.** Everything it
+hands back needs a destination, and a world-scoped URL would have to guess which
+composition that is. Keeping it over the Desk makes the destination the thing you
+were already looking at, and names it in the sentence. Revisit when Sessions
+arrives and there is a real second destination to navigate between.
+
+**Where new material lands is asked of the surface, not lifted out of it.**
+`SurfaceControls` is two imperative calls — `landing()` and `reveal()` — that the
+canvas and the stack each answer their own way. Lifting the viewport into the
+chrome would re-render the chrome on every frame of a pan, and where the GM is
+looking is not the chrome's business. `reveal` pans and deliberately does not
+zoom: the scale is how close the GM has chosen to stand to their world, and a
+search result is not a reason to change it.
 
 ## Decisions the Representations slice settled
 

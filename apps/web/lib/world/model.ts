@@ -253,6 +253,40 @@ export type ObjectRef = Readonly<{
 }>;
 
 /**
+ * What the Library can filter by.
+ *
+ * `unclassified` is a real answer, not the absence of one: a world's loose
+ * Fragments are the material a GM most often goes looking for, and a filter that
+ * could only name Characters and Places would make captured thought the one
+ * thing the index cannot reach.
+ */
+export type KindFilter = RepresentationKind | "unclassified";
+
+/**
+ * One World Object as an index sees it: enough to recognise the thing and
+ * decide to pull it in, and no more.
+ *
+ * Not a `DeskCard`. A card is a placement on one composition; this is the
+ * identity itself, seen from outside any composition — which is the whole point
+ * of a Library. `cardHere` is the one composition-shaped fact on it, and it
+ * answers the only question the Desk needs asked: is this already in front of
+ * me, or am I about to bring it here?
+ */
+export type WorldEntry = Readonly<{
+  ref: ObjectRef;
+  maturity: Maturity;
+  /** Archived material is still in the world, and the Library is how it is found. */
+  lifecycle: Lifecycle;
+  /** Every way this object is understood, not only the one a card shows. */
+  kinds: readonly RepresentationKind[];
+  /** Enough prose to recognise it by. Never the whole body. */
+  snippet: string;
+  updatedAt: string;
+  /** The card placing it on the composition asked about, if any. */
+  cardHere: CardId | null;
+}>;
+
+/**
  * One relationship claim, seen from one end of it.
  *
  * Both directions matter and they are not the same statement. Mara asserting an

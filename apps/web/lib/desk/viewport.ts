@@ -118,6 +118,23 @@ export function fitToBounds(
   };
 }
 
+/**
+ * Pan so `rect` sits in the middle of the view. Deliberately does **not** zoom.
+ *
+ * Revealing something retrieved from the Library is Relic answering a question,
+ * not taking over the canvas. The scale is the GM's — it is how close they have
+ * chosen to stand to their world — and a search result is not a reason to
+ * change it.
+ */
+export function centreOn(viewport: Viewport, size: Size, rect: Rect): Viewport {
+  const centre = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+  return {
+    scale: viewport.scale,
+    x: size.width / 2 - centre.x * viewport.scale,
+    y: size.height / 2 - centre.y * viewport.scale
+  };
+}
+
 export function rectsIntersect(a: Rect, b: Rect): boolean {
   return (
     a.x < b.x + b.width &&

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   boundsOf,
+  centreOfView,
+  centreOn,
   fitToBounds,
   IDENTITY_VIEWPORT,
   panBy,
@@ -30,6 +32,7 @@ import { tierFor, type Tier } from "@/lib/desk/zoom";
 import type { CardId } from "@/lib/world/model";
 
 import { DeskCard } from "./desk-card";
+import type { SurfaceControlsRef } from "./surface-controls";
 import type { DeskStore } from "./use-desk";
 import styles from "./desk.module.css";
 
@@ -55,6 +58,8 @@ type Props = {
   onFocusChange: (cardId: CardId | null) => void;
   /** Cards the focused object is connected to. They do not recede. */
   neighbours: ReadonlySet<string>;
+  /** Filled in here, so the chrome can place and reveal things on this canvas. */
+  controls: SurfaceControlsRef;
 };
 
 export function DeskCanvas({
@@ -66,7 +71,8 @@ export function DeskCanvas({
   onEditingChange,
   focusId,
   onFocusChange,
-  neighbours
+  neighbours,
+  controls
 }: Props) {
   const surface = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState<Viewport>(IDENTITY_VIEWPORT);
@@ -77,6 +83,8 @@ export function DeskCanvas({
   const gesture = useRef<Gesture>({ kind: "none" });
   const viewportRef = useRef(viewport);
   viewportRef.current = viewport;
+  const sizeRef = useRef(size);
+  sizeRef.current = size;
   const nudgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cards = store.cards;
@@ -109,6 +117,28 @@ export function DeskCanvas({
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
+
+  /*
+   * What the chrome can ask of this canvas.
+   *
+   * Read through refs rather than state so that the Finder holding these does
+   * not re-render on every frame of a pan — and answered here rather than
+   * lifted, because where the GM is looking is a property of the surface, not
+   * something the surrounding frame should be tracking.
+   */
+  useEffect(() => {
+    controls.current = {
+      landing: () => centreOfView(viewportRef.current, sizeRef.current),
+      reveal: (cardId) => {
+        const card = cardsRef.current.find((c) => c.cardId === cardId);
+        if (!card) return;
+        setViewport((current) => centreOn(current, sizeRef.current, card.layout));
+      }
+    };
+    return () => {
+      controls.current = null;
+    };
+  }, [controls]);
 
   const toWorld = useCallback((event: { clientX: number; clientY: number }): Point => {
     const rect = surface.current?.getBoundingClientRect();

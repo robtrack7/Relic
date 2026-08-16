@@ -31,6 +31,7 @@ import {
   type StoryPosition,
   type TruthState,
   type Workspace,
+  type WorldEntry,
   type WorldId,
   type WorldObjectId
 } from "@/lib/world/model";
@@ -49,7 +50,7 @@ import {
   type RemoveCardsInput,
   type RemoveClaimInput,
   type RepresentObjectInput,
-  type SearchObjectsInput,
+  type SearchWorldInput,
   type SetClaimInput,
   type SettleTruthInput,
   type Settled,
@@ -207,6 +208,32 @@ const objectRefSelect = (sql: Sql) => sql`
     ) r on true
    where wo.lifecycle = 'active'
 `;
+
+type WorldEntryRow = ObjectRefRow & {
+  maturity: string;
+  lifecycle: string;
+  kinds: string[] | null;
+  created_at: string | Date;
+  updated_at: string | Date;
+  card_here: string | null;
+};
+
+/** Enough prose to recognise a thing by, on one line. Never the whole body. */
+function toSnippet(body: string | null): string {
+  return (body ?? "").replace(/\s+/g, " ").trim().slice(0, 220);
+}
+
+function toWorldEntry(row: WorldEntryRow): WorldEntry {
+  return {
+    ref: toObjectRef(row),
+    maturity: row.maturity as Maturity,
+    lifecycle: row.lifecycle as Lifecycle,
+    kinds: (row.kinds ?? []) as readonly RepresentationKind[],
+    snippet: toSnippet(row.body),
+    updatedAt: asTimestamp(row.updated_at),
+    cardHere: row.card_here ? asCardId(row.card_here) : null
+  };
+}
 
 function toObjectRef(row: ObjectRefRow): ObjectRef {
   const named = row.label?.trim() ?? "";
@@ -673,7 +700,13 @@ export class PostgresDeskRepository implements DeskRepository {
       const placed: DeskCard[] = [];
 
       for (const placement of input.placements) {
-        if (byId.get(placement.objectId)?.lifecycle !== "active") continue;
+        const object = byId.get(placement.objectId)!;
+        // Deleted is gone. Archived is not — `removeCards` archives an object
+        // that loses its last reference, and referencing it again is the
+        // deliberate act that brings it back. "Archived, not destroyed" is only
+        // a true promise if there is a way back, and this is the way: the
+        // Library finds it, and pulling it onto a composition restores it.
+        if (object.lifecycle === "deleted") continue;
 
         // Already on this composition: referencing it again is a no-op that
         // returns what is already there, so a repeated gesture is harmless.
@@ -699,6 +732,17 @@ export class PostgresDeskRepository implements DeskRepository {
             ${++z}, 1, 'active'
           )
         `;
+
+        // After the item, never before it: the global lock order is
+        // `composition_items` → `world_objects`, and `removeCards` takes them
+        // in exactly that order to decide the opposite question.
+        if (object.lifecycle === "archived") {
+          await tx`
+            update world_objects
+               set lifecycle = 'active', version = version + 1
+             where id = ${placement.objectId}
+          `;
+        }
 
         const row = await this.#cardById(tx, input.compositionId, placement.cardId);
         if (!row) throw new Error("referenceObjects: card vanished inside its own transaction");
@@ -1238,32 +1282,121 @@ export class PostgresDeskRepository implements DeskRepository {
   }
 
   /**
-   * Objects of a world, for choosing the other end of a relationship.
+   * The world's index.
    *
-   * Matches on the name and on the captured text, because an object that has
+   * Matches on names and on the captured text alike, because an object that has
    * not been deepened into anything has no name — and "that thing I wrote about
-   * the harbour" has to be findable, or relationships would only ever reach
-   * material that had already been classified.
+   * the harbour" has to be findable, or the index would only ever reach material
+   * that had already been classified.
+   *
+   * Ranked rather than merely filtered: a GM typing "mara" means the person
+   * called Mara, not the seventh Fragment that mentions her. An exact name beats
+   * a prefix, a prefix beats a name containing it, and a name of any kind beats
+   * a mention in prose. With no query at all this is a browse, so it orders by
+   * name — an index reads alphabetically, not by whatever was touched last.
+   *
+   * Matching reaches every representation's label, not only the one a card
+   * shows. An object that is both a Place called "The Quay" and a Faction called
+   * "Quay Wardens" must be findable by either, or search would depend on which
+   * way the object happened to be understood first.
    */
-  async searchObjects(input: SearchObjectsInput): Promise<readonly ObjectRef[]> {
+  async searchWorld(input: SearchWorldInput): Promise<readonly WorldEntry[]> {
     const sql = this.#sql;
-    const limit = Math.min(Math.max(Math.trunc(input.limit ?? 8), 1), 50);
+    const limit = Math.min(Math.max(Math.trunc(input.limit ?? 12), 1), 100);
+    const offset = Math.min(Math.max(Math.trunc(input.offset ?? 0), 0), 10_000);
     const query = input.query.trim();
-    const like = `%${query.replace(/[\\%_]/g, "\\$&")}%`;
+    // The query is text. Escaping the wildcards is what keeps it text: a GM
+    // searching for "%" is looking for a per-cent sign, not for everything.
+    const escaped = query.replace(/[\\%_]/g, "\\$&");
+    const like = `%${escaped}%`;
+    const prefix = `${escaped}%`;
+
+    const kinds = input.kinds ?? [];
+    const named = kinds.filter((kind): kind is RepresentationKind => kind !== "unclassified");
+    const loose = kinds.includes("unclassified");
 
     const rows = (await sql`
-      ${objectRefSelect(sql)}
-        and wo.world_id = ${input.worldId}
+      select
+        wo.id            as id,
+        wo.maturity      as maturity,
+        wo.lifecycle     as lifecycle,
+        wo.created_at    as created_at,
+        r.kind           as kind,
+        r.label          as label,
+        k.kinds          as kinds,
+        f.body           as body,
+        coalesce(f.updated_at, wo.created_at) as updated_at,
+        ci.id            as card_here,
+        case
+          when ${query === ""} then 4
+          when lower(coalesce(r.label, '')) = lower(${query}) then 0
+          when coalesce(r.label, '') ilike ${prefix} then 1
+          when coalesce(r.label, '') ilike ${like} then 2
+          when exists (
+            select 1 from representations rl
+             where rl.object_id = wo.id and rl.lifecycle = 'active'
+               and coalesce(rl.label, '') ilike ${like}
+          ) then 3
+          else 4
+        end as rank
+      from world_objects wo
+      left join fragments f on f.object_id = wo.id
+      left join lateral (
+        select kind, label
+          from representations
+         where object_id = wo.id and lifecycle = 'active'
+         order by seq asc
+         limit 1
+      ) r on true
+      left join lateral (
+        select array_agg(kind order by seq) as kinds
+          from representations
+         where object_id = wo.id and lifecycle = 'active'
+      ) k on true
+      left join composition_items ci
+        on ${input.compositionId ? sql`ci.composition_id = ${input.compositionId}` : sql`false`}
+       and ci.object_id = wo.id
+       and ci.lifecycle = 'active'
+      where wo.world_id = ${input.worldId}
+        ${
+          input.include === "archived"
+            ? sql`and wo.lifecycle = 'archived'`
+            : input.include === "all"
+              ? sql`and wo.lifecycle <> 'deleted'`
+              : sql`and wo.lifecycle = 'active'`
+        }
         ${input.excludeId ? sql`and wo.id <> ${input.excludeId}` : sql``}
+        ${input.maturity ? sql`and wo.maturity = ${input.maturity}` : sql``}
+        ${
+          kinds.length === 0
+            ? sql``
+            : loose && named.length > 0
+              ? sql`and (k.kinds is null or k.kinds && ${named}::text[])`
+              : loose
+                ? sql`and k.kinds is null`
+                : sql`and k.kinds && ${named}::text[]`
+        }
         ${
           query === ""
             ? sql``
-            : sql`and (coalesce(r.label, '') ilike ${like} or coalesce(f.body, '') ilike ${like})`
+            : sql`and (
+                coalesce(r.label, '') ilike ${like}
+                or coalesce(f.body, '') ilike ${like}
+                or exists (
+                  select 1 from representations rl
+                   where rl.object_id = wo.id and rl.lifecycle = 'active'
+                     and coalesce(rl.label, '') ilike ${like}
+                )
+              )`
         }
-      order by r.label asc nulls last, wo.created_at desc
-      limit ${limit}
-    `) as unknown as ObjectRefRow[];
+      order by
+        rank asc,
+        ${query === "" ? sql`r.label asc nulls last` : sql`coalesce(f.updated_at, wo.created_at) desc`},
+        wo.created_at desc,
+        wo.id asc
+      limit ${limit} offset ${offset}
+    `) as unknown as WorldEntryRow[];
 
-    return rows.map(toObjectRef);
+    return rows.map(toWorldEntry);
   }
 }

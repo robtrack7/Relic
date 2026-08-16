@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   boundsOf,
+  centreOn,
   clampScale,
   fitToBounds,
   MAX_SCALE,
@@ -96,6 +97,19 @@ describe("fitting", () => {
     const wide = fitToBounds({ x: 0, y: 0, width: 4000, height: 400 }, { width: 1000, height: 800 });
     expect(wide.scale).toBeLessThan(1);
     expect(wide.scale).toBeGreaterThan(MIN_SCALE);
+  });
+});
+
+describe("revealing", () => {
+  it("puts a card in the middle of the view without changing the zoom", () => {
+    const viewport: Viewport = { x: -400, y: 120, scale: 2 };
+    const card = { x: 1000, y: 500, width: 260, height: 160 };
+    const size = { width: 800, height: 600 };
+
+    const revealed = centreOn(viewport, size, card);
+
+    expect(revealed.scale).toBe(viewport.scale);
+    expect(worldToScreen(revealed, { x: 1130, y: 580 })).toEqual({ x: 400, y: 300 });
   });
 });
 

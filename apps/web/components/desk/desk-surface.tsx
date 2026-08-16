@@ -2,11 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { EMPTY_SELECTION, only, type Selection } from "@/lib/desk/selection";
+import { DEFAULT_CARD_WIDTH } from "@/lib/world/model";
+import { add, EMPTY_SELECTION, only, type Selection } from "@/lib/desk/selection";
 import type { CardId, DeskView, Link, Workspace } from "@/lib/world/model";
 
 import { DeskCanvas } from "./desk-canvas";
 import { DeskStack } from "./desk-stack";
+import { Finder } from "./finder";
+import { Library } from "./library";
+import type { SurfaceControls } from "./surface-controls";
 import { useDesk, type DeskStore } from "./use-desk";
 import { WorldBar } from "./world-bar";
 import { Inspector } from "./inspector";
@@ -27,6 +31,8 @@ export function DeskSurface({
   const [focusId, setFocusId] = useState<CardId | null>(null);
   const [narrow, setNarrow] = useState(false);
   const [override, setOverride] = useState<Arrangement | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const controls = useRef<SurfaceControls | null>(null);
 
   useEffect(() => {
     const query = window.matchMedia("(max-width: 720px), (pointer: coarse)");
@@ -83,11 +89,32 @@ export function DeskSurface({
    */
   const follow = async (link: Link) => {
     if (!focused) return;
-    const cardId = await store.pullIn(link.other, focused.layout);
+    const beside = {
+      x: focused.layout.x + focused.layout.width + 48 + DEFAULT_CARD_WIDTH / 2,
+      y: focused.layout.y + focused.layout.height / 2
+    };
+    const [cardId] = await store.pullIn([link.other], beside);
     if (cardId) {
       setSelection(only(cardId));
       setFocusId(cardId);
     }
+  };
+
+  /**
+   * What happens when something is retrieved from search or the Library.
+   *
+   * Selection because it is what the GM asked for; Focus, for a single thing,
+   * because searching for one object is already the deliberate act that Focus
+   * asks for — the second stage happened at the keyboard. A batch is only
+   * selected: nine things arriving at once is an arrangement, not a reading, and
+   * opening a panel on one of them would be Relic choosing which.
+   */
+  const arrive = (cardIds: readonly CardId[]) => {
+    if (cardIds.length === 0) return;
+    setSelection(add(EMPTY_SELECTION, cardIds));
+    setFocusId(cardIds.length === 1 ? cardIds[0]! : null);
+    const first = cardIds[0];
+    if (first) requestAnimationFrame(() => controls.current?.reveal(first));
   };
 
   const captureFromChrome = () => {
@@ -106,8 +133,25 @@ export function DeskSurface({
           <WorldBar workspace={workspace} active={initial.compositionId} />
         </div>
 
+        {/* Search sits in the top frame, between where you are and what you can
+            do with it: the world is always reachable, from any composition. */}
+        <Finder
+          store={store}
+          controls={controls}
+          onArrive={arrive}
+          onOpenLibrary={() => setLibraryOpen(true)}
+        />
+
         <div className={styles.chromeActions}>
           <SyncBadge store={store} />
+          <button
+            type="button"
+            className={styles.ghostAction}
+            aria-pressed={libraryOpen}
+            onClick={() => setLibraryOpen((was) => !was)}
+          >
+            Library
+          </button>
           <button type="button" className={styles.primaryAction} onClick={captureFromChrome}>
             New card
           </button>
@@ -134,6 +178,7 @@ export function DeskSurface({
             focusId={focusId}
             onFocusChange={setFocusId}
             neighbours={neighbours}
+            controls={controls}
           />
         ) : (
           <DeskStack
@@ -146,8 +191,22 @@ export function DeskSurface({
             focusId={focusId}
             onFocusChange={setFocusId}
             neighbours={neighbours}
+            controls={controls}
           />
         )}
+
+        {/* Over the composition rather than away from it. The Library is an
+            index into this world, not another place to be — and what it hands
+            back lands on the composition still underneath it. */}
+        {libraryOpen ? (
+          <Library
+            store={store}
+            controls={controls}
+            compositionName={initial.name ?? "this composition"}
+            onArrive={arrive}
+            onClose={() => setLibraryOpen(false)}
+          />
+        ) : null}
 
         {/* Emerges from selection, beside the canvas rather than over it: the
             surrounding world stays perceptible while one object deepens. */}

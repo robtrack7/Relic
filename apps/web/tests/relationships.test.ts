@@ -273,43 +273,5 @@ describe("a relational attribute is single-valued", () => {
   });
 });
 
-describe("finding the other end", () => {
-  it("matches on the name and on what was captured before it had one", async () => {
-    const desk = await repo.openDesk(WORLD);
-    await capture(desk.compositionId, "the shipping cartel", "Harbour Guild");
-    const unnamed = await capture(desk.compositionId, "something about the lamplighters");
-
-    const byName = await repo.searchObjects({ worldId: WORLD, query: "harbour" });
-    expect(byName.map((ref) => ref.label)).toContain("Harbour Guild");
-
-    // An object nobody has classified is still findable, or relationships
-    // would only ever reach material that had already been filed.
-    const byBody = await repo.searchObjects({ worldId: WORLD, query: "lamplighter" });
-    expect(byBody.map((ref) => ref.objectId)).toContain(unnamed.objectId);
-    expect(byBody[0]?.label).toBe("something about the lamplighters");
-    expect(byBody[0]?.kind).toBeNull();
-  });
-
-  it("never offers the subject, or anything from another world", async () => {
-    const desk = await repo.openDesk(WORLD);
-    const mara = await capture(desk.compositionId, "harbour master", "Mara");
-
-    const elsewhere = await repo.openDesk(asWorldId(randomUUID()));
-    await capture(elsewhere.compositionId, "another Mara entirely", "Mara");
-
-    const found = await repo.searchObjects({
-      worldId: WORLD,
-      query: "Mara",
-      excludeId: mara.objectId
-    });
-    expect(found).toHaveLength(0);
-  });
-
-  it("treats the query as text, never as a pattern", async () => {
-    const desk = await repo.openDesk(WORLD);
-    await capture(desk.compositionId, "the shipping cartel", "Harbour Guild");
-
-    const wildcard = await repo.searchObjects({ worldId: WORLD, query: "%" });
-    expect(wildcard).toHaveLength(0);
-  });
-});
+// Choosing the other end of a relationship is the world's index asked with a
+// narrower question, so what it does is specified once, in `library.test.ts`.

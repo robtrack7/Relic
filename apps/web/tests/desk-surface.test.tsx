@@ -3,8 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  asCardId,
   asCompositionId,
   asWorldId,
+  asWorldObjectId,
   type DeskView,
   type Workspace
 } from "@/lib/world/model";
@@ -15,6 +17,7 @@ const moveCardsAction = vi.fn();
 const removeCardsAction = vi.fn();
 const referenceObjectsAction = vi.fn();
 const createBoardAction = vi.fn();
+const searchWorldAction = vi.fn();
 const push = vi.fn();
 
 vi.mock("@/app/actions", () => ({
@@ -23,7 +26,8 @@ vi.mock("@/app/actions", () => ({
   moveCardsAction: (input: unknown) => moveCardsAction(input),
   removeCardsAction: (input: unknown) => removeCardsAction(input),
   referenceObjectsAction: (input: unknown) => referenceObjectsAction(input),
-  createBoardAction: (input: unknown) => createBoardAction(input)
+  createBoardAction: (input: unknown) => createBoardAction(input),
+  searchWorldAction: (input: unknown) => searchWorldAction(input)
 }));
 
 vi.mock("next/navigation", () => ({
@@ -80,6 +84,7 @@ beforeEach(() => {
   moveCardsAction.mockResolvedValue({ state: "ok", data: [] });
   removeCardsAction.mockResolvedValue({ state: "ok", data: [] });
   referenceObjectsAction.mockResolvedValue({ state: "ok", data: [] });
+  searchWorldAction.mockResolvedValue({ state: "ok", data: [] });
   createBoardAction.mockImplementation(async (input: Record<string, unknown>) => ({
     state: "ok",
     data: {
@@ -253,5 +258,183 @@ describe("reporting failure", () => {
 
     expect(await screen.findByText(/could not be saved/i)).toBeDefined();
     expect(screen.getByText(/^1 card/)).toBeDefined();
+  });
+});
+
+describe("search and retrieval", () => {
+  it("reaches past this composition", async () => {
+    const maraId = "11111111-1111-4000-8000-0000000000aa";
+    searchWorldAction.mockResolvedValue({
+      state: "ok",
+      data: [
+        {
+          ref: { objectId: maraId, label: "Mara", kind: "character" },
+          maturity: "ink",
+          lifecycle: "active",
+          kinds: ["character"],
+          snippet: "",
+          updatedAt: new Date().toISOString(),
+          cardHere: null
+        }
+      ]
+    });
+
+    const user = userEvent.setup();
+    renderDesk();
+
+    await user.click(screen.getByRole("button", { name: /Search this world/ }));
+    const field = screen.getByRole("textbox", { name: "Search this world" });
+    await user.type(field, "mara");
+
+    await waitFor(() =>
+      expect(searchWorldAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: "mara",
+          compositionId: EMPTY_DESK.compositionId
+        })
+      )
+    );
+
+    expect(await screen.findByText(/Mara/)).toBeDefined();
+  });
+
+  it("brings a result onto the desk when selected", async () => {
+    const objectId = "22222222-2222-4000-8000-0000000000bb";
+    const newCardId = "33333333-3333-4000-8000-0000000000cc";
+
+    searchWorldAction.mockResolvedValue({
+      state: "ok",
+      data: [
+        {
+          ref: { objectId, label: "The Lighthouse", kind: "place" },
+          maturity: "ink",
+          lifecycle: "active",
+          kinds: ["place"],
+          snippet: "It stands on the cliff.",
+          updatedAt: new Date().toISOString(),
+          cardHere: null
+        }
+      ]
+    });
+
+    referenceObjectsAction.mockImplementation(async (input: Record<string, unknown>) => ({
+      state: "ok",
+      data: [
+        {
+          cardId: newCardId,
+          objectId,
+          layout: { x: 0, y: 0, width: 280, height: 200 },
+          z: 1,
+          body: "It stands on the cliff.",
+          representation: null,
+          claims: [],
+          links: [],
+          maturity: "ink",
+          settled: null,
+          cardVersion: 1,
+          bodyVersion: 1
+        }
+      ]
+    }));
+
+    const user = userEvent.setup();
+    renderDesk();
+
+    await user.click(screen.getByRole("button", { name: /Search this world/ }));
+    const field = screen.getByRole("textbox", { name: "Search this world" });
+    await user.type(field, "lighthouse");
+
+    const result = await screen.findByRole("button", { name: /The Lighthouse/ });
+    await user.click(result);
+
+    await waitFor(() =>
+      expect(referenceObjectsAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          compositionId: EMPTY_DESK.compositionId,
+          placements: expect.arrayContaining([
+            expect.objectContaining({ objectId })
+          ])
+        })
+      )
+    );
+
+    const allCardBodies = await screen.findAllByText(/It stands on the cliff/);
+    expect(allCardBodies.length).toBeGreaterThan(0);
+  });
+
+  it("reveals a card already here rather than adding it again", async () => {
+    const existingCardId = "44444444-4444-4000-8000-0000000000dd";
+    const objectId = "55555555-5555-4000-8000-0000000000ee";
+
+    searchWorldAction.mockResolvedValue({
+      state: "ok",
+      data: [
+        {
+          ref: { objectId, label: "The Keeper", kind: "character" },
+          maturity: "pencil",
+          lifecycle: "active",
+          kinds: ["character"],
+          snippet: "",
+          updatedAt: new Date().toISOString(),
+          cardHere: existingCardId
+        }
+      ]
+    });
+
+    const user = userEvent.setup();
+    render(
+      <DeskSurface
+        workspace={SOLO}
+        initial={{
+          ...EMPTY_DESK,
+          cards: [
+            {
+              cardId: asCardId(existingCardId),
+              objectId: asWorldObjectId(objectId),
+              layout: { x: 0, y: 0, width: 280, height: 200 },
+              z: 1,
+              body: "The Keeper knows",
+              maturity: "pencil",
+              settled: null,
+              cardVersion: 1,
+              bodyVersion: 1,
+              representation: null,
+              claims: [],
+              links: []
+            }
+          ]
+        }}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: /Search this world/ }));
+    const field = screen.getByRole("textbox", { name: "Search this world" });
+    await user.type(field, "keeper");
+
+    const result = await screen.findByRole("button", { name: /The Keeper/ });
+    expect(within(result).getByText(/here/)).toBeDefined();
+
+    await user.click(result);
+
+    expect(referenceObjectsAction).not.toHaveBeenCalled();
+  });
+
+  it("closes the panel on Escape without doing anything", async () => {
+    searchWorldAction.mockResolvedValue({
+      state: "ok",
+      data: []
+    });
+
+    const user = userEvent.setup();
+    renderDesk();
+
+    await user.click(screen.getByRole("button", { name: /Search this world/ }));
+    expect(screen.getByRole("dialog", { name: "Search this world" })).toBeDefined();
+
+    vi.clearAllMocks();
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog", { name: "Search this world" })).toBeNull();
+    expect(searchWorldAction).not.toHaveBeenCalled();
   });
 });

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { EMPTY_SELECTION, only, toggle, type Selection } from "@/lib/desk/selection";
 import { cardTitle, disputedClaims, type CardId, type DeskCard } from "@/lib/world/model";
 
+import type { SurfaceControlsRef } from "./surface-controls";
 import { ContestedCue, MaturityCue } from "./truth";
 import type { DeskStore } from "./use-desk";
 import styles from "./desk.module.css";
@@ -30,6 +31,8 @@ type Props = {
   onFocusChange: (cardId: CardId | null) => void;
   /** Cards the focused object is connected to. */
   neighbours: ReadonlySet<string>;
+  /** Filled in here, so retrieval works the same way without a canvas. */
+  controls: SurfaceControlsRef;
 };
 
 /**
@@ -48,9 +51,35 @@ export function DeskStack({
   onEditingChange,
   focusId,
   onFocusChange,
-  neighbours
+  neighbours,
+  controls
 }: Props) {
   const editor = useRef<HTMLTextAreaElement>(null);
+  const list = useRef<HTMLOListElement>(null);
+
+  const cards = store.cards;
+  const cardsRef = useRef(cards);
+  cardsRef.current = cards;
+
+  /*
+   * The same two answers the canvas gives, without a viewport to give them
+   * with. Workflow parity, not canvas parity: retrieving something from the
+   * Library has to work here too, so "where does it land" becomes a position in
+   * the stack and "reveal it" becomes a scroll.
+   */
+  useEffect(() => {
+    controls.current = {
+      landing: () => ({ x: 0, y: cardsRef.current.length * 190 }),
+      reveal: (cardId) => {
+        list.current
+          ?.querySelector(`[data-card="${cardId}"]`)
+          ?.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+    };
+    return () => {
+      controls.current = null;
+    };
+  }, [controls]);
 
   useEffect(() => {
     if (!editing) return;
@@ -61,7 +90,7 @@ export function DeskStack({
   }, [editing]);
 
   // Most recently placed first — the stack reads as a capture history.
-  const ordered = useMemo(() => [...store.cards].sort((a, b) => b.z - a.z), [store.cards]);
+  const ordered = useMemo(() => [...cards].sort((a, b) => b.z - a.z), [cards]);
 
   return (
     <div className={styles.stack}>
@@ -71,7 +100,7 @@ export function DeskStack({
         </p>
       ) : null}
 
-      <ol className={styles.stackList}>
+      <ol className={styles.stackList} ref={list}>
         {ordered.map((card) => {
           const selected = selection.has(card.cardId);
           const isEditing = editing === card.cardId;
@@ -79,6 +108,7 @@ export function DeskStack({
             <li
               key={card.cardId}
               className={styles.stackItem}
+              data-card={card.cardId}
               data-maturity={card.maturity}
               data-selected={selected || undefined}
               data-focused={focusId === card.cardId || undefined}

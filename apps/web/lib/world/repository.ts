@@ -8,10 +8,10 @@ import type {
   DeskCard,
   DeskView,
   FieldValues,
+  KindFilter,
   Layout,
   Lifecycle,
   Maturity,
-  ObjectRef,
   Representation,
   RepresentationId,
   RepresentationKind,
@@ -19,6 +19,7 @@ import type {
   StoryPosition,
   TruthState,
   Workspace,
+  WorldEntry,
   WorldId,
   WorldObjectId
 } from "@/lib/world/model";
@@ -141,22 +142,42 @@ export interface DeskRepository {
   settleTruth(input: SettleTruthInput): Promise<WriteResult<Settled>>;
 
   /**
-   * Objects of a world that could stand at the other end of a relationship.
+   * The world's index: every identity in it, found by name or by prose.
    *
-   * A read, not a write, and the only place Relic offers identities the current
-   * composition does not hold — which is the point: a relationship reaches into
-   * the world, not into the Board you are looking at.
+   * The one read that is not scoped to a composition, and that is what makes it
+   * a Library rather than a view. Search must retrieve any object regardless of
+   * where it sits, so this reaches past the Desk deliberately — spatial memory
+   * is an assist here, never a requirement.
+   *
+   * Serves both the relationship picker and the Library because they are the
+   * same question asked with different filters. Two methods would drift, and the
+   * one that drifted would be the one that could not find something.
    */
-  searchObjects(input: SearchObjectsInput): Promise<readonly ObjectRef[]>;
+  searchWorld(input: SearchWorldInput): Promise<readonly WorldEntry[]>;
 }
 
-export type SearchObjectsInput = Readonly<{
+export type SearchWorldInput = Readonly<{
   worldId: WorldId;
-  /** Empty means "the most recent few", which is what an opened picker wants. */
+  /** Empty means "everything", which is what an opened index wants. */
   query: string;
+  /** Empty means every kind, including the objects that have none. */
+  kinds?: readonly KindFilter[];
+  maturity?: Maturity | null;
+  /**
+   * Archived material is reachable, but only deliberately.
+   *
+   * `removeCards` archives an object that loses its last reference, so the
+   * Library is the only way back to it. Defaulting to `active` keeps ordinary
+   * retrieval clean; asking for `archived` is how a GM finds what they cleared
+   * off the Desk last week.
+   */
+  include?: "active" | "archived" | "all";
   /** Nothing is its own allegiance; the subject is never offered. */
   excludeId?: WorldObjectId;
+  /** Resolves `cardHere`: is this already on the composition I am looking at? */
+  compositionId?: CompositionId;
   limit?: number;
+  offset?: number;
 }>;
 
 export type RepresentObjectInput = Readonly<{
