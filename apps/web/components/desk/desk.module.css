@@ -1979,3 +1979,297 @@
     gap: 8px;
   }
 }
+
+/* ------------------------------------------------------------- librarian -- */
+
+/*
+ * The carriage: a column beside the world, never over it.
+ *
+ * Beside is the whole point. The Librarian's context *is* what the GM is
+ * looking at, so a panel that covered the canvas would hide its own subject —
+ * and a long exchange has to be able to stay open while the world changes next
+ * to it. The Inspector is asked to move over rather than share the edge, for
+ * the same reason: two panels stacked on one another would make deepening into
+ * an object and asking about it mutually exclusive.
+ */
+
+.carriageTab {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--rule-strong);
+  background: var(--card-raised);
+  box-shadow: var(--lift-raised);
+  color: var(--ink);
+  font-size: 13px;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.carriageTab:hover {
+  border-color: var(--orange);
+  color: var(--orange-deep);
+}
+
+.carriage {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 40;
+  width: 360px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 0;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--card-raised);
+  box-shadow: var(--lift-raised);
+  animation: carriageIn 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes carriageIn {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carriage {
+    animation: none;
+  }
+}
+
+.main[data-carriage="open"] .inspector {
+  right: 384px;
+}
+
+.carriageHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.carriageTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* What the Librarian can see. Chrome metadata, so mono — this is Relic
+   reporting its own state, not the world speaking. */
+.carriageVantage {
+  margin: 3px 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+.carriageVantage strong {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.carriageBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+}
+
+.carriageNote {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-faint);
+}
+
+.carriageNote code {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.carriageProblem {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--orange-deep);
+}
+
+/* The two voices are told apart by typeface and alignment before colour: sans
+   and indented for the GM's own words, serif and full-width for the world
+   being described back to them. */
+.saidGm {
+  align-self: flex-end;
+  max-width: 88%;
+  padding: 7px 11px;
+  border-radius: var(--radius-control);
+  background: var(--paper-deep);
+}
+
+.saidGm .saidBody {
+  font-size: 13px;
+}
+
+.saidLibrarian {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.saidLibrarian .saidBody {
+  font-family: var(--serif);
+  font-size: 14px;
+}
+
+.saidBody {
+  margin: 0;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.consulting {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 0.9em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--orange);
+  animation: cursorBlink 1s steps(2, start) infinite;
+}
+
+@keyframes cursorBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor {
+    animation: none;
+  }
+}
+
+/* A citation is followable: it brings the thing it names onto the composition
+   the GM is already on, exactly as search and relationships do. */
+.citation {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15px;
+  height: 15px;
+  margin: 0 1px;
+  padding: 0 3px;
+  vertical-align: 1px;
+  border-radius: 4px;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper);
+  color: var(--ink-faint);
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.citation:hover {
+  border-color: var(--orange);
+  color: var(--orange-deep);
+}
+
+.sourceList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0;
+}
+
+.sourceChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink-faint);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.sourceChip:hover {
+  border-color: var(--orange);
+  color: var(--orange-deep);
+}
+
+.sourceMark {
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--rule);
+}
+
+.composerField {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 9px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--rule-strong);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: none;
+}
+
+.composerField:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: -1px;
+}
+
+/* Workflow parity: the same conversation without a wide frame. A sheet over
+   the stack rather than a column beside a canvas there is no room for. */
+@media (max-width: 720px), (pointer: coarse) {
+  .carriage {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: auto;
+  }
+
+  .main[data-carriage="open"] .inspector {
+    right: 12px;
+  }
+}

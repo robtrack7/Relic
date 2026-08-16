@@ -4,6 +4,12 @@ import type postgres from "postgres";
 
 import { db } from "@/lib/world/db";
 import {
+  asLibrarianMessageId,
+  type LibrarianMessage,
+  type Source,
+  type Speaker
+} from "@/lib/librarian/model";
+import {
   asCardId,
   asClaimId,
   asCompositionId,
@@ -46,6 +52,7 @@ import {
   type EditBodyInput,
   type EditRepresentationInput,
   type MoveCardsInput,
+  type RecordExchangeInput,
   type ReferenceObjectsInput,
   type RemoveCardsInput,
   type RemoveClaimInput,
@@ -139,6 +146,28 @@ const cardSelect = (sql: Sql) => sql`
 
 const asTimestamp = (value: string | Date): string =>
   value instanceof Date ? value.toISOString() : String(value);
+
+type LibrarianMessageRow = {
+  id: string;
+  composition_id: string | null;
+  role: string;
+  body: string;
+  sources: unknown;
+  said_at: string | Date;
+};
+
+function toLibrarianMessage(row: LibrarianMessageRow): LibrarianMessage {
+  return {
+    id: asLibrarianMessageId(row.id),
+    speaker: row.role as Speaker,
+    body: row.body,
+    // The column is jsonb and its shape is Relic's own, written by
+    // `recordExchange` one statement away. Read back as what it was stored as.
+    sources: (Array.isArray(row.sources) ? row.sources : []) as readonly Source[],
+    compositionId: row.composition_id === null ? null : asCompositionId(row.composition_id),
+    saidAt: asTimestamp(row.said_at)
+  };
+}
 
 /** Who settled something and when, or null where nothing has been settled. */
 function toSettlement(by: string | null, at: string | Date | null): Settlement | null {
@@ -1398,5 +1427,61 @@ export class PostgresDeskRepository implements DeskRepository {
     `) as unknown as WorldEntryRow[];
 
     return rows.map(toWorldEntry);
+  }
+
+  /**
+   * The Librarian's conversation in this world, oldest first.
+   *
+   * `seq` rather than `said_at`, because an exchange writes both messages in one
+   * transaction and their timestamps can be identical — ordering on the clock is
+   * how an answer ends up printed above its question. The newest window is taken
+   * with a descending limit and then reversed, so a long conversation costs the
+   * same read as a short one.
+   */
+  async librarianHistory(
+    worldId: WorldId,
+    limit = 40
+  ): Promise<readonly LibrarianMessage[]> {
+    const window = Math.min(Math.max(Math.trunc(limit), 1), 200);
+
+    const rows = (await this.#sql`
+      select id, composition_id, role, body, sources, said_at
+        from public.librarian_messages
+       where world_id = ${worldId}
+       order by seq desc
+       limit ${window}
+    `) as unknown as LibrarianMessageRow[];
+
+    return rows.reverse().map(toLibrarianMessage);
+  }
+
+  async recordExchange(input: RecordExchangeInput): Promise<readonly LibrarianMessage[]> {
+    const sql = this.#sql;
+
+    // Two statements rather than one multi-row insert, because `returning` makes
+    // no promise about row order and the order here is the conversation. The
+    // transaction is what makes it one change set; the round trip is noise
+    // beside the model call that just finished.
+    return await this.#tx(async (tx) => {
+      const said = async (role: "gm" | "librarian", body: string, sources: unknown) =>
+        (
+          (await tx`
+            insert into public.librarian_messages
+              (world_id, composition_id, role, body, sources)
+            values (
+              ${input.worldId},
+              ${input.compositionId},
+              ${role},
+              ${body},
+              ${sql.json(sources as postgres.JSONValue)}
+            )
+            returning id, composition_id, role, body, sources, said_at
+          `) as unknown as LibrarianMessageRow[]
+        )[0]!;
+
+      const ask = await said("gm", input.ask, []);
+      const answer = await said("librarian", input.answer, input.sources);
+      return [ask, answer].map(toLibrarianMessage);
+    });
   }
 }

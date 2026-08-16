@@ -22,7 +22,10 @@ Build **vertical slices**, not administrative phases. Prefer visible product pro
     ranked index behind global search, the Library, and the relationship picker;
     retrieval that brings a thing to the composition you are on rather than
     taking you to it; and a way back for material that was cleared off the Desk.
-12. Make the Librarian understand current Board, focus, and selection.
+12. ~~Make the Librarian understand current Board, focus, and selection.~~
+    **Done** — a persistent carriage beside the world, a context assembled on the
+    server from identifiers the browser cannot forge, citations that resolve to
+    real objects or to nothing, and a model behind a port. Eyes, not yet hands.
 13. Let the Librarian manipulate the workspace and create Pencil material.
 14. Build Prep as a composition of the same world.
 15. Run that composition through Stage.
@@ -245,6 +248,83 @@ chrome would re-render the chrome on every frame of a pan, and where the GM is
 looking is not the chrome's business. `reveal` pans and deliberately does not
 zoom: the scale is how close the GM has chosen to stand to their world, and a
 search result is not a reason to change it.
+
+## Decisions the Librarian-context slice settled
+
+**The model is behind a port, exactly as storage is.** `LibrarianProvider` is the
+interface; `AnthropicLibrarian` is the one file in Relic that knows a model
+exists. Everything the Librarian *is* — its identity, the truth laws it works
+under, what it may see, what it may cite — is assembled above that line and
+arrives as a `Turn`. `AI.md` says models are replaceable workers behind a stable
+product intelligence, and this is what makes that checkable rather than
+aspirational: swapping the provider cannot change what the Librarian believes
+about Ink, because the provider was never told.
+
+**The client sends identifiers; the server reads the world.** A request carries a
+composition id, a focused card id, a list of selected card ids, and one sentence.
+Every word of world content in the prompt is re-read on the server from those
+ids. A card id naming something on another composition resolves to nothing
+rather than to context, which is specified in the suite because it is the whole
+security property: nothing able to write to the page is able to write to the
+Librarian's grounding. It is the same seam `referenceObjects` already holds, and
+it becomes tenancy enforcement the day Relic grows accounts.
+
+**The conversation is persisted, and that is a security decision before it is a
+product one.** The transcript is part of the prompt. Had the browser held it, the
+server would have to trust the client's account of what it had previously said —
+a direct route for anything that can write to the page to rewrite the Librarian's
+instructions. Reading it from Postgres by world id costs one table and closes
+that. It is world-scoped rather than composition-scoped because the Librarian is
+one presence: moving from the Desk to a Board changes what you are looking at,
+not who you are talking to.
+
+**A citation is a number into a list Relic built, and it fails closed.** The
+grounding numbers what it names and the Soul asks for `[3]`. A model asked to
+quote an identifier will eventually invent one that resolves to nothing; a model
+asked for a number can only be right or out of range, and out of range is visible.
+Unbacked numbers are dropped rather than repaired — an answer carrying one fewer
+source is better than a chip pointing confidently at the wrong thing.
+
+**One numbering per turn, across the brief and every search result.** The Harbour
+Guild found by search and the Harbour Guild sitting on the Desk are one identity
+and get one number. A second counter would have made the conversation the one
+place in Relic where identity is not stable.
+
+**Retrieval is `searchWorld` again.** The Librarian's reach is exactly the GM's
+reach — the same ranked index behind global search, the Library, and the
+relationship picker. A second retrieval path would have drifted, and the one that
+drifted would be the one that could not find something.
+
+**Eyes before hands.** Every tool at this step is a read, so "the Librarian may
+never establish Ink" is not a rule the model is asked to keep — it is a
+capability it does not have. The Soul states the law anyway, because the model
+should be able to explain the boundary it is working inside rather than merely
+hit it. Writes, and the authority tiers that go with them, are step 13.
+
+**The carriage sits beside the world and the Inspector moves over.** What the GM
+is looking at *is* the subject of the conversation, so a panel covering the canvas
+would hide its own context. Two panels sharing the right edge would have made
+deepening into an object and asking about it mutually exclusive, which is exactly
+the pair a GM wants together. The Library still draws above both, because it is a
+different act — looking something up rather than working.
+
+**A route handler rather than a server action, because the answer streams.**
+Everything else in Relic commits and returns, and a server action is the right
+shape for that. A sentence arriving a word at a time is not. The wire format is
+newline-delimited JSON: Relic owns both ends, and SSE's field grammar would be
+ceremony over a channel carrying four kinds of event.
+
+**Relic works without a model.** No key means the carriage says so and everything
+else behaves normally. The world is the product; a Librarian that could make the
+Desk unusable by being unconfigured would have the dependency backwards.
+
+**The Story Kernel is deliberately absent.** `librarian-ux` puts a short living
+brief — premise, tone, central forces, dramatic question — between the Soul and
+the current view. Relic has nowhere to keep one: there is no record of a world's
+premise or direction, and inventing the schema now would mean designing it
+against a world with no sessions in it. The seam is the ordering of the context
+stack, which is already right, so adding it later is one more section in the
+brief rather than a rewrite.
 
 ## Decisions the Representations slice settled
 

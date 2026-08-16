@@ -1,3 +1,4 @@
+import type { LibrarianMessage, Source } from "@/lib/librarian/model";
 import type {
   AuthorKind,
   CardId,
@@ -154,7 +155,39 @@ export interface DeskRepository {
    * one that drifted would be the one that could not find something.
    */
   searchWorld(input: SearchWorldInput): Promise<readonly WorldEntry[]>;
+
+  /**
+   * What the GM and the Librarian have said to each other in this world.
+   *
+   * On this port rather than a second one because it is the same world, the same
+   * store, and the same scoping question — and because the conversation must be
+   * read on the server, from a world id, for the same reason every other read
+   * here is. A transcript that came back from the browser would be the browser
+   * telling the Librarian what it had previously said.
+   *
+   * Oldest first, most recent `limit` exchanges.
+   */
+  librarianHistory(worldId: WorldId, limit?: number): Promise<readonly LibrarianMessage[]>;
+
+  /**
+   * Records one exchange: the question and the answer, together.
+   *
+   * One intent, one change set. A half-written exchange is a conversation with a
+   * question nobody answered, which would then be replayed into every later turn
+   * as though the Librarian had ignored it.
+   */
+  recordExchange(input: RecordExchangeInput): Promise<readonly LibrarianMessage[]>;
 }
+
+export type RecordExchangeInput = Readonly<{
+  worldId: WorldId;
+  /** Where the GM was standing. Recorded, never used to scope the conversation. */
+  compositionId: CompositionId | null;
+  ask: string;
+  answer: string;
+  /** The World Objects the answer actually cited. */
+  sources: readonly Source[];
+}>;
 
 export type SearchWorldInput = Readonly<{
   worldId: WorldId;

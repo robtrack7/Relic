@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { DEFAULT_CARD_WIDTH } from "@/lib/world/model";
+import { cardTitle, DEFAULT_CARD_WIDTH } from "@/lib/world/model";
 import { add, EMPTY_SELECTION, only, type Selection } from "@/lib/desk/selection";
-import type { CardId, DeskView, Link, Workspace } from "@/lib/world/model";
+import type { CardId, DeskView, Link, ObjectRef, Workspace } from "@/lib/world/model";
 
 import { DeskCanvas } from "./desk-canvas";
 import { DeskStack } from "./desk-stack";
 import { Finder } from "./finder";
+import { Librarian } from "./librarian";
 import { Library } from "./library";
 import type { SurfaceControls } from "./surface-controls";
 import { useDesk, type DeskStore } from "./use-desk";
@@ -32,6 +33,7 @@ export function DeskSurface({
   const [narrow, setNarrow] = useState(false);
   const [override, setOverride] = useState<Arrangement | null>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [librarianOpen, setLibrarianOpen] = useState(false);
   const controls = useRef<SurfaceControls | null>(null);
 
   useEffect(() => {
@@ -117,6 +119,20 @@ export function DeskSurface({
     if (first) requestAnimationFrame(() => controls.current?.reveal(first));
   };
 
+  /**
+   * Following a source the Librarian cited.
+   *
+   * The same gesture as following a relationship or retrieving from the Library:
+   * the thing is referenced onto the composition the GM is already on, rather
+   * than the conversation navigating them somewhere else. It is worth being
+   * exact about who acted — the Librarian named a source, and the GM chose to
+   * bring it here. Nothing the Librarian said wrote to the world.
+   */
+  const followSource = async (ref: ObjectRef) => {
+    const [cardId] = await store.pullIn([ref], controls.current?.landing() ?? { x: 0, y: 0 });
+    if (cardId) arrive([cardId]);
+  };
+
   const captureFromChrome = () => {
     // Placed just below the newest card so the stack view stays readable and
     // the canvas does not pile every card on one spot.
@@ -166,7 +182,7 @@ export function DeskSurface({
         </div>
       </header>
 
-      <main className={styles.main}>
+      <main className={styles.main} data-carriage={librarianOpen ? "open" : undefined}>
         {arrangement === "canvas" ? (
           <DeskCanvas
             store={store}
@@ -218,6 +234,21 @@ export function DeskSurface({
             onFollow={follow}
           />
         ) : null}
+
+        {/* Persistent and collapsible, beside the world rather than over it.
+            What the GM is looking at is the subject of the conversation, so a
+            panel that covered the canvas would hide its own context — and the
+            Library, which does cover it, is drawn above this deliberately. */}
+        <Librarian
+          open={librarianOpen}
+          onOpenChange={setLibrarianOpen}
+          compositionId={initial.compositionId}
+          compositionName={initial.name ?? "this composition"}
+          focusCardId={focusId}
+          focusLabel={focused ? cardTitle(focused) || "Unnamed" : null}
+          selectedCardIds={[...selection]}
+          onFollowSource={followSource}
+        />
       </main>
 
       <footer className={styles.statusBar}>

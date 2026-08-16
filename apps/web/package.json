@@ -13,6 +13,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.117.1",
     "next": "^16.0.0",
     "postgres": "^3.4.9",
     "react": "^19.2.0",
