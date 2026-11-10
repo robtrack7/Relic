@@ -10,11 +10,19 @@
 }
 .topFrame {
   position: absolute; top: 18px; left: 28px; right: 28px;
-  display: grid; grid-template-columns: minmax(200px, 1fr) minmax(240px, 500px) minmax(160px, 1fr);
+  /* Search owns the true centre: both flanks are equal 1fr columns, so the
+     board selector rides the lead column's inner edge beside search instead
+     of claiming a column that would push search off-centre. */
+  --search-width: minmax(240px, 500px);
+  display: grid; grid-template-columns: minmax(0, 1fr) var(--search-width) minmax(0, 1fr);
+  grid-template-areas: "lead search actions";
   align-items: center; gap: 24px; pointer-events: none;
   color: var(--ink); font-family: var(--font-ui);
 }
-.topFrame:has(.contextSlot) { grid-template-columns: minmax(150px, .7fr) minmax(180px, 1fr) minmax(240px, 500px) minmax(160px, .8fr); }
+.orientation { grid-area: lead; justify-self: start; }
+.contextSlot { grid-area: lead; justify-self: end; max-width: calc(100% - 132px); }
+.searchSlot { grid-area: search; }
+.globalActions { grid-area: actions; }
 .orientation, .globalActions { display: flex; align-items: center; gap: 10px; min-width: 0; pointer-events: none; }
 .globalActions { justify-content: flex-end; }
 .globalActions > button { width: 44px; height: 44px; flex: none; border: 1px solid var(--chrome-rule); border-radius: var(--radius-pill); background: var(--chrome-surface); box-shadow: var(--lift); }
@@ -119,14 +127,12 @@
   :global([data-detail-open]) .viewArea, :global([data-detail-open]) .minimapArea { display: none; }
 }
 @container (max-width: 1100px) {
-  .topFrame { left: 20px; right: 20px; grid-template-columns: minmax(170px, 1fr) minmax(200px, 360px) auto; gap: 16px; }
-  .topFrame:has(.contextSlot) { grid-template-columns: minmax(135px, .7fr) minmax(150px, .9fr) minmax(200px, 1.3fr) auto; }
+  .topFrame { left: 20px; right: 20px; --search-width: minmax(200px, 360px); gap: 16px; }
   .orientation { gap: 6px; }
   .contextControl { max-width: 160px; }
 }
 @container (max-width: 820px) {
   .topFrame { left: 14px; right: 14px; gap: 8px; }
-  .topFrame:has(.contextSlot) { grid-template-columns: minmax(100px, .7fr) minmax(120px, .85fr) minmax(170px, 1.2fr) auto; }
   .orientation, .globalActions { gap: 4px; }
   .contextControl { max-width: 140px; }
 }
@@ -135,8 +141,8 @@
   .minimapArea { bottom: calc(var(--workspace-edge) + 280px); }
 }
 @container (max-width: 760px) {
-  .topFrame { grid-template-columns: minmax(145px, 1fr) minmax(150px, 1.2fr) auto; gap: 10px; left: 18px; right: 18px; }
-  .topFrame:has(.contextSlot) { grid-template-columns: minmax(120px, .7fr) minmax(125px, .8fr) minmax(150px, 1.1fr) auto; }
+  .topFrame { --search-width: minmax(140px, 220px); gap: 10px; left: 18px; right: 18px; }
+  .contextSlot { min-width: 64px; max-width: calc(100% - 92px); }
   .globalActions { gap: 4px; }
   .relicButton { font-size: 23px !important; }
   .contextControl { padding: 4px; max-width: 115px; }
@@ -145,10 +151,14 @@
   .searchControl kbd { display: none; }
   .toolCluster { gap: 12px; }
 }
+/* Too narrow to keep the selector beside a centred search: it takes its own
+   centred row beneath, so search never leaves the middle. */
+@container (max-width: 640px) {
+  .topFrame:has(.contextSlot) { grid-template-rows: auto auto; row-gap: 4px; }
+  .topFrame:has(.contextSlot) .contextSlot { display: flex; grid-area: auto; grid-column: 1 / -1; grid-row: 2; justify-self: center; min-width: 0; max-width: min(100%, 34ch); }
+}
 @container (max-width: 520px) {
-  .topFrame { grid-template-columns: minmax(0, 1fr) 44px auto; }
-  .topFrame:has(.contextSlot) { grid-template-columns: minmax(0, 1fr) 44px auto; grid-template-rows: auto auto; row-gap: 4px; }
-  .topFrame:has(.contextSlot) .contextSlot { display: flex; grid-column: 1 / -1; grid-row: 2; max-width: min(100%, 34ch); }
+  .topFrame { --search-width: 44px; }
   .topFrame:has(.contextSlot) .contextControl { max-width: 100%; padding: 2px 4px; }
   .contextControl { display: none; }
   .toolButton { width: 46px !important; height: 46px; min-height: 46px !important; }
