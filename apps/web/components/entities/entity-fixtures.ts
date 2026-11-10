@@ -79,7 +79,7 @@ const pcCard: DeskCard = {
 };
 
 const pcExtra: EntityBlock[] = [
-  { id: "entity-story-pc-mara:roleplay", kind: "text", role: "roleplay", title: "At the table", content: prose("Mara asks one precise question before committing to a plan. Give her a quiet way to notice what others miss.") },
+  { id: "entity-story-pc-mara:roleplay", kind: "text", role: "roleplay", title: "Playing Mara", content: prose("Mara asks one precise question before committing to a plan. Give her a quiet way to notice what others miss.") },
   { id: "entity-story-pc-mara:notes", kind: "text", role: "notes", title: "Private notes", content: prose("The player does not yet know that Mara cast the first wick key. Keep this separate from the established character history.") },
 ];
 

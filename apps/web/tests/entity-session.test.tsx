@@ -24,6 +24,7 @@ vi.mock("@/app/actions", () => ({ searchWorldAction: mocks.search, setClaimActio
 
 import { EntitySession } from "@/components/entities/entity-session";
 import { EntityBuilder } from "@/components/entities/entity-builder";
+import { EntityFocus } from "@/components/entities/entity-focus";
 
 const seed = ENTITY_FIXTURE_GROUPS.character[0]!;
 
@@ -184,6 +185,40 @@ function LiveBuilder({ session, onClose = () => {} }: { session: EntitySession; 
   const { entity } = useSyncExternalStore(session.subscribe, session.getSnapshot, session.getSnapshot);
   return entity ? <EntityBuilder entity={entity} session={session} onClose={onClose} onFollow={() => {}}/> : null;
 }
+
+function LiveFocus({ session }: { session: EntitySession }) {
+  const { entity } = useSyncExternalStore(session.subscribe, session.getSnapshot, session.getSnapshot);
+  return entity ? <EntityFocus entity={entity} session={session} onPageChange={() => {}} onBuilder={() => {}} onClose={() => {}} onFollow={() => {}}/> : null;
+}
+
+describe("Focus Overview", () => {
+  afterEach(cleanup);
+
+  it("puts what is true now and the table's numbers before the writing", async () => {
+    const { session } = sessionFor("focus-overview");
+    await session.load();
+    const { container } = render(<LiveFocus session={session}/>);
+    const facts = container.querySelector("[data-key-facts]")!;
+    const firstWriting = container.querySelector("[data-block-id]")!;
+    expect(facts).toBeTruthy();
+    expect(facts.compareDocumentPosition(firstWriting) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(facts as HTMLElement).getAllByRole("term").length).toBeGreaterThan(0);
+    expect(within(facts as HTMLElement).getByLabelText("Vitals")).toBeTruthy();
+  });
+
+  it("does not repeat a Source's excerpt or full record on Overview", async () => {
+    const source = ENTITY_FIXTURE_GROUPS.source[0]!;
+    const fixture = scopedEntityFixture(source, "focus-source");
+    const session = new EntitySession(String(fixture.worldId), String(fixture.objectId), fixture);
+    mocks.load.mockResolvedValue({ state: "ok", data: cloneEntityFixture(fixture) });
+    await session.load();
+    const { container } = render(<LiveFocus session={session}/>);
+    const facts = container.querySelector("[data-key-facts]") as HTMLElement;
+    expect(within(facts).queryByLabelText("Excerpt")).toBeNull();
+    expect(within(facts).getByText(/not automatically established truth/)).toBeTruthy();
+    expect(screen.queryAllByText(/not automatically established truth/)).toHaveLength(1);
+  });
+});
 
 describe("Entity Builder manuscript", () => {
   afterEach(cleanup);

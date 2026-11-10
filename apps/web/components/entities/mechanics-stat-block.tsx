@@ -106,6 +106,14 @@ function Vital({ vital, editable, onField, onResource }: { vital: StatVital; edi
   </div>;
 }
 
+/** The ruleset's vitals alone, read-only: the at-the-table line in Focus. Renders nothing when there are none. */
+export function MechanicsVitals({ profile, limit = CARD_VITALS }: { profile: MechanicsProfile; limit?: number }) {
+  const vitals = statBlockLayout(profile).vitals.slice(0, limit);
+  if (!vitals.length) return null;
+  const ignore = () => undefined;
+  return <dl className={styles.vitals} aria-label="Vitals">{vitals.map(vital => <Vital key={vital.kind === "field" ? vital.field.id : vital.resource.id} vital={vital} editable={false} onField={ignore} onResource={ignore}/>)}</dl>;
+}
+
 export function MechanicsStatBlock({ profile, depth, editable = depth === "builder", onChange, onReference, objectPicker }: MechanicsStatBlockProps) {
   const canEdit = editable && !!onChange && depth === "builder";
   const update = (next: MechanicsProfile) => onChange?.(next);

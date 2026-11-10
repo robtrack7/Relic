@@ -76,10 +76,10 @@ const DETAIL_FIELDS: Record<string, readonly [string, string][]> = {
   source: [["sourceType", "Kind of source"], ["origin", "Origin"], ["page", "Page or anchor"], ["url", "Reference URL"], ["excerpt", "Excerpt"]],
   thread: [["category", "Kind of concern"]], event: [["category", "Kind of event"]], note: [["category", "Kind of note"]]
 };
-export function EntityDetails({ entity, session, showEmpty = false }: { entity: EntitySnapshot; session: EntitySession; showEmpty?: boolean }) {
+export function EntityDetails({ entity, session, showEmpty = false, omit = [] }: { entity: EntitySnapshot; session: EntitySession; showEmpty?: boolean; omit?: readonly string[] }) {
   const representation = entity.representation;
   if (!representation) return null;
-  const fields = (DETAIL_FIELDS[representation.kind] ?? []).filter(([key]) => showEmpty || String(representation.fields[key] ?? "").trim());
+  const fields = (DETAIL_FIELDS[representation.kind] ?? []).filter(([key]) => !omit.includes(key) && (showEmpty || String(representation.fields[key] ?? "").trim()));
   return fields.length ? <section className={styles.entityDetails} aria-label="Entity details">{fields.map(([key, label]) => <label key={key}><span>{label}</span>{key === "excerpt" ? <textarea aria-label={label} placeholder={showEmpty ? "Empty" : undefined} value={String(representation.fields[key] ?? "")} rows={showEmpty ? 2 : 4} onChange={event => session.setIdentityDraft(representation.label ?? "", { [key]: event.target.value })} onBlur={() => { void session.flush(); }}/> : <input aria-label={label} placeholder={showEmpty ? "Empty" : undefined} value={String(representation.fields[key] ?? "")} onChange={event => session.setIdentityDraft(representation.label ?? "", { [key]: event.target.value })} onBlur={() => { void session.flush(); }}/>}</label>)}</section> : null;
 }
 

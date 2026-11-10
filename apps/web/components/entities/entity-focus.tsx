@@ -5,7 +5,9 @@ import { richPlainText, type EntityBlock, type EntitySnapshot } from "@/lib/worl
 import { focusPages, type FocusPageId } from "@/lib/world/entity-composition";
 import { FAMILY_LABELS, objectFamily, objectMedia } from "@/lib/world/object-presentation";
 import type { Link } from "@/lib/world/model";
+import { legacyMechanicsProfile } from "@/lib/world/mechanics-presentation";
 import { ObjectGlyph } from "@/components/world-objects/object-parts";
+import { MechanicsVitals } from "./mechanics-stat-block";
 import { EditableText, EntityDetails, EntityHistory, EntityMechanics, EntityRelationships, EntityState } from "./entity-blocks";
 import { Chevron, CloseGlyph, EntityRecovery, EntitySaveStatus, NameEditor } from "./entity-chrome";
 import type { EntitySession } from "./entity-session";
@@ -47,6 +49,7 @@ export function EntityFocus({ entity, session, page = "overview", onPageChange, 
   const visibleWriting = entity.document.blocks.filter((block): block is EntityBlock & { kind: "text" } => block.kind === "text" && (!!richPlainText(block.content).trim() || activeEdits.has(block.id)));
   const prose = visibleWriting.filter(block => block.role !== "notes");
   const media = objectMedia(entity);
+  const mechanicsProfile = family === "character" ? entity.representation?.mechanics ?? legacyMechanicsProfile(entity) : null;
   const onLink = (link: Link) => onFollow(link.other.objectId);
   return <aside className={styles.focus} data-entity-focus data-object-id={entity.objectId} aria-label={`${FAMILY_LABELS[family]} Focus`} onKeyDown={event => { if (event.key !== "Escape" || event.defaultPrevented) return; event.stopPropagation(); event.preventDefault(); if ((event.target as Element).closest("input, textarea, select")) { (event.target as HTMLElement).blur(); void session.flush(); } else onClose(); }}>
     <header className={styles.focusHeader}><div className={styles.headerIdentity}><ObjectGlyph family={family}/><span>{FAMILY_LABELS[family]}</span><span className={styles.maturity}>{entity.maturity === "ink" ? "Ink" : "Pencil"}</span></div><div className={styles.headerControls}>{canBack ? <button type="button" className={styles.iconButton} aria-label="Back in Focus" onClick={onBack}><Chevron direction="left"/></button> : null}{canForward ? <button type="button" className={styles.iconButton} aria-label="Forward in Focus" onClick={onForward}><Chevron direction="right"/></button> : null}<button className={styles.iconButton} type="button" aria-label="Close Focus" onClick={onClose}><CloseGlyph/></button></div></header>
@@ -55,9 +58,14 @@ export function EntityFocus({ entity, session, page = "overview", onPageChange, 
       <EntityRecovery session={session}/>
       {selected === "overview" ? <>
         <div className={styles.focusIdentity} data-has-image={!!media || undefined}><div><NameEditor entity={entity} session={session} compact/>{entity.representation?.fields.quote ? <p className={styles.identityLine}>{String(entity.representation.fields.quote)}</p> : null}</div>{media ? <img src={media.src} alt={media.alt} style={{ objectPosition: media.position }} draggable={false}/> : null}</div>
+        {/* Reference before reading: what is true now, who they are, and the numbers a table asks for. */}
+        <div className={styles.keyFacts} data-key-facts>
+          <EntityState entity={entity} session={session}/><EntityDetails entity={entity} session={session} omit={pages.some(item => item.id === "content") ? ["excerpt"] : []}/>
+          {family === "character" && mechanicsProfile ? <MechanicsVitals profile={mechanicsProfile}/> : null}
+          {/* The full record lives on Provenance; Overview keeps only the evidence standing. */}
+          {family === "source" ? <p className={styles.caption}>Evidence; not automatically established truth.</p> : null}
+        </div>
         {prose.length ? prose.map(block => <EditableText key={block.id} block={block} session={session} onReference={onFollow} showTitle={block.role !== "narrative"} onEditingChange={editing => editingChanged(block.id, editing)}/>) : <p className={styles.quiet}>A thought waiting to take shape.</p>}
-        <EntityDetails entity={entity} session={session}/><EntityState entity={entity} session={session}/>
-        {family === "source" ? <SourceRecord entity={entity}/> : null}
       </> : null}
       {selected === "mechanics" ? <EntityMechanics entity={entity} session={session} onReference={onFollow}/> : null}
       {selected === "relationships" ? <><h1 className={styles.pageTitle}>{pages.find(item => item.id === selected)?.label}</h1><EntityRelationships entity={entity} session={session} onFollow={onLink}/></> : null}

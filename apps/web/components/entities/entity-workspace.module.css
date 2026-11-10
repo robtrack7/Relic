@@ -18,7 +18,7 @@
 .focusIdentity { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 18px; margin: 2px 0 26px; }
 .focusIdentity[data-has-image] { grid-template-columns: minmax(0, 1fr) 112px; }
 .focusIdentity img { display: block; width: 112px; height: 148px; object-fit: cover; border-radius: var(--radius-inset); }
-.focusName, .builderName { display: block; width: 100%; min-width: 0; margin: 0; padding: 0 0 3px; border: 0; border-radius: 2px; color: var(--ink); background: transparent; font: 500 36px/1.08 var(--font-editorial); letter-spacing: -.025em; overflow-wrap: anywhere; resize: none; overflow: hidden; }
+.focusName, .builderName { display: block; text-wrap: balance; width: 100%; min-width: 0; margin: 0; padding: 0 0 3px; border: 0; border-radius: 2px; color: var(--ink); background: transparent; font: 500 36px/1.08 var(--font-editorial); letter-spacing: -.025em; overflow-wrap: anywhere; resize: none; overflow: hidden; }
 .focusName:focus, .builderName:focus { outline: none; box-shadow: 0 1px var(--workflow-ink); }
 .focusName::placeholder, .builderName::placeholder { color: var(--ink-quiet); }
 .identityLine { margin: 12px 0 0; color: var(--ink-quiet); font: italic 17px/1.4 var(--font-editorial); }
@@ -39,6 +39,17 @@
 .revealAction:hover { color: var(--workflow-ink); background: var(--chrome-hover); }
 .writePrompt { margin: 0; color: var(--ink-quiet); font: italic 19px/1.65 var(--font-editorial); }
 .pageTitle { margin: 1px 0 24px; font: 500 29px/1.15 var(--font-editorial); letter-spacing: -.02em; }
+/* Focus Overview: reference before reading. One label column and one value voice for state, details and vitals. */
+.keyFacts { --fact-columns: minmax(84px, .35fr) minmax(0, 1fr); display: grid; gap: 12px; margin: 0 0 28px; padding-bottom: 20px; border-bottom: 1px solid var(--chrome-rule); }
+.keyFacts:not(:has(dl, label, details, button, p)) { display: none; }
+.keyFacts .stateBlock { margin: 0; padding: 0; border: 0; }
+.keyFacts .stateBlock:empty, .keyFacts .entityDetails:empty { display: none; }
+.keyFacts .facts { gap: 10px; }
+.keyFacts .facts > div, .keyFacts .entityDetails label { grid-template-columns: var(--fact-columns); gap: 16px; }
+.keyFacts .entityDetails { gap: 10px; margin: 0; }
+.keyFacts .entityDetails label > span { font: 500 12px/1.4 var(--font-ui); }
+.keyFacts .entityDetails input { min-height: 0; padding: 0 0 1px; font: 500 14px/1.4 var(--font-reading); }
+.keyFacts > dl[aria-label="Vitals"] { padding-top: 12px; border-top: 1px solid var(--chrome-rule); }
 .stateBlock { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--chrome-rule); }
 .facts { display: grid; gap: 15px; margin: 0; }
 .facts > div { display: grid; grid-template-columns: minmax(80px, .35fr) minmax(0, 1fr); align-items: baseline; gap: 16px; }
