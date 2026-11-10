@@ -1,0 +1,7864 @@
+[
+  {
+    "id": "00-AUTHORITY-POLICY",
+    "title": "Authority & Change Policy",
+    "status": "active",
+    "kind": "reference",
+    "authority": "invariant",
+    "system": null,
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "00 Catalogue/00-AUTHORITY-POLICY — Authority & Change Policy.md"
+  },
+  {
+    "id": "00-CATALOGUE-MAP",
+    "title": "Catalogue Map",
+    "status": "active",
+    "kind": "reference",
+    "authority": "current",
+    "system": null,
+    "family": null,
+    "storybook": "none",
+    "depends_on": [
+      "00-PRODUCT-LAWS",
+      "00-AUTHORITY-POLICY",
+      "00-REG-SCHEMA"
+    ],
+    "platforms": [],
+    "path": "00 Catalogue/00-CATALOGUE-MAP — Catalogue Map.md"
+  },
+  {
+    "id": "00-GLOSSARY",
+    "title": "Canonical Glossary",
+    "status": "active",
+    "kind": "reference",
+    "authority": "current",
+    "system": null,
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "00 Catalogue/00-GLOSSARY — Canonical Glossary.md"
+  },
+  {
+    "id": "00-PRODUCT-LAWS",
+    "title": "Product Laws",
+    "status": "active",
+    "kind": "reference",
+    "authority": "invariant",
+    "system": null,
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "00 Catalogue/00-PRODUCT-LAWS — Product Laws.md"
+  },
+  {
+    "id": "00-REG-SCHEMA",
+    "title": "Registry Schema",
+    "status": "active",
+    "kind": "reference",
+    "authority": "current",
+    "system": null,
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "00 Catalogue/00-REG-SCHEMA — Registry Schema.md"
+  },
+  {
+    "id": "00-START",
+    "title": "Relic V2 Catalogue — Start Here",
+    "status": "active",
+    "kind": "reference",
+    "authority": "invariant",
+    "system": null,
+    "family": null,
+    "storybook": "none",
+    "depends_on": [
+      "00-PRODUCT-LAWS",
+      "00-CATALOGUE-MAP",
+      "00-AUTHORITY-POLICY"
+    ],
+    "platforms": [],
+    "path": "00 Catalogue/00-START — Start Here.md"
+  },
+  {
+    "id": "APP-002",
+    "title": "Relic Button",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": "global-controls",
+    "storybook": "component",
+    "depends_on": [
+      "APP-003",
+      "DS-CTL-ICON-BUTTON"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "01 App Shell & Navigation/Global Controls/APP-002 — Relic Button.md"
+  },
+  {
+    "id": "APP-003",
+    "title": "Relic Menu",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": "global-controls",
+    "storybook": "component",
+    "depends_on": [
+      "APP-011",
+      "APP-005",
+      "DS-SRF-MENU"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "01 App Shell & Navigation/Global Controls/APP-003 — Relic Menu.md"
+  },
+  {
+    "id": "APP-004",
+    "title": "Global Search & Quick Open",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": "global-controls",
+    "storybook": "component",
+    "depends_on": [
+      "APP-005",
+      "APP-011",
+      "SRH-002",
+      "DS-FRM-SEARCH"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "01 App Shell & Navigation/Global Controls/APP-004 — Global Search & Quick Open.md"
+  },
+  {
+    "id": "APP-007",
+    "title": "Librarian Toggle",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": "global-controls",
+    "storybook": "component",
+    "depends_on": [
+      "APP-010",
+      "LBR-001",
+      "DS-CTL-ICON-BUTTON"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "01 App Shell & Navigation/Global Controls/APP-007 — Librarian Toggle.md"
+  },
+  {
+    "id": "APP-008",
+    "title": "Profile Control",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": "global-controls",
+    "storybook": "component",
+    "depends_on": [
+      "APP-009",
+      "APP-007"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "01 App Shell & Navigation/Global Controls/APP-008 — Profile Control.md"
+  },
+  {
+    "id": "APP-009",
+    "title": "Profile Menu",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": "global-controls",
+    "storybook": "component",
+    "depends_on": [
+      "APP-011",
+      "SET-001",
+      "DS-SRF-MENU"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "01 App Shell & Navigation/Global Controls/APP-009 — Profile Menu.md"
+  },
+  {
+    "id": "SYS-01",
+    "title": "App Shell & Navigation",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "01 App Shell & Navigation/Global Controls/SYS-01 — App Shell & Navigation.md"
+  },
+  {
+    "id": "APP-001",
+    "title": "Global App Shell",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": "shell-workspace",
+    "storybook": "scene",
+    "depends_on": [
+      "APP-002",
+      "APP-005",
+      "APP-004"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "01 App Shell & Navigation/Shell & Workspace/APP-001 — Global App Shell.md"
+  },
+  {
+    "id": "APP-005",
+    "title": "Current Context Control",
+    "status": "prototype",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": "shell-workspace",
+    "storybook": "component",
+    "depends_on": [
+      "CHR-004",
+      "CHR-006",
+      "APP-004"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "01 App Shell & Navigation/Shell & Workspace/APP-005 — Current Context Control.md"
+  },
+  {
+    "id": "APP-006",
+    "title": "Active Session Return",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": "shell-workspace",
+    "storybook": "component",
+    "depends_on": [
+      "APP-005",
+      "STG-001",
+      "PREP-001"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "01 App Shell & Navigation/Shell & Workspace/APP-006 — Active Session Return.md"
+  },
+  {
+    "id": "APP-010",
+    "title": "Workspace Dock Manager",
+    "status": "prototype",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": "shell-workspace",
+    "storybook": "none",
+    "depends_on": [
+      "LBR-001",
+      "STG-002",
+      "DSK-002"
+    ],
+    "platforms": [],
+    "path": "01 App Shell & Navigation/Shell & Workspace/APP-010 — Workspace Dock Manager.md"
+  },
+  {
+    "id": "APP-011",
+    "title": "Global Overlay Host",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": "shell-workspace",
+    "storybook": "component",
+    "depends_on": [
+      "DS-BHV-OVERLAY"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "01 App Shell & Navigation/Shell & Workspace/APP-011 — Global Overlay Host.md"
+  },
+  {
+    "id": "APP-012",
+    "title": "Global Action Receipt",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": "shell-workspace",
+    "storybook": "component",
+    "depends_on": [
+      "PLT-004",
+      "LBR-001",
+      "REV-004"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "01 App Shell & Navigation/Shell & Workspace/APP-012 — Global Action Receipt.md"
+  },
+  {
+    "id": "APP-013",
+    "title": "Degraded & Offline Status",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-01",
+    "family": "shell-workspace",
+    "storybook": "component",
+    "depends_on": [
+      "STG-001"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "01 App Shell & Navigation/Shell & Workspace/APP-013 — Degraded & Offline Status.md"
+  },
+  {
+    "id": "BRD-001",
+    "title": "Board Context Popover",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "boards",
+    "storybook": "component",
+    "depends_on": [
+      "BRD-005",
+      "BRD-002",
+      "BRD-003",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Boards/BRD-001 — Board Context Popover.md"
+  },
+  {
+    "id": "BRD-002",
+    "title": "Board Preview Tile",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "boards",
+    "storybook": "component",
+    "depends_on": [
+      "BRD-011",
+      "BRD-009",
+      "BRD-005",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Boards/BRD-002 — Board Preview Tile.md"
+  },
+  {
+    "id": "BRD-003",
+    "title": "Create Board",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "boards",
+    "storybook": "component",
+    "depends_on": [
+      "BRD-005",
+      "BRD-006",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Boards/BRD-003 — Create Board.md"
+  },
+  {
+    "id": "BRD-004",
+    "title": "Board Actions Menu",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "boards",
+    "storybook": "component",
+    "depends_on": [
+      "APP-012",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Boards/BRD-004 — Board Actions Menu.md"
+  },
+  {
+    "id": "BRD-005",
+    "title": "Board Open & Restore",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "boards",
+    "storybook": "pattern",
+    "depends_on": [
+      "BRD-001",
+      "BRD-009",
+      "DSK-004",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Boards/BRD-005 — Board Open & Restore.md"
+  },
+  {
+    "id": "BRD-006",
+    "title": "Placement Host",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "boards",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-020",
+      "DSK-021",
+      "DSK-019",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Boards/BRD-006 — Placement Host.md"
+  },
+  {
+    "id": "BRD-007",
+    "title": "Board Section",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "boards",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-023",
+      "DSK-015",
+      "BRD-006",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Boards/BRD-007 — Board Section.md"
+  },
+  {
+    "id": "BRD-008",
+    "title": "Board Annotation",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "boards",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-015",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Boards/BRD-008 — Board Annotation.md"
+  },
+  {
+    "id": "BRD-009",
+    "title": "Board Link Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "boards",
+    "storybook": "component",
+    "depends_on": [
+      "BRD-002",
+      "BRD-005",
+      "BRD-011",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Boards/BRD-009 — Board Link Card.md"
+  },
+  {
+    "id": "BRD-010",
+    "title": "Move or Copy to Board Picker",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "boards",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-023",
+      "DSK-024",
+      "BRD-003",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Boards/BRD-010 — Move or Copy to Board Picker.md"
+  },
+  {
+    "id": "BRD-011",
+    "title": "Board Preview Renderer",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "boards",
+    "storybook": "pattern",
+    "depends_on": [
+      "BRD-002",
+      "BRD-009",
+      "DSK-031",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Boards/BRD-011 — Board Preview Renderer.md"
+  },
+  {
+    "id": "DSK-001",
+    "title": "Desk Surface",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-core",
+    "storybook": "scene",
+    "depends_on": [
+      "APP-001",
+      "DSK-002",
+      "DSK-007",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Core/DSK-001 — Desk Surface.md"
+  },
+  {
+    "id": "DSK-002",
+    "title": "Canvas Viewport",
+    "status": "prototype",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-core",
+    "storybook": "scene",
+    "depends_on": [
+      "DSK-007",
+      "DSK-005",
+      "DSK-031",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Core/DSK-002 — Canvas Viewport.md"
+  },
+  {
+    "id": "DSK-003",
+    "title": "Canvas Background & Dot Grid",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-core",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-006",
+      "DSK-022",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Core/DSK-003 — Canvas Background & Dot Grid.md"
+  },
+  {
+    "id": "DSK-004",
+    "title": "Canvas Camera Navigation",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-core",
+    "storybook": "pattern",
+    "depends_on": [
+      "DSK-005",
+      "DSK-031",
+      "BRD-005",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Core/DSK-004 — Canvas Camera Navigation.md"
+  },
+  {
+    "id": "DSK-005",
+    "title": "View Controls",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-core",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-006",
+      "DSK-004",
+      "DSK-031",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Core/DSK-005 — View Controls.md"
+  },
+  {
+    "id": "DSK-006",
+    "title": "Canvas View Options",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-core",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-003",
+      "DSK-022",
+      "DSK-031",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Core/DSK-006 — Canvas View Options.md"
+  },
+  {
+    "id": "DSK-026",
+    "title": "Semantic Zoom",
+    "status": "prototype",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-core",
+    "storybook": "pattern",
+    "depends_on": [
+      "DSK-021",
+      "DSK-004",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Core/DSK-026 — Semantic Zoom.md"
+  },
+  {
+    "id": "DSK-030",
+    "title": "Empty Board Prompt",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-core",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-010",
+      "DSK-011",
+      "LBR-001",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Core/DSK-030 — Empty Board Prompt.md"
+  },
+  {
+    "id": "DSK-031",
+    "title": "Contextual Minimap",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-core",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-006",
+      "DSK-004",
+      "APP-010",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Core/DSK-031 — Contextual Minimap.md"
+  },
+  {
+    "id": "DSK-033",
+    "title": "Pinned Reference Shelf",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-core",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-007",
+      "OBJ-SRC",
+      "MEC-015",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Core/DSK-033 — Pinned Reference Shelf.md"
+  },
+  {
+    "id": "DSK-007",
+    "title": "Canvas Tool Cluster",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-tools",
+    "storybook": "component",
+    "depends_on": [
+      "APP-002",
+      "DSK-008",
+      "DSK-009",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Tools/DSK-007 — Canvas Tool Cluster.md"
+  },
+  {
+    "id": "DSK-008",
+    "title": "Create World Material Menu",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-tools",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-010",
+      "DSK-009",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Tools/DSK-008 — Create World Material Menu.md"
+  },
+  {
+    "id": "DSK-009",
+    "title": "Composition Tool Menu",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-tools",
+    "storybook": "component",
+    "depends_on": [
+      "BRD-007",
+      "BRD-008",
+      "DSK-014",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Tools/DSK-009 — Composition Tool Menu.md"
+  },
+  {
+    "id": "DSK-010",
+    "title": "Blank Canvas Quick Capture",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-tools",
+    "storybook": "pattern",
+    "depends_on": [
+      "DSK-008",
+      "BRD-006",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Tools/DSK-010 — Blank Canvas Quick Capture.md"
+  },
+  {
+    "id": "DSK-011",
+    "title": "Paste & Drop to Canvas",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-tools",
+    "storybook": "none",
+    "depends_on": [
+      "BRD-006",
+      "DS-CAN"
+    ],
+    "platforms": [],
+    "path": "02 Desk & Boards/Canvas Tools/DSK-011 — Paste & Drop to Canvas.md"
+  },
+  {
+    "id": "DSK-012",
+    "title": "Semantic Connect Interaction",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-tools",
+    "storybook": "pattern",
+    "depends_on": [
+      "DSK-013",
+      "DSK-014",
+      "DSK-017",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Tools/DSK-012 — Semantic Connect Interaction.md"
+  },
+  {
+    "id": "DSK-013",
+    "title": "Semantic Connection Handles",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-tools",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-019",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Tools/DSK-013 — Semantic Connection Handles.md"
+  },
+  {
+    "id": "DSK-014",
+    "title": "Decorative Connector Tool",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-tools",
+    "storybook": "pattern",
+    "depends_on": [
+      "DSK-015",
+      "DSK-012",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Tools/DSK-014 — Decorative Connector Tool.md"
+  },
+  {
+    "id": "DSK-015",
+    "title": "Decorative Connector Edge",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "canvas-tools",
+    "storybook": "component",
+    "depends_on": [
+      "BRD-006",
+      "BRD-007",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Canvas Tools/DSK-015 — Decorative Connector Edge.md"
+  },
+  {
+    "id": "SYS-02",
+    "title": "Desk & Boards",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "02 Desk & Boards/SYS-02 — Desk & Boards.md"
+  },
+  {
+    "id": "DSK-016",
+    "title": "Selection Toolbar",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-017",
+      "DSK-023",
+      "DSK-024",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-016 — Selection Toolbar.md"
+  },
+  {
+    "id": "DSK-017",
+    "title": "Canvas Selection Model",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "none",
+    "depends_on": [
+      "DSK-018",
+      "DSK-019",
+      "DSK-016",
+      "DS-CAN"
+    ],
+    "platforms": [],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-017 — Canvas Selection Model.md"
+  },
+  {
+    "id": "DSK-018",
+    "title": "Selection Marquee",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "pattern",
+    "depends_on": [
+      "BRD-007",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-018 — Selection Marquee.md"
+  },
+  {
+    "id": "DSK-019",
+    "title": "Selection Frame & Handles",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-013",
+      "DSK-021",
+      "DSK-020",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-019 — Selection Frame & Handles.md"
+  },
+  {
+    "id": "DSK-020",
+    "title": "Placement Drag",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "pattern",
+    "depends_on": [
+      "DSK-022",
+      "BRD-007",
+      "DSK-028",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-020 — Placement Drag.md"
+  },
+  {
+    "id": "DSK-021",
+    "title": "Placement Resize & Disclosure",
+    "status": "prototype",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "pattern",
+    "depends_on": [
+      "DSK-019",
+      "DSK-026",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-021 — Placement Resize & Disclosure.md"
+  },
+  {
+    "id": "DSK-022",
+    "title": "Alignment & Snap Guides",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "pattern",
+    "depends_on": [
+      "DSK-006",
+      "DSK-020",
+      "DSK-021",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-022 — Alignment & Snap Guides.md"
+  },
+  {
+    "id": "DSK-023",
+    "title": "Multi-Selection Arrange Menu",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "component",
+    "depends_on": [
+      "BRD-007",
+      "BRD-010",
+      "DSK-028",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-023 — Multi-Selection Arrange Menu.md"
+  },
+  {
+    "id": "DSK-024",
+    "title": "Placement Context Menu",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "component",
+    "depends_on": [
+      "BRD-010",
+      "APP-011",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-024 — Placement Context Menu.md"
+  },
+  {
+    "id": "DSK-025",
+    "title": "Canvas Context Menu",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-008",
+      "DSK-009",
+      "DSK-010",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-025 — Canvas Context Menu.md"
+  },
+  {
+    "id": "DSK-027",
+    "title": "Focus Invocation",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "pattern",
+    "depends_on": [
+      "FOC-001",
+      "DSK-021",
+      "BRD-005",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-027 — Focus Invocation.md"
+  },
+  {
+    "id": "DSK-028",
+    "title": "Canvas Undo & Redo",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "pattern",
+    "depends_on": [
+      "APP-012",
+      "DSK-020",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-028 — Canvas Undo & Redo.md"
+  },
+  {
+    "id": "DSK-029",
+    "title": "Canvas Proposal Layer",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "component",
+    "depends_on": [
+      "LBR-001",
+      "APP-012",
+      "DSK-028",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-029 — Canvas Proposal Layer.md"
+  },
+  {
+    "id": "DSK-032",
+    "title": "Canvas Keyboard & Spatial Navigation",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-02",
+    "family": "selection-placement",
+    "storybook": "pattern",
+    "depends_on": [
+      "DSK-017",
+      "DSK-020",
+      "DSK-027",
+      "DS-CAN"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "02 Desk & Boards/Selection & Placement/DSK-032 — Canvas Keyboard & Spatial Navigation.md"
+  },
+  {
+    "id": "OBJ-016",
+    "title": "Two-Sided Expanded Card Host",
+    "status": "deferred",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "expanded-cards",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-017",
+      "BRD-006",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Expanded Cards/OBJ-016 — Two-Sided Expanded Card Host.md"
+  },
+  {
+    "id": "OBJ-017",
+    "title": "Expanded Card Flip Control",
+    "status": "deferred",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "expanded-cards",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-MOTION",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Expanded Cards/OBJ-017 — Expanded Card Flip Control.md"
+  },
+  {
+    "id": "OBJ-001",
+    "title": "World Object Representation Framework",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "representation-framework",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "03 World Objects & Cards/Representation Framework/OBJ-001 — World Object Representation Framework.md"
+  },
+  {
+    "id": "OBJ-002",
+    "title": "World Object Projection Resolver",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "representation-framework",
+    "storybook": "pattern",
+    "depends_on": [
+      "OBJ-001",
+      "DSK-026",
+      "DSK-021",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Representation Framework/OBJ-002 — World Object Projection Resolver.md"
+  },
+  {
+    "id": "OBJ-003",
+    "title": "Representation Transition Coordinator",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "representation-framework",
+    "storybook": "pattern",
+    "depends_on": [
+      "OBJ-002",
+      "DSK-027",
+      "DS-FND-MOTION",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Representation Framework/OBJ-003 — Representation Transition Coordinator.md"
+  },
+  {
+    "id": "OBJ-013",
+    "title": "Object Action Contribution Contract",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "representation-framework",
+    "storybook": "pattern",
+    "depends_on": [
+      "DSK-016",
+      "DSK-024",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Representation Framework/OBJ-013 — Object Action Contribution Contract.md"
+  },
+  {
+    "id": "OBJ-015",
+    "title": "Object Reference Navigation",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "representation-framework",
+    "storybook": "pattern",
+    "depends_on": [
+      "DSK-027",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Representation Framework/OBJ-015 — Object Reference Navigation.md"
+  },
+  {
+    "id": "SYS-03",
+    "title": "World Objects & Cards",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "03 World Objects & Cards/SYS-03 — World Objects & Cards.md"
+  },
+  {
+    "id": "OBJ-004",
+    "title": "Object Identity Lockup",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "shared-projection-components",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-005",
+      "OBJ-006",
+      "OBJ-012",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Shared Projection Components/OBJ-004 — Object Identity Lockup.md"
+  },
+  {
+    "id": "OBJ-005",
+    "title": "Object Type Cue",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "shared-projection-components",
+    "storybook": "component",
+    "depends_on": [
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Shared Projection Components/OBJ-005 — Object Type Cue.md"
+  },
+  {
+    "id": "OBJ-006",
+    "title": "Object Image & Media Lead",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "shared-projection-components",
+    "storybook": "component",
+    "depends_on": [
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Shared Projection Components/OBJ-006 — Object Image & Media Lead.md"
+  },
+  {
+    "id": "OBJ-007",
+    "title": "Object Maturity Treatment",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "shared-projection-components",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-008",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Shared Projection Components/OBJ-007 — Object Maturity Treatment.md"
+  },
+  {
+    "id": "OBJ-008",
+    "title": "Object Provenance Cue",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "shared-projection-components",
+    "storybook": "component",
+    "depends_on": [
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Shared Projection Components/OBJ-008 — Object Provenance Cue.md"
+  },
+  {
+    "id": "OBJ-009",
+    "title": "Historical & As-Of Indicator",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "shared-projection-components",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-004",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Shared Projection Components/OBJ-009 — Historical & As-Of Indicator.md"
+  },
+  {
+    "id": "OBJ-010",
+    "title": "Inline Object Reference",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "shared-projection-components",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-011",
+      "OBJ-015",
+      "OBJ-005",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Shared Projection Components/OBJ-010 — Inline Object Reference.md"
+  },
+  {
+    "id": "OBJ-011",
+    "title": "Object Peek",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "shared-projection-components",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-009",
+      "OBJ-015",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Shared Projection Components/OBJ-011 — Object Peek.md"
+  },
+  {
+    "id": "OBJ-012",
+    "title": "Inline Object Rename",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "shared-projection-components",
+    "storybook": "none",
+    "depends_on": [
+      "OBJ-004",
+      "DS-BHV-AUTOSAVE"
+    ],
+    "platforms": [],
+    "path": "03 World Objects & Cards/Shared Projection Components/OBJ-012 — Inline Object Rename.md"
+  },
+  {
+    "id": "OBJ-014",
+    "title": "Archived & Unavailable Object Treatment",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-03",
+    "family": "shared-projection-components",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-010",
+      "BRD-006",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "03 World Objects & Cards/Shared Projection Components/OBJ-014 — Archived & Unavailable Object Treatment.md"
+  },
+  {
+    "id": "OBJ-CHAR-21",
+    "title": "Character Action Contributions",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "actions",
+    "storybook": "pattern",
+    "depends_on": [
+      "OBJ-013",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Actions/OBJ-CHAR-21 — Character Action Contributions.md"
+  },
+  {
+    "id": "OBJ-CHAR",
+    "title": "Character Representation Family",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "character",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "04 Characters/OBJ-CHAR — Character Representation Family.md"
+  },
+  {
+    "id": "OBJ-CHAR-01",
+    "title": "Character Marker",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "projections",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-026",
+      "OBJ-CHAR-02",
+      "OBJ-003",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Projections/OBJ-CHAR-01 — Character Marker.md"
+  },
+  {
+    "id": "OBJ-CHAR-02",
+    "title": "Character Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "projections",
+    "storybook": "component",
+    "depends_on": [
+      "BRD-006",
+      "OBJ-CHAR-03",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Projections/OBJ-CHAR-02 — Character Card.md"
+  },
+  {
+    "id": "OBJ-CHAR-03",
+    "title": "Expanded Character Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "projections",
+    "storybook": "component",
+    "depends_on": [
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Projections/OBJ-CHAR-03 — Expanded Character Card.md"
+  },
+  {
+    "id": "OBJ-CHAR-04",
+    "title": "Expanded Character Front",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "projections",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-CHAR-19",
+      "OBJ-CHAR-15",
+      "OBJ-CHAR-18",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Projections/OBJ-CHAR-04 — Expanded Character Front.md"
+  },
+  {
+    "id": "OBJ-CHAR-05",
+    "title": "Expanded Character Mechanics Back",
+    "status": "deferred",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "projections",
+    "storybook": "component",
+    "depends_on": [
+      "MEC-022",
+      "MEC-023",
+      "MEC-003",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Projections/OBJ-CHAR-05 — Expanded Character Mechanics Back.md"
+  },
+  {
+    "id": "OBJ-CHAR-06",
+    "title": "Character Focus",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "projections",
+    "storybook": "scene",
+    "depends_on": [
+      "MEC-003",
+      "OBJ-CHAR-19",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Projections/OBJ-CHAR-06 — Character Focus.md"
+  },
+  {
+    "id": "OBJ-CHAR-07",
+    "title": "Character Index Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "character-projections",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "SRH-004",
+      "LIB-003",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Projections/OBJ-CHAR-07 — Character Index Projection.md"
+  },
+  {
+    "id": "OBJ-CHAR-09",
+    "title": "Character Prepare Row",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "projections",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-CHAR-20",
+      "OBJ-CHAR-10",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Projections/OBJ-CHAR-09 — Character Prepare Row.md"
+  },
+  {
+    "id": "OBJ-CHAR-10",
+    "title": "Character Prepare Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "projections",
+    "storybook": "component",
+    "depends_on": [
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Projections/OBJ-CHAR-10 — Character Prepare Card.md"
+  },
+  {
+    "id": "OBJ-CHAR-11",
+    "title": "Character Stage Bubble",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "projections",
+    "storybook": "component",
+    "depends_on": [
+      "STG-002",
+      "STG-005",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Projections/OBJ-CHAR-11 — Character Stage Bubble.md"
+  },
+  {
+    "id": "OBJ-CHAR-13",
+    "title": "Character Chronicle Projection",
+    "status": "prototype",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "projections",
+    "storybook": "component",
+    "depends_on": [
+      "CHR-003",
+      "CHR-001",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Projections/OBJ-CHAR-13 — Character Chronicle Projection.md"
+  },
+  {
+    "id": "SYS-04",
+    "title": "Characters",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "04 Characters/SYS-04 — Characters.md"
+  },
+  {
+    "id": "OBJ-CHAR-15",
+    "title": "Character Roleplay Snapshot",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "snapshots",
+    "storybook": "component",
+    "depends_on": [
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Snapshots/OBJ-CHAR-15 — Character Roleplay Snapshot.md"
+  },
+  {
+    "id": "OBJ-CHAR-16",
+    "title": "Character Mechanical Summary",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "snapshots",
+    "storybook": "component",
+    "depends_on": [
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Snapshots/OBJ-CHAR-16 — Character Mechanical Summary.md"
+  },
+  {
+    "id": "OBJ-CHAR-17",
+    "title": "Character Knowledge Snapshot",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "snapshots",
+    "storybook": "component",
+    "depends_on": [
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Snapshots/OBJ-CHAR-17 — Character Knowledge Snapshot.md"
+  },
+  {
+    "id": "OBJ-CHAR-18",
+    "title": "Character Relationship Snapshot",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "snapshots",
+    "storybook": "component",
+    "depends_on": [
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Snapshots/OBJ-CHAR-18 — Character Relationship Snapshot.md"
+  },
+  {
+    "id": "OBJ-CHAR-19",
+    "title": "Character Current State Summary",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "snapshots",
+    "storybook": "component",
+    "depends_on": [
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Snapshots/OBJ-CHAR-19 — Character Current State Summary.md"
+  },
+  {
+    "id": "OBJ-CHAR-20",
+    "title": "Character Session Relevance Cue",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-04",
+    "family": "snapshots",
+    "storybook": "component",
+    "depends_on": [
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "04 Characters/Snapshots/OBJ-CHAR-20 — Character Session Relevance Cue.md"
+  },
+  {
+    "id": "MEC-001",
+    "title": "Mechanics Framework",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "framework-configuration",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Framework & Configuration/MEC-001 — Mechanics Framework.md"
+  },
+  {
+    "id": "MEC-002",
+    "title": "Mechanics Template Definition",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "framework-configuration",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Framework & Configuration/MEC-002 — Mechanics Template Definition.md"
+  },
+  {
+    "id": "MEC-004",
+    "title": "Mechanics Template Builder",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "framework-configuration",
+    "storybook": "scene",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Framework & Configuration/MEC-004 — Mechanics Template Builder.md"
+  },
+  {
+    "id": "MEC-016",
+    "title": "Mechanics Template Library",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "framework-configuration",
+    "storybook": "scene",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Framework & Configuration/MEC-016 — Mechanics Template Library.md"
+  },
+  {
+    "id": "MEC-017",
+    "title": "Saga Mechanics Profile",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "framework-configuration",
+    "storybook": "none",
+    "depends_on": [
+      "SET-005"
+    ],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Framework & Configuration/MEC-017 — Saga Mechanics Profile.md"
+  },
+  {
+    "id": "MEC-019",
+    "title": "Mechanics Template Data Mapping",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "framework-configuration",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Framework & Configuration/MEC-019 — Mechanics Template Data Mapping.md"
+  },
+  {
+    "id": "MEC-020",
+    "title": "Rules Reference Source Model",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "framework-configuration",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Framework & Configuration/MEC-020 — Rules Reference Source Model.md"
+  },
+  {
+    "id": "SYS-05",
+    "title": "Mechanics & Rules",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Framework & Configuration/SYS-05 — Mechanics & Rules.md"
+  },
+  {
+    "id": "MEC-003",
+    "title": "Mechanics Layout Renderer",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "mechanics-components",
+    "storybook": "component",
+    "depends_on": [
+      "DS-MEC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Mechanics Components/MEC-003 — Mechanics Layout Renderer.md"
+  },
+  {
+    "id": "MEC-005",
+    "title": "Mechanics Field",
+    "status": "active",
+    "kind": "primitive",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "mechanics-components",
+    "storybook": "primitive",
+    "depends_on": [
+      "DS-MEC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Mechanics Components/MEC-005 — Mechanics Field.md"
+  },
+  {
+    "id": "MEC-006",
+    "title": "Resource Track",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "mechanics-components",
+    "storybook": "component",
+    "depends_on": [
+      "MEC-022",
+      "MEC-023",
+      "DS-MEC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Mechanics Components/MEC-006 — Resource Track.md"
+  },
+  {
+    "id": "MEC-007",
+    "title": "Dice Expression",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "mechanics-components",
+    "storybook": "component",
+    "depends_on": [
+      "MEC-021",
+      "DS-MEC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Mechanics Components/MEC-007 — Dice Expression.md"
+  },
+  {
+    "id": "MEC-008",
+    "title": "Action Cost Token",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "mechanics-components",
+    "storybook": "component",
+    "depends_on": [
+      "MEC-009",
+      "MEC-010",
+      "DS-MEC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Mechanics Components/MEC-008 — Action Cost Token.md"
+  },
+  {
+    "id": "MEC-009",
+    "title": "Action Symbol Library",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "mechanics-components",
+    "storybook": "component",
+    "depends_on": [
+      "DS-MEC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Mechanics Components/MEC-009 — Action Symbol Library.md"
+  },
+  {
+    "id": "MEC-010",
+    "title": "Action & Ability Entry",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "mechanics-components",
+    "storybook": "component",
+    "depends_on": [
+      "DS-MEC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Mechanics Components/MEC-010 — Action & Ability Entry.md"
+  },
+  {
+    "id": "MEC-011",
+    "title": "Skill Group",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "mechanics-components",
+    "storybook": "component",
+    "depends_on": [
+      "DS-MEC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Mechanics Components/MEC-011 — Skill Group.md"
+  },
+  {
+    "id": "MEC-012",
+    "title": "Spell & Power Group",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "mechanics-components",
+    "storybook": "component",
+    "depends_on": [
+      "DS-MEC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Mechanics Components/MEC-012 — Spell & Power Group.md"
+  },
+  {
+    "id": "MEC-013",
+    "title": "Attack & Weapon Entry",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "mechanics-components",
+    "storybook": "component",
+    "depends_on": [
+      "DS-MEC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Mechanics Components/MEC-013 — Attack & Weapon Entry.md"
+  },
+  {
+    "id": "MEC-015",
+    "title": "Rules Reference Binding",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "mechanics-components",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-033",
+      "OBJ-SRC",
+      "DS-MEC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Mechanics Components/MEC-015 — Rules Reference Binding.md"
+  },
+  {
+    "id": "MEC-018",
+    "title": "Object Mechanics Assignment",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "mechanics-components",
+    "storybook": "component",
+    "depends_on": [
+      "DS-MEC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "05 Mechanics & Rules/Mechanics Components/MEC-018 — Object Mechanics Assignment.md"
+  },
+  {
+    "id": "MEC-014",
+    "title": "Encounter Flow Definition",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "runtime-flow",
+    "storybook": "none",
+    "depends_on": [
+      "STG-009"
+    ],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Runtime & Flow/MEC-014 — Encounter Flow Definition.md"
+  },
+  {
+    "id": "MEC-021",
+    "title": "Dice Roll Engine",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "runtime-flow",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Runtime & Flow/MEC-021 — Dice Roll Engine.md"
+  },
+  {
+    "id": "MEC-022",
+    "title": "Session Mechanics State",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "runtime-flow",
+    "storybook": "none",
+    "depends_on": [
+      "MEC-023"
+    ],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Runtime & Flow/MEC-022 — Session Mechanics State.md"
+  },
+  {
+    "id": "MEC-023",
+    "title": "Live Resource Definition",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "runtime-flow",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Runtime & Flow/MEC-023 — Live Resource Definition.md"
+  },
+  {
+    "id": "MEC-TPL-01",
+    "title": "D&D 5e & 2024 Template",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "templates",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Templates/MEC-TPL-01 — D&D 5e & 2024 Template.md"
+  },
+  {
+    "id": "MEC-TPL-02",
+    "title": "Pathfinder 2e Template",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "templates",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Templates/MEC-TPL-02 — Pathfinder 2e Template.md"
+  },
+  {
+    "id": "MEC-TPL-03",
+    "title": "Daggerheart Template",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "templates",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Templates/MEC-TPL-03 — Daggerheart Template.md"
+  },
+  {
+    "id": "MEC-TPL-04",
+    "title": "Cosmere RPG Template",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "templates",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Templates/MEC-TPL-04 — Cosmere RPG Template.md"
+  },
+  {
+    "id": "MEC-TPL-05",
+    "title": "Cyberpunk RED Template",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "templates",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Templates/MEC-TPL-05 — Cyberpunk RED Template.md"
+  },
+  {
+    "id": "MEC-TPL-06",
+    "title": "Star Wars Narrative Dice Template",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "templates",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Templates/MEC-TPL-06 — Star Wars Narrative Dice Template.md"
+  },
+  {
+    "id": "MEC-TPL-07",
+    "title": "Generic d20 Template",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "templates",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Templates/MEC-TPL-07 — Generic d20 Template.md"
+  },
+  {
+    "id": "MEC-TPL-08",
+    "title": "Generic Percentile Template",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "templates",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Templates/MEC-TPL-08 — Generic Percentile Template.md"
+  },
+  {
+    "id": "MEC-TPL-09",
+    "title": "Generic Dice Pool Template",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "templates",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Templates/MEC-TPL-09 — Generic Dice Pool Template.md"
+  },
+  {
+    "id": "MEC-TPL-10",
+    "title": "Custom Blank Template",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-05",
+    "family": "templates",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "05 Mechanics & Rules/Templates/MEC-TPL-10 — Custom Blank Template.md"
+  },
+  {
+    "id": "FOC-BLK-001",
+    "title": "Identity Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-004",
+      "OBJ-006",
+      "OBJ-009",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-001 — Identity Block.md"
+  },
+  {
+    "id": "FOC-BLK-002",
+    "title": "Image & Media Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-006",
+      "FOC-BLK-014",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-002 — Image & Media Block.md"
+  },
+  {
+    "id": "FOC-BLK-003",
+    "title": "Narrative Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-010",
+      "FOC-008",
+      "FOC-BLK-014",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-003 — Narrative Block.md"
+  },
+  {
+    "id": "FOC-BLK-004",
+    "title": "Roleplay Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-CHAR-15",
+      "FOC-008",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-004 — Roleplay Block.md"
+  },
+  {
+    "id": "FOC-BLK-005",
+    "title": "Mechanics Block Host",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "MEC-003",
+      "MEC-018",
+      "MEC-015",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-005 — Mechanics Block Host.md"
+  },
+  {
+    "id": "FOC-BLK-006",
+    "title": "Status Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "FOC-011",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-006 — Status Block.md"
+  },
+  {
+    "id": "FOC-BLK-007",
+    "title": "Goals & Motives Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "FOC-011",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-007 — Goals & Motives Block.md"
+  },
+  {
+    "id": "FOC-BLK-008",
+    "title": "Knowledge & Beliefs Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-CHAR-17",
+      "FOC-011",
+      "FOC-BLK-014",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-008 — Knowledge & Beliefs Block.md"
+  },
+  {
+    "id": "FOC-BLK-009",
+    "title": "Relationships Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-CHAR-18",
+      "FOC-011",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-009 — Relationships Block.md"
+  },
+  {
+    "id": "FOC-BLK-010",
+    "title": "Thread Membership Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-THREAD",
+      "FOC-BLK-011",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-010 — Thread Membership Block.md"
+  },
+  {
+    "id": "FOC-BLK-011",
+    "title": "Event History Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-EVT",
+      "FOC-011",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-011 — Event History Block.md"
+  },
+  {
+    "id": "FOC-BLK-012",
+    "title": "Inventory & Holdings Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-ART",
+      "OBJ-010",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-012 — Inventory & Holdings Block.md"
+  },
+  {
+    "id": "FOC-BLK-013",
+    "title": "Location Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-PLACE",
+      "FOC-011",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-013 — Location Block.md"
+  },
+  {
+    "id": "FOC-BLK-014",
+    "title": "Sources & Provenance Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-SRC",
+      "OBJ-008",
+      "MEC-015",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-014 — Sources & Provenance Block.md"
+  },
+  {
+    "id": "FOC-BLK-015",
+    "title": "GM Notes Block",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-FRAG",
+      "FOC-008",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-015 — GM Notes Block.md"
+  },
+  {
+    "id": "FOC-BLK-016",
+    "title": "Related References Block",
+    "status": "prototype",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "blocks",
+    "storybook": "component",
+    "depends_on": [
+      "FOC-BLK-014",
+      "DSK-033",
+      "MEC-015",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-016 — Related References Block.md"
+  },
+  {
+    "id": "FOC-001",
+    "title": "Focus Host",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "focus-host-navigation",
+    "storybook": "scene",
+    "depends_on": [
+      "APP-001",
+      "FOC-002",
+      "FOC-006",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/FOC-001 — Focus Host.md"
+  },
+  {
+    "id": "FOC-002",
+    "title": "Focus Surface Chrome",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "focus-host-navigation",
+    "storybook": "component",
+    "depends_on": [
+      "FOC-003",
+      "FOC-006",
+      "OBJ-013",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/FOC-002 — Focus Surface Chrome.md"
+  },
+  {
+    "id": "FOC-003",
+    "title": "Focus Return Context",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "focus-host-navigation",
+    "storybook": "none",
+    "depends_on": [
+      "DSK-027",
+      "OBJ-015",
+      "DS-FOC"
+    ],
+    "platforms": [],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/FOC-003 — Focus Return Context.md"
+  },
+  {
+    "id": "FOC-004",
+    "title": "Focus Composition Contract",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "focus-host-navigation",
+    "storybook": "none",
+    "depends_on": [
+      "FOC-005",
+      "DS-FOC"
+    ],
+    "platforms": [],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/FOC-004 — Focus Composition Contract.md"
+  },
+  {
+    "id": "FOC-005",
+    "title": "Focus Layout System",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "focus-host-navigation",
+    "storybook": "none",
+    "depends_on": [
+      "FOC-004",
+      "FOC-006",
+      "APP-010",
+      "DS-FOC"
+    ],
+    "platforms": [],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/FOC-005 — Focus Layout System.md"
+  },
+  {
+    "id": "FOC-006",
+    "title": "Focus Section Navigator",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "focus-host-navigation",
+    "storybook": "component",
+    "depends_on": [
+      "FOC-010",
+      "FOC-004",
+      "FOC-002",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/FOC-006 — Focus Section Navigator.md"
+  },
+  {
+    "id": "FOC-007",
+    "title": "Focus Block Frame",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "focus-host-navigation",
+    "storybook": "component",
+    "depends_on": [
+      "FOC-009",
+      "FOC-010",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/FOC-007 — Focus Block Frame.md"
+  },
+  {
+    "id": "FOC-008",
+    "title": "Focus Inline Editing",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "focus-host-navigation",
+    "storybook": "pattern",
+    "depends_on": [
+      "FOC-011",
+      "OBJ-012",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/FOC-008 — Focus Inline Editing.md"
+  },
+  {
+    "id": "FOC-009",
+    "title": "Focus Empty & Add Content Pattern",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "focus-host-navigation",
+    "storybook": "component",
+    "depends_on": [
+      "FOC-008",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/FOC-009 — Focus Empty & Add Content Pattern.md"
+  },
+  {
+    "id": "FOC-010",
+    "title": "Focus Anchor & Deep Link",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "focus-host-navigation",
+    "storybook": "pattern",
+    "depends_on": [
+      "FOC-006",
+      "FOC-011",
+      "MEC-015",
+      "DS-FOC"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/FOC-010 — Focus Anchor & Deep Link.md"
+  },
+  {
+    "id": "FOC-011",
+    "title": "Focus Temporal Context",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "focus-host-navigation",
+    "storybook": "none",
+    "depends_on": [
+      "OBJ-009",
+      "REV-006",
+      "CHR-011",
+      "DS-FOC"
+    ],
+    "platforms": [],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/FOC-011 — Focus Temporal Context.md"
+  },
+  {
+    "id": "FOC-012",
+    "title": "Focus Librarian Context Bridge",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "focus-host-navigation",
+    "storybook": "none",
+    "depends_on": [
+      "LBR-001",
+      "FOC-010",
+      "DS-FOC"
+    ],
+    "platforms": [],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/FOC-012 — Focus Librarian Context Bridge.md"
+  },
+  {
+    "id": "FOC-013",
+    "title": "Entity Builder Host",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": "focus-host-navigation",
+    "storybook": "scene",
+    "depends_on": [
+      "FOC-001",
+      "FOC-003",
+      "FOC-004",
+      "FOC-008",
+      "APP-010",
+      "OBJ-001"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/FOC-013 — Entity Builder Host.md"
+  },
+  {
+    "id": "SYS-06",
+    "title": "Focus & Shared Focus Blocks",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-06",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "06 Focus & Shared Focus Blocks/Focus Host & Navigation/SYS-06 — Focus & Shared Focus Blocks.md"
+  },
+  {
+    "id": "OBJ-ART",
+    "title": "Artifact Representation Family",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "artifact",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "07 World Object Families/OBJ-ART — Artifact Family/OBJ-ART — Artifact Representation Family.md"
+  },
+  {
+    "id": "OBJ-ART-02",
+    "title": "Artifact Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "artifact",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-ART — Artifact Family/Projections/OBJ-ART-02 — Artifact Card.md"
+  },
+  {
+    "id": "OBJ-ART-03",
+    "title": "Artifact Expanded Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "artifact",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-ART — Artifact Family/Projections/OBJ-ART-03 — Artifact Expanded Card.md"
+  },
+  {
+    "id": "OBJ-ART-04",
+    "title": "Artifact Focus",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "artifact",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-ART — Artifact Family/Projections/OBJ-ART-04 — Artifact Focus.md"
+  },
+  {
+    "id": "OBJ-ART-05",
+    "title": "Artifact Index Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "artifact",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-ART — Artifact Family/Projections/OBJ-ART-05 — Artifact Index Projection.md"
+  },
+  {
+    "id": "OBJ-ART-06",
+    "title": "Artifact Prepare Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "artifact",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-ART — Artifact Family/Projections/OBJ-ART-06 — Artifact Prepare Projection.md"
+  },
+  {
+    "id": "OBJ-ART-07",
+    "title": "Artifact Chronicle Projection",
+    "status": "prototype",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "artifact",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-ART — Artifact Family/Projections/OBJ-ART-07 — Artifact Chronicle Projection.md"
+  },
+  {
+    "id": "OBJ-EVT",
+    "title": "Event Representation Family",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "event",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "07 World Object Families/OBJ-EVT — Event Family/OBJ-EVT — Event Representation Family.md"
+  },
+  {
+    "id": "OBJ-EVT-02",
+    "title": "Event Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "event",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-EVT — Event Family/Projections/OBJ-EVT-02 — Event Card.md"
+  },
+  {
+    "id": "OBJ-EVT-03",
+    "title": "Event Expanded Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "event",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-EVT — Event Family/Projections/OBJ-EVT-03 — Event Expanded Card.md"
+  },
+  {
+    "id": "OBJ-EVT-04",
+    "title": "Event Focus",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "event",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-EVT — Event Family/Projections/OBJ-EVT-04 — Event Focus.md"
+  },
+  {
+    "id": "OBJ-EVT-05",
+    "title": "Event Index Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "event",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-EVT — Event Family/Projections/OBJ-EVT-05 — Event Index Projection.md"
+  },
+  {
+    "id": "OBJ-EVT-06",
+    "title": "Event Chronicle Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "event",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-EVT — Event Family/Projections/OBJ-EVT-06 — Event Chronicle Projection.md"
+  },
+  {
+    "id": "OBJ-FACT",
+    "title": "Faction Representation Family",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "faction",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "07 World Object Families/OBJ-FACT — Faction Family/OBJ-FACT — Faction Representation Family.md"
+  },
+  {
+    "id": "OBJ-FACT-02",
+    "title": "Faction Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "faction",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-FACT — Faction Family/Projections/OBJ-FACT-02 — Faction Card.md"
+  },
+  {
+    "id": "OBJ-FACT-03",
+    "title": "Faction Expanded Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "faction",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-FACT — Faction Family/Projections/OBJ-FACT-03 — Faction Expanded Card.md"
+  },
+  {
+    "id": "OBJ-FACT-04",
+    "title": "Faction Focus",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "faction",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-FACT — Faction Family/Projections/OBJ-FACT-04 — Faction Focus.md"
+  },
+  {
+    "id": "OBJ-FACT-05",
+    "title": "Faction Index Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "faction",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-FACT — Faction Family/Projections/OBJ-FACT-05 — Faction Index Projection.md"
+  },
+  {
+    "id": "OBJ-FACT-06",
+    "title": "Faction Chronicle Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "faction",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-FACT — Faction Family/Projections/OBJ-FACT-06 — Faction Chronicle Projection.md"
+  },
+  {
+    "id": "OBJ-FRAG",
+    "title": "Fragment Representation Family",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "fragment",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "07 World Object Families/OBJ-FRAG — Fragment Family/OBJ-FRAG — Fragment Representation Family.md"
+  },
+  {
+    "id": "OBJ-FRAG-01",
+    "title": "Resolve Fragment",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "fragment",
+    "storybook": "none",
+    "depends_on": [
+      "DS-OBJ"
+    ],
+    "platforms": [],
+    "path": "07 World Object Families/OBJ-FRAG — Fragment Family/OBJ-FRAG-01 — Resolve Fragment.md"
+  },
+  {
+    "id": "OBJ-FRAG-02",
+    "title": "Fragment Marker",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "fragment",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-FRAG — Fragment Family/Projections/OBJ-FRAG-02 — Fragment Marker.md"
+  },
+  {
+    "id": "OBJ-FRAG-03",
+    "title": "Fragment Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "fragment",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-FRAG — Fragment Family/Projections/OBJ-FRAG-03 — Fragment Card.md"
+  },
+  {
+    "id": "OBJ-FRAG-04",
+    "title": "Fragment Expanded Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "fragment",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-FRAG — Fragment Family/Projections/OBJ-FRAG-04 — Fragment Expanded Card.md"
+  },
+  {
+    "id": "OBJ-FRAG-05",
+    "title": "Fragment Focus",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "fragment",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-FRAG — Fragment Family/Projections/OBJ-FRAG-05 — Fragment Focus.md"
+  },
+  {
+    "id": "OBJ-FRAG-06",
+    "title": "Fragment Index Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "fragment",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-FRAG — Fragment Family/Projections/OBJ-FRAG-06 — Fragment Index Projection.md"
+  },
+  {
+    "id": "OBJ-PLACE",
+    "title": "Place Representation Family",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "place",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "07 World Object Families/OBJ-PLACE — Place Family/OBJ-PLACE — Place Representation Family.md"
+  },
+  {
+    "id": "OBJ-PLACE-02",
+    "title": "Place Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "place",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-PLACE — Place Family/Projections/OBJ-PLACE-02 — Place Card.md"
+  },
+  {
+    "id": "OBJ-PLACE-03",
+    "title": "Place Expanded Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "place",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-PLACE — Place Family/Projections/OBJ-PLACE-03 — Place Expanded Card.md"
+  },
+  {
+    "id": "OBJ-PLACE-04",
+    "title": "Place Focus",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "place",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-PLACE — Place Family/Projections/OBJ-PLACE-04 — Place Focus.md"
+  },
+  {
+    "id": "OBJ-PLACE-05",
+    "title": "Place Index Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "place",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-PLACE — Place Family/Projections/OBJ-PLACE-05 — Place Index Projection.md"
+  },
+  {
+    "id": "OBJ-PLACE-06",
+    "title": "Place Prepare Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "place",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-PLACE — Place Family/Projections/OBJ-PLACE-06 — Place Prepare Projection.md"
+  },
+  {
+    "id": "OBJ-PLACE-07",
+    "title": "Place Chronicle Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "place",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-PLACE — Place Family/Projections/OBJ-PLACE-07 — Place Chronicle Projection.md"
+  },
+  {
+    "id": "OBJ-SRC",
+    "title": "Source Representation Family",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "source",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "07 World Object Families/OBJ-SRC — Source Family/OBJ-SRC — Source Representation Family.md"
+  },
+  {
+    "id": "OBJ-SRC-01",
+    "title": "Source Viewer",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "source",
+    "storybook": "scene",
+    "depends_on": [
+      "FOC-001",
+      "MEC-015",
+      "DS-OBJ"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-SRC — Source Family/OBJ-SRC-01 — Source Viewer.md"
+  },
+  {
+    "id": "OBJ-SRC-02",
+    "title": "Source Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "source",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-SRC — Source Family/Projections/OBJ-SRC-02 — Source Card.md"
+  },
+  {
+    "id": "OBJ-SRC-03",
+    "title": "Source Expanded Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "source",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-SRC — Source Family/Projections/OBJ-SRC-03 — Source Expanded Card.md"
+  },
+  {
+    "id": "OBJ-SRC-04",
+    "title": "Source Index Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "source",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-SRC — Source Family/Projections/OBJ-SRC-04 — Source Index Projection.md"
+  },
+  {
+    "id": "OBJ-THREAD",
+    "title": "Thread Representation Family",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "thread",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "07 World Object Families/OBJ-THREAD — Thread Family/OBJ-THREAD — Thread Representation Family.md"
+  },
+  {
+    "id": "OBJ-THREAD-02",
+    "title": "Thread Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "thread",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-THREAD — Thread Family/Projections/OBJ-THREAD-02 — Thread Card.md"
+  },
+  {
+    "id": "OBJ-THREAD-03",
+    "title": "Thread Expanded Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "thread",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-THREAD — Thread Family/Projections/OBJ-THREAD-03 — Thread Expanded Card.md"
+  },
+  {
+    "id": "OBJ-THREAD-04",
+    "title": "Thread Focus",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "thread",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-THREAD — Thread Family/Projections/OBJ-THREAD-04 — Thread Focus.md"
+  },
+  {
+    "id": "OBJ-THREAD-05",
+    "title": "Thread Index Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "thread",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-THREAD — Thread Family/Projections/OBJ-THREAD-05 — Thread Index Projection.md"
+  },
+  {
+    "id": "OBJ-THREAD-06",
+    "title": "Thread Prepare Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "thread",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-THREAD — Thread Family/Projections/OBJ-THREAD-06 — Thread Prepare Projection.md"
+  },
+  {
+    "id": "OBJ-THREAD-07",
+    "title": "Thread Chronicle Projection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "thread",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "OBJ-002",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "07 World Object Families/OBJ-THREAD — Thread Family/Projections/OBJ-THREAD-07 — Thread Chronicle Projection.md"
+  },
+  {
+    "id": "SYS-07",
+    "title": "World Object Families",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "07 World Object Families/SYS-07 — World Object Families.md"
+  },
+  {
+    "id": "WOF-001",
+    "title": "Family Projection Standard",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-07",
+    "family": "standards",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "07 World Object Families/Standards/WOF-001 — Family Projection Standard.md"
+  },
+  {
+    "id": "REL-001",
+    "title": "Semantic Relationship Model",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-08",
+    "family": "domain",
+    "storybook": "none",
+    "depends_on": [
+      "REL-002"
+    ],
+    "platforms": [],
+    "path": "08 Relationships/Domain/REL-001 — Semantic Relationship Model.md"
+  },
+  {
+    "id": "REL-002",
+    "title": "Relationship Type Registry",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-08",
+    "family": "domain",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "08 Relationships/Domain/REL-002 — Relationship Type Registry.md"
+  },
+  {
+    "id": "REL-006",
+    "title": "Board Relationship Projection",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-08",
+    "family": "domain",
+    "storybook": "none",
+    "depends_on": [
+      "BRD-006",
+      "REL-005",
+      "DSK-012"
+    ],
+    "platforms": [],
+    "path": "08 Relationships/Domain/REL-006 — Board Relationship Projection.md"
+  },
+  {
+    "id": "REL-007",
+    "title": "Relationship Temporal History",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-08",
+    "family": "domain",
+    "storybook": "none",
+    "depends_on": [
+      "REL-001",
+      "CHR-001",
+      "CHR-003"
+    ],
+    "platforms": [],
+    "path": "08 Relationships/Domain/REL-007 — Relationship Temporal History.md"
+  },
+  {
+    "id": "REL-008",
+    "title": "Relationship Provenance & Proposal",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-08",
+    "family": "domain",
+    "storybook": "none",
+    "depends_on": [
+      "DSK-029",
+      "FOC-BLK-014",
+      "OBJ-SRC-01"
+    ],
+    "platforms": [],
+    "path": "08 Relationships/Domain/REL-008 — Relationship Provenance & Proposal.md"
+  },
+  {
+    "id": "REL-009",
+    "title": "Relationship Resolver",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-08",
+    "family": "domain",
+    "storybook": "none",
+    "depends_on": [
+      "REL-001",
+      "REL-002",
+      "REL-007"
+    ],
+    "platforms": [],
+    "path": "08 Relationships/Domain/REL-009 — Relationship Resolver.md"
+  },
+  {
+    "id": "SYS-08",
+    "title": "Relationships",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-08",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "08 Relationships/Domain/SYS-08 — Relationships.md"
+  },
+  {
+    "id": "REL-003",
+    "title": "Relationship Composer",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-08",
+    "family": "interface-projection",
+    "storybook": "component",
+    "depends_on": [
+      "REL-002",
+      "DSK-012",
+      "FOC-BLK-009",
+      "DS-FRM-RESOURCE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "08 Relationships/Interface & Projection/REL-003 — Relationship Composer.md"
+  },
+  {
+    "id": "REL-004",
+    "title": "Relationship Row",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-08",
+    "family": "interface-projection",
+    "storybook": "component",
+    "depends_on": [
+      "REL-001",
+      "REL-002",
+      "OBJ-010",
+      "DS-TRUST"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "08 Relationships/Interface & Projection/REL-004 — Relationship Row.md"
+  },
+  {
+    "id": "REL-005",
+    "title": "Semantic Relationship Edge",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-08",
+    "family": "interface-projection",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-015",
+      "REL-003",
+      "DSK-029"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "08 Relationships/Interface & Projection/REL-005 — Semantic Relationship Edge.md"
+  },
+  {
+    "id": "LIB-001",
+    "title": "Library Surface",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-09",
+    "family": "library",
+    "storybook": "scene",
+    "depends_on": [
+      "LIB-002",
+      "LIB-004",
+      "LIB-003"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "09 Search & Library/Library/LIB-001 — Library Surface.md"
+  },
+  {
+    "id": "LIB-002",
+    "title": "Library Category Navigator",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-09",
+    "family": "library",
+    "storybook": "component",
+    "depends_on": [
+      "LIB-003",
+      "LIB-004"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "09 Search & Library/Library/LIB-002 — Library Category Navigator.md"
+  },
+  {
+    "id": "LIB-003",
+    "title": "Library Index Collection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-09",
+    "family": "library",
+    "storybook": "component",
+    "depends_on": [
+      "WOF-001",
+      "LIB-005"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "09 Search & Library/Library/LIB-003 — Library Index Collection.md"
+  },
+  {
+    "id": "LIB-004",
+    "title": "Library Filter Bar",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-09",
+    "family": "library",
+    "storybook": "component",
+    "depends_on": [
+      "LIB-003",
+      "SRH-005"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "09 Search & Library/Library/LIB-004 — Library Filter Bar.md"
+  },
+  {
+    "id": "LIB-005",
+    "title": "Library Object Actions",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-09",
+    "family": "library",
+    "storybook": "none",
+    "depends_on": [
+      "OBJ-FRAG-01",
+      "BRD-006",
+      "OBJ-013"
+    ],
+    "platforms": [],
+    "path": "09 Search & Library/Library/LIB-005 — Library Object Actions.md"
+  },
+  {
+    "id": "SRH-001",
+    "title": "Search System",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-09",
+    "family": "search",
+    "storybook": "none",
+    "depends_on": [
+      "APP-004",
+      "SRH-002",
+      "SRH-003"
+    ],
+    "platforms": [],
+    "path": "09 Search & Library/Search/SRH-001 — Search System.md"
+  },
+  {
+    "id": "SRH-002",
+    "title": "Quick Search Results",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-09",
+    "family": "search",
+    "storybook": "component",
+    "depends_on": [
+      "APP-004",
+      "SRH-001",
+      "SRH-003"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "09 Search & Library/Search/SRH-002 — Quick Search Results.md"
+  },
+  {
+    "id": "SRH-003",
+    "title": "Full Search Surface",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-09",
+    "family": "search",
+    "storybook": "scene",
+    "depends_on": [
+      "SRH-004",
+      "SRH-001",
+      "SRH-005"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "09 Search & Library/Search/SRH-003 — Full Search Surface.md"
+  },
+  {
+    "id": "SRH-004",
+    "title": "Search Result Match Context",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-09",
+    "family": "search",
+    "storybook": "component",
+    "depends_on": [
+      "FOC-010",
+      "OBJ-SRC-01",
+      "SRH-002"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "09 Search & Library/Search/SRH-004 — Search Result Match Context.md"
+  },
+  {
+    "id": "SRH-005",
+    "title": "Search Scope & Filters",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-09",
+    "family": "search",
+    "storybook": "component",
+    "depends_on": [
+      "SRH-001",
+      "SRH-003",
+      "LIB-004"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "09 Search & Library/Search/SRH-005 — Search Scope & Filters.md"
+  },
+  {
+    "id": "SYS-09",
+    "title": "Search & Library",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-09",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "09 Search & Library/Search/SYS-09 — Search & Library.md"
+  },
+  {
+    "id": "PREP-001",
+    "title": "Prepare Workspace State",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": "prepare",
+    "storybook": "scene",
+    "depends_on": [
+      "PREP-002",
+      "PREP-003",
+      "PREP-009",
+      "DS-WFL"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "10 Sessions & Prepare/Prepare/PREP-001 — Prepare Workspace State.md"
+  },
+  {
+    "id": "PREP-002",
+    "title": "Prepare Carriage",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": "prepare",
+    "storybook": "component",
+    "depends_on": [
+      "PREP-004",
+      "PREP-005",
+      "PREP-006",
+      "DS-WFL"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "10 Sessions & Prepare/Prepare/PREP-002 — Prepare Carriage.md"
+  },
+  {
+    "id": "PREP-003",
+    "title": "Prep Canvas Lens",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": "prepare",
+    "storybook": "none",
+    "depends_on": [
+      "DSK-001",
+      "DSK-002",
+      "PREP-005"
+    ],
+    "platforms": [],
+    "path": "10 Sessions & Prepare/Prepare/PREP-003 — Prep Canvas Lens.md"
+  },
+  {
+    "id": "PREP-004",
+    "title": "Session Brief",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": "prepare",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-010",
+      "PREP-009"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "10 Sessions & Prepare/Prepare/PREP-004 — Session Brief.md"
+  },
+  {
+    "id": "PREP-005",
+    "title": "Scene & Beat Stack",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": "prepare",
+    "storybook": "component",
+    "depends_on": [
+      "PREP-003",
+      "STG-009",
+      "PREP-006"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "10 Sessions & Prepare/Prepare/PREP-005 — Scene & Beat Stack.md"
+  },
+  {
+    "id": "PREP-006",
+    "title": "Session Context Collection",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": "prepare",
+    "storybook": "component",
+    "depends_on": [
+      "PREP-003",
+      "PREP-005",
+      "PREP-010"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "10 Sessions & Prepare/Prepare/PREP-006 — Session Context Collection.md"
+  },
+  {
+    "id": "PREP-007",
+    "title": "Prep Checklist & Reminders",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": "prepare",
+    "storybook": "component",
+    "depends_on": [
+      "PREP-010"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "10 Sessions & Prepare/Prepare/PREP-007 — Prep Checklist & Reminders.md"
+  },
+  {
+    "id": "PREP-008",
+    "title": "Carry-Forward Briefing",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": "prepare",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-THREAD",
+      "OBJ-EVT",
+      "PREP-009"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "10 Sessions & Prepare/Prepare/PREP-008 — Carry-Forward Briefing.md"
+  },
+  {
+    "id": "PREP-009",
+    "title": "Prep Librarian Context Bridge",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": "prepare",
+    "storybook": "none",
+    "depends_on": [
+      "LBR-013",
+      "FOC-012",
+      "SRH-001"
+    ],
+    "platforms": [],
+    "path": "10 Sessions & Prepare/Prepare/PREP-009 — Prep Librarian Context Bridge.md"
+  },
+  {
+    "id": "PREP-010",
+    "title": "Stage Readiness & Session Packet",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": "prepare",
+    "storybook": "none",
+    "depends_on": [
+      "SES-001",
+      "PREP-002",
+      "PREP-003"
+    ],
+    "platforms": [],
+    "path": "10 Sessions & Prepare/Prepare/PREP-010 — Stage Readiness & Session Packet.md"
+  },
+  {
+    "id": "SES-001",
+    "title": "Session Model & Lifecycle",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": "sessions",
+    "storybook": "none",
+    "depends_on": [
+      "SES-002",
+      "PREP-001",
+      "PREP-010"
+    ],
+    "platforms": [],
+    "path": "10 Sessions & Prepare/Sessions/SES-001 — Session Model & Lifecycle.md"
+  },
+  {
+    "id": "SES-002",
+    "title": "Sessions Surface",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": "sessions",
+    "storybook": "scene",
+    "depends_on": [
+      "SES-003",
+      "PREP-001",
+      "APP-006"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "10 Sessions & Prepare/Sessions/SES-002 — Sessions Surface.md"
+  },
+  {
+    "id": "SES-003",
+    "title": "Session Index Item",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": "sessions",
+    "storybook": "component",
+    "depends_on": [
+      "SRH-001"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "10 Sessions & Prepare/Sessions/SES-003 — Session Index Item.md"
+  },
+  {
+    "id": "SYS-10",
+    "title": "Sessions & Prepare",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-10",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "10 Sessions & Prepare/Sessions/SYS-10 — Sessions & Prepare.md"
+  },
+  {
+    "id": "STG-014",
+    "title": "Stage Librarian Context Bridge",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "continuity-handoff",
+    "storybook": "none",
+    "depends_on": [
+      "PREP-009",
+      "STG-009",
+      "STG-006"
+    ],
+    "platforms": [],
+    "path": "11 Stage/Continuity & Handoff/STG-014 — Stage Librarian Context Bridge.md"
+  },
+  {
+    "id": "STG-015",
+    "title": "End Session & Undo",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "continuity-handoff",
+    "storybook": "pattern",
+    "depends_on": [
+      "SES-001",
+      "STG-007",
+      "STG-016"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "11 Stage/Continuity & Handoff/STG-015 — End Session & Undo.md"
+  },
+  {
+    "id": "STG-016",
+    "title": "Stage Offline Continuity & Recovery",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "continuity-handoff",
+    "storybook": "pattern",
+    "depends_on": [
+      "APP-013",
+      "STG-007",
+      "STG-009"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "11 Stage/Continuity & Handoff/STG-016 — Stage Offline Continuity & Recovery.md"
+  },
+  {
+    "id": "STG-009",
+    "title": "Encounter Flow",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "encounter-mechanics",
+    "storybook": "component",
+    "depends_on": [
+      "MEC-014",
+      "STG-012",
+      "STG-013",
+      "DS-WFL"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "11 Stage/Encounter & Mechanics/STG-009 — Encounter Flow.md"
+  },
+  {
+    "id": "STG-010",
+    "title": "Session Instance Model",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "encounter-mechanics",
+    "storybook": "none",
+    "depends_on": [
+      "MEC-022",
+      "STG-010A",
+      "STG-011"
+    ],
+    "platforms": [],
+    "path": "11 Stage/Encounter & Mechanics/STG-010 — Session Instance Model.md"
+  },
+  {
+    "id": "STG-010A",
+    "title": "Session Instance Live Card",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "encounter-mechanics",
+    "storybook": "component",
+    "depends_on": [
+      "MEC-022",
+      "STG-012"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "11 Stage/Encounter & Mechanics/STG-010A — Session Instance Live Card.md"
+  },
+  {
+    "id": "STG-011",
+    "title": "Resolve Session Instance",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "encounter-mechanics",
+    "storybook": "none",
+    "depends_on": [
+      "OBJ-FRAG-01"
+    ],
+    "platforms": [],
+    "path": "11 Stage/Encounter & Mechanics/STG-011 — Resolve Session Instance.md"
+  },
+  {
+    "id": "STG-012",
+    "title": "Encounter Participant",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "encounter-mechanics",
+    "storybook": "none",
+    "depends_on": [
+      "MEC-014",
+      "MEC-022",
+      "STG-010"
+    ],
+    "platforms": [],
+    "path": "11 Stage/Encounter & Mechanics/STG-012 — Encounter Participant.md"
+  },
+  {
+    "id": "STG-013",
+    "title": "Live Mechanics Presentation",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "encounter-mechanics",
+    "storybook": "component",
+    "depends_on": [
+      "MEC-023",
+      "MEC-022",
+      "MEC-003"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "11 Stage/Encounter & Mechanics/STG-013 — Live Mechanics Presentation.md"
+  },
+  {
+    "id": "STG-001",
+    "title": "Stage Workspace State",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "workspace-live-tools",
+    "storybook": "scene",
+    "depends_on": [
+      "PREP-010",
+      "STG-002",
+      "STG-003",
+      "DS-WFL"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "11 Stage/Workspace & Live Tools/STG-001 — Stage Workspace State.md"
+  },
+  {
+    "id": "STG-002",
+    "title": "Stage Carriage",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "workspace-live-tools",
+    "storybook": "component",
+    "depends_on": [
+      "STG-005",
+      "STG-004",
+      "STG-006",
+      "DS-WFL"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "11 Stage/Workspace & Live Tools/STG-002 — Stage Carriage.md"
+  },
+  {
+    "id": "STG-003",
+    "title": "Stage Canvas View",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "workspace-live-tools",
+    "storybook": "none",
+    "depends_on": [
+      "PREP-003",
+      "STG-005",
+      "STG-009"
+    ],
+    "platforms": [],
+    "path": "11 Stage/Workspace & Live Tools/STG-003 — Stage Canvas View.md"
+  },
+  {
+    "id": "STG-004",
+    "title": "Live Scene Flow",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "workspace-live-tools",
+    "storybook": "none",
+    "depends_on": [
+      "PREP-005",
+      "STG-003",
+      "STG-005"
+    ],
+    "platforms": [],
+    "path": "11 Stage/Workspace & Live Tools/STG-004 — Live Scene Flow.md"
+  },
+  {
+    "id": "STG-005",
+    "title": "Stage Entity Rail",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "workspace-live-tools",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-015",
+      "OBJ-CHAR-11",
+      "STG-003",
+      "DS-WFL"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "11 Stage/Workspace & Live Tools/STG-005 — Stage Entity Rail.md"
+  },
+  {
+    "id": "STG-005A",
+    "title": "Stage Entity Rail Item",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "workspace-live-tools",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "11 Stage/Workspace & Live Tools/STG-005A — Stage Entity Rail Item.md"
+  },
+  {
+    "id": "STG-006",
+    "title": "Session Capture & Marking",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "workspace-live-tools",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-FRAG",
+      "OBJ-FRAG-01",
+      "STG-007"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "11 Stage/Workspace & Live Tools/STG-006 — Session Capture & Marking.md"
+  },
+  {
+    "id": "STG-007",
+    "title": "Recording & Consent",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "workspace-live-tools",
+    "storybook": "pattern",
+    "depends_on": [
+      "STG-006",
+      "STG-015",
+      "STG-016"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "11 Stage/Workspace & Live Tools/STG-007 — Recording & Consent.md"
+  },
+  {
+    "id": "STG-008",
+    "title": "Stage Dice Utility",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": "workspace-live-tools",
+    "storybook": "component",
+    "depends_on": [
+      "MEC-021",
+      "MEC-007",
+      "STG-013"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "11 Stage/Workspace & Live Tools/STG-008 — Stage Dice Utility.md"
+  },
+  {
+    "id": "SYS-11",
+    "title": "Stage",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-11",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "11 Stage/Workspace & Live Tools/SYS-11 — Stage.md"
+  },
+  {
+    "id": "REV-013",
+    "title": "Settlement Librarian Context Bridge",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "librarian-bridge",
+    "storybook": "none",
+    "depends_on": [
+      "STG-015",
+      "REV-005",
+      "REV-007"
+    ],
+    "platforms": [],
+    "path": "12 Review & Settlement/Librarian Bridge/REV-013 — Settlement Librarian Context Bridge.md"
+  },
+  {
+    "id": "REV-001",
+    "title": "Post-Session Processing Pipeline",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "settlement-model-lifecycle",
+    "storybook": "none",
+    "depends_on": [
+      "LBR-013",
+      "STG-015",
+      "REV-004"
+    ],
+    "platforms": [],
+    "path": "12 Review & Settlement/Settlement Model & Lifecycle/REV-001 — Post-Session Processing Pipeline.md"
+  },
+  {
+    "id": "REV-002",
+    "title": "Session Settlement Workspace",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "settlement-model-lifecycle",
+    "storybook": "scene",
+    "depends_on": [
+      "REV-005",
+      "REV-007",
+      "REV-008",
+      "DS-WFL"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "12 Review & Settlement/Settlement Model & Lifecycle/REV-002 — Session Settlement Workspace.md"
+  },
+  {
+    "id": "REV-003",
+    "title": "Session Story Carriage",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "settlement-model-lifecycle",
+    "storybook": "component",
+    "depends_on": [
+      "REV-004",
+      "REV-010",
+      "REV-012",
+      "DS-WFL"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "12 Review & Settlement/Settlement Model & Lifecycle/REV-003 — Session Story Carriage.md"
+  },
+  {
+    "id": "REV-009",
+    "title": "Settlement Policy & Review Style",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "settlement-model-lifecycle",
+    "storybook": "pattern",
+    "depends_on": [
+      "SET-006",
+      "REV-010"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "12 Review & Settlement/Settlement Model & Lifecycle/REV-009 — Settlement Policy & Review Style.md"
+  },
+  {
+    "id": "REV-010",
+    "title": "Exceptions, Conflicts & Protected Changes",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "settlement-model-lifecycle",
+    "storybook": "none",
+    "depends_on": [
+      "REV-008",
+      "REV-009",
+      "REV-014"
+    ],
+    "platforms": [],
+    "path": "12 Review & Settlement/Settlement Model & Lifecycle/REV-010 — Exceptions, Conflicts & Protected Changes.md"
+  },
+  {
+    "id": "REV-011",
+    "title": "Session Material Resolution",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "settlement-model-lifecycle",
+    "storybook": "component",
+    "depends_on": [
+      "STG-011",
+      "MEC-023",
+      "OBJ-FRAG-01",
+      "DS-TRUST"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "12 Review & Settlement/Settlement Model & Lifecycle/REV-011 — Session Material Resolution.md"
+  },
+  {
+    "id": "REV-014",
+    "title": "Revert, Correct & Audit",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "settlement-model-lifecycle",
+    "storybook": "none",
+    "depends_on": [
+      "REV-004",
+      "REV-006",
+      "CHR-010"
+    ],
+    "platforms": [],
+    "path": "12 Review & Settlement/Settlement Model & Lifecycle/REV-014 — Revert, Correct & Audit.md"
+  },
+  {
+    "id": "REV-015",
+    "title": "Completion & Carry Forward",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "settlement-model-lifecycle",
+    "storybook": "none",
+    "depends_on": [
+      "PREP-008",
+      "REV-006",
+      "REV-009"
+    ],
+    "platforms": [],
+    "path": "12 Review & Settlement/Settlement Model & Lifecycle/REV-015 — Completion & Carry Forward.md"
+  },
+  {
+    "id": "REV-004",
+    "title": "Session Change Set & Story Changes",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "workspace-review-ui",
+    "storybook": "none",
+    "depends_on": [
+      "REV-001",
+      "REV-014",
+      "PLT-004"
+    ],
+    "platforms": [],
+    "path": "12 Review & Settlement/Workspace & Review UI/REV-004 — Session Change Set & Story Changes.md"
+  },
+  {
+    "id": "REV-005",
+    "title": "Settlement Canvas View",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "workspace-review-ui",
+    "storybook": "scene",
+    "depends_on": [
+      "DSK-029",
+      "REV-006",
+      "REV-007",
+      "DS-TRUST"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "12 Review & Settlement/Workspace & Review UI/REV-005 — Settlement Canvas View.md"
+  },
+  {
+    "id": "REV-006",
+    "title": "Recent Change & Temporal Trace",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "workspace-review-ui",
+    "storybook": "component",
+    "depends_on": [
+      "FOC-011",
+      "REL-007",
+      "DS-TRUST"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "12 Review & Settlement/Workspace & Review UI/REV-006 — Recent Change & Temporal Trace.md"
+  },
+  {
+    "id": "REV-007",
+    "title": "Change Detail & Inline Edit",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "workspace-review-ui",
+    "storybook": "component",
+    "depends_on": [
+      "REV-004",
+      "REV-008",
+      "REV-013",
+      "DS-TRUST"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "12 Review & Settlement/Workspace & Review UI/REV-007 — Change Detail & Inline Edit.md"
+  },
+  {
+    "id": "REV-008",
+    "title": "Evidence & Transcript Inspector",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "workspace-review-ui",
+    "storybook": "component",
+    "depends_on": [
+      "STG-006",
+      "REV-010",
+      "REV-013",
+      "DS-TRUST"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "12 Review & Settlement/Workspace & Review UI/REV-008 — Evidence & Transcript Inspector.md"
+  },
+  {
+    "id": "REV-012",
+    "title": "Recap & Prep Implications",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": "workspace-review-ui",
+    "storybook": "component",
+    "depends_on": [
+      "PREP-008",
+      "OBJ-THREAD",
+      "REV-015",
+      "DS-TRUST"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "12 Review & Settlement/Workspace & Review UI/REV-012 — Recap & Prep Implications.md"
+  },
+  {
+    "id": "SYS-12",
+    "title": "Review & Settlement",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-12",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "12 Review & Settlement/Workspace & Review UI/SYS-12 — Review & Settlement.md"
+  },
+  {
+    "id": "LBR-009",
+    "title": "Intent, Authority & Autonomy Gate",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "agent-runtime-authority",
+    "storybook": "none",
+    "depends_on": [
+      "LBR-013",
+      "REV-009",
+      "LBR-011"
+    ],
+    "platforms": [],
+    "path": "13 Librarian/Agent Runtime & Authority/LBR-009 — Intent, Authority & Autonomy Gate.md"
+  },
+  {
+    "id": "LBR-010",
+    "title": "Action Planning & Change Sets",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "agent-runtime-authority",
+    "storybook": "none",
+    "depends_on": [
+      "LBR-008",
+      "LBR-012",
+      "REV-004"
+    ],
+    "platforms": [],
+    "path": "13 Librarian/Agent Runtime & Authority/LBR-010 — Action Planning & Change Sets.md"
+  },
+  {
+    "id": "LBR-011",
+    "title": "Proposal, Preview & In-Place Editing",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "agent-runtime-authority",
+    "storybook": "component",
+    "depends_on": [
+      "DSK-029",
+      "LBR-009",
+      "REV-005"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "13 Librarian/Agent Runtime & Authority/LBR-011 — Proposal, Preview & In-Place Editing.md"
+  },
+  {
+    "id": "LBR-012",
+    "title": "Execution, Progress, Receipt & Undo",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "agent-runtime-authority",
+    "storybook": "pattern",
+    "depends_on": [
+      "APP-012",
+      "REV-014",
+      "LBR-010"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "13 Librarian/Agent Runtime & Authority/LBR-012 — Execution, Progress, Receipt & Undo.md"
+  },
+  {
+    "id": "LBR-013",
+    "title": "Human-Initiated Agentic Work",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "agent-runtime-authority",
+    "storybook": "none",
+    "depends_on": [
+      "LBR-006",
+      "LBR-010",
+      "LBR-012"
+    ],
+    "platforms": [],
+    "path": "13 Librarian/Agent Runtime & Authority/LBR-013 — Human-Initiated Agentic Work.md"
+  },
+  {
+    "id": "LBR-014",
+    "title": "Failure, Insufficiency & Recovery",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "agent-runtime-authority",
+    "storybook": "component",
+    "depends_on": [
+      "STG-016"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "13 Librarian/Agent Runtime & Authority/LBR-014 — Failure, Insufficiency & Recovery.md"
+  },
+  {
+    "id": "SYS-13",
+    "title": "Librarian",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "13 Librarian/Agent Runtime & Authority/SYS-13 — Librarian.md"
+  },
+  {
+    "id": "LBR-007",
+    "title": "Retrieval & Temporal Reasoning",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "grounding-memory",
+    "storybook": "none",
+    "depends_on": [
+      "CHR-003",
+      "CHR-010",
+      "SRH-001"
+    ],
+    "platforms": [],
+    "path": "13 Librarian/Grounding & Memory/LBR-007 — Retrieval & Temporal Reasoning.md"
+  },
+  {
+    "id": "LBR-008",
+    "title": "Semantic Capability & Tool Registry",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "grounding-memory",
+    "storybook": "none",
+    "depends_on": [
+      "LBR-009",
+      "LBR-010",
+      "PLT-010"
+    ],
+    "platforms": [],
+    "path": "13 Librarian/Grounding & Memory/LBR-008 — Semantic Capability & Tool Registry.md"
+  },
+  {
+    "id": "LBR-001",
+    "title": "Librarian Carriage",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "interface",
+    "storybook": "scene",
+    "depends_on": [
+      "APP-007",
+      "APP-010",
+      "LBR-002",
+      "DS-WFL"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "13 Librarian/Interface/LBR-001 — Librarian Carriage.md"
+  },
+  {
+    "id": "LBR-002",
+    "title": "Conversation & Composer",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "interface",
+    "storybook": "component",
+    "depends_on": [
+      "OBJ-010",
+      "LBR-003",
+      "LBR-004"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "13 Librarian/Interface/LBR-002 — Conversation & Composer.md"
+  },
+  {
+    "id": "LBR-003",
+    "title": "Context Scope & Inspector",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "interface",
+    "storybook": "component",
+    "depends_on": [
+      "FOC-012",
+      "PREP-009",
+      "STG-014"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "13 Librarian/Interface/LBR-003 — Context Scope & Inspector.md"
+  },
+  {
+    "id": "LBR-004",
+    "title": "Grounded Answer & Citation",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "interface",
+    "storybook": "component",
+    "depends_on": [
+      "LBR-007",
+      "OBJ-SRC-01",
+      "FOC-010"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "13 Librarian/Interface/LBR-004 — Grounded Answer & Citation.md"
+  },
+  {
+    "id": "LBR-005",
+    "title": "Conversation History & Memory Boundary",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "interface",
+    "storybook": "none",
+    "depends_on": [
+      "LBR-009",
+      "LBR-012"
+    ],
+    "platforms": [],
+    "path": "13 Librarian/Interface/LBR-005 — Conversation History & Memory Boundary.md"
+  },
+  {
+    "id": "LBR-006",
+    "title": "Context Assembly & Grounding Layers",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-13",
+    "family": "interface",
+    "storybook": "none",
+    "depends_on": [
+      "LBR-013",
+      "LBR-003",
+      "LBR-007"
+    ],
+    "platforms": [],
+    "path": "13 Librarian/Interface/LBR-006 — Context Assembly & Grounding Layers.md"
+  },
+  {
+    "id": "CHR-004",
+    "title": "Chronicle Workspace State",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": "chronicle-interface",
+    "storybook": "scene",
+    "depends_on": [
+      "APP-005",
+      "CHR-006",
+      "CHR-005",
+      "DS-TRUST"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "14 Chronicle & Temporal Model/Chronicle Interface/CHR-004 — Chronicle Workspace State.md"
+  },
+  {
+    "id": "CHR-005",
+    "title": "Chronicle Stream",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": "chronicle-interface",
+    "storybook": "component",
+    "depends_on": [
+      "CHR-007",
+      "CHR-001",
+      "OBJ-EVT",
+      "DS-TRUST"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "14 Chronicle & Temporal Model/Chronicle Interface/CHR-005 — Chronicle Stream.md"
+  },
+  {
+    "id": "CHR-006",
+    "title": "Story Position Control",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": "chronicle-interface",
+    "storybook": "component",
+    "depends_on": [
+      "APP-005",
+      "CHR-001",
+      "CHR-012",
+      "DS-TRUST"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "14 Chronicle & Temporal Model/Chronicle Interface/CHR-006 — Story Position Control.md"
+  },
+  {
+    "id": "CHR-007",
+    "title": "Chronicle Entry & Story Change Group",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": "chronicle-interface",
+    "storybook": "component",
+    "depends_on": [
+      "REV-004",
+      "OBJ-CHAR-13",
+      "WOF-001",
+      "DS-TRUST"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "14 Chronicle & Temporal Model/Chronicle Interface/CHR-007 — Chronicle Entry & Story Change Group.md"
+  },
+  {
+    "id": "CHR-008",
+    "title": "Object History & As-Of Navigation",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": "chronicle-interface",
+    "storybook": "pattern",
+    "depends_on": [
+      "FOC-011",
+      "FOC-BLK-011",
+      "CHR-003"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "14 Chronicle & Temporal Model/Chronicle Interface/CHR-008 — Object History & As-Of Navigation.md"
+  },
+  {
+    "id": "CHR-009",
+    "title": "Temporal Compare",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": "chronicle-interface",
+    "storybook": "component",
+    "depends_on": [
+      "REV-006",
+      "CHR-003",
+      "CHR-010",
+      "DS-TRUST"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "14 Chronicle & Temporal Model/Chronicle Interface/CHR-009 — Temporal Compare.md"
+  },
+  {
+    "id": "CHR-010",
+    "title": "Temporal Truth Layers",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": "chronicle-interface",
+    "storybook": "none",
+    "depends_on": [
+      "REV-009",
+      "REV-014",
+      "LBR-006"
+    ],
+    "platforms": [],
+    "path": "14 Chronicle & Temporal Model/Chronicle Interface/CHR-010 — Temporal Truth Layers.md"
+  },
+  {
+    "id": "CHR-011",
+    "title": "Historical Editing, Correction & Retcon",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": "chronicle-interface",
+    "storybook": "pattern",
+    "depends_on": [
+      "LBR-009",
+      "REV-014",
+      "REL-007"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "14 Chronicle & Temporal Model/Chronicle Interface/CHR-011 — Historical Editing, Correction & Retcon.md"
+  },
+  {
+    "id": "CHR-012",
+    "title": "Temporal Deep Links & Return Context",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": "chronicle-interface",
+    "storybook": "pattern",
+    "depends_on": [
+      "FOC-010",
+      "CHR-006",
+      "OBJ-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "14 Chronicle & Temporal Model/Chronicle Interface/CHR-012 — Temporal Deep Links & Return Context.md"
+  },
+  {
+    "id": "SYS-14",
+    "title": "Chronicle & Temporal Model",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "14 Chronicle & Temporal Model/Chronicle Interface/SYS-14 — Chronicle & Temporal Model.md"
+  },
+  {
+    "id": "CHR-013",
+    "title": "Chronicle Librarian Context Bridge",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": "librarian-bridge",
+    "storybook": "none",
+    "depends_on": [
+      "CHR-003",
+      "LBR-013",
+      "LBR-003"
+    ],
+    "platforms": [],
+    "path": "14 Chronicle & Temporal Model/Librarian Bridge/CHR-013 — Chronicle Librarian Context Bridge.md"
+  },
+  {
+    "id": "CHR-001",
+    "title": "Story Time & Position Model",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": "temporal-core",
+    "storybook": "none",
+    "depends_on": [
+      "SES-001",
+      "OBJ-EVT",
+      "CHR-003"
+    ],
+    "platforms": [],
+    "path": "14 Chronicle & Temporal Model/Temporal Core/CHR-001 — Story Time & Position Model.md"
+  },
+  {
+    "id": "CHR-002",
+    "title": "Temporal State Model",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": "temporal-core",
+    "storybook": "none",
+    "depends_on": [
+      "REL-007",
+      "CHR-001",
+      "CHR-003"
+    ],
+    "platforms": [],
+    "path": "14 Chronicle & Temporal Model/Temporal Core/CHR-002 — Temporal State Model.md"
+  },
+  {
+    "id": "CHR-003",
+    "title": "Temporal Resolver & Now Projection",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-14",
+    "family": "temporal-core",
+    "storybook": "none",
+    "depends_on": [
+      "CHR-001",
+      "CHR-002",
+      "CHR-010"
+    ],
+    "platforms": [],
+    "path": "14 Chronicle & Temporal Model/Temporal Core/CHR-003 — Temporal Resolver & Now Projection.md"
+  },
+  {
+    "id": "SGA-004",
+    "title": "Build with the Librarian",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-15",
+    "family": "assisted-creation",
+    "storybook": "none",
+    "depends_on": [
+      "LBR-001",
+      "LBR-013"
+    ],
+    "platforms": [],
+    "path": "15 Saga Creator & First Run/Assisted Creation/SGA-004 — Build with the Librarian.md"
+  },
+  {
+    "id": "SGA-005",
+    "title": "Bring Your Material",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-15",
+    "family": "assisted-creation",
+    "storybook": "none",
+    "depends_on": [
+      "OBJ-SRC",
+      "PLT-008"
+    ],
+    "platforms": [],
+    "path": "15 Saga Creator & First Run/Assisted Creation/SGA-005 — Bring Your Material.md"
+  },
+  {
+    "id": "SGA-006",
+    "title": "Starting World Change Set",
+    "status": "active",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-15",
+    "family": "assisted-creation",
+    "storybook": "none",
+    "depends_on": [
+      "LBR-010",
+      "LBR-011",
+      "SGA-007"
+    ],
+    "platforms": [],
+    "path": "15 Saga Creator & First Run/Assisted Creation/SGA-006 — Starting World Change Set.md"
+  },
+  {
+    "id": "SGA-007",
+    "title": "Starting World Summary & Settlement",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-15",
+    "family": "assisted-creation",
+    "storybook": "none",
+    "depends_on": [
+      "SGA-006"
+    ],
+    "platforms": [],
+    "path": "15 Saga Creator & First Run/Assisted Creation/SGA-007 — Starting World Summary & Settlement.md"
+  },
+  {
+    "id": "SGA-008",
+    "title": "First Desk Composition",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-15",
+    "family": "assisted-creation",
+    "storybook": "none",
+    "depends_on": [
+      "BRD-006",
+      "DSK-029"
+    ],
+    "platforms": [],
+    "path": "15 Saga Creator & First Run/Assisted Creation/SGA-008 — First Desk Composition.md"
+  },
+  {
+    "id": "SGA-001",
+    "title": "New Saga Entry & Saga Shell",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-15",
+    "family": "entry-empty-desk",
+    "storybook": "none",
+    "depends_on": [
+      "APP-005",
+      "SGA-002",
+      "SGA-003"
+    ],
+    "platforms": [],
+    "path": "15 Saga Creator & First Run/Entry & Empty Desk/SGA-001 — New Saga Entry & Saga Shell.md"
+  },
+  {
+    "id": "SGA-002",
+    "title": "World & Mechanics Setup",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-15",
+    "family": "entry-empty-desk",
+    "storybook": "component",
+    "depends_on": [
+      "MEC-017"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "15 Saga Creator & First Run/Entry & Empty Desk/SGA-002 — World & Mechanics Setup.md"
+  },
+  {
+    "id": "SGA-003",
+    "title": "First Desk Empty State & Starting Actions",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-15",
+    "family": "entry-empty-desk",
+    "storybook": "component",
+    "depends_on": [
+      "SGA-002",
+      "DSK-001"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "15 Saga Creator & First Run/Entry & Empty Desk/SGA-003 — First Desk Empty State & Starting Actions.md"
+  },
+  {
+    "id": "SGA-009",
+    "title": "Session 1 Seed & Prepare Handoff",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-15",
+    "family": "handoff-guidance-recovery",
+    "storybook": "none",
+    "depends_on": [
+      "PREP-001"
+    ],
+    "platforms": [],
+    "path": "15 Saga Creator & First Run/Handoff Guidance & Recovery/SGA-009 — Session 1 Seed & Prepare Handoff.md"
+  },
+  {
+    "id": "SGA-010",
+    "title": "First-Run Guidance & Learn-by-Doing",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-15",
+    "family": "handoff-guidance-recovery",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "15 Saga Creator & First Run/Handoff Guidance & Recovery/SGA-010 — First-Run Guidance & Learn-by-Doing.md"
+  },
+  {
+    "id": "SGA-011",
+    "title": "Resume, Recovery & Failure",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-15",
+    "family": "handoff-guidance-recovery",
+    "storybook": "pattern",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "15 Saga Creator & First Run/Handoff Guidance & Recovery/SGA-011 — Resume, Recovery & Failure.md"
+  },
+  {
+    "id": "SGA-012",
+    "title": "Saga Creator Librarian Context Bridge",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-15",
+    "family": "handoff-guidance-recovery",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "15 Saga Creator & First Run/Handoff Guidance & Recovery/SGA-012 — Saga Creator Librarian Context Bridge.md"
+  },
+  {
+    "id": "SYS-15",
+    "title": "Saga Creator & First Run",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-15",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "15 Saga Creator & First Run/Handoff Guidance & Recovery/SYS-15 — Saga Creator & First Run.md"
+  },
+  {
+    "id": "PUB-003",
+    "title": "GM Publication Controls",
+    "status": "deferred",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-16",
+    "family": "gm-publication-ui",
+    "storybook": "component",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "16 Player Publication & Permissions/GM Publication UI/PUB-003 — GM Publication Controls.md"
+  },
+  {
+    "id": "PUB-009",
+    "title": "Settlement to Publication Handoff",
+    "status": "deferred",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-16",
+    "family": "gm-publication-ui",
+    "storybook": "none",
+    "depends_on": [
+      "REV-015",
+      "PUB-006",
+      "PUB-011"
+    ],
+    "platforms": [],
+    "path": "16 Player Publication & Permissions/GM Publication UI/PUB-009 — Settlement to Publication Handoff.md"
+  },
+  {
+    "id": "PUB-010",
+    "title": "View as Player Preview",
+    "status": "deferred",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-16",
+    "family": "gm-publication-ui",
+    "storybook": "scene",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "16 Player Publication & Permissions/GM Publication UI/PUB-010 — View as Player Preview.md"
+  },
+  {
+    "id": "PUB-004",
+    "title": "Player Wiki Surface",
+    "status": "deferred",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-16",
+    "family": "player-experience",
+    "storybook": "scene",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "16 Player Publication & Permissions/Player Experience/PUB-004 — Player Wiki Surface.md"
+  },
+  {
+    "id": "PUB-005",
+    "title": "Published World Object Projections",
+    "status": "deferred",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-16",
+    "family": "player-experience",
+    "storybook": "pattern",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "16 Player Publication & Permissions/Player Experience/PUB-005 — Published World Object Projections.md"
+  },
+  {
+    "id": "PUB-006",
+    "title": "Published Session Recap",
+    "status": "deferred",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-16",
+    "family": "player-experience",
+    "storybook": "component",
+    "depends_on": [
+      "REV-012"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "16 Player Publication & Permissions/Player Experience/PUB-006 — Published Session Recap.md"
+  },
+  {
+    "id": "PUB-007",
+    "title": "Player Chronicle Projection",
+    "status": "deferred",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-16",
+    "family": "player-experience",
+    "storybook": "none",
+    "depends_on": [
+      "CHR-004"
+    ],
+    "platforms": [],
+    "path": "16 Player Publication & Permissions/Player Experience/PUB-007 — Player Chronicle Projection.md"
+  },
+  {
+    "id": "PUB-008",
+    "title": "Permission-Safe Search & Retrieval",
+    "status": "deferred",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-16",
+    "family": "player-experience",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "16 Player Publication & Permissions/Player Experience/PUB-008 — Permission-Safe Search & Retrieval.md"
+  },
+  {
+    "id": "SYS-16",
+    "title": "Player Publication & Permissions",
+    "status": "deferred",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-16",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "16 Player Publication & Permissions/Player Experience/SYS-16 — Player Publication & Permissions.md"
+  },
+  {
+    "id": "PUB-001",
+    "title": "Publication & Visibility Model",
+    "status": "deferred",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-16",
+    "family": "publication-domain-security",
+    "storybook": "none",
+    "depends_on": [
+      "FOC-BLK-015"
+    ],
+    "platforms": [],
+    "path": "16 Player Publication & Permissions/Publication Domain & Security/PUB-001 — Publication & Visibility Model.md"
+  },
+  {
+    "id": "PUB-002",
+    "title": "Player Membership & Saga Access",
+    "status": "deferred",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-16",
+    "family": "publication-domain-security",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "16 Player Publication & Permissions/Publication Domain & Security/PUB-002 — Player Membership & Saga Access.md"
+  },
+  {
+    "id": "PUB-011",
+    "title": "Publication Audit & Reversal",
+    "status": "deferred",
+    "kind": "domain",
+    "authority": "current",
+    "system": "SYS-16",
+    "family": "publication-domain-security",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "16 Player Publication & Permissions/Publication Domain & Security/PUB-011 — Publication Audit & Reversal.md"
+  },
+  {
+    "id": "SET-007",
+    "title": "Usage Credits & AI Activity",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": "ai-usage",
+    "storybook": "component",
+    "depends_on": [
+      "LBR-012",
+      "LBR-013",
+      "PLT-015"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "17 Settings Account & AI Configuration/AI & Usage/SET-007 — Usage Credits & AI Activity.md"
+  },
+  {
+    "id": "SET-008",
+    "title": "AI Provider & Model Connections",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": "ai-usage",
+    "storybook": "component",
+    "depends_on": [
+      "SET-006",
+      "PLT-011"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "17 Settings Account & AI Configuration/AI & Usage/SET-008 — AI Provider & Model Connections.md"
+  },
+  {
+    "id": "SET-010",
+    "title": "Data Export & Ownership",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": "data-recovery-destructive-actions",
+    "storybook": "component",
+    "depends_on": [
+      "SET-002",
+      "SET-011"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "17 Settings Account & AI Configuration/Data Recovery & Destructive Actions/SET-010 — Data Export & Ownership.md"
+  },
+  {
+    "id": "SET-011",
+    "title": "Archive Delete & Protected Actions",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": "data-recovery-destructive-actions",
+    "storybook": "none",
+    "depends_on": [
+      "SET-005",
+      "LBR-009",
+      "SET-010"
+    ],
+    "platforms": [],
+    "path": "17 Settings Account & AI Configuration/Data Recovery & Destructive Actions/SET-011 — Archive Delete & Protected Actions.md"
+  },
+  {
+    "id": "SET-012",
+    "title": "Sync Recovery & Diagnostics",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": "data-recovery-destructive-actions",
+    "storybook": "component",
+    "depends_on": [
+      "STG-016",
+      "LBR-014"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "17 Settings Account & AI Configuration/Data Recovery & Destructive Actions/SET-012 — Sync Recovery & Diagnostics.md"
+  },
+  {
+    "id": "SYS-17",
+    "title": "Settings Account & AI Configuration",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "17 Settings Account & AI Configuration/Data Recovery & Destructive Actions/SYS-17 — Settings Account & AI Configuration.md"
+  },
+  {
+    "id": "SET-001",
+    "title": "Settings Surface & Scope Navigation",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": "personal-shell",
+    "storybook": "scene",
+    "depends_on": [
+      "APP-008",
+      "APP-009",
+      "SET-013"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "17 Settings Account & AI Configuration/Personal & Shell/SET-001 — Settings Surface & Scope Navigation.md"
+  },
+  {
+    "id": "SET-002",
+    "title": "Account & Identity",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": "personal-shell",
+    "storybook": "component",
+    "depends_on": [
+      "SET-010",
+      "SET-011"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "17 Settings Account & AI Configuration/Personal & Shell/SET-002 — Account & Identity.md"
+  },
+  {
+    "id": "SET-003",
+    "title": "Appearance & Interface Preferences",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": "personal-shell",
+    "storybook": "component",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "17 Settings Account & AI Configuration/Personal & Shell/SET-003 — Appearance & Interface Preferences.md"
+  },
+  {
+    "id": "SET-004",
+    "title": "Notifications",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": "personal-shell",
+    "storybook": "component",
+    "depends_on": [
+      "LBR-013",
+      "REV-001"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "17 Settings Account & AI Configuration/Personal & Shell/SET-004 — Notifications.md"
+  },
+  {
+    "id": "SET-005",
+    "title": "Current Saga General Settings",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": "saga-policy",
+    "storybook": "component",
+    "depends_on": [
+      "MEC-017",
+      "SET-006",
+      "SET-009"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "17 Settings Account & AI Configuration/Saga Policy/SET-005 — Current Saga General Settings.md"
+  },
+  {
+    "id": "SET-006",
+    "title": "Librarian Authority & Review Policy",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": "saga-policy",
+    "storybook": "component",
+    "depends_on": [
+      "LBR-013",
+      "LBR-009",
+      "REV-009"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "17 Settings Account & AI Configuration/Saga Policy/SET-006 — Librarian Authority & Review Policy.md"
+  },
+  {
+    "id": "SET-009",
+    "title": "Recording Retention & Privacy",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": "saga-policy",
+    "storybook": "component",
+    "depends_on": [
+      "STG-007",
+      "REV-008",
+      "SET-013"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "17 Settings Account & AI Configuration/Saga Policy/SET-009 — Recording Retention & Privacy.md"
+  },
+  {
+    "id": "SET-013",
+    "title": "Settings Scope & Inheritance",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-17",
+    "family": "saga-policy",
+    "storybook": "none",
+    "depends_on": [
+      "SET-005",
+      "SET-006",
+      "SET-009"
+    ],
+    "platforms": [],
+    "path": "17 Settings Account & AI Configuration/Saga Policy/SET-013 — Settings Scope & Inheritance.md"
+  },
+  {
+    "id": "DS-CAN",
+    "title": "Canvas Visual System",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "canvas",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/Canvas/DS-CAN — Canvas Visual System.md"
+  },
+  {
+    "id": "DS-CTL",
+    "title": "Controls",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "controls",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/Controls/DS-CTL — Controls.md"
+  },
+  {
+    "id": "DS-CTL-BUTTON",
+    "title": "Button",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-ctl",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE",
+      "DS-FND-DENSITY"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Controls/DS-CTL-BUTTON — Button.md"
+  },
+  {
+    "id": "DS-CTL-BUTTON-GROUP",
+    "title": "Button Group",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-ctl",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Controls/DS-CTL-BUTTON-GROUP — Button Group.md"
+  },
+  {
+    "id": "DS-CTL-ICON-BUTTON",
+    "title": "Icon Button",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-ctl",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-ICON",
+      "DS-FND-STATE",
+      "DS-FND-DENSITY",
+      "DS-SRF-TOOLTIP"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Controls/DS-CTL-ICON-BUTTON — Icon Button.md"
+  },
+  {
+    "id": "DS-CTL-TEXT-ACTION",
+    "title": "Text & Link Action",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-ctl",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Controls/DS-CTL-TEXT-ACTION — Text & Link Action.md"
+  },
+  {
+    "id": "DS-CTL-TOGGLE-BUTTON",
+    "title": "Toggle Button",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-ctl",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Controls/DS-CTL-TOGGLE-BUTTON — Toggle Button.md"
+  },
+  {
+    "id": "DS-FBK",
+    "title": "Feedback & Status",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "feedback-status",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/Feedback & Status/DS-FBK — Feedback & Status.md"
+  },
+  {
+    "id": "DS-FBK-EMPTY",
+    "title": "Empty State",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fbk",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Feedback & Status/DS-FBK-EMPTY — Empty State.md"
+  },
+  {
+    "id": "DS-FBK-ERROR",
+    "title": "Inline Error",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fbk",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Feedback & Status/DS-FBK-ERROR — Inline Error.md"
+  },
+  {
+    "id": "DS-FBK-NOTICE",
+    "title": "Notice & Banner",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fbk",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Feedback & Status/DS-FBK-NOTICE — Notice & Banner.md"
+  },
+  {
+    "id": "DS-FBK-PROGRESS",
+    "title": "Progress",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fbk",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Feedback & Status/DS-FBK-PROGRESS — Progress.md"
+  },
+  {
+    "id": "DS-FBK-SAVE",
+    "title": "Save State Indicator",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fbk",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Feedback & Status/DS-FBK-SAVE — Save State Indicator.md"
+  },
+  {
+    "id": "DS-FBK-SKELETON",
+    "title": "Skeleton",
+    "status": "active",
+    "kind": "primitive",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fbk",
+    "storybook": "primitive",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Feedback & Status/DS-FBK-SKELETON — Skeleton.md"
+  },
+  {
+    "id": "DS-FBK-SPINNER",
+    "title": "Spinner",
+    "status": "active",
+    "kind": "primitive",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fbk",
+    "storybook": "primitive",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Feedback & Status/DS-FBK-SPINNER — Spinner.md"
+  },
+  {
+    "id": "DS-FBK-STATUS",
+    "title": "Status Mark",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fbk",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE",
+      "DS-TRUST"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Feedback & Status/DS-FBK-STATUS — Status Mark.md"
+  },
+  {
+    "id": "DS-FBK-TRANSFER",
+    "title": "Upload & Transfer State",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fbk",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Feedback & Status/DS-FBK-TRANSFER — Upload & Transfer State.md"
+  },
+  {
+    "id": "DS-FOC",
+    "title": "Focus & Content Visual System",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "focus",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/Focus/DS-FOC — Focus & Content Visual System.md"
+  },
+  {
+    "id": "DS-FRM",
+    "title": "Forms",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "forms",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/Forms/DS-FRM — Forms.md"
+  },
+  {
+    "id": "DS-FRM-CHECKBOX",
+    "title": "Checkbox",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-CHECKBOX — Checkbox.md"
+  },
+  {
+    "id": "DS-FRM-COMBOBOX",
+    "title": "Combobox",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-COMBOBOX — Combobox.md"
+  },
+  {
+    "id": "DS-FRM-FIELD",
+    "title": "Field Shell Label Help & Validation",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-SPACING",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-FIELD — Field Shell Label Help & Validation.md"
+  },
+  {
+    "id": "DS-FRM-FILE",
+    "title": "File & Attachment Input",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-FILE — File & Attachment Input.md"
+  },
+  {
+    "id": "DS-FRM-INLINE",
+    "title": "Inline Editable Text",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-INLINE — Inline Editable Text.md"
+  },
+  {
+    "id": "DS-FRM-NUMBER",
+    "title": "Number & Stepper",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-NUMBER — Number & Stepper.md"
+  },
+  {
+    "id": "DS-FRM-RADIO",
+    "title": "Radio",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-RADIO — Radio.md"
+  },
+  {
+    "id": "DS-FRM-RESOURCE",
+    "title": "Search-Backed Resource Picker",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "pattern",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-RESOURCE — Search-Backed Resource Picker.md"
+  },
+  {
+    "id": "DS-FRM-SEARCH",
+    "title": "Search Field",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-SEARCH — Search Field.md"
+  },
+  {
+    "id": "DS-FRM-SEGMENTED",
+    "title": "Segmented Control",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-SEGMENTED — Segmented Control.md"
+  },
+  {
+    "id": "DS-FRM-SELECT",
+    "title": "Select",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-SELECT — Select.md"
+  },
+  {
+    "id": "DS-FRM-TEXT",
+    "title": "Text Field",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-TEXT — Text Field.md"
+  },
+  {
+    "id": "DS-FRM-TEXTAREA",
+    "title": "Text Area",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-TEXTAREA — Text Area.md"
+  },
+  {
+    "id": "DS-FRM-TOGGLE",
+    "title": "Toggle Switch",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-frm",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Forms/DS-FRM-TOGGLE — Toggle Switch.md"
+  },
+  {
+    "id": "DS-FND",
+    "title": "Foundations",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "foundations",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/Foundations/DS-FND — Foundations.md"
+  },
+  {
+    "id": "DS-FND-COLOR",
+    "title": "Colour Roles",
+    "status": "active",
+    "kind": "primitive",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fnd",
+    "storybook": "primitive",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Foundations/DS-FND-COLOR — Colour Roles.md"
+  },
+  {
+    "id": "DS-FND-DENSITY",
+    "title": "Responsive Density & Touch Targets",
+    "status": "active",
+    "kind": "primitive",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fnd",
+    "storybook": "primitive",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Foundations/DS-FND-DENSITY — Responsive Density & Touch Targets.md"
+  },
+  {
+    "id": "DS-FND-ICON",
+    "title": "Iconography",
+    "status": "active",
+    "kind": "primitive",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fnd",
+    "storybook": "primitive",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Foundations/DS-FND-ICON — Iconography.md"
+  },
+  {
+    "id": "DS-FND-MOTION",
+    "title": "Motion & Transition Tokens",
+    "status": "active",
+    "kind": "primitive",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fnd",
+    "storybook": "primitive",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Foundations/DS-FND-MOTION — Motion & Transition Tokens.md"
+  },
+  {
+    "id": "DS-FND-SHAPE",
+    "title": "Borders Radii & Elevation",
+    "status": "active",
+    "kind": "primitive",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fnd",
+    "storybook": "primitive",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Foundations/DS-FND-SHAPE — Borders Radii & Elevation.md"
+  },
+  {
+    "id": "DS-FND-SPACING",
+    "title": "Spacing & Sizing Scale",
+    "status": "active",
+    "kind": "primitive",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fnd",
+    "storybook": "primitive",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Foundations/DS-FND-SPACING — Spacing & Sizing Scale.md"
+  },
+  {
+    "id": "DS-FND-STATE",
+    "title": "Interaction State Language",
+    "status": "active",
+    "kind": "primitive",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fnd",
+    "storybook": "primitive",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Foundations/DS-FND-STATE — Interaction State Language.md"
+  },
+  {
+    "id": "DS-FND-TYPE",
+    "title": "Typography Roles",
+    "status": "active",
+    "kind": "primitive",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-fnd",
+    "storybook": "primitive",
+    "depends_on": [],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Foundations/DS-FND-TYPE — Typography Roles.md"
+  },
+  {
+    "id": "DS-MEC",
+    "title": "Mechanics Visual System",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "mechanics",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/Mechanics/DS-MEC — Mechanics Visual System.md"
+  },
+  {
+    "id": "DS-SCN",
+    "title": "Reference Scenes",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "reference-scenes",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/Reference Scenes/DS-SCN — Reference Scenes.md"
+  },
+  {
+    "id": "DS-SCN-CHRON",
+    "title": "Chronicle Workspace",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-scn",
+    "storybook": "scene",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-SPACING"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Reference Scenes/DS-SCN-CHRON — Chronicle Workspace.md"
+  },
+  {
+    "id": "DS-SCN-DESK",
+    "title": "Populated Desk",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-scn",
+    "storybook": "scene",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-SPACING"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Reference Scenes/DS-SCN-DESK — Populated Desk.md"
+  },
+  {
+    "id": "DS-SCN-EMPTY",
+    "title": "Empty First Desk",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-scn",
+    "storybook": "scene",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-SPACING"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Reference Scenes/DS-SCN-EMPTY — Empty First Desk.md"
+  },
+  {
+    "id": "DS-SCN-FOCUS",
+    "title": "Character Focus + Librarian",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-scn",
+    "storybook": "scene",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-SPACING"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Reference Scenes/DS-SCN-FOCUS — Character Focus + Librarian.md"
+  },
+  {
+    "id": "DS-SCN-PREP",
+    "title": "Prepare Workspace",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-scn",
+    "storybook": "scene",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-SPACING"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Reference Scenes/DS-SCN-PREP — Prepare Workspace.md"
+  },
+  {
+    "id": "DS-SCN-SETTLE",
+    "title": "Settlement Workspace",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-scn",
+    "storybook": "scene",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-SPACING"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Reference Scenes/DS-SCN-SETTLE — Settlement Workspace.md"
+  },
+  {
+    "id": "DS-SCN-STAGE",
+    "title": "Stage Workspace",
+    "status": "active",
+    "kind": "surface",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-scn",
+    "storybook": "scene",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-SPACING"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Reference Scenes/DS-SCN-STAGE — Stage Workspace.md"
+  },
+  {
+    "id": "SYS-18",
+    "title": "Relic Design System",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": null,
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/SYS-18 — Relic Design System.md"
+  },
+  {
+    "id": "DS-BHV",
+    "title": "Shared UI Behaviors",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "shared-ui-behaviors",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/Shared UI Behaviors/DS-BHV — Shared UI Behaviors.md"
+  },
+  {
+    "id": "DS-BHV-ACCESS",
+    "title": "Accessibility & Input Modality",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-bhv",
+    "storybook": "pattern",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Shared UI Behaviors/DS-BHV-ACCESS — Accessibility & Input Modality.md"
+  },
+  {
+    "id": "DS-BHV-AUTOSAVE",
+    "title": "Autosave & Save-State Contract",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-bhv",
+    "storybook": "pattern",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Shared UI Behaviors/DS-BHV-AUTOSAVE — Autosave & Save-State Contract.md"
+  },
+  {
+    "id": "DS-BHV-KEYBOARD",
+    "title": "Keyboard Command & Focus Arbitration",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-bhv",
+    "storybook": "pattern",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Shared UI Behaviors/DS-BHV-KEYBOARD — Keyboard Command & Focus Arbitration.md"
+  },
+  {
+    "id": "DS-BHV-OVERLAY",
+    "title": "Overlay Dismissal Focus & Layering",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-bhv",
+    "storybook": "pattern",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Shared UI Behaviors/DS-BHV-OVERLAY — Overlay Dismissal Focus & Layering.md"
+  },
+  {
+    "id": "DS-BHV-PROTECTED",
+    "title": "Protected Action & Confirmation Pattern",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-bhv",
+    "storybook": "pattern",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Shared UI Behaviors/DS-BHV-PROTECTED — Protected Action & Confirmation Pattern.md"
+  },
+  {
+    "id": "DS-SRF",
+    "title": "Surfaces & Overlays",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "surfaces-overlays",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/Surfaces & Overlays/DS-SRF — Surfaces & Overlays.md"
+  },
+  {
+    "id": "DS-SRF-CONTEXT",
+    "title": "Context Menu Pattern",
+    "status": "active",
+    "kind": "behavior",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-srf",
+    "storybook": "pattern",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE",
+      "APP-011"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Surfaces & Overlays/DS-SRF-CONTEXT — Context Menu Pattern.md"
+  },
+  {
+    "id": "DS-SRF-DIALOG",
+    "title": "Dialog",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-srf",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE",
+      "APP-011"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Surfaces & Overlays/DS-SRF-DIALOG — Dialog.md"
+  },
+  {
+    "id": "DS-SRF-DIVIDER",
+    "title": "Divider",
+    "status": "active",
+    "kind": "primitive",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-srf",
+    "storybook": "primitive",
+    "depends_on": [
+      "DS-FND-COLOR",
+      "DS-FND-SPACING",
+      "DS-FND-SHAPE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Surfaces & Overlays/DS-SRF-DIVIDER — Divider.md"
+  },
+  {
+    "id": "DS-SRF-FLOAT",
+    "title": "Floating Surface",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-srf",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE",
+      "APP-011"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Surfaces & Overlays/DS-SRF-FLOAT — Floating Surface.md"
+  },
+  {
+    "id": "DS-SRF-MENU",
+    "title": "Menu Surface",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-srf",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE",
+      "APP-011"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Surfaces & Overlays/DS-SRF-MENU — Menu Surface.md"
+  },
+  {
+    "id": "DS-SRF-MENU-ITEM",
+    "title": "Menu Item",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-srf",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-ICON",
+      "DS-FND-STATE",
+      "DS-SRF-MENU"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Surfaces & Overlays/DS-SRF-MENU-ITEM — Menu Item.md"
+  },
+  {
+    "id": "DS-SRF-POPOVER",
+    "title": "Popover",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-srf",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE",
+      "APP-011"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Surfaces & Overlays/DS-SRF-POPOVER — Popover.md"
+  },
+  {
+    "id": "DS-SRF-SHEET",
+    "title": "Adaptive Sheet & Drawer",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-srf",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE",
+      "APP-011"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Surfaces & Overlays/DS-SRF-SHEET — Adaptive Sheet & Drawer.md"
+  },
+  {
+    "id": "DS-SRF-TOOLTIP",
+    "title": "Tooltip",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-srf",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE",
+      "APP-011"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Surfaces & Overlays/DS-SRF-TOOLTIP — Tooltip.md"
+  },
+  {
+    "id": "DS-TRUST",
+    "title": "Temporal Proposal & Trust Visual System",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "trust-temporal",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/Trust & Temporal/DS-TRUST — Temporal Proposal & Trust Visual System.md"
+  },
+  {
+    "id": "DS-WFL",
+    "title": "Workflow & Carriage Visual System",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "workflow-carriages",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/Workflow & Carriages/DS-WFL — Workflow & Carriage Visual System.md"
+  },
+  {
+    "id": "DS-WFL-CARRIAGE",
+    "title": "Carriage Shell",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-wfl",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Workflow & Carriages/DS-WFL-CARRIAGE — Carriage Shell.md"
+  },
+  {
+    "id": "DS-WFL-SECTION",
+    "title": "Carriage Section",
+    "status": "active",
+    "kind": "component",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "ds-wfl",
+    "storybook": "component",
+    "depends_on": [
+      "DS-FND-TYPE",
+      "DS-FND-COLOR",
+      "DS-FND-STATE"
+    ],
+    "platforms": [
+      "web"
+    ],
+    "path": "18 Design System/Workflow & Carriages/DS-WFL-SECTION — Carriage Section.md"
+  },
+  {
+    "id": "DS-OBJ",
+    "title": "World Object Visual System",
+    "status": "active",
+    "kind": "family",
+    "authority": "current",
+    "system": "SYS-18",
+    "family": "world-objects",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "18 Design System/World Objects/DS-OBJ — World Object Visual System.md"
+  },
+  {
+    "id": "PLT-009",
+    "title": "Search Indexing & Retrieval",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "ai-retrieval-async",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/AI Retrieval & Async/PLT-009 — Search Indexing & Retrieval.md"
+  },
+  {
+    "id": "PLT-010",
+    "title": "Librarian Task Runtime & Semantic Tool Executor",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "ai-retrieval-async",
+    "storybook": "none",
+    "depends_on": [
+      "PLT-004"
+    ],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/AI Retrieval & Async/PLT-010 — Librarian Task Runtime & Semantic Tool Executor.md"
+  },
+  {
+    "id": "PLT-011",
+    "title": "AI Routing Context & Run Ledger",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "ai-retrieval-async",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/AI Retrieval & Async/PLT-011 — AI Routing Context & Run Ledger.md"
+  },
+  {
+    "id": "PLT-012",
+    "title": "Durable Jobs Queues & Pipeline Orchestration",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "ai-retrieval-async",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/AI Retrieval & Async/PLT-012 — Durable Jobs Queues & Pipeline Orchestration.md"
+  },
+  {
+    "id": "PLT-001",
+    "title": "Runtime Repository & Contract Boundaries",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "core-domain-security",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/Core Domain & Security/PLT-001 — Runtime Repository & Contract Boundaries.md"
+  },
+  {
+    "id": "PLT-002",
+    "title": "Tenancy Authentication RLS & Security",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "core-domain-security",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/Core Domain & Security/PLT-002 — Tenancy Authentication RLS & Security.md"
+  },
+  {
+    "id": "PLT-003",
+    "title": "Core Domain Persistence & Scope",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "core-domain-security",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/Core Domain & Security/PLT-003 — Core Domain Persistence & Scope.md"
+  },
+  {
+    "id": "PLT-004",
+    "title": "Temporal State & Change-Set Transaction Engine",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "core-domain-security",
+    "storybook": "none",
+    "depends_on": [
+      "CHR-001"
+    ],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/Core Domain & Security/PLT-004 — Temporal State & Change-Set Transaction Engine.md"
+  },
+  {
+    "id": "PLT-005",
+    "title": "Spatial Board Persistence",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "core-domain-security",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/Core Domain & Security/PLT-005 — Spatial Board Persistence.md"
+  },
+  {
+    "id": "PLT-015",
+    "title": "Usage Quotas Notifications Retention & Export",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "operations-delivery",
+    "storybook": "none",
+    "depends_on": [
+      "PLT-011"
+    ],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/Operations & Delivery/PLT-015 — Usage Quotas Notifications Retention & Export.md"
+  },
+  {
+    "id": "PLT-016",
+    "title": "Observability Evaluation & Security Tests",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "operations-delivery",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/Operations & Delivery/PLT-016 — Observability Evaluation & Security Tests.md"
+  },
+  {
+    "id": "PLT-017",
+    "title": "Deployment Environments Secrets & Migrations",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "operations-delivery",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/Operations & Delivery/PLT-017 — Deployment Environments Secrets & Migrations.md"
+  },
+  {
+    "id": "SYS-19",
+    "title": "Platform & Data Architecture",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/SYS-19 — Platform & Data Architecture.md"
+  },
+  {
+    "id": "PLT-006",
+    "title": "Session Stage & Runtime Persistence",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "session-content-continuity",
+    "storybook": "none",
+    "depends_on": [
+      "STG-011",
+      "STG-012"
+    ],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/Session Content & Continuity/PLT-006 — Session Stage & Runtime Persistence.md"
+  },
+  {
+    "id": "PLT-007",
+    "title": "Mechanics Persistence",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "session-content-continuity",
+    "storybook": "none",
+    "depends_on": [
+      "MEC-023"
+    ],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/Session Content & Continuity/PLT-007 — Mechanics Persistence.md"
+  },
+  {
+    "id": "PLT-008",
+    "title": "Source Storage & Ingestion Pipeline",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "session-content-continuity",
+    "storybook": "none",
+    "depends_on": [
+      "SGA-005"
+    ],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/Session Content & Continuity/PLT-008 — Source Storage & Ingestion Pipeline.md"
+  },
+  {
+    "id": "PLT-013",
+    "title": "Recording Transcription & Evidence",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "session-content-continuity",
+    "storybook": "none",
+    "depends_on": [
+      "STG-015",
+      "SET-009"
+    ],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/Session Content & Continuity/PLT-013 — Recording Transcription & Evidence.md"
+  },
+  {
+    "id": "PLT-014",
+    "title": "Offline Cache Sync & Conflict Recovery",
+    "status": "active",
+    "kind": "platform",
+    "authority": "current",
+    "system": "SYS-19",
+    "family": "session-content-continuity",
+    "storybook": "none",
+    "depends_on": [],
+    "platforms": [],
+    "path": "19 Platform & Data Architecture/Session Content & Continuity/PLT-014 — Offline Cache Sync & Conflict Recovery.md"
+  },
+  {
+    "id": "AUD-001",
+    "title": "Final Semantic & Catalogue Audit",
+    "status": "active",
+    "kind": "reference",
+    "authority": "current",
+    "system": "SYS-20",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [
+      "00-PRODUCT-LAWS",
+      "00-AUTHORITY-POLICY"
+    ],
+    "platforms": [],
+    "path": "20 Catalogue Audit & Implementation Plan/AUD-001 — Final Semantic & Catalogue Audit.md"
+  },
+  {
+    "id": "IMP-001",
+    "title": "Context Loading & Dependency Policy",
+    "status": "active",
+    "kind": "reference",
+    "authority": "implementation",
+    "system": "SYS-20",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [
+      "00-CATALOGUE-MAP",
+      "00-REG-SCHEMA"
+    ],
+    "platforms": [],
+    "path": "20 Catalogue Audit & Implementation Plan/IMP-001 — Context Loading & Dependency Policy.md"
+  },
+  {
+    "id": "IMP-002",
+    "title": "Implementation Build Sequence",
+    "status": "active",
+    "kind": "reference",
+    "authority": "implementation",
+    "system": "SYS-20",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [
+      "AUD-001",
+      "PLT-002",
+      "PLT-004",
+      "SYS-18"
+    ],
+    "platforms": [],
+    "path": "20 Catalogue Audit & Implementation Plan/IMP-002 — Implementation Build Sequence.md"
+  },
+  {
+    "id": "IMP-003",
+    "title": "Storybook-First UI Workflow",
+    "status": "active",
+    "kind": "reference",
+    "authority": "current",
+    "system": "SYS-20",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [
+      "SYS-18",
+      "DS-SCN",
+      "00-AUTHORITY-POLICY"
+    ],
+    "platforms": [],
+    "path": "20 Catalogue Audit & Implementation Plan/IMP-003 — Storybook-First UI Workflow.md"
+  },
+  {
+    "id": "IMP-004",
+    "title": "Manual & Automated Testing Workflow",
+    "status": "active",
+    "kind": "reference",
+    "authority": "current",
+    "system": "SYS-20",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [
+      "IMP-003",
+      "PLT-016"
+    ],
+    "platforms": [],
+    "path": "20 Catalogue Audit & Implementation Plan/IMP-004 — Manual & Automated Testing Workflow.md"
+  },
+  {
+    "id": "IMP-005",
+    "title": "Codex Catalogue Skill Specification",
+    "status": "active",
+    "kind": "reference",
+    "authority": "implementation",
+    "system": "SYS-20",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [
+      "IMP-001",
+      "IMP-003",
+      "IMP-004",
+      "00-AUTHORITY-POLICY"
+    ],
+    "platforms": [],
+    "path": "20 Catalogue Audit & Implementation Plan/IMP-005 — Codex Catalogue Skill Specification.md"
+  },
+  {
+    "id": "IMP-006",
+    "title": "Lightweight Documentation Sync",
+    "status": "active",
+    "kind": "reference",
+    "authority": "implementation",
+    "system": "SYS-20",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [
+      "00-AUTHORITY-POLICY",
+      "00-REG-SCHEMA"
+    ],
+    "platforms": [],
+    "path": "20 Catalogue Audit & Implementation Plan/IMP-006 — Lightweight Documentation Sync.md"
+  },
+  {
+    "id": "IMP-007",
+    "title": "Work Ledger Scope & Change Control",
+    "status": "active",
+    "kind": "reference",
+    "authority": "implementation",
+    "system": "SYS-20",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [
+      "IMP-002",
+      "IMP-006"
+    ],
+    "platforms": [],
+    "path": "20 Catalogue Audit & Implementation Plan/IMP-007 — Work Ledger Scope & Change Control.md"
+  },
+  {
+    "id": "SYS-20",
+    "title": "Catalogue Audit & Implementation Plan",
+    "status": "active",
+    "kind": "system",
+    "authority": "current",
+    "system": "SYS-20",
+    "family": null,
+    "storybook": "none",
+    "depends_on": [
+      "00-PRODUCT-LAWS",
+      "00-AUTHORITY-POLICY",
+      "00-CATALOGUE-MAP"
+    ],
+    "platforms": [],
+    "path": "20 Catalogue Audit & Implementation Plan/SYS-20 — Catalogue Audit & Implementation Plan.md"
+  }
+]

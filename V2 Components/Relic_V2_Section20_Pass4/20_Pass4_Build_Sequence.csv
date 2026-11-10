@@ -1,0 +1,11 @@
+﻿wave,name,systems,anchor_contracts,manual_checkpoint
+0,Engineering walking skeleton,SYS-19,PLT-001;PLT-002;PLT-016;PLT-017,Next.js + Storybook + Supabase local + RLS/test harness
+1,Design foundations + shell,SYS-18;SYS-01,DS-FND;DS-CTL;DS-FRM;DS-SRF;DS-FBK;APP-001;APP-011,Manual Storybook + keyboard/overlay shell
+2,First worldbuilding vertical slice,SYS-15;SYS-02;SYS-03;SYS-04;SYS-06;SYS-19,SGA-001;SGA-002;SGA-003;DSK-001;BRD-006;OBJ-CHAR-02;FOC-001;PLT-003;PLT-004;PLT-005,Manual no-AI Saga → Desk → Character → Focus → reload
+3,World depth + Relationships + Search/Library,SYS-07;SYS-08;SYS-09,WOF-001;REL-001;REL-003;SRH-001;LIB-001;PLT-008;PLT-009,Representative worldbuild/search/source/RLS test
+4,Sessions & Prepare,SYS-10;SYS-05,SES-001;PREP-001;PREP-005;PREP-010;MEC-001;MEC-017;PLT-006;PLT-007,Create/prepare/reopen Session and Enter Stage
+5,Stage manual loop,SYS-11,STG-001;STG-002;STG-006;STG-007;STG-009;STG-010;STG-015;STG-016;PLT-013;PLT-014,Mock live Session + network loss/reload + End
+6,Librarian + semantic tools,SYS-13,LBR-001;LBR-004;LBR-008;LBR-009;LBR-013;PLT-010;PLT-011,Grounded Q&A + explicit GM write + AI proposal + usage trace
+7,Settlement loop,SYS-12,REV-001;REV-002;REV-004;REV-008;REV-009;REV-014;PLT-012,End → process → correct → settle → revert
+8,Chronicle & temporal depth,SYS-14,CHR-001;CHR-003;CHR-004;CHR-008;CHR-009;CHR-011,As-of/historical/compare/correction correctness
+9,Assisted setup + settings + hardening,SYS-15;SYS-17;SYS-19,SGA-004;SGA-005;SGA-006;SET-001;SET-007;SET-009;PLT-015;PLT-016,Polish/ingestion/export/evals/accessibility/performance

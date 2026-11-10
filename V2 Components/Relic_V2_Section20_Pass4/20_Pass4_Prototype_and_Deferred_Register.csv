@@ -1,0 +1,21 @@
+﻿status,id,title,path
+prototype,APP-005,Current Context Control,01 App Shell & Navigation/Shell & Workspace/APP-005 — Current Context Control.md
+prototype,APP-010,Workspace Dock Manager,01 App Shell & Navigation/Shell & Workspace/APP-010 — Workspace Dock Manager.md
+prototype,DSK-002,Canvas Viewport,02 Desk & Boards/Canvas Core/DSK-002 — Canvas Viewport.md
+prototype,DSK-021,Placement Resize & Disclosure,02 Desk & Boards/Selection & Placement/DSK-021 — Placement Resize & Disclosure.md
+prototype,DSK-026,Semantic Zoom,02 Desk & Boards/Canvas Core/DSK-026 — Semantic Zoom.md
+prototype,FOC-BLK-016,Related References Block,06 Focus & Shared Focus Blocks/Blocks/FOC-BLK-016 — Related References Block.md
+prototype,OBJ-ART-07,Artifact Chronicle Projection,07 World Object Families/OBJ-ART — Artifact Family/Projections/OBJ-ART-07 — Artifact Chronicle Projection.md
+prototype,OBJ-CHAR-13,Character Chronicle Projection,04 Characters/Projections/OBJ-CHAR-13 — Character Chronicle Projection.md
+deferred,PUB-001,Publication & Visibility Model,16 Player Publication & Permissions/Publication Domain & Security/PUB-001 — Publication & Visibility Model.md
+deferred,PUB-002,Player Membership & Saga Access,16 Player Publication & Permissions/Publication Domain & Security/PUB-002 — Player Membership & Saga Access.md
+deferred,PUB-003,GM Publication Controls,16 Player Publication & Permissions/GM Publication UI/PUB-003 — GM Publication Controls.md
+deferred,PUB-004,Player Wiki Surface,16 Player Publication & Permissions/Player Experience/PUB-004 — Player Wiki Surface.md
+deferred,PUB-005,Published World Object Projections,16 Player Publication & Permissions/Player Experience/PUB-005 — Published World Object Projections.md
+deferred,PUB-006,Published Session Recap,16 Player Publication & Permissions/Player Experience/PUB-006 — Published Session Recap.md
+deferred,PUB-007,Player Chronicle Projection,16 Player Publication & Permissions/Player Experience/PUB-007 — Player Chronicle Projection.md
+deferred,PUB-008,Permission-Safe Search & Retrieval,16 Player Publication & Permissions/Player Experience/PUB-008 — Permission-Safe Search & Retrieval.md
+deferred,PUB-009,Settlement to Publication Handoff,16 Player Publication & Permissions/GM Publication UI/PUB-009 — Settlement to Publication Handoff.md
+deferred,PUB-010,View as Player Preview,16 Player Publication & Permissions/GM Publication UI/PUB-010 — View as Player Preview.md
+deferred,PUB-011,Publication Audit & Reversal,16 Player Publication & Permissions/Publication Domain & Security/PUB-011 — Publication Audit & Reversal.md
+deferred,SYS-16,Player Publication & Permissions,16 Player Publication & Permissions/Player Experience/SYS-16 — Player Publication & Permissions.md

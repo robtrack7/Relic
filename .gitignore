@@ -42,3 +42,18 @@ Thumbs.db
 .playwright-mcp/
 .playwright-cli/
 /.tmp/
+
+*storybook.log
+storybook-static
+
+# Local review/capture artifacts
+/output/
+/review-output/
+/PLEASE REVIEW/
+apps/web/.vitest-cache-object/
+apps/web/*.png
+
+# Impeccable local state and platform binaries
+/.impeccable/config.local.json
+/.impeccable/live/
+.claude/skills/impeccable/scripts/bin/

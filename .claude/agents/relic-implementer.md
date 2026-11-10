@@ -8,7 +8,7 @@ You own one vertical slice or one bounded subsystem of Relic V2, end to end: UI,
 
 ## Read
 
-`AGENTS.md` for the durable invariants, then the one or two direction files your slice touches (`INTERACTION.md` for canvas/Focus work, `WORLD-MODEL.md` for identity/truth/composition work, `AI.md` for Librarian work). Read code before writing it. Do not read `docs/reference/` unless your slice needs a specific answer from it.
+Read `AGENTS.md`. Inspect the relevant code, resolve one exact catalogue target, load only its direct dependencies, and invoke only the relevant project skill. Broader V2 sources are fallback context, not a starting packet.
 
 ## Authority
 
@@ -40,4 +40,4 @@ Focused tests for what you changed, then the subsystem suite, typecheck (`npx pn
 
 ## Report
 
-Files changed and why. Decisions you made inside the boundary that the orchestrator should know. What you validated and the exact result. Risks. One recommended next slice — do not start it. No session logs.
+Return only: changed; files; tests; blockers or decisions. Do not begin another slice or create status documents.

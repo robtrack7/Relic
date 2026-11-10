@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-08T00:00:00Z",
+  "title": "Design System: Relic",
+  "extensions": {
+    "colorMeta": {
+      "orange": { "role": "primary", "displayName": "Signal Orange", "canonical": "#ed6c34", "tonalRamp": ["#3d1708", "#6b2a10", "#ad4318", "#d4561f", "#ed6c34", "#f39a72", "#f8c7b0", "#fdeee6"] },
+      "orange-deep": { "role": "primary", "displayName": "Kiln Orange", "canonical": "#ad4318", "tonalRamp": ["#3d1708", "#6b2a10", "#ad4318", "#d4561f", "#ed6c34", "#f39a72", "#f8c7b0", "#fdeee6"] },
+      "workflow-accent": { "role": "secondary", "displayName": "Burnt Amber (converging to orange)", "canonical": "#b8702a", "tonalRamp": ["#33200c", "#5c3814", "#824817", "#995a21", "#b8702a", "#d49a5c", "#e9c8a0", "#f8ecdd"] },
+      "workflow-ink": { "role": "secondary", "displayName": "Amber Ink (converging to orange)", "canonical": "#995a21", "tonalRamp": ["#33200c", "#5c3814", "#824817", "#995a21", "#b8702a", "#d49a5c", "#e9c8a0", "#f8ecdd"] },
+      "ink": { "role": "neutral", "displayName": "Archive Ink", "canonical": "#1c1815", "tonalRamp": ["#1c1815", "#302c27", "#57514a", "#70695f", "#9c9488", "#c8c0ae", "#ddd6c7", "#f7f4ef"] },
+      "ink-quiet": { "role": "neutral", "displayName": "Quiet Ink", "canonical": "#57514a" },
+      "ink-faint": { "role": "neutral", "displayName": "Faint Ink", "canonical": "#70695f" },
+      "paper-deep": { "role": "neutral", "displayName": "Deep Paper", "canonical": "#eae7e0" },
+      "paper": { "role": "neutral", "displayName": "Archive Paper", "canonical": "#f7f4ef", "tonalRamp": ["#3a3226", "#6b6253", "#9c9384", "#c8c0ae", "#ddd6c7", "#eae7e0", "#f7f4ef", "#fffdf9"] },
+      "card": { "role": "neutral", "displayName": "Card Stock", "canonical": "#fbf9f4" },
+      "card-raised": { "role": "neutral", "displayName": "Fresh Card", "canonical": "#fffdf9" },
+      "canvas-surface": { "role": "neutral", "displayName": "Canvas Surface", "canonical": "#fffefa" },
+      "chrome-surface": { "role": "neutral", "displayName": "Chrome Paper", "canonical": "#faf8f4" },
+      "chrome-hover": { "role": "neutral", "displayName": "Chrome Hover", "canonical": "#e7e0d8" },
+      "carriage-surface": { "role": "neutral", "displayName": "Carriage Linen", "canonical": "#f4efea" },
+      "carriage-context": { "role": "neutral", "displayName": "Carriage Context", "canonical": "#f3eeea" },
+      "rule": { "role": "neutral", "displayName": "Rule", "canonical": "#ddd6c7" },
+      "rule-strong": { "role": "neutral", "displayName": "Strong Rule", "canonical": "#c8c0ae" },
+      "chrome-rule": { "role": "neutral", "displayName": "Chrome Rule", "canonical": "#e1dad1" },
+      "orange-wash": { "role": "primary", "displayName": "Signal Wash", "canonical": "rgba(237, 108, 52, 0.1)" },
+      "orange-edge": { "role": "primary", "displayName": "Signal Edge", "canonical": "rgba(237, 108, 52, 0.38)" },
+      "status-ready": { "role": "functional", "displayName": "Ready Moss", "canonical": "#496640", "tonalRamp": ["#1a2617", "#2f4229", "#496640", "#5f8254", "#86a37b", "#adc2a4", "#d3dfcd", "#eff2ea"] },
+      "destructive": { "role": "functional", "displayName": "Oxide", "canonical": "#8a3828", "tonalRamp": ["#2e120c", "#5a2419", "#8a3828", "#a9513f", "#c47b6b", "#dba69a", "#ecd0c9", "#f8eeeb"] },
+      "tint-sand": { "role": "neutral", "displayName": "Sand Paper Tint", "canonical": "#f4ecdc" },
+      "tint-sage": { "role": "neutral", "displayName": "Sage Paper Tint", "canonical": "#edf0e7" },
+      "tint-slate": { "role": "neutral", "displayName": "Slate Paper Tint", "canonical": "#eaf0f2" },
+      "tint-rose": { "role": "neutral", "displayName": "Rose Paper Tint", "canonical": "#f4e9e5" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "World Object titles on cards and in Focus." },
+      "headline": { "displayName": "Headline", "purpose": "Carriage and surface titles." },
+      "fragment": { "displayName": "Fragment", "purpose": "Fragment prose set as display; captured thought, not a form field." },
+      "body": { "displayName": "Body (reading serif)", "purpose": "Narrative, summaries, metadata values, citations." },
+      "ui": { "displayName": "UI", "purpose": "Buttons, menus, control labels." },
+      "label": { "displayName": "Label", "purpose": "Uppercase eyebrows, section labels, metadata keys, maturity." },
+      "meta": { "displayName": "Meta", "purpose": "Provenance, dates, sources, counts." }
+    },
+    "shadows": [
+      { "name": "lift", "value": "0 1px 1px rgba(28, 24, 21, 0.05), 0 3px 10px -6px rgba(28, 24, 21, 0.22)", "purpose": "Resting controls, search trigger, small floating chips." },
+      { "name": "lift-raised", "value": "0 1px 1px rgba(28, 24, 21, 0.06), 0 10px 24px -12px rgba(28, 24, 21, 0.32)", "purpose": "World Object cards, hovered cards, floating menus." },
+      { "name": "chrome-lift", "value": "0 2px 5px rgb(26 25 22 / 4%), 0 12px 24px -14px rgb(26 25 22 / 25%)", "purpose": "Carriages, nav rail destinations, secondary buttons." },
+      { "name": "selection-halo", "value": "0 10px 24px -12px rgba(28, 24, 21, 0.32), 0 0 0 2px rgba(237, 108, 52, 0.38)", "purpose": "Selected card: raised lift plus orange edge halo." }
+    ],
+    "motion": [
+      { "name": "motion-feedback", "value": "120ms", "purpose": "Hover, press and state feedback." },
+      { "name": "motion-disclosure", "value": "240ms", "purpose": "Opening and collapsing sections, menus, carriages." },
+      { "name": "motion-spatial", "value": "320ms", "purpose": "Canvas and spatial transitions." },
+      { "name": "motion-ease", "value": "cubic-bezier(.16, 1, .3, 1)", "purpose": "Default easing; fast out, soft settle." }
+    ],
+    "breakpoints": [
+      { "name": "narrow", "value": "560px" },
+      { "name": "short", "value": "600px (max-height)" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main action in a surface. Currently Amber Ink; migrating to Kiln Orange.",
+      "html": "<button class=\"ds-btn-primary\">Add to Prepare</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 15px; border: 1px solid var(--workflow-ink, #995a21); border-radius: 8px; background: var(--workflow-ink, #995a21); color: #fffaf2; font: 600 13px/1.15 'Instrument Sans', system-ui, sans-serif; letter-spacing: -0.01em; box-shadow: 0 1px 2px rgb(68 39 18 / 18%); cursor: pointer; transition: background-color 140ms ease, transform 140ms ease; } .ds-btn-primary:hover { background: #824817; border-color: #824817; } .ds-btn-primary:active { background: #6f3d15; border-color: #6f3d15; box-shadow: none; transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 2px solid var(--orange, #ed6c34); outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Supporting action on Chrome Paper with a hairline and Chrome Lift.",
+      "html": "<button class=\"ds-btn-secondary\">Open in Focus</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 15px; border: 1px solid var(--chrome-rule, #e1dad1); border-radius: 8px; background: var(--chrome-surface, #faf8f4); color: var(--ink, #1c1815); font: 600 13px/1.15 'Instrument Sans', system-ui, sans-serif; letter-spacing: -0.01em; box-shadow: 0 2px 5px rgb(26 25 22 / 4%), 0 12px 24px -14px rgb(26 25 22 / 25%); cursor: pointer; transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease; } .ds-btn-secondary:hover { border-color: color-mix(in srgb, #ed6c34 55%, #e1dad1); background: color-mix(in srgb, #faf8f4 86%, #ed6c34); } .ds-btn-secondary:active { transform: translateY(1px); box-shadow: none; } .ds-btn-secondary:focus-visible { outline: 2px solid var(--orange, #ed6c34); outline-offset: 2px; }"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Transparent tool action; faint accent wash on hover.",
+      "html": "<button class=\"ds-btn-quiet\">Pencil it in</button>",
+      "css": ".ds-btn-quiet { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 15px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--ink-quiet, #57514a); font: 600 13px/1.15 'Instrument Sans', system-ui, sans-serif; letter-spacing: -0.01em; cursor: pointer; transition: background-color 140ms ease, color 140ms ease; } .ds-btn-quiet:hover { background: color-mix(in srgb, #faf8f4 88%, #ed6c34); color: var(--ink, #1c1815); } .ds-btn-quiet:focus-visible { outline: 2px solid var(--orange, #ed6c34); outline-offset: 2px; }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Oxide text and border; a 10% wash on hover, never a solid red fill.",
+      "html": "<button class=\"ds-btn-destructive\">Remove from Board</button>",
+      "css": ".ds-btn-destructive { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 15px; border: 1px solid color-mix(in srgb, #8a3828 38%, #e1dad1); border-radius: 8px; background: transparent; color: var(--destructive, #8a3828); font: 600 13px/1.15 'Instrument Sans', system-ui, sans-serif; cursor: pointer; transition: background-color 140ms ease; } .ds-btn-destructive:hover { background: color-mix(in srgb, #8a3828 10%, transparent); } .ds-btn-destructive:focus-visible { outline: 2px solid var(--orange, #ed6c34); outline-offset: 2px; }"
+    },
+    {
+      "name": "Search Trigger",
+      "kind": "input",
+      "refersTo": "search-trigger",
+      "description": "Centred top search field that opens the Library/Search panel.",
+      "html": "<button class=\"ds-search\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/></svg><span class=\"ds-search-label\">Search the world</span><kbd class=\"ds-search-kbd\">Ctrl K</kbd></button>",
+      "css": ".ds-search { display: inline-flex; align-items: center; gap: 8px; width: 360px; min-height: 44px; padding: 4px 16px; border: 1px solid var(--chrome-rule, #e1dad1); border-radius: 13px; background: var(--chrome-surface, #faf8f4); color: var(--ink-quiet, #57514a); font: 13px/1.2 'Instrument Sans', system-ui, sans-serif; text-align: left; box-shadow: 0 1px 1px rgba(28,24,21,0.05), 0 3px 10px -6px rgba(28,24,21,0.22); cursor: pointer; } .ds-search:hover { border-color: var(--orange-deep, #ad4318); color: var(--ink, #1c1815); } .ds-search:focus-visible { outline: 2px solid var(--orange, #ed6c34); outline-offset: 2px; } .ds-search-label { flex: 1; } .ds-search-kbd { color: var(--ink-faint, #70695f); font: 11px 'Instrument Sans', system-ui, sans-serif; border: 0; background: transparent; }"
+    },
+    {
+      "name": "World Object Card (Ink)",
+      "kind": "card",
+      "refersTo": "object-card",
+      "description": "Signature archival index card for one identity; solid quiet edge means settled Ink.",
+      "html": "<article class=\"ds-card\" data-maturity=\"ink\"><header class=\"ds-card-top\"><span class=\"ds-card-family\">Character</span><span class=\"ds-card-maturity\"><i></i>Ink</span></header><div class=\"ds-card-body\"><h2>Mara Venn</h2><p>Keeps the gate on Blackwater Road. Knows what happened to the bells, and will not say it twice.</p></div><footer class=\"ds-card-bottom\">Glass Church · 3 threads</footer></article>",
+      "css": ".ds-card { display: flex; flex-direction: column; width: 300px; border: 1px solid var(--ink-faint, #70695f); border-radius: 14px; background: var(--card, #fbf9f4); color: var(--ink, #1c1815); box-shadow: 0 1px 1px rgba(28,24,21,0.06), 0 10px 24px -12px rgba(28,24,21,0.32); font-family: 'Instrument Sans', system-ui, sans-serif; overflow: hidden; transition: box-shadow 180ms ease-out, border-color 180ms ease-out; } .ds-card:hover, .ds-card:focus-within { border-color: var(--orange, #ed6c34); box-shadow: 0 1px 1px rgba(28,24,21,0.06), 0 10px 24px -12px rgba(28,24,21,0.32), 0 0 0 2px rgba(237,108,52,0.38); } .ds-card-top { display: flex; justify-content: space-between; align-items: center; min-height: 42px; padding: 12px 20px 10px; } .ds-card-family, .ds-card-maturity { color: var(--ink-quiet, #57514a); font: 500 10px/1.4 'Instrument Sans', system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; } .ds-card-maturity { display: inline-flex; align-items: center; gap: 7px; } .ds-card-maturity i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink, #1c1815); } .ds-card-body { padding: 4px 20px 18px; } .ds-card-body h2 { margin: 0; font: 600 30px/1 'Cormorant Garamond', Georgia, serif; letter-spacing: -.018em; } .ds-card-body p { margin: 12px 0 0; font: 400 13px/1.65 'Iowan Old Style', Charter, Georgia, serif; } .ds-card-bottom { display: flex; align-items: center; min-height: 44px; padding: 0 20px; border-top: 1px solid var(--rule, #ddd6c7); color: var(--ink-quiet, #57514a); font-size: 10px; }"
+    },
+    {
+      "name": "World Object Card (Pencil)",
+      "kind": "custom",
+      "refersTo": "object-card",
+      "description": "Provisional material: dashed Strong Rule edge and hollow maturity dot, never dimmed to look disabled.",
+      "html": "<article class=\"ds-pcard\"><header class=\"ds-pcard-top\"><span>Fragment</span><span class=\"ds-pcard-maturity\"><i></i>Pencil</span></header><p class=\"ds-pcard-prose\">Maybe her son joined the Glass Church.</p></article>",
+      "css": ".ds-pcard { width: 300px; border: 1px dashed var(--rule-strong, #c8c0ae); border-radius: 14px; background: var(--card, #fbf9f4); color: var(--ink, #1c1815); box-shadow: 0 1px 1px rgba(28,24,21,0.06), 0 10px 24px -12px rgba(28,24,21,0.32); font-family: 'Instrument Sans', system-ui, sans-serif; } .ds-pcard:hover, .ds-pcard:focus-within { border-color: var(--orange, #ed6c34); } .ds-pcard-top { display: flex; justify-content: space-between; align-items: center; min-height: 42px; padding: 12px 20px 10px; color: var(--ink-quiet, #57514a); font: 500 10px/1.4 'Instrument Sans', system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; } .ds-pcard-maturity { display: inline-flex; align-items: center; gap: 7px; } .ds-pcard-maturity i { width: 6px; height: 6px; border-radius: 50%; border: 1px solid currentColor; box-sizing: border-box; } .ds-pcard-prose { margin: 0; padding: 12px 26px 30px; font: 600 26px/1.18 'Cormorant Garamond', Georgia, serif; letter-spacing: -.01em; }"
+    },
+    {
+      "name": "Navigation Rail Destination",
+      "kind": "nav",
+      "refersTo": "nav-destination",
+      "description": "48px circular destination on the left rail; current destination takes the accent on Carriage Context.",
+      "html": "<nav class=\"ds-rail\"><button class=\"ds-dest\" aria-current=\"page\" aria-label=\"Desk\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/></svg></button><button class=\"ds-dest\" aria-label=\"Library\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\"><path d=\"M5 4v16M10 4v16M15 5l4 15\"/></svg></button></nav>",
+      "css": ".ds-rail { display: flex; flex-direction: column; gap: 14px; width: 48px; } .ds-dest { display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid var(--chrome-rule, #e1dad1); border-radius: 50%; background: var(--chrome-surface, #faf8f4); color: var(--ink, #1c1815); box-shadow: 0 2px 5px rgb(26 25 22 / 4%), 0 12px 24px -14px rgb(26 25 22 / 25%); cursor: pointer; transition: background-color 140ms ease, transform 140ms ease; } .ds-dest:hover { background: var(--card-raised, #fffdf9); transform: translateX(2px); } .ds-dest[aria-current] { color: var(--orange-deep, #ad4318); background: var(--carriage-context, #f3eeea); } .ds-dest:focus-visible { outline: 2px solid var(--orange, #ed6c34); outline-offset: 3px; }"
+    },
+    {
+      "name": "Floating Menu",
+      "kind": "custom",
+      "refersTo": "floating-surface",
+      "description": "Context menu on Chrome Paper with 24px radius, inset 44px rows.",
+      "html": "<div class=\"ds-menu\" role=\"menu\"><span class=\"ds-menu-label\">Mara Venn</span><button role=\"menuitem\">Open in Focus</button><button role=\"menuitem\">Ink this</button><button role=\"menuitem\">Ask the Librarian</button></div>",
+      "css": ".ds-menu { display: grid; width: 240px; padding: 10px; border: 1px solid var(--chrome-rule, #e1dad1); border-radius: 24px; background: var(--chrome-surface, #faf8f4); box-shadow: 0 1px 1px rgba(28,24,21,0.06), 0 10px 24px -12px rgba(28,24,21,0.32); color: var(--ink, #1c1815); font: 13px/1.5 'Instrument Sans', system-ui, sans-serif; } .ds-menu-label { padding: 9px 10px 8px; color: var(--ink-faint, #70695f); font-size: 11px; } .ds-menu button { display: flex; align-items: center; min-height: 44px; padding: 8px 10px; border: 0; border-radius: 12px; background: transparent; color: var(--ink, #1c1815); font: 500 13px/1.4 'Instrument Sans', system-ui, sans-serif; text-align: left; cursor: pointer; } .ds-menu button:hover, .ds-menu button:focus-visible { background: var(--chrome-hover, #e7e0d8); outline: none; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Living Archive",
+    "overview": "Relic looks like a carefully kept record of a world that is still being written. The interface is archival paper: warm ivory grounds, near-black ink and thin precise rules. It stays quiet so that the world's own material (names, prose, portraits, places) carries the colour and the attention. Nothing is decorated to look important. Settled things look settled because they are fully drawn and calm, not because they are badged.\n\nThe archive is alive, so provenance and state are always legible. You can tell established truth (Ink) from provisional material (Pencil) by shape alone. Dates, sources and counts are set as system metadata. Selection and the live signal are marked with one scarce orange. Type does the heavy lifting. A literary serif voices the world, and a clean grotesque runs the instruments around it.\n\nDensity is calm but working. The archive is read at length in Focus and scanned fast at the table, so hierarchy comes from scale, weight, spacing and placement before colour. The system is light-paper only today. The low-light treatment for play is an open decision (see Do's and Don'ts).",
+    "keyCharacteristics": [
+      "Warm paper grounds and near-black ink. The world has the colour; the interface has paper and rules.",
+      "One scarce orange accent for where you are: selection, focus, live.",
+      "A serif voice for world content and a sans voice for instruments.",
+      "Truth is carried by edge shape (dashed Pencil, solid Ink), never by colour alone.",
+      "Tactile, matte, shallow depth. Never a drop-shadow costume.",
+      "Generous 44px touch targets everywhere, including dense chrome."
+    ],
+    "rules": [
+      { "name": "The Paper and Rules Rule", "body": "The world is the thing with colour in it; the interface is paper and rules. Chrome never competes with a portrait, a place image or a card tint.", "section": "colors" },
+      { "name": "The One Signal Rule", "body": "Orange means \"this is where you are\" (selected, focused, live). If more than one thing on a screen is orange for unrelated reasons, one of them is wrong.", "section": "colors" },
+      { "name": "The Never Colour Alone Rule", "body": "Every state that colour marks (truth, selection, proposal, status) also reads through a word, a shape or an edge.", "section": "colors" },
+      { "name": "The Two Voices Rule", "body": "World content is set in the serifs, and instruments are set in Instrument Sans. A control label in Cormorant, or a character summary in sans, breaks the archive.", "section": "typography" },
+      { "name": "The No Fantasy Display Rule", "body": "No decorative blackletter, runic or \"medieval\" faces. The archive is literary, not costumed.", "section": "typography" },
+      { "name": "The Matte Paper Rule", "body": "Never a drop-shadow costume. No glows, no coloured shadows and no blur-heavy glass. If a surface needs to stand out more, raise it one tier or change its paper tone.", "section": "elevation" },
+      { "name": "The Selection Is Not Elevation Rule", "body": "Selection adds the orange edge and halo. It never changes border style, and on its own it never raises a card.", "section": "elevation" },
+      { "name": "The Interrupted Edge Rule", "body": "A dashed edge means not settled. It belongs to Pencil maturity, proposals (2px dashed, offset 5px) and spatial collections, and nothing else. Never use dashes as decoration.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do let world content carry the colour. Keep chrome in the paper and ink neutrals.",
+      "Do mark Pencil with a dashed edge and Ink with a solid, quiet edge. Spell out the maturity word where space allows.",
+      "Do reserve orange for selection, focus and live state. Use orange-deep wherever orange must carry text or a fill.",
+      "Do set world content in the serifs and every instrument in Instrument Sans.",
+      "Do keep every interactive target at least 44px, including dense card actions and Stage controls.",
+      "Do honour prefers-reduced-motion and data-relic-motion=\"reduced\". Motion uses 120ms (feedback), 240ms (disclosure) and 320ms (spatial) on cubic-bezier(.16,1,.3,1).",
+      "Do meet WCAG 2.2 AA contrast in every role combination, including text on paper tints and orange."
+    ],
+    "donts": [
+      "Don't add new uses of the amber workflow colours. Orange is canonical, and amber migrates when touched.",
+      "Don't use colour as the only carrier of truth, selection, proposal or status.",
+      "Don't use dashed borders for anything that is not unsettled.",
+      "Don't use glows, coloured shadows, glassmorphism or heavy blur. Depth is matte paper.",
+      "Don't use decorative fantasy display type.",
+      "Don't flatten hierarchy into uniform 14px-medium SaaS text. Scale, weight and the two voices make the hierarchy.",
+      "Don't treat a dark theme as decided. Open decision: live play happens in dim rooms, so Stage must be readable at low light. That treatment (a dim Stage mode or a full night theme) has not been designed. Until it is, light paper is the only theme."
+    ]
+  }
+}

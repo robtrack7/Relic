@@ -1,0 +1,46 @@
+---
+id: OBJ-FRAG-04
+status: active
+kind: component
+authority: current
+system: SYS-07
+family: fragment
+storybook: component
+depends_on:
+- WOF-001
+- OBJ-002
+- OBJ-015
+platforms:
+- web
+---
+
+# OBJ-FRAG-04 — Fragment Expanded Card
+
+Parent: [[OBJ-FRAG — Fragment Representation Family]]
+
+## Purpose
+
+Suggested anatomy:
+- full/longer content;
+- image/media;
+- linked World Object references;
+- provenance/source;
+- relationships where meaningful;
+- GM note;
+- explicit Resolve action.
+
+Avoid surrounding unresolved content with a large number of empty typed fields.
+
+## Shared contracts
+
+- [[WOF-001 — Family Projection Standard]]
+- [[OBJ-002 — World Object Projection Resolver]]
+- [[OBJ-015 — Object Reference Navigation]]
+
+## Storybook / manual test
+
+Render this projection with realistic Fragment content and cover its meaningful family states. Verify it reads as the same persistent object while remaining distinct from other projection roles.
+
+## Handoff
+
+Implement this as an independently inspectable projection. Production code may share internal pieces with sibling projections where useful.

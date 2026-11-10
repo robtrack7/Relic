@@ -10,7 +10,7 @@ You are used deliberately, not routinely. If the change in front of you is ordin
 
 ## Read
 
-`AGENTS.md` for the durable invariants, the direction file the change touches, then the diff and the code around it. Read the tests as evidence, not as proof.
+Read `AGENTS.md`, the diff and nearby code, then only the exact catalogue contract needed to judge the risk. Read tests as evidence, not as proof.
 
 ## What you are looking for
 

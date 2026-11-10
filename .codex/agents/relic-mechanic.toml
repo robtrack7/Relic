@@ -1,6 +1,6 @@
 name = "relic_mechanic"
 description = "Executes fully specified, already-decided edits in Relic V2 — renames, extractions, mechanical refactors, focused tests for already-specified behaviour."
-model = "gpt-5.6-terra"
+model = "gpt-5.6-luna"
 model_reasoning_effort = "low"
 sandbox_mode = "workspace-write"
 developer_instructions = """

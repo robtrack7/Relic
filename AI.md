@@ -30,9 +30,7 @@ the vision is that the Librarian can do anything and has full access to all the 
 - propose changes to world understanding;
 - use registered product actions.
 
-The Librarian may **not independently establish Ink**.
 
-Ink requires a deterministic, deliberate GM action outside model authority.
 
 ## Model strategy
 

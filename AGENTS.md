@@ -1,146 +1,79 @@
-# Relic V2 — how we work
+# Relic V2 agent router
 
-This is the tool-neutral contract for anyone (human or agent) building Relic V2.
+Relic is a web-first spatial workspace for GMs to create, remember, prepare, play, and advance persistent fictional worlds. The same world moves through Desk, Boards, Focus, Prepare, Stage, Settlement, and Chronicle, with the Librarian acting as a contextual AI operating layer. The Canvas is a view, not the database; identity persists, state is temporal, and presentation is projected.
 
-## Direction
+## Authority
 
-Read these first. They are short on purpose and they are the north star:
+- Current V2 sources and the canonical Component Catalogue supersede historical Relic material.
+- Product Laws are invariants. Stop and surface a conflict before weakening one.
+- Catalogue entries with `authority: current` are strong defaults. Challenge them when implementation or manual testing produces clear evidence for a better product answer.
+- Entries with `authority: implementation` are flexible. Preserve the contract and use ordinary engineering judgment.
+- Never mirror catalogue Markdown mechanically into code structure.
 
-| File | What it settles |
-| --- | --- |
-| [`VISION.md`](VISION.md) | Why Relic exists and how it should feel |
-| [`PRODUCT.md`](PRODUCT.md) | The pieces — Desk, World Objects, Cards, Boards, Focus, Librarian, Prep, Stage |
-| [`INTERACTION.md`](INTERACTION.md) | Spatial canvas model, Focus, Librarian carriage, responsive parity |
-| [`WORLD-MODEL.md`](WORLD-MODEL.md) | Identity, Fragments, Representations, Ink/Pencil, provenance, composition, change sets |
-| [`AI.md`](AI.md) | What the Librarian knows, what it may do, what it may never do |
-| [`BUILD.md`](BUILD.md) | Build order, working style, validation levels |
+The canonical index is:
 
-## The design skills
+`V2 Components/Component Catalogue/00 Catalogue/00 — Catalogue Index.json`
 
-Two skills carry the look, feel, and interaction semantics. They are direction,
-not reference — consult the matching one before user-facing work:
+Use `.claude/skills/relic-v2-catalogue/scripts/catalogue.py` for deterministic lookup. Historical, backup, pass, V1, and quarry material are never current authority.
 
-| Skill | Owns |
-| --- | --- |
-| [`.claude/skills/relic-ui/`](.claude/skills/relic-ui/SKILL.md) | Visual language, tokens, card and component contracts, canvas feel, motion |
-| [`.claude/skills/relic-ux/`](.claude/skills/relic-ux/SKILL.md) | Interaction semantics, state, attention, authority, temporal behaviour, flow |
+## Default context route
 
-Claude Code loads them automatically when the work matches. Codex and other
-agents should read the `SKILL.md` directly. Each has a `references/` directory —
-load **one** file when the decision needs that depth, never the tree.
+1. Understand the task.
+2. Inspect the relevant code before deciding architecture.
+3. Locate the exact catalogue target by ID, name, or keyword.
+4. Load that target and its direct `depends_on` entries once; do not recurse.
+5. Invoke only the specialist skills relevant to the task.
+6. Load broader current V2 source docs only when the exact contracts and code are insufficient.
+7. Implement and verify the smallest useful increment.
 
-**Proportionality outranks both skills.** They contain laws, tests, and review
-checklists. Those exist for contested or expensive-to-reverse decisions. A
-mechanical edit gets none of them; ordinary slice work gets a skim and a build;
-only a durable decision earns the full apparatus. Never run both skills'
-checklists on one change. Re-reading a section without changing your answer means
-deliberation is over — build the thing.
+Use lazy context. Never load a whole catalogue section, skill reference tree, or source pack when an exact target will do.
 
-Where a skill and a root direction file disagree, the root file wins, and the
-disagreement is worth fixing rather than routing around.
+## Task routing
 
-Everything else under `docs/reference/` is **reference, not required reading** —
-including [`Relic V2 — Chronicle & Temporal World Model.md`](docs/reference/Relic%20V2%20%E2%80%94%20Chronicle%20%26%20Temporal%20World%20Model.md)
-and `UI Concept Direction/`. Consult it when you need it; do not read it per task.
+- Button, Divider, Field, or another component: `relic-ui` plus the exact design-system contract.
+- Canvas: `relic-ui`, `relic-ux`, and only the exact Canvas contracts.
+- Backend, persistence, auth, or RLS: exact domain/platform contracts and current code/migrations.
+- Librarian: Librarian/AI contracts only.
+- Session or Stage: Session/Stage contracts only.
+- Temporal or Settlement: temporal/Settlement contracts only.
+- Scope or a genuinely new-system decision: Product Laws plus Scope.
 
-## Durable invariants
+Do not load auth, Librarian, temporal, or general project context for unrelated component work. Use `relic-map` only when a precise code-location question is not answered by inspecting the relevant code.
 
-These are the things that are expensive to get wrong. Everything else is ordinary engineering judgment.
+## Build and verify
 
-1. **Stable identity.** A World Object keeps one identity wherever it appears and as it becomes more resolved. Deepening a Fragment into a Character never creates a new thing.
-2. **Compositions never own truth.** Desk, Board, Prep, and Session views hold references plus layout, grouping, ordering, annotation, and focus. Moving, grouping, or deleting a composition never changes world content.
-3. **Ink is deliberate.** Ink is established only by an explicit, previewed GM action. Typing, pasting, importing, capture, transcripts, and model output produce Pencil. The Librarian may never establish Ink.
-4. **Provenance survives.** An assertion records why Relic believes it. Pencil may change when its evidence changes; Ink is never silently rewritten by inference.
-5. **One intent, one change set.** A semantic user or Librarian intent commits as one coherent operation and, where practical, undoes as one.
-6. **Truth cues are never colour alone.** Ink, Pencil, disputed, and hidden states read through text plus shape or icon.
-7. **Workflow parity on narrow screens.** Not canvas parity — every core path stays usable without pointer-dependent spatial manipulation.
-8. **Identity is permanent, state is temporal, presentation is projected.** Story time and transaction time are separate clocks. Meaningful state change is retained, not overwritten; the present is a projection, not the only state stored.
+- Build the smallest manually testable increment.
+- Use Storybook first for reusable or rendered UI.
+- Test manually early; automate confirmed behavior afterward.
+- Build infrastructure only when the next real experience needs it.
+- Avoid unnecessary plans, reports, status docs, work ledgers, and housekeeping.
+- Do not begin adjacent features just because their contracts were discovered.
 
-If a change would break one of these, stop and escalate. If it would not, decide it yourself.
+## Delegation
 
-## Roles
+The primary agent owns planning, integration, architecture, and final verification.
 
-**Orchestrator.** Owns direction, sequencing, integration, and difficult architectural calls. Chooses the next vertical slice, decides what gets ported from V1, holds the integration gate. Makes architecture decisions; specialists do not.
+Work directly for search/grep, catalogue lookup, small or sequential edits, and work where delegation costs more than execution.
 
-**Implementation specialist.** Owns a meaningful vertical slice or a clearly bounded subsystem — UI, data, and its own focused tests together. Works within the slice, uses judgment inside it, and stops rather than silently redesigning something outside it.
+- Use `gpt-5.6-luna` with high reasoning for one bounded independent Storybook component, focused tests, a contained refactor, an accessibility review, or another isolated implementation task.
+- Use `gpt-5.6-luna` at the smallest practical reasoning level for tiny housekeeping or catalogue/doc sync.
+- Use `gpt-5.6-terra` or `gpt-5.6-sol` for genuinely complex independent workstreams that require broad reasoning or multiple coordinated steps.
+- Use multiple agents only for meaningfully independent parallel work. Avoid overlapping file ownership.
+- Do not spawn a context scout by default. Use deterministic lookup first; a tiny Luna scout is allowed only when ownership or context is genuinely unclear.
 
-**Independent reviewer.** Used *selectively* — security, tenancy and authorization, data integrity, truth/Ink semantics, major architecture, and milestone review. Reviews work it did not implement and is not asked to repair it. Not used for ordinary changes.
+Subagent handoffs are terse:
 
-### Model mapping
+- changed;
+- files;
+- tests;
+- blockers or decisions.
 
-| Role | Claude Code | Codex / other |
-| --- | --- | --- |
-| Orchestrator | Opus | strongest reasoning model |
-| Implementation specialist (ambiguous or high-impact) | Opus | strongest reasoning model |
-| Implementation specialist (bounded, decided) | Haiku | fast/cheap model |
-| Bounded research, mechanical edits, tests, command runs | Haiku | fast/cheap model |
-| Independent reviewer | Opus | strongest reasoning model |
+## Documentation sync
 
-Use Haiku aggressively. A Haiku packet must have a checkable answer and no open judgment. If a Haiku worker reports its packet contained a decision, that is a correct refusal — re-scope it, do not re-run it.
+Update the catalogue or current docs only when implementation changes observable product behavior, a product decision, ownership/dependencies, status, or an invariant.
 
-## Working rule
+Prefer a tiny Luna housekeeping pass given only the affected IDs/files and the accepted decision. Most implementation tasks should produce zero documentation changes.
 
-Act like senior engineers, not contract executors.
+## Operating loop
 
-- V1 and the partial migration are a **quarry of proven solutions**, not a specification. Reuse what genuinely accelerates a V2 slice. Leave behind compatibility machinery and structure that does not serve V2.
-- Prefer simple implementations that can evolve over speculative infrastructure.
-- Escalate only what materially affects product direction, security, data integrity, or expensive-to-reverse architecture.
-- Update docs when a durable decision changes — not as a per-task ritual.
-- Do not create session logs, delivery logs, or parallel source maps.
-
-## Validation levels
-
-**During implementation** — focused checks for the code you are changing.
-**At vertical-slice completion** — the subsystem suite, typecheck, build, and the feature exercised in a browser.
-**At real milestones** — full repository, migration, security, and end-to-end gates.
-
-Testing exists to enable confident movement, not to replace it.
-
-## Commands
-
-Node 22+ and `pnpm@10.11.0`. `pnpm` is not on PATH on this host; call it through `npx`.
-
-```bash
-npx pnpm@10.11.0 install
-```
-
-The world lives in Postgres, served locally by Supabase. Start it before `dev`
-or `test` — both fail with an instruction if it is not running. Relic uses the
-544xx port block, because V1's local stack holds 543xx on the build machine.
-
-```bash
-npx supabase start
-```
-
-```bash
-npx pnpm@10.11.0 dev
-```
-
-```bash
-npx pnpm@10.11.0 test
-```
-
-```bash
-npx pnpm@10.11.0 lint
-```
-
-```bash
-npx pnpm@10.11.0 build
-```
-
-## Layout
-
-```
-VISION/PRODUCT/INTERACTION/WORLD-MODEL/AI/BUILD.md   product direction
-.claude/skills/          relic-ui and relic-ux — the design contract
-supabase/migrations/     the durable schema
-apps/web/                Next.js App Router client (the whole product today)
-  app/                   routes and server actions
-  components/desk/       canvas, cards, selection, editing
-  lib/world/             World Object + composition domain, repository port, Postgres store
-  lib/desk/              canvas math, viewport, interaction state
-  tests/                 vitest
-docs/reference/          long-form vision, precedents, V1 quarry index
-```
-
-`docs/reference/V1-QUARRY.md` indexes what lives in the V1 worktree and what is worth taking from it.
+Small persistent map → exact task context → relevant skill → smallest useful execution → manual verification → focused automation → almost no housekeeping.
