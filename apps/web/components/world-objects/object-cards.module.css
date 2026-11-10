@@ -72,11 +72,9 @@
 .faceContent { display: flex; flex: 1; flex-direction: column; min-width: 0; transition: opacity 140ms ease-out, transform 220ms cubic-bezier(.16, 1, .3, 1); }
 .surface[data-disclosure="expanded"] .faceContent { opacity: 1; }
 .flipControl { position: absolute; z-index: 4; top: -15px; right: -16px; border: 1px solid var(--chrome-rule); border-radius: var(--radius-inset); background: var(--chrome-surface); box-shadow: var(--lift); }
-.surface[data-disclosure="expanded"] { animation: disclosureIn 220ms cubic-bezier(.16, 1, .3, 1); }
-@keyframes disclosureIn { from { opacity: .86; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+/* Disclosure motion lives in WorldObjectCard: the surface itself never fades, its persistent parts travel. */
 @media (prefers-reduced-motion: reduce) {
   .surface, .faceContent { transition: none; }
-  .surface[data-disclosure="expanded"] { animation: none; }
 }
 @media (pointer: coarse) { .cardActionsOverlay { opacity: 1; } }
 

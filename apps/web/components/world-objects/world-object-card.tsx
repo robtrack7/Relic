@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { type DeskCard, type Link } from "@/lib/world/model";
 import { objectFamily, objectField, objectMedia, type Disclosure } from "@/lib/world/object-presentation";
 import { projectObject, type ResolvedObjectSnapshot } from "@/lib/world/object-projection";
+import { morphFrom, prefersReducedMotion, revealAround, sharedPart, snapshot as sharedSnapshot, type SharedKind, type SharedSnapshot } from "@/lib/motion/shared-element";
 import { ObjectGlyph } from "./object-parts";
 import { RecognitionFace } from "./recognition-card";
 import styles from "./object-cards.module.css";
@@ -27,7 +28,26 @@ export function WorldObjectCard({ card: current, disclosure = "card", selected =
   const faceRef = useRef<HTMLDivElement>(null);
   const previousFace = useRef<HTMLElement | null>(null);
   const outgoingFace = useRef<HTMLElement | null>(null);
-  const faceAnimation = useRef<Animation | null>(null);
+  const faceAnimations = useRef<Animation[]>([]);
+  // Shared parts of the last composition, in the host's own units so a pan or zoom between states cannot stale them.
+  const previousShared = useRef<Partial<Record<SharedKind, { x: number; y: number; width: number; height: number; fontSize: number }>>>({});
+  const readShared = () => {
+    const host = hostRef.current, face = faceRef.current;
+    if (!host || !face) return {};
+    const frame = host.getBoundingClientRect(), k = host.offsetWidth ? frame.width / host.offsetWidth : 1;
+    const parts: typeof previousShared.current = {};
+    for (const kind of ["media", "title"] as const) {
+      const part = sharedPart(face, kind);
+      if (!part) continue;
+      const { box, fontSize } = sharedSnapshot(part);
+      parts[kind] = { x: (box.x - frame.left) / k, y: (box.y - frame.top) / k, width: box.width / k, height: box.height / k, fontSize };
+    }
+    return parts;
+  };
+  const sharedOnScreen = (part: { x: number; y: number; width: number; height: number; fontSize: number }): SharedSnapshot => {
+    const host = hostRef.current!, frame = host.getBoundingClientRect(), k = host.offsetWidth ? frame.width / host.offsetWidth : 1;
+    return { box: { x: frame.left + part.x * k, y: frame.top + part.y * k, width: part.width * k, height: part.height * k }, fontSize: part.fontSize };
+  };
   const previousHeight = useRef<number | null>(null);
   const stateKey = `${card.objectId}:${disclosure}`;
   const lastStateKey = useRef<string | null>(null);
@@ -42,14 +62,17 @@ export function WorldObjectCard({ card: current, disclosure = "card", selected =
     if (firstPass || !changed) {
       previousHeight.current = host.offsetHeight || previousHeight.current;
       previousFace.current = snapshot ?? null;
+      previousShared.current = readShared();
       return;
     }
-    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const departed = previousShared.current;
+    previousShared.current = readShared();
+    const reduceMotion = prefersReducedMotion();
     const from = disclosureAnimation.current ? Number.parseFloat(getComputedStyle(host).height) : previousHeight.current ?? host.offsetHeight;
     disclosureAnimation.current?.cancel();
-    faceAnimation.current?.cancel();
+    faceAnimations.current.forEach(animation => animation.cancel());
     disclosureAnimation.current = null;
-    faceAnimation.current = null;
+    faceAnimations.current = [];
     delete host.dataset.transition;
     outgoingFace.current?.remove();
     // Measure the next composition once at its intended width. The live card
@@ -57,7 +80,8 @@ export function WorldObjectCard({ card: current, disclosure = "card", selected =
     const clone = host.cloneNode(true) as HTMLElement;
     clone.querySelectorAll('[data-outgoing-face]').forEach(node => node.remove());
     const targetWidth = Number.parseFloat(host.parentElement?.style.width ?? "") || host.parentElement?.offsetWidth || host.offsetWidth;
-    clone.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;width:${targetWidth}px;height:auto;left:0;top:0;`;
+    // min-height:0 — the host stretches to its placement, which still holds the old footprint here.
+    clone.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;width:${targetWidth}px;height:auto;min-height:0;left:0;top:0;`;
     clone.inert = true;
     host.parentElement?.append(clone);
     const naturalHeight = Math.max(clone.offsetHeight, Number.parseFloat(host.parentElement ? getComputedStyle(host.parentElement).minHeight : "0") || 0);
@@ -78,6 +102,8 @@ export function WorldObjectCard({ card: current, disclosure = "card", selected =
     disclosureAnimation.current = animation;
     host.dataset.transition = "disclosure";
     const outgoing = previousFace.current;
+    // Persistent parts travel rather than fade: hide them in the outgoing face, move the new ones.
+    outgoing?.querySelectorAll<HTMLElement>('[data-shared], [data-card-title]').forEach(node => { node.style.visibility = "hidden"; });
     if (outgoing) {
       outgoing.setAttribute("aria-hidden", "true"); outgoing.inert = true;
       outgoing.dataset.outgoingFace = "true";
@@ -86,7 +112,21 @@ export function WorldObjectCard({ card: current, disclosure = "card", selected =
       outgoingFace.current = outgoing;
       outgoing.animate([{opacity:1},{opacity:0}], {duration:90,fill:"both"}).onfinish = () => outgoing.remove();
     }
-    if (faceRef.current) faceAnimation.current = faceRef.current.animate([{opacity:0},{opacity:1}], {duration:160,delay:70,fill:"both"});
+    const face = faceRef.current;
+    if (face) {
+      const kept: HTMLElement[] = [];
+      for (const kind of ["media", "title"] as const) {
+        const part = sharedPart(face, kind), from = departed[kind];
+        if (!part) continue;
+        kept.push(part);
+        const motion = from ? morphFrom(part, kind, sharedOnScreen(from), 260) : null;
+        if (motion) faceAnimations.current.push(motion);
+        // A part with nowhere to travel from is new material: it reveals with the rest.
+        else if (!from) kept.pop();
+      }
+      // New material enters once the geometry is about half way.
+      faceAnimations.current.push(...revealAround(face, kept, 120, 160));
+    }
     previousFace.current = snapshot ?? null;
     animation.onfinish = () => {
       if (disclosureAnimation.current !== animation) return;
@@ -94,10 +134,10 @@ export function WorldObjectCard({ card: current, disclosure = "card", selected =
       host.style.overflow = "";
       delete host.dataset.transition;
       disclosureAnimation.current = null;
-      animation.cancel(); faceAnimation.current?.cancel(); outgoingFace.current?.remove();
+      animation.cancel(); faceAnimations.current.forEach(item => item.cancel()); outgoingFace.current?.remove();
     };
   }, [stateKey]);
-  useEffect(() => () => { disclosureAnimation.current?.cancel(); faceAnimation.current?.cancel(); outgoingFace.current?.remove(); }, []);
+  useEffect(() => () => { disclosureAnimation.current?.cancel(); faceAnimations.current.forEach(animation => animation.cancel()); outgoingFace.current?.remove(); }, []);
   const proposedKinds = new Set(view.pendingClaims.map(claim => claim.claimKind));
   const claims = proposed ? [...view.pendingClaims, ...view.settledClaims.filter(claim => !proposedKinds.has(claim.claimKind))] : view.settledClaims;
   const links = proposed ? [...view.settledLinks, ...view.pendingLinks] : view.settledLinks;
@@ -110,7 +150,7 @@ export function WorldObjectCard({ card: current, disclosure = "card", selected =
     {onFocus ? <button type="button" aria-label="Open Focus" title="Open Focus (F)" onClick={() => onFocus()}><ObjectGlyph family="focus"/></button> : null}
   </div>;
 
-  return <div ref={hostRef} className={styles.cardHost}><div className={styles.surface} data-object-family={family} data-disclosure={disclosure} data-maturity={card.maturity} data-composition={objectField(card, "composition") || undefined} data-media={objectMedia(card) ? true : undefined} data-selected={selected || undefined} data-proposed={proposed || undefined}>
+  return <div ref={hostRef} className={styles.cardHost}><div className={styles.surface} data-object-family={family} data-object-id={card.objectId} data-disclosure={disclosure} data-maturity={card.maturity} data-composition={objectField(card, "composition") || undefined} data-media={objectMedia(card) ? true : undefined} data-selected={selected || undefined} data-proposed={proposed || undefined}>
     <div className={styles.cardActionsOverlay}>{actions}</div>
     {view.context.kind === "historical" ? <div className={styles.asOf}><ObjectGlyph family="history"/>As of {view.context.position.label || "an earlier story position"}</div> : null}
     <div ref={faceRef} className={styles.faceContent}>{body}</div>

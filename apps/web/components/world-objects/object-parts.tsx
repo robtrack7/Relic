@@ -71,12 +71,12 @@ export function ObjectMedia({ card, className = "", focal }: { card: DeskCard; c
   if (!media || failed) return null;
   // Ordinary images support authored external media without an image-optimizer allowlist.
   // eslint-disable-next-line @next/next/no-img-element
-  return <img ref={image} className={className} src={media.src} alt={media.alt} style={{ objectPosition: media.position }} loading="lazy" draggable={false} onError={() => setFailed(true)} />;
+  return <img ref={image} className={className} data-shared="media" src={media.src} alt={media.alt} style={{ objectPosition: media.position }} loading="lazy" draggable={false} onError={() => setFailed(true)} />;
 }
 
 /** The composed image-less identity mark: initials on the family tint, never an empty slab. */
 export function ObjectMonogram({ title, className = "" }: { title: string; className?: string }) {
-  return <div className={`${styles.monogram} ${className}`} aria-hidden="true"><span>{objectInitials(title)}</span></div>;
+  return <div className={`${styles.monogram} ${className}`} data-shared="media" aria-hidden="true"><span>{objectInitials(title)}</span></div>;
 }
 
 export function ObjectMaturity({ card }: { card: DeskCard }) {

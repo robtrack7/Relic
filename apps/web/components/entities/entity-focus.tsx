@@ -57,7 +57,7 @@ export function EntityFocus({ entity, session, page = "overview", onPageChange, 
     <div className={styles.focusBody} ref={scroll} role="tabpanel" id={`${scope}-page`} aria-labelledby={`${scope}-${selected}`} tabIndex={0} onScroll={() => { if (scroll.current) scrollPositions.current.set(currentPage.current, scroll.current.scrollTop); }} onPointerDown={startSwipe} onPointerUp={finishSwipe}>
       <EntityRecovery session={session}/>
       {selected === "overview" ? <>
-        <div className={styles.focusIdentity} data-has-image={!!media || undefined}><div><NameEditor entity={entity} session={session} compact/>{entity.representation?.fields.quote ? <p className={styles.identityLine}>{String(entity.representation.fields.quote)}</p> : null}</div>{media ? <img src={media.src} alt={media.alt} style={{ objectPosition: media.position }} draggable={false}/> : null}</div>
+        <div className={styles.focusIdentity} data-has-image={!!media || undefined}><div><NameEditor entity={entity} session={session} compact/>{entity.representation?.fields.quote ? <p className={styles.identityLine}>{String(entity.representation.fields.quote)}</p> : null}</div>{media ? <img data-shared="media" src={media.src} alt={media.alt} style={{ objectPosition: media.position }} draggable={false}/> : null}</div>
         {/* Reference before reading: what is true now, who they are, and the numbers a table asks for. */}
         <div className={styles.keyFacts} data-key-facts>
           <EntityState entity={entity} session={session}/><EntityDetails entity={entity} session={session} omit={pages.some(item => item.id === "content") ? ["excerpt"] : []}/>
