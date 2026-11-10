@@ -16,6 +16,8 @@ type Props = {
   selected: boolean;
   editing: boolean;
   expanded?: boolean;
+  /** The selection actions hang beneath this card as its tray. */
+  trayed?: boolean;
   focused?: boolean;
   neighbour?: boolean;
   receded?: boolean;
@@ -39,7 +41,7 @@ type Props = {
 };
 
 /** The placement owns geometry and gestures; family projections own their content. */
-export function DeskCard({ card, tier = "mid", selected, editing, expanded = false, focused = false, neighbour = false, receded = false, stacked = false, rotation = 0, onPointerDown, onContextMenu, onResizeStart, onResizeKeyDown, onOpen, onExpand, onFollow, onMeasure, onRequestEdit, onTitleChange, onBodyChange, onEndEdit }: Props) {
+export function DeskCard({ card, tier = "mid", selected, editing, expanded = false, trayed = false, focused = false, neighbour = false, receded = false, stacked = false, rotation = 0, onPointerDown, onContextMenu, onResizeStart, onResizeKeyDown, onOpen, onExpand, onFollow, onMeasure, onRequestEdit, onTitleChange, onBodyChange, onEndEdit }: Props) {
   const node = useRef<HTMLElement>(null);
   const [titleEditing, setTitleEditing] = useState(false);
   const [titleDraft, setTitleDraft] = useState(() => cardTitle(card));
@@ -91,7 +93,7 @@ export function DeskCard({ card, tier = "mid", selected, editing, expanded = fal
     data-card-id={card.cardId} data-maturity={card.maturity} data-selected={selected || undefined}
     data-editing={editing || undefined} data-kind={card.representation?.kind} data-tier={tier}
     data-paper-tint={card.presentation?.tint || undefined}
-    data-disclosure={disclosure} data-focused={focused || undefined} data-neighbour={neighbour || undefined} data-receded={receded || undefined}
+    data-disclosure={disclosure} data-trayed={trayed || undefined} data-focused={focused || undefined} data-neighbour={neighbour || undefined} data-receded={receded || undefined}
     data-stacked={stacked || undefined}
     style={{ left: 0, top: 0, transform: `translate(${card.layout.x}px, ${card.layout.y}px) rotate(${rotation}deg)`, width: card.layout.width, height: editing ? stableFootprint.current?.height ?? card.layout.height : undefined, minHeight: editing ? (stableFootprint.current?.height ?? card.layout.height) : disclosure === "expanded" ? undefined : card.layout.height, zIndex: expanded ? card.z + 100 : card.z }}
     tabIndex={editing ? -1 : 0} aria-description={selected ? "Selected" : undefined}

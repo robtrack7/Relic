@@ -61,6 +61,8 @@
    screen-space target; above 100% it simply grows with the card. */
 .cardActionsOverlay { position: absolute; z-index: 5; top: 6px; right: 6px; opacity: 0; transform: scale(max(1, calc(1 / var(--canvas-scale, 1)))); transform-origin: top right; transition: opacity 140ms ease-out; }
 .cardHost:hover .cardActionsOverlay, .cardHost:focus-within .cardActionsOverlay { opacity: 1; }
+/* The attached tray already offers these; two sets would cover the title row. */
+:global([data-trayed]) .cardActionsOverlay { display: none; }
 .cardActionsOverlay .cardActions { margin-left: 0; padding: 2px; border: 1px solid color-mix(in srgb, var(--card) 55%, var(--rule)); border-radius: var(--radius-control); background: color-mix(in srgb, var(--card) 88%, transparent); box-shadow: var(--lift); }
 .cardActions button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--object-quiet); border-radius: var(--radius-control); }
 .cardActions button:hover { background: var(--chrome-hover); color: var(--ink); }
@@ -131,6 +133,8 @@
 .nameBand { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 12px 16px 14px; }
 .characterExpanded { display: grid; flex: 1; grid-template-columns: minmax(0, 42%) minmax(0, 1fr); }
 .characterExpanded .portraitFrame { min-height: 280px; }
+/* Composed initials carry no picture to protect: the base follows the content. */
+.characterExpanded .portraitFrame:has(.monogram) { min-height: 168px; }
 .characterBody { display: flex; flex-direction: column; min-width: 0; padding: 18px 20px 16px; }
 .headRow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .epithet { margin: 6px 0 0; color: var(--object-quiet); font: var(--type-card-body); font-style: italic; }

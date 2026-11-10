@@ -737,9 +737,14 @@ export function shouldShowMinimap(
   return overflowX || overflowY;
 }
 
-export function CanvasSelectionToolbar({ bounds, viewportSize, children, insets }: {
+/** Inset of an attached tray from each side of its card, in world units: deep enough into the 14px corner radius that the curve departs by under a pixel. */
+export const TRAY_INSET = 10;
+
+export function CanvasSelectionToolbar({ bounds, viewportSize, children, insets, attach = false, scale = 1 }: {
   bounds: { x: number; y: number; width: number; height: number };
   viewportSize: Size; children: ReactNode; insets?: { top: number; left: number; right: number; bottom: number };
+  /** Draw the actions as a tray sliding out beneath one expanded card when it fits; otherwise float. */
+  attach?: boolean; scale?: number;
 }) {
   const toolbar = useRef<HTMLDivElement>(null);
   const [toolbarSize, setToolbarSize] = useState({ width: 320, height: 44 });
@@ -747,7 +752,11 @@ export function CanvasSelectionToolbar({ bounds, viewportSize, children, insets 
     const node = toolbar.current;
     if (!node) return;
     const measure = () => {
-      if (node.offsetWidth && node.offsetHeight) setToolbarSize(current => current.width === node.offsetWidth && current.height === node.offsetHeight ? current : { width: node.offsetWidth, height: node.offsetHeight });
+      // Intrinsic width, independent of any tray width imposed on the node.
+      const style = getComputedStyle(node);
+      const items = [...node.children] as HTMLElement[];
+      const width = Math.ceil(items.reduce((sum, item) => sum + item.offsetWidth, 0) + Math.max(0, items.length - 1) * (Number.parseFloat(style.columnGap) || 0) + (Number.parseFloat(style.paddingLeft) || 0) + (Number.parseFloat(style.paddingRight) || 0) + 2);
+      if (width && node.offsetHeight) setToolbarSize(current => current.width === width && current.height === node.offsetHeight ? current : { width, height: node.offsetHeight });
     };
     const observer = new ResizeObserver(measure);
     measure();
@@ -768,10 +777,15 @@ export function CanvasSelectionToolbar({ bounds, viewportSize, children, insets 
   const canPlaceAbove = above >= area.top;
   const canPlaceBelow = below + toolbarSize.height <= safeHeight - area.bottom;
   const top = canPlaceAbove ? above : canPlaceBelow ? below : Math.max(area.top, Math.min(above, safeHeight - area.bottom - toolbarSize.height));
-  const placement = canPlaceAbove ? "above" : canPlaceBelow ? "below" : "clamped";
+  // A tray hangs from the card's flat bottom edge, between its rounded corners,
+  // so it reads as part of the object rather than a menu hovering near it.
+  const trayWidth = bounds.width - 2 * TRAY_INSET * scale;
+  const trayBottom = bounds.y + bounds.height + toolbarSize.height;
+  const tray = attach && toolbarSize.width <= trayWidth && bounds.x >= area.left && bounds.x + bounds.width <= safeWidth - area.right && bounds.y + bounds.height >= area.top && trayBottom <= safeHeight - area.bottom;
+  const placement = tray ? "tray" : canPlaceAbove ? "above" : canPlaceBelow ? "below" : "clamped";
   return <div role="toolbar" aria-label="Selection actions" className={styles.selectionToolbar}
     ref={toolbar} data-placement={placement}
-    style={{ left, top, maxWidth: Math.max(0, safeWidth - area.left - area.right), transform: "translateX(-50%)" }}
+    style={tray ? { left: bounds.x + TRAY_INSET * scale, top: bounds.y + bounds.height, width: trayWidth } : { left, top, maxWidth: Math.max(0, safeWidth - area.left - area.right), transform: "translateX(-50%)" }}
     onPointerDown={event => event.stopPropagation()} onDoubleClick={event => event.stopPropagation()}>{children}</div>;
 }
 
@@ -804,6 +818,7 @@ export function CanvasGlyph({
   name:
     | CanvasTool
     | "fit"
+    | "collapse"
     | "selection"
     | "relic"
     | "search"
@@ -848,6 +863,7 @@ export function CanvasGlyph({
       {name === "thread" ? <><path {...common} d="M5 7h14M5 12h14M5 17h14" /><circle {...common} cx="8" cy="7" r="1" /><circle {...common} cx="16" cy="12" r="1" /></> : null}
       {name === "link" ? <><path {...common} d="m9 15-2 2a3 3 0 0 1-4-4l3-3a3 3 0 0 1 4 0m1-3 2-2a3 3 0 0 1 4 4l-3 3a3 3 0 0 1-4 0m-2 2 6-6" /></> : null}
       {name === "close" ? <path {...common} d="m6 6 12 12M18 6 6 18" /> : null}
+      {name === "collapse" ? <path {...common} d="M4 14h6v6m10-10h-6V4m-4 10-6 6m10-10 6-6" /> : null}
       {name === "fit" ? <path {...common} d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4" /> : null}
       {name === "selection" ? <><rect {...common} x="4" y="5" width="16" height="14" rx="1" strokeDasharray="2.5 2.5" /><path {...common} d="M8 9h8M8 13h5" /></> : null}
       {name === "search" ? <><circle {...common} cx="10.8" cy="10.8" r="6.5" /><path {...common} d="m16 16 4.5 4.5" /></> : null}

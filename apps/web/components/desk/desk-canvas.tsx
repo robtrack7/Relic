@@ -712,6 +712,9 @@ export function DeskCanvas({
   const selectedCollection = collections.find(collection => collection.cardIds.length === selection.size && collection.cardIds.every(id => selection.has(id)));
   const toolbarCollection = selectedCollection ?? (selectedCard && collectionFor(collections, selectedCard.cardId)?.collapsed ? collectionFor(collections, selectedCard.cardId) : undefined);
   const toolbarBounds = toolbarCollection ? collectionBounds(toolbarCollection, cards) ?? selectionBounds : selectionBounds;
+  const toolbarVisible = Boolean(toolbarBounds) && selectedCards.length > 0 && !editing && !focusId && !contextMenu && interacting === "none" && tool === "select";
+  // One expanded card carries its actions as an attached tray; its own hover actions stand down.
+  const trayCardId = toolbarVisible && selectedCard && !toolbarCollection && expandedCards.has(selectedCard.cardId) ? selectedCard.cardId : null;
   const collectSelection = (collapsed: boolean) => {
     if (!selection.size) { setAnnouncement("Select cards, then collect them into a Section or Stack."); return; }
     void store.changeCollection({ kind: "create", id: crypto.randomUUID(), title: "Research collection", cardIds: [...selection].sort((a, b) => (store.byId.get(a)?.z ?? 0) - (store.byId.get(b)?.z ?? 0)), collapsed });
@@ -924,6 +927,7 @@ export function DeskCanvas({
               selected={selection.has(card.cardId)}
               editing={editing === card.cardId}
               expanded={expandedCards.has(card.cardId)}
+              trayed={trayCardId === card.cardId}
               stacked={Boolean(collectionFor(collections, card.cardId)?.collapsed)}
               rotation={collectionFor(collections, card.cardId)?.collapsed && !liftedCards.has(card.cardId) ? ((collectionFor(collections, card.cardId)!.cardIds.indexOf(card.cardId) % 3) - 1) * 1.1 : 0}
               onExpand={() => { onSelectionChange(only(card.cardId)); toggleExpanded(card.cardId); }}
@@ -998,10 +1002,12 @@ export function DeskCanvas({
         }
       }}/>: null}
 
-      {toolbarBounds && selectedCards.length > 0 && !editing && !focusId && !contextMenu && interacting === "none" && tool === "select" ? <CanvasSelectionToolbar
+      {toolbarVisible && toolbarBounds ? <CanvasSelectionToolbar attach={Boolean(trayCardId)} scale={viewport.scale}
         bounds={{ x: toolbarBounds.x * viewport.scale + viewport.x, y: toolbarBounds.y * viewport.scale + viewport.y, width: toolbarBounds.width * viewport.scale, height: toolbarBounds.height * viewport.scale }} viewportSize={size} insets={toolbarInsets}>
         {selectedCard ? <><Button variant="quiet" onClick={() => onFocusChange(selectedCard.cardId)}>Open Focus</Button>
-          <Button variant="quiet" onClick={() => toggleExpanded(selectedCard.cardId)}>{expandedCards.has(selectedCard.cardId) ? "Collapse card" : "Expand card"}</Button>
+          {/* The tray hangs inside the card's width, so its secondary actions are marks, not words. */}
+          {trayCardId ? <IconButton label="Collapse card" onClick={() => toggleExpanded(selectedCard.cardId)}><CanvasGlyph name="collapse" /></IconButton>
+            : <Button variant="quiet" onClick={() => toggleExpanded(selectedCard.cardId)}>{expandedCards.has(selectedCard.cardId) ? "Collapse card" : "Expand card"}</Button>}
           <IconButton label="Open in Builder" onClick={() => onEditingChange(selectedCard.cardId)}><CanvasGlyph name="edit" /></IconButton></> : <span>{selectedCards.length} selected</span>}
         {!selectedCard ? <Button variant="quiet" onClick={() => selectedCollection ? void store.changeCollection({ kind: "collapse", id: selectedCollection.id, collapsed: !selectedCollection.collapsed }) : collectSelection(true)}>{selectedCollection ? selectedCollection.collapsed ? "Expand collection" : "Stack collection" : "Collect in stack"}</Button> : null}
         <IconButton label="Connect selected object" disabled={!selectedCard} onClick={() => changeTool("connect")}><CanvasGlyph name="connect" /></IconButton>

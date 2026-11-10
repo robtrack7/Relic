@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 import { CarriageSection } from "@/components/carriage/carriage";
-import { CanvasSelectionToolbar, CanvasViewControls, ProfileControl, shouldShowMinimap } from "@/components/canvas/canvas-controls";
+import { CanvasSelectionToolbar, CanvasViewControls, TRAY_INSET, ProfileControl, shouldShowMinimap } from "@/components/canvas/canvas-controls";
 import type { ProxyPlacement } from "@/components/canvas/canvas-foundation";
 import { CanvasWorkspace } from "@/components/workspace/canvas-workspace";
 import type { WorkspaceCarriageDefinition } from "@/components/workspace/workspace-shell";
@@ -144,6 +144,35 @@ describe("selection toolbar placement", () => {
     expect(Number.parseFloat(toolbar.style.left)).toBeGreaterThanOrEqual(12);
     expect(Number.parseFloat(toolbar.style.top)).toBeGreaterThanOrEqual(12);
     expect(toolbar.dataset.placement).toBe("below");
+  });
+
+  it("hangs as a tray from an expanded card's bottom edge, inside its rounded corners", () => {
+    render(
+      <CanvasSelectionToolbar attach scale={1} bounds={{ x: 200, y: 200, width: 400, height: 168 }} viewportSize={{ width: 1440, height: 900 }}>
+        <button type="button">Open Focus</button>
+      </CanvasSelectionToolbar>
+    );
+    const toolbar = screen.getByRole("toolbar", { name: "Selection actions" });
+    expect(toolbar.dataset.placement).toBe("tray");
+    expect(toolbar.style.top).toBe("368px");
+    expect(toolbar.style.left).toBe(`${200 + TRAY_INSET}px`);
+    expect(toolbar.style.width).toBe(`${400 - 2 * TRAY_INSET}px`);
+  });
+
+  it("floats instead of attaching when the card is too narrow or the tray would leave the viewport", () => {
+    const { rerender } = render(
+      <CanvasSelectionToolbar attach bounds={{ x: 200, y: 200, width: 300, height: 168 }} viewportSize={{ width: 1440, height: 900 }}>
+        <button type="button">Open Focus</button>
+      </CanvasSelectionToolbar>
+    );
+    const toolbar = screen.getByRole("toolbar", { name: "Selection actions" });
+    expect(toolbar.dataset.placement).toBe("above");
+    rerender(
+      <CanvasSelectionToolbar attach bounds={{ x: 200, y: 600, width: 400, height: 280 }} viewportSize={{ width: 1440, height: 900 }}>
+        <button type="button">Open Focus</button>
+      </CanvasSelectionToolbar>
+    );
+    expect(toolbar.dataset.placement).not.toBe("tray");
   });
 });
 

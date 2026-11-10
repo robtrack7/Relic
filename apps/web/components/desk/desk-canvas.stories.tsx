@@ -50,7 +50,10 @@ export const InteractiveDesk: Story = {
     await expect(mara).toHaveAttribute("data-selected", "true");
     await userEvent.click(within(mara).getByRole("button", { name: "Expand card" }));
     await expect(mara).toHaveAttribute("data-disclosure", "expanded");
-    await userEvent.click(within(mara).getByRole("button", { name: "Collapse card" }));
+    // An expanded selection carries its actions in the tray attached beneath it.
+    const tray = canvas.getByRole("toolbar", { name: "Selection actions" });
+    await expect(tray).toHaveAttribute("data-placement", "tray");
+    await userEvent.click(within(tray).getByRole("button", { name: "Collapse card" }));
     await expect(mara).toHaveAttribute("data-disclosure", "card");
   }
 };
