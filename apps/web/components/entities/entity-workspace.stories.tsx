@@ -12,7 +12,7 @@ import styles from "./entity-workspace.module.css";
 import "../../app/globals.css";
 
 const meta = {
-  title: "Entities/Three-layer workspace",
+  title: "Entities/Focus and Builder",
   parameters: { layout: "fullscreen", backgrounds: { disable: true }, a11y: { test: "todo" } },
 } satisfies Meta;
 export default meta;
@@ -83,7 +83,23 @@ export const CardsFocusBuilderJourney: Story = {
   },
 };
 
-export const CharacterFocusReading: Story = { render: () => <ControlledWorkbench initialEntity={pc} /> };
+export const CharacterFocusReading: Story = { render: () => <ControlledWorkbench initialEntity={pc} />, play: async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(await canvas.findByRole("tab", { name: "Overview" })).toBeVisible();
+  await expect(canvas.getByRole("complementary", { name: /Character Focus/i })).toBeVisible();
+} };
+export const CharacterMechanics: Story = { render: () => <ControlledWorkbench initialEntity={pc} initialPage="mechanics" />, play: async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  await expect(await canvas.findByRole("tab", { name: "Mechanics" })).toHaveAttribute("aria-selected", "true");
+  await expect(canvas.getByRole("region", { name: "Mechanical profile" })).toBeVisible();
+} };
+export const BuilderAuthoring: Story = { render: () => <ControlledWorkbench initialEntity={pc} initialBuilder />, play: async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const builder = await canvas.findByRole("region", { name: /Character Entity Builder/i });
+  await expect(builder).toBeVisible();
+  await userEvent.click(within(builder).getByText("A letter that never arrived"));
+  await expect(within(builder).getByRole("textbox", { name: "Narrative" })).toBeVisible();
+} };
 export const BuilderWithSiblingLibrarian: Story = { render: () => <ControlledWorkbench initialBuilder withLibrarian initialEntity={pc} /> };
 export const ConstrainedBuilderFocusSwitch: Story = { render: () => <ControlledWorkbench initialBuilder controls withLibrarian initialEntity={pc} width={1024} /> };
 export const ArtifactProperties: Story = { render: () => <ControlledWorkbench initialEntity={artifact} /> };

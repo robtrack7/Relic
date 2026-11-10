@@ -44,6 +44,9 @@ export default defineConfig({
           provider: playwright({
             launchOptions: process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : undefined
           }),
+          // Relic is desktop-first: stories are exercised at the size they are designed for,
+          // not the 414px default, which silently switched the Desk to its phone Stack layout.
+          viewport: { width: 1440, height: 900 },
           instances: [{
             browser: 'chromium'
           }]

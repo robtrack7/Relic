@@ -3,9 +3,11 @@
 import { useEffect, useLayoutEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 import { boundsFor } from "@/lib/desk/manipulation";
-import { MAX_SCALE, MIN_SCALE, screenToWorld, type Point, type Size, type Viewport } from "@/lib/desk/viewport";
+import { MAX_SCALE, MIN_SCALE, screenToWorld, type Point, type Rect, type Size, type Viewport } from "@/lib/desk/viewport";
 
-import type { ProxyPlacement } from "./canvas-foundation";
+/** What the minimap needs to know about a Placement: where it is, and which one. */
+export type CanvasPlacement = Rect & { id: string };
+
 import { Button, IconButton } from "../ui/control";
 import { FloatingSurface } from "../ui/floating-surface";
 import styles from "./canvas-controls.module.css";
@@ -64,6 +66,7 @@ export function ProfileControl({
   const [helpOpen, setHelpOpen] = useState(false);
   const [motionPreference, setMotionPreference] = useState<"system" | "reduced" | "full">("system");
   const [readableText, setReadableText] = useState(false);
+  const [lightPreference, setLightPreference] = useState<"system" | "daylight" | "lamplit">("system");
   const trigger = useRef<HTMLButtonElement>(null);
   const menuId = useId();
   const settingsId = useId();
@@ -72,14 +75,19 @@ export function ProfileControl({
     try {
       const motion = window.localStorage.getItem("relic.motionPreference");
       const readable = window.localStorage.getItem("relic.readableText");
+      const light = window.localStorage.getItem("relic.lightPreference");
       if (motion === "system" || motion === "reduced" || motion === "full") setMotionPreference(motion);
+      if (light === "daylight" || light === "lamplit") setLightPreference(light);
       setReadableText(readable === "true");
     } catch { /* localStorage can be unavailable in privacy mode */ }
   }, []);
   useEffect(() => {
     document.documentElement.dataset.relicMotion = motionPreference;
     document.documentElement.dataset.relicReadable = readableText ? "true" : "false";
-  }, [motionPreference, readableText]);
+    // "system" removes the attribute so the stylesheet follows prefers-color-scheme.
+    if (lightPreference === "system") delete document.documentElement.dataset.relicLight;
+    else document.documentElement.dataset.relicLight = lightPreference;
+  }, [motionPreference, readableText, lightPreference]);
   const close = (restoreFocus = false) => {
     setOpen(false);
     onClose?.();
@@ -93,6 +101,10 @@ export function ProfileControl({
   const updateMotion = (value: "system" | "reduced" | "full") => {
     setMotionPreference(value);
     try { window.localStorage.setItem("relic.motionPreference", value); } catch { /* optional preference */ }
+  };
+  const updateLight = (value: "system" | "daylight" | "lamplit") => {
+    setLightPreference(value);
+    try { window.localStorage.setItem("relic.lightPreference", value); } catch { /* optional preference */ }
   };
   const updateReadable = (value: boolean) => {
     setReadableText(value);
@@ -128,7 +140,8 @@ export function ProfileControl({
     <FloatingSurface id={settingsId} open={settingsOpen} label="Settings" role="dialog" triggerRef={trigger} onClose={closeSecondary} placement="bottom" align="start" width={288}>
       <form className={styles.settingsForm} onSubmit={event => event.preventDefault()}>
         <div className={styles.settingsHeading}><strong>Settings</strong><small>Saved on this device</small></div>
-        <label>Motion preference<select autoFocus value={motionPreference} onChange={event => updateMotion(event.target.value as "system" | "reduced" | "full")}><option value="system">Use system setting</option><option value="reduced">Reduced motion</option><option value="full">Full motion</option></select></label>
+        <label>Light<select autoFocus value={lightPreference} onChange={event => updateLight(event.target.value as "system" | "daylight" | "lamplit")}><option value="system">Use system setting</option><option value="daylight">Daylight</option><option value="lamplit">Lamplit · for dim rooms</option></select></label>
+        <label>Motion preference<select value={motionPreference} onChange={event => updateMotion(event.target.value as "system" | "reduced" | "full")}><option value="system">Use system setting</option><option value="reduced">Reduced motion</option><option value="full">Full motion</option></select></label>
         <label className={styles.settingsCheck}><input type="checkbox" checked={readableText} onChange={event => updateReadable(event.target.checked)} /><span><strong>Readable text</strong><small>Increase working copy size and spacing</small></span></label>
         <button type="button" className={styles.settingsDone} onClick={() => closeSecondary(true)}>Done</button>
       </form>
@@ -355,7 +368,7 @@ export function ContextualMinimap({
   mode = "auto",
   onNavigate
 }: {
-  placements: readonly ProxyPlacement[];
+  placements: readonly CanvasPlacement[];
   viewport: Viewport;
   viewportSize: Size;
   selectedIds?: readonly string[];
@@ -488,7 +501,7 @@ export function CanvasChrome({
   showCanvasControls?: boolean;
   scale: number;
   selectionCount: number;
-  placements: readonly ProxyPlacement[];
+  placements: readonly CanvasPlacement[];
   viewport: Viewport;
   viewportSize: Size;
   selectedIds: readonly string[];
@@ -722,7 +735,7 @@ export function CanvasChrome({
 
 export function shouldShowMinimap(
   mode: MinimapMode,
-  placements: readonly ProxyPlacement[],
+  placements: readonly CanvasPlacement[],
   viewport: Viewport,
   viewportSize: Size
 ) {

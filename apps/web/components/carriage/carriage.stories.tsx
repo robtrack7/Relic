@@ -6,7 +6,7 @@ import { PREPARE_CARRIAGE, STAGE_CARRIAGE, LIBRARIAN_CARRIAGE } from "./carriage
 import { WorkspaceShell, type WorkspaceCarriageDefinition } from "@/components/workspace/workspace-shell";
 import styles from "./carriage.stories.module.css";
 
-const meta = { title: "Carriages/Scaffold", parameters: { layout: "fullscreen", backgrounds: { disable: true }, a11y: { test: "error" } } } satisfies Meta;
+const meta = { title: "Carriages/Family", parameters: { layout: "fullscreen", backgrounds: { disable: true }, a11y: { test: "error" } } } satisfies Meta;
 export default meta;
 type Story = StoryObj<typeof meta>;
 function Study({ definition }: { definition: WorkspaceCarriageDefinition }) {

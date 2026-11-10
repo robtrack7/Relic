@@ -61,7 +61,7 @@
 .settingsDone { min-height: 38px; padding: 0 12px; border: 1px solid var(--chrome-rule); border-radius: var(--radius-inset); background: var(--chrome-hover); color: var(--ink); font: 600 12px var(--font-ui); }
 .settingsDone:hover, .settingsDone:focus-visible { background: var(--card-raised); }
 .helpPanel p { margin: 0; }
-.helpPanel kbd { padding: 1px 4px; border: 1px solid var(--chrome-rule); border-radius: 4px; background: var(--paper); color: var(--ink); font-size: 10px; }
+.helpPanel kbd { padding: 1px 4px; border: 1px solid var(--chrome-rule); border-radius: 4px; background: var(--paper); color: var(--ink); font-size: 11px; }
 :global(html[data-relic-readable="true"]) .settingsForm, :global(html[data-relic-readable="true"]) .helpPanel { font-size: 14px; }
 :global(html[data-relic-readable="true"]) .chromeRoot { font-size: 14px; }
 :global(html[data-relic-readable="true"]) .chromeRoot .searchControl, :global(html[data-relic-readable="true"]) .chromeRoot .contextControl { line-height: 1.6; }
@@ -112,7 +112,7 @@
 .minimapPlacement, .minimapViewport { position: absolute; display: block; }
 .minimapPlacement { min-width: 2px; min-height: 2px; background: var(--chrome-rule); border: 1px solid var(--rule-strong); }
 .minimapPlacement[data-selected] { background: var(--workflow-accent); border-color: var(--workflow-ink); }
-.minimapViewport { min-width: 5px; min-height: 5px; border: 1px solid var(--workflow-accent); background: rgb(247 244 239 / 30%); }
+.minimapViewport { min-width: 5px; min-height: 5px; border: 1px solid var(--workflow-accent); background: color-mix(in srgb, var(--paper) 30%, transparent); }
 .selectionToolbar { position: absolute; z-index: 8; display: flex; align-items: center; gap: 4px; max-width: min(560px, calc(100% - 24px)); max-height: min(96px, calc(100% - 24px)); overflow-x: auto; overflow-y: hidden; padding: 5px; border: 1px solid var(--chrome-rule); border-radius: var(--radius-surface); background: var(--chrome-surface); box-shadow: var(--lift-raised); color: var(--ink); pointer-events: auto; font-family: var(--font-ui); scrollbar-width: thin; }
 .selectionToolbar > span { padding: 0 10px; color: var(--ink-quiet); font-size: 12px; }
 .selectionToolbar button { min-height: 36px; }

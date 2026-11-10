@@ -1021,7 +1021,7 @@ export function DeskCanvas({
       </section> : null}
 
       <CanvasChrome activeTool={tool} onToolChange={changeTool} gridVisible={gridVisible} onGridVisibleChange={setGridVisible} showTopFrame={false} showCanvasControls={active} contextLabel={surfaceName} scale={viewport.scale} selectionCount={selection.size}
-        placements={cards.map(card => ({ ...card.layout, id: card.cardId, title: card.cardId, kind: "fragment", note: "" }))}
+        placements={cards.map(card => ({ ...card.layout, id: card.cardId }))}
         viewport={viewport} viewportSize={size} selectedIds={[...selection]} minimapMode={minimapMode}
         onMinimapModeChange={setMinimapMode} onNavigate={(point) => navigate(centreOn(viewport, size, { ...point, width: 0, height: 0 }))}
         onZoomOut={() => zoom(1 / 1.2)} onZoomIn={() => zoom(1.2)}

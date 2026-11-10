@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { expect, userEvent, within } from "storybook/test";
+import { expect, userEvent, within, waitFor } from "storybook/test";
 import { CanvasGlyph } from "@/components/canvas/canvas-controls";
 import { IconButton } from "./control";
 import { FloatingSurface } from "./floating-surface";
@@ -63,7 +63,10 @@ export const SideRailPlacement: Story = {
   play: async ({ canvasElement }) => {
     const scene = within(canvasElement.ownerDocument.body);
     await userEvent.click(scene.getByRole("button", { name: "Open destination rail" }));
-    await expect(scene.getByRole("dialog", { name: "Destinations" })).toBeVisible();
+    // The rail fades in from the point it was opened; wait for the entrance, not the first frame.
+    await waitFor(() => expect(scene.getByRole("dialog", { name: "Destinations" })).toBeVisible());
+    // Let the entrance finish so the accessibility check reads settled colours, not a half-faded frame.
+    await Promise.all(canvasElement.ownerDocument.getAnimations().map(animation => animation.finished.catch(() => {})));
   }
 };
 

@@ -85,13 +85,13 @@ typography:
     letterSpacing: "-0.01em"
   label:
     fontFamily: "Instrument Sans, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "10px"
+    fontSize: "11px"
     fontWeight: 600
     lineHeight: 1.4
     letterSpacing: "0.055em"
   meta:
     fontFamily: "Instrument Sans, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "10px"
+    fontSize: "11px"
     fontWeight: 400
     lineHeight: 1.45
   stat-value:
@@ -228,6 +228,9 @@ The interface is deliberately quiet. Paper shades define depth; imagery and worl
 - **Destructive Rust** (`destructive`): destructive operations, never a decorative accent.
 - **Paper Tints** (`tint-*`): optional personal or organizational treatments, not implicit narrative facts.
 
+### Lamplit (low light)
+Live play happens in dim rooms. **Lamplit** is the same world by lamplight: warm umber surfaces (`paper` #1a1612, `card` #24201b), parchment ink held near 11:1 (`ink` #e4d9c6) so text does not halate, and a lighter amber (`workflow-ink` #e2a868) that stays the only workflow colour. Text on filled workflow surfaces uses `on-workflow`, which turns dark under Lamplit. Pictures are lowered slightly so they do not glare. Lamplit follows the system dark preference unless the GM chooses Daylight or Lamplit in Settings; it is applied before first paint. Every token pair holds WCAG AA on every Lamplit surface. Components never hard-code daylight literals; they read tokens.
+
 **The Distinct Signals Rule.** Amber indicates a workflow/action; orange indicates selected or actively manipulated context. Do not use either as general decoration. Validate contrast on every surface.
 
 **The Separate States Rule.** Pencil/Ink indicate content maturity; Proposed/Pending/Settled indicate authority and truth workflow; publication is separate again. No color, border or label should silently equate these dimensions. Evidence and provenance retain their own clear presentation.
@@ -250,7 +253,7 @@ The frontmatter defines the default type roles, and their values are intentional
 - **Focus Prose, 14px:** an exception for Focus, which is read at arm's length during play.
 - **Editor Body, 16px:** an exception for sustained authoring in Builder, held to a 62–70ch measure.
 - **UI, 13px:** buttons, search, menus and working controls.
-- **Label / Meta, 10px:** genuinely subordinate category, provenance and structural labels—not primary instructions.
+- **Label / Meta, 11px:** genuinely subordinate category, provenance and structural labels—not primary instructions. 11px is the legibility floor for functional text; nothing smaller carries meaning.
 - **Stat Value, 28px:** a limited number of important mechanics figures, not every numeric field.
 
 ### Reading rules

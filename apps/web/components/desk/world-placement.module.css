@@ -19,7 +19,7 @@
 .placement[data-focused]::after { border-color: var(--workflow-accent); box-shadow: 0 10px 24px rgba(31, 27, 21, .14); }
 .placement[data-neighbour]::after { inset: -3px; border-width: 1px; border-color: color-mix(in srgb, var(--workflow-ink) 70%, transparent); box-shadow: none; }
 .editingShell { display: flex; min-width: 0; min-height: 100%; height: 100%; flex-direction: column; overflow: hidden; border-radius: 14px; background: var(--paper-tint, var(--card)); box-shadow: var(--lift-raised); }
-.editingHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; box-sizing: border-box; padding: 12px 20px 10px; color: var(--ink-quiet); font: 500 10px/1.4 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }
+.editingHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; box-sizing: border-box; padding: 12px 20px 10px; color: var(--ink-quiet); font: 500 11px/1.4 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }
 .writing { box-sizing: border-box; display: flex; min-height: 0; height: 100%; padding: 16px 20px 20px; border-top: 1px solid var(--rule); background: var(--paper-tint, var(--card)); box-shadow: inset 0 0 0 1px var(--workflow-accent); user-select: text; }
 .editor { font: 400 17px/1.6 var(--serif); }
 .editingShell { min-height: 0; }

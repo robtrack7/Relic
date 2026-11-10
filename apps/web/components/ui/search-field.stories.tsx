@@ -47,9 +47,9 @@ function SearchFixture({ state, initialValue = "" }: { state: "results" | "empty
           }
         }}
       >
-        {state === "loading" ? <p style={{ margin: "10px 8px", color: "#655e56" }} role="status">Searching…</p> : null}
-        {state === "error" ? <p style={{ margin: "10px 8px", color: "#8a3828" }} role="alert">Search could not load. Try again.</p> : null}
-        {state === "empty" ? <p style={{ margin: "10px 8px", color: "#655e56" }} role="status">Nothing matches “moon”.</p> : null}
+        {state === "loading" ? <p style={{ margin: "10px 8px", color: "var(--ink-quiet)" }} role="status">Searching…</p> : null}
+        {state === "error" ? <p style={{ margin: "10px 8px", color: "var(--destructive)" }} role="alert">Search could not load. Try again.</p> : null}
+        {state === "empty" ? <p style={{ margin: "10px 8px", color: "var(--ink-quiet)" }} role="status">Nothing matches “moon”.</p> : null}
         <ul id={listboxId} role="listbox" aria-label="Search results" style={{ listStyle: "none", margin: 0, padding: 0 }}>
           {state === "results" ? FIXTURES.map((item, index) => (
             <li key={item.id} role="presentation">

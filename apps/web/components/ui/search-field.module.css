@@ -172,7 +172,7 @@
 .verb {
   flex: none;
   color: var(--ink-faint, #81786e);
-  font: 10px var(--font-ui, sans-serif);
+  font: 11px var(--font-ui, sans-serif);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }

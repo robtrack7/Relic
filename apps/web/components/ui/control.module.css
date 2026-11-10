@@ -91,7 +91,7 @@
 .primary {
   border-color: var(--workflow-ink, #995a21);
   background: var(--workflow-ink, #995a21);
-  color: #fffaf2;
+  color: var(--on-workflow);
   box-shadow: 0 1px 2px rgb(68 39 18 / 18%);
 }
 

@@ -1,27 +1,28 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, userEvent, within } from "storybook/test";
-import { CanvasWorkspace } from "@/components/workspace/canvas-workspace";
 
 import "../../app/globals.css";
 
-import type { ProxyPlacement } from "./canvas-foundation";
 import {
+  CanvasChrome,
   CanvasToolCluster,
   CanvasGlyph,
   CanvasViewControls,
   ContextualMinimap,
+  type CanvasPlacement,
   type CanvasTool,
   type MinimapMode,
   type PersistentCanvasTool
 } from "./canvas-controls";
 import storyStyles from "./canvas-controls.stories.module.css";
 
-const BOARD: readonly ProxyPlacement[] = [
-  { id: "mara", kind: "character", title: "Mara Vey", note: "", x: -900, y: -420, width: 248, height: 176 },
-  { id: "bell", kind: "place", title: "The Drowned Bell", note: "", x: -120, y: -680, width: 294, height: 208 },
-  { id: "knocks", kind: "thread", title: "Three knocks beneath the quay", note: "", x: 760, y: -160, width: 268, height: 184 },
-  { id: "ledger", kind: "source", title: "Tide ledger, folio 9", note: "", x: -520, y: 540, width: 276, height: 196 }
+/** Placement geometry for the minimap: a character, a place, a thread and a source spread over a Board. */
+const BOARD: readonly CanvasPlacement[] = [
+  { id: "mara", x: -900, y: -420, width: 248, height: 176 },
+  { id: "bell", x: -120, y: -680, width: 294, height: 208 },
+  { id: "knocks", x: 760, y: -160, width: 268, height: 184 },
+  { id: "ledger", x: -520, y: 540, width: 276, height: 196 }
 ];
 
 const meta = {
@@ -55,7 +56,12 @@ export const MinimapOverview: Story = {
 };
 
 export const CreationMenus: Story = {
-  render: () => <CanvasWorkspace initialPlacements={BOARD} contextLabel="The Drowned Coast" availableToolActions={["Fragment", "Character", "Place", "Faction", "Thread", "Note", "Source"]} onToolAction={() => {}} />,
+  render: () => <div style={{ position: "relative", height: "100dvh", background: "var(--paper)" }}>
+    <CanvasChrome contextLabel="The Drowned Coast" showTopFrame={false} showCanvasControls scale={1} selectionCount={0} placements={BOARD}
+      viewport={{ x: 0, y: 0, scale: 1 }} viewportSize={{ width: 1440, height: 900 }} selectedIds={[]} minimapMode="auto"
+      onZoomOut={() => {}} onResetZoom={() => {}} onZoomIn={() => {}} onFitBoard={() => {}} onFitSelection={() => {}} onNavigate={() => {}} onMinimapModeChange={() => {}}
+      availableToolActions={["Fragment", "Character", "Place", "Faction", "Thread", "Note", "Source"]} onToolAction={() => {}} />
+  </div>,
   play: async ({ canvasElement }) => {
     const scene = within(canvasElement.ownerDocument.body);
     const create = scene.getByRole("button", { name: "Create" });

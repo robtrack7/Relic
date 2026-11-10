@@ -92,7 +92,7 @@
 .switcherHeading {
   margin: 4px 8px 6px;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -131,7 +131,7 @@
 .switcherCount {
   flex: none;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -218,7 +218,7 @@
 
 .syncBadge {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -512,7 +512,7 @@
   align-items: center;
   gap: 5px;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -542,7 +542,7 @@
   align-items: center;
   gap: 4px;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--orange-deep);
@@ -749,7 +749,7 @@
 /* Accession-record language: the kind is catalogue metadata, not a badge. */
 .kindMark {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -785,7 +785,7 @@
 
 .claimKind {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -836,7 +836,7 @@
 
 .sheetLabel {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -967,7 +967,7 @@
   padding-bottom: 5px;
   border-bottom: 1px solid var(--rule);
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -977,7 +977,7 @@
 /* Says what kind of thing is being edited. The distinction between an
    assertion and a rules figure is the model, so it is stated, not implied. */
 .inspectorNote {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.05em;
   text-transform: none;
   color: var(--ink-faint);
@@ -992,7 +992,7 @@
 
 .inspectorLabel {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -1056,7 +1056,7 @@
   padding: 2px 7px;
   background: var(--paper);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-quiet);
@@ -1097,7 +1097,7 @@
 
 .writtenBy {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.02em;
   color: var(--ink-quiet);
 }
@@ -1130,7 +1130,7 @@
 .provenance {
   margin: 0;
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.02em;
   color: var(--ink-faint);
 }
@@ -1222,7 +1222,7 @@
 
 .establishKind {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -1243,7 +1243,7 @@
 /* What establishing this would mean, said where the decision is made. */
 .establishMeaning {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.02em;
   text-transform: none;
   color: var(--ink-faint);
@@ -1319,7 +1319,7 @@
   padding: 2px 6px;
   background: var(--paper);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-quiet);
@@ -1405,7 +1405,7 @@
    arrow rather than a position in a list. */
 .linkRelation {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--ink-faint);
 }
@@ -1421,7 +1421,7 @@
 
 .linkKind {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -1458,7 +1458,7 @@
 
 .sheetGroupName {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -1664,7 +1664,7 @@
 .finderKey {
   flex: none;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   color: var(--ink-faint);
 }
@@ -1729,7 +1729,7 @@
 .finderVerb {
   flex: none;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -1809,7 +1809,7 @@
 
 .entryKind {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -1825,7 +1825,7 @@
    own, and never the same mark a claim uses for truth. */
 .entryMaturity {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -1840,7 +1840,7 @@
   border: 1px dashed var(--rule-strong);
   border-radius: var(--radius-control);
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -1946,7 +1946,7 @@
 .filterLabel {
   margin-left: 8px;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -2026,7 +2026,7 @@
 
 .entryHereMark {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
@@ -2356,7 +2356,7 @@
   background: var(--paper);
   color: var(--ink-faint);
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1;
   transition: border-color 120ms ease, color 120ms ease;
 }
@@ -2397,7 +2397,7 @@
 
 .sourceMark {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .composer {
@@ -2438,7 +2438,7 @@
   gap: 6px;
   padding: 0 14px 9px;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.4;
   color: var(--ink-faint);
   font-variant-numeric: tabular-nums;
@@ -2546,7 +2546,7 @@
   display: flex;
   align-items: baseline;
   gap: 8px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -2557,7 +2557,7 @@
    state tonight is in without distinguishing two shades of the same ink. */
 .prepState {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 400;
   letter-spacing: 0.04em;
   text-transform: none;
@@ -2752,7 +2752,7 @@
 .beatProposed {
   margin: 0;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--ink-faint);
 }
 
@@ -2899,7 +2899,7 @@
 .liveSurface[data-detail-open] { --detail-panel-inset: 0px; }
 .liveShell .identity { gap: 14px; font-family: var(--font-ui); }
 .liveShell .wordmark { flex: none; font-family: var(--font-editorial); font-weight: 600; font-size: 27px; letter-spacing: -.025em; white-space: nowrap; }
-.wordmark small { font: 500 10px var(--font-ui); letter-spacing: .1em; }
+.wordmark small { font: 500 11px var(--font-ui); letter-spacing: .1em; }
 .liveShell .worldBar { min-width: 0; flex-wrap: wrap; gap: 2px 6px; }
 .liveShell .worldName { display: none; }
 .liveShell .worldBar > .trailMark { display: none; }

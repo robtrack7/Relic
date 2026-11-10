@@ -15,7 +15,7 @@
 .focusDock[data-focus-suppressed] { visibility: hidden; pointer-events: none; }
 .focusDock[hidden] { display: none; }
 .panelSwitch { position: absolute; z-index: 52; top: 82px; right: var(--switch-right, 12px); display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--chrome-rule); border-radius: 999px; background: color-mix(in srgb, var(--chrome-surface) 94%, transparent); box-shadow: var(--lift); }
-.panelSwitch button { min-height: 26px; padding: 0 9px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-quiet); font: 500 10px/1 var(--font-ui); cursor: pointer; }
+.panelSwitch button { min-height: 26px; padding: 0 9px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-quiet); font: 500 11px/1 var(--font-ui); cursor: pointer; }
 .panelSwitch button[aria-pressed="true"] { background: var(--ink); color: var(--card); }
 .panelSwitch button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 /* Right-hand counterpart of the navigation rail while the Builder is open: same 48px marks, same 14px rhythm. */

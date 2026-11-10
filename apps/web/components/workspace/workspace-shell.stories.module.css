@@ -1,2 +1,5 @@
+.desktop { width: 1440px; }
 .constrained { width: min(1100px, 100vw); margin: 0 auto; }
 .narrow { width: min(760px, 100vw); margin: 0 auto; }
+.paper { height: 100%; background: var(--paper); }
+.reverse { position: fixed; top: 85px; left: 180px; z-index: 150; }

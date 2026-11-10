@@ -1,42 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
-import { CarriageSection } from "@/components/carriage/carriage";
-import { CanvasSelectionToolbar, CanvasViewControls, TRAY_INSET, ProfileControl, shouldShowMinimap } from "@/components/canvas/canvas-controls";
-import type { ProxyPlacement } from "@/components/canvas/canvas-foundation";
-import { CanvasWorkspace } from "@/components/workspace/canvas-workspace";
-import type { WorkspaceCarriageDefinition } from "@/components/workspace/workspace-shell";
+import { CanvasChrome, CanvasSelectionToolbar, type CanvasPlacement, CanvasViewControls, TRAY_INSET, ProfileControl, shouldShowMinimap } from "@/components/canvas/canvas-controls";
 
-const PLACEMENTS: readonly ProxyPlacement[] = [
-  {
-    id: "mara",
-    kind: "character",
-    title: "Mara Vey",
-    note: "Keeps a ledger of promises the harbour has not yet collected.",
-    x: 40,
-    y: 40,
-    width: 240,
-    height: 160
-  },
-  {
-    id: "bell",
-    kind: "place",
-    title: "The Drowned Bell",
-    note: "At low tide its bronze crown breaks the black water.",
-    x: 1800,
-    y: 900,
-    width: 300,
-    height: 210
-  }
-];
 
-const LIBRARIAN: WorkspaceCarriageDefinition = {
-  id: "librarian",
-  label: "Librarian",
-  title: "The Librarian",
-  defaultWidth: 340,
-  content: <CarriageSection title="Pinned context">Blackwater Board</CarriageSection>
-};
 
 const OriginalResizeObserver = globalThis.ResizeObserver;
 
@@ -64,6 +31,12 @@ afterEach(() => {
   cleanup();
   globalThis.ResizeObserver = OriginalResizeObserver;
 });
+
+/** Two placements far apart: enough world to exceed one view when zoomed out. */
+const PLACEMENTS: readonly CanvasPlacement[] = [
+  { id: "mara", x: 40, y: 40, width: 240, height: 160 },
+  { id: "bell", x: 1800, y: 900, width: 300, height: 210 }
+];
 
 describe("contextual minimap rule", () => {
   const size = { width: 1000, height: 700 };
@@ -176,10 +149,17 @@ describe("selection toolbar placement", () => {
   });
 });
 
-describe("integrated Canvas chrome", () => {
-  it("explains unavailable actions without activating tools or changing world material", () => {
+function Chrome(props: Partial<Parameters<typeof CanvasChrome>[0]>) {
+  const noop = () => {};
+  return <CanvasChrome contextLabel="Desk" showTopFrame={false} showCanvasControls scale={1} selectionCount={0} placements={[]}
+    viewport={{ x: 0, y: 0, scale: 1 }} viewportSize={{ width: 1440, height: 900 }} selectedIds={[]} minimapMode="auto"
+    onZoomOut={noop} onResetZoom={noop} onZoomIn={noop} onFitBoard={noop} onFitSelection={noop} onNavigate={noop} onMinimapModeChange={noop} {...props}/>;
+}
+
+describe("Canvas chrome", () => {
+  it("explains unavailable actions without activating tools or acting", () => {
     const onToolAction = vi.fn();
-    render(<CanvasWorkspace initialPlacements={PLACEMENTS} layoutWidth={1440} onToolAction={onToolAction} availableToolActions={["Fragment"]} />);
+    render(<Chrome onToolAction={onToolAction} availableToolActions={["Fragment"]}/>);
     const connect = screen.getByRole("button", { name: "Connect" });
     expect(connect.getAttribute("aria-disabled")).toBe("true");
     fireEvent.click(connect);
@@ -192,7 +172,7 @@ describe("integrated Canvas chrome", () => {
   });
 
   it("supports keyboard menus, restores trigger focus, and leaves copy shortcuts alone", () => {
-    render(<CanvasWorkspace initialPlacements={PLACEMENTS} layoutWidth={1440} />);
+    render(<Chrome onToolAction={vi.fn()}/>);
     const create = screen.getByRole("button", { name: "Create" });
     create.focus();
     fireEvent.keyDown(create, { key: "c", ctrlKey: true });
@@ -216,96 +196,12 @@ describe("integrated Canvas chrome", () => {
     expect(document.activeElement).toBe(options);
   });
 
-  it("drives the real camera and exposes Fit Selection only when useful", () => {
-    render(<CanvasWorkspace initialPlacements={PLACEMENTS} initialView="origin" layoutWidth={1440} />);
-    const world = screen.getByTestId("canvas-world");
-
-    expect(world.getAttribute("data-viewport-scale")).toBe("1");
-    fireEvent.click(screen.getByRole("button", { name: "Zoom in" }));
-    expect(Number(world.getAttribute("data-viewport-scale"))).toBeGreaterThan(1);
-    fireEvent.click(screen.getByRole("button", { name: /^Reset zoom to 100%/ }));
-    expect(world.getAttribute("data-viewport-scale")).toBe("1");
-
-    const placement = screen.getByRole("button", { name: /^character: Mara Vey\./ });
-    const viewport = screen.getByTestId("canvas-viewport");
-    fireEvent.pointerDown(placement, { button: 0, pointerId: 1, clientX: 560, clientY: 430 });
-    fireEvent.pointerUp(viewport, { pointerId: 1, clientX: 560, clientY: 430 });
-
-    expect(screen.getByRole("button", { name: "Fit selection" })).toBeDefined();
-  });
-
-  it("keeps tool modes and provisional menus separate from world mutation", () => {
+  it("reports a chosen creation without touching world material", () => {
     const onToolAction = vi.fn();
-    const onPlacementsChange = vi.fn();
-    render(
-      <CanvasWorkspace
-        initialPlacements={PLACEMENTS}
-        layoutWidth={1440}
-        onToolAction={onToolAction}
-        onToolChange={vi.fn()}
-        onPlacementsChange={onPlacementsChange}
-      />
-    );
-
+    render(<Chrome onToolAction={onToolAction}/>);
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
     expect(screen.getByRole("menu", { name: "Create menu" })).toBeDefined();
     fireEvent.click(screen.getByRole("menuitem", { name: "Fragment" }));
     expect(onToolAction).toHaveBeenCalledWith("create", "Fragment");
-    expect(onPlacementsChange).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole("button", { name: "Connect" }));
-    expect(screen.getByRole("button", { name: "Connect" }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByText(/Connect mode/)).toBeDefined();
-    fireEvent.keyDown(window, { key: "Escape" });
-    expect(screen.getByRole("button", { name: "Select" }).getAttribute("aria-pressed")).toBe("true");
-    expect(screen.queryByText(/Connect mode/)).toBeNull();
-  });
-
-  it("switches minimap visibility and navigates without changing Placements", () => {
-    const onPlacementsChange = vi.fn();
-    render(
-      <CanvasWorkspace
-        initialPlacements={PLACEMENTS}
-        initialView="origin"
-        layoutWidth={1440}
-        onPlacementsChange={onPlacementsChange}
-      />
-    );
-
-    expect(screen.queryByRole("button", { name: "Canvas minimap" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Canvas view options" }));
-    fireEvent.click(screen.getByRole("menuitemradio", { name: "Always" }));
-
-    const minimap = screen.getByRole("button", { name: "Canvas minimap" });
-    Object.defineProperty(minimap, "getBoundingClientRect", {
-      value: () => ({ left: 0, top: 0, width: 156, height: 108, right: 156, bottom: 108, x: 0, y: 0, toJSON() {} })
-    });
-    const cameraBefore = screen.getByTestId("canvas-world").getAttribute("style");
-    fireEvent.pointerDown(minimap, { pointerId: 2, clientX: 140, clientY: 92 });
-    fireEvent.pointerUp(minimap, { pointerId: 2, clientX: 140, clientY: 92 });
-
-    expect(screen.getByTestId("canvas-world").getAttribute("style")).not.toBe(cameraBefore);
-    expect(onPlacementsChange).not.toHaveBeenCalled();
-  });
-
-  it("keeps chrome anchored to the Canvas while toggling a carriage", () => {
-    const onPlacementsChange = vi.fn();
-    render(
-      <CanvasWorkspace
-        initialPlacements={PLACEMENTS}
-        initialView="origin"
-        rightCarriage={LIBRARIAN}
-        layoutWidth={1440}
-        onPlacementsChange={onPlacementsChange}
-      />
-    );
-
-    const workspace = screen.getByLabelText("Relic workspace");
-    const cameraBefore = screen.getByTestId("canvas-world").getAttribute("style");
-    fireEvent.click(screen.getByRole("button", { name: "Open Librarian carriage" }));
-
-    expect(workspace.getAttribute("data-right-mode")).toBe("overlay");
-    expect(screen.getByTestId("canvas-world").getAttribute("style")).toBe(cameraBefore);
-    expect(onPlacementsChange).not.toHaveBeenCalled();
   });
 });

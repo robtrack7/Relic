@@ -87,7 +87,7 @@ export function mockWorldOperations(initial: DeskView = OBJECT_DESK) {
   mocked(actions.representObjectAction).mockImplementation(async input => ({ state: "ok", data: { id: asRepresentationId(input.representationId), objectId: asWorldObjectId(input.objectId), kind: input.kind as RepresentationKind, label: input.label, fields: {}, templateId: null, version: 1 } }));
 }
 
-const meta = { title: "World Objects/Workspace", component: DeskSurface, excludeStories: ["mockWorldOperations"], parameters: { layout: "fullscreen", a11y: { test: "todo" }, nextjs: { appDirectory: true } }, args: { initial: OBJECT_DESK, workspace: OBJECT_WORKSPACE }, beforeEach: ({ args }) => mockWorldOperations(args.initial) } satisfies Meta<typeof DeskSurface>;
+const meta = { title: "Desk/World material", component: DeskSurface, excludeStories: ["mockWorldOperations"], parameters: { layout: "fullscreen", a11y: { test: "todo" }, nextjs: { appDirectory: true } }, args: { initial: OBJECT_DESK, workspace: OBJECT_WORKSPACE }, beforeEach: ({ args }) => mockWorldOperations(args.initial) } satisfies Meta<typeof DeskSurface>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const LivingWorld: Story = {};

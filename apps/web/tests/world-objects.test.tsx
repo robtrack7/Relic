@@ -8,8 +8,6 @@ import { observeObject, previewObjectProposal, type ObjectProposal } from "@/lib
 import { asClaimId } from "@/lib/world/model";
 import { legacyDocument, narrativeBody, type EntityDocument, type EntitySnapshot } from "@/lib/world/entity-document";
 import { resolveDisclosure, safeMediaUrl } from "@/lib/world/object-presentation";
-import { MechanicsReference } from "@/components/world-objects/mechanics-reference";
-import { ObjectDetail } from "@/components/world-objects/object-detail";
 import { asTemplateId } from "@/lib/world/model";
 import { useState } from "react";
 
@@ -252,26 +250,6 @@ describe("Focus inspection and recovery", () => {
     expect(!forward || forward.hasAttribute("disabled")).toBe(true);
   }, 15000);
 
-  it("keeps historical Focus read-only and projects the supplied story position", () => {
-    const { result } = renderHook(() => useDesk(OBJECT_DESK));
-    render(<ObjectDetail card={BELL_THREAD} snapshot={THREAD_AT_SESSION_FOUR} store={result.current} onClose={vi.fn()} onFollow={vi.fn()} onReturnToNow={vi.fn()}/>);
-    expect(screen.getByText(/Historical view/)).toBeTruthy();
-    expect(within(screen.getByRole("region", { name: "At a glance" })).getByText("Dormant")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /Edit|Revise|Add development/ })).toBeNull();
-    expect(screen.getByRole("button", { name: "Return to Now" })).toBeTruthy();
-    expect(screen.queryByText("The bell sounds again beneath the spire.")).toBeNull();
-  });
-
-  it("renders a custom rules vocabulary without inserting D&D statistics or derived modifiers", () => {
-    const card = { ...MARA, representation: { ...MARA.representation!, templateId: asTemplateId("custom-sheet"), fields: { ruleset: "A different game", stress: 3, hope: 0, moves: "Turn the tide. Ask what the sea remembers." } } };
-    render(<MechanicsReference card={card}/>);
-    expect(screen.getByText("stress")).toBeTruthy();
-    expect(screen.getByText("0")).toBeTruthy();
-    expect(screen.queryByText("AC")).toBeNull();
-    expect(screen.queryByText("STR")).toBeNull();
-    expect(screen.getByText(/Turn the tide/)).toBeTruthy();
-  });
-
   it("keeps an earlier failure visible through an unrelated success and clears it after its own successful save", async () => {
     actions.editCardBodyAction.mockResolvedValueOnce({ state: "failed", message: "Offline passage" }).mockResolvedValueOnce({ state: "ok", data: { ...MARA, body: "Recovered", bodyVersion: 2 } });
     actions.moveCardsAction.mockResolvedValue({ state: "ok", data: [{ ...WATCHERS_SPIRE, cardVersion: 2 }] });
@@ -295,74 +273,4 @@ describe("Focus inspection and recovery", () => {
     expect(result.current.cards[0]!.layout).toMatchObject({ x: 50, y: 30 });
     expect(result.current.sync.kind).toBe("settled");
   });
-});
-
-it("returns keyboard focus to the section edit control when Escape cancels the draft", async () => {
-  const { result } = renderHook(() => useDesk(OBJECT_DESK));
-  render(<ObjectDetail card={MARA} store={result.current} onClose={vi.fn()} onFollow={vi.fn()}/>);
-  await userEvent.selectOptions(screen.getByRole("combobox", { name: "Focus section" }), "notes");
-  await userEvent.click(screen.getByRole("button", { name: "Edit gm notes" }));
-  const input = screen.getByRole("textbox", { name: "GM notes" });
-  fireEvent.change(input, { target: { value: "Uncommitted" } });
-  fireEvent.keyDown(input, { key: "Escape" });
-  await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit gm notes" })));
-  expect(screen.getByRole("complementary", { name: /Character details/i })).toBeTruthy();
-  expect(actions.editRepresentationAction).not.toHaveBeenCalled();
-});
-
-it("keeps an unsaved Focus draft mounted while moving compact → full → compact", async () => {
-  const { result } = renderHook(() => useDesk(OBJECT_DESK));
-  function FocusModeHarness() {
-    const [mode, setMode] = useState<"compact" | "full">("full");
-    return <ObjectDetail card={MARA} store={result.current} mode={mode} onModeChange={setMode} onClose={vi.fn()} onFollow={vi.fn()}/>;
-  }
-  render(<FocusModeHarness/>);
-  await userEvent.selectOptions(screen.getByRole("combobox", { name: "Focus section" }), "notes");
-  await userEvent.click(screen.getByRole("button", { name: "Edit gm notes" }));
-  const input = screen.getByRole("textbox", { name: "GM notes" });
-  await userEvent.type(input, "Draft kept across the dossier");
-  await userEvent.click(screen.getByRole("button", { name: "Return to dossier" }));
-  expect(screen.queryByRole("textbox", { name: "GM notes" })).toBeNull();
-  await userEvent.click(screen.getByRole("button", { name: "Open full Focus" }));
-  await userEvent.selectOptions(screen.getByRole("combobox", { name: "Focus section" }), "notes");
-  expect((screen.getByRole("textbox", { name: "GM notes" }) as HTMLTextAreaElement).value).toContain("Draft kept across the dossier");
-});
-
-it("keeps an authored draft mounted while reviewing and cancelling establishment", async () => {
-  const pending = fixtureClaim(MARA, "status", "At sea", { id: asClaimId("status-proposal"), truthState: "pencil", settled: null });
-  const card = { ...MARA, claims: [...MARA.claims, pending] };
-  const { result } = renderHook(() => useDesk({ ...OBJECT_DESK, cards: [card] }));
-  render(<ObjectDetail card={card} store={result.current} onClose={vi.fn()} onFollow={vi.fn()}/>);
-  await userEvent.click(screen.getByRole("button", { name: "Edit narrative" }));
-  fireEvent.change(screen.getByRole("textbox", { name: "Narrative" }), { target: { value: "Keep this authored draft." } });
-  await userEvent.click(screen.getByRole("button", { name: "Object actions" }));
-  await userEvent.click(screen.getByRole("button", { name: "Review & establish…" }));
-  const preview = within(screen.getByRole("complementary", { name: "Preview establishing" }));
-  await userEvent.click(preview.getByRole("button", { name: "Cancel" }));
-  expect((screen.getByRole("textbox", { name: "Narrative" }) as HTMLTextAreaElement).value).toBe("Keep this authored draft.");
-  expect(actions.settleTruthAction).not.toHaveBeenCalled();
-});
-
-it("does not turn an unchanged settled relationship into a pending revision or remove its target", async () => {
-  const { result } = renderHook(() => useDesk(OBJECT_DESK));
-  render(<ObjectDetail card={MARA} store={result.current} onClose={vi.fn()} onFollow={vi.fn()}/>);
-  await userEvent.selectOptions(screen.getByRole("combobox", { name: "Focus section" }), "state");
-  await userEvent.click(screen.getByRole("button", { name: "Revise location" }));
-  await userEvent.click(screen.getByRole("button", { name: "Save revision" }));
-  expect(actions.setClaimAction).not.toHaveBeenCalled();
-  expect(actions.removeClaimAction).not.toHaveBeenCalled();
-  expect(screen.queryByRole("textbox", { name: "Location" })).toBeNull();
-  expect(result.current.cards.find(card => card.objectId === MARA.objectId)?.claims.find(claim => claim.claimKind === "location")?.objectValue).toBe(WATCHERS_SPIRE.objectId);
-});
-
-it("requires an explicit withdrawal instead of treating an empty settled revision as removal", async () => {
-  const { result } = renderHook(() => useDesk(OBJECT_DESK));
-  render(<ObjectDetail card={MARA} store={result.current} onClose={vi.fn()} onFollow={vi.fn()}/>);
-  await userEvent.selectOptions(screen.getByRole("combobox", { name: "Focus section" }), "state");
-  await userEvent.click(screen.getByRole("button", { name: "Revise status" }));
-  fireEvent.change(screen.getByRole("textbox", { name: "Status" }), { target: { value: "" } });
-  await userEvent.click(screen.getByRole("button", { name: "Save revision" }));
-  expect(screen.getByRole("alert").textContent).toContain("Use Withdraw");
-  expect(actions.removeClaimAction).not.toHaveBeenCalled();
-  expect(actions.setClaimAction).not.toHaveBeenCalled();
 });

@@ -124,6 +124,15 @@
   --workflow-ink: #995a21;
   --status-ready: #496640;
   --destructive: #8a3828;
+  /* Aliases some components read. Defined once here so they follow the light
+     preference instead of falling back to daylight literals. */
+  --control-surface: var(--chrome-surface);
+  --control-hover: var(--chrome-hover);
+  --context-surface: var(--carriage-context);
+  --canvas: var(--paper);
+  --selection-orange: var(--orange);
+  /* Text and marks set on a filled workflow surface (primary buttons). */
+  --on-workflow: #fffaf2;
 
   /* Type roles. Compact by default; Focus and Builder prose are deliberate
      exceptions because they are read at arm's length and written in for hours. */
@@ -135,7 +144,7 @@
   --type-focus-prose: 400 14px/1.5 var(--font-reading);
   --type-builder-prose: 400 16px/1.6 var(--font-reading);
   --type-ui: 500 13px/1.4 var(--font-ui);
-  --type-label: 600 10px/1.4 var(--font-ui);
+  --type-label: 600 11px/1.4 var(--font-ui);
   --type-stat: 600 22px/1.1 var(--font-ui);
 
   --motion-feedback: 120ms;
@@ -143,6 +152,94 @@
   --motion-spatial: 320ms;
   --motion-ease: cubic-bezier(.16, 1, .3, 1);
 }
+/* Lamplit: the low-light world for dim rooms (P8, option A). Warm umber
+   surfaces and parchment ink held near 11:1 so text does not halate; amber
+   stays the one workflow colour. Follows the system unless the GM chooses
+   Daylight or Lamplit in Settings (data-relic-light, set before first paint). */
+:root[data-relic-light="lamplit"] {
+  color-scheme: dark;
+  --paper-deep: #15120f;
+  --paper: #1a1612;
+  --paper-tooth: rgba(239, 230, 214, 0.035);
+  --card: #24201b;
+  --card-raised: #2a251f;
+  --ink: #e4d9c6;
+  --ink-quiet: #bdb19e;
+  --ink-faint: #a39784;
+  --rule: #3a332b;
+  --rule-strong: #4a4237;
+  --orange: #e8834f;
+  --orange-deep: #e2a868;
+  --orange-wash: rgba(232, 131, 79, 0.14);
+  --orange-edge: rgba(232, 131, 79, 0.45);
+  --focus-ring: #e2a868;
+  --lift: 0 1px 1px rgba(0, 0, 0, 0.3), 0 3px 10px -6px rgba(0, 0, 0, 0.6);
+  --lift-raised: 0 1px 1px rgba(0, 0, 0, 0.3), 0 10px 24px -12px rgba(0, 0, 0, 0.7);
+  --canvas-grid: rgba(228, 217, 198, 0.06);
+  --canvas-surface: #26221d;
+  --canvas-note: #2b261e;
+  --canvas-sage: #232821;
+  --canvas-slate: #22262a;
+  --canvas-selection: #e4d9c6;
+  --chrome-surface: #221e19;
+  --chrome-hover: #312b24;
+  --chrome-rule: #3a332b;
+  --chrome-lift: 0 2px 5px rgb(0 0 0 / 25%), 0 12px 24px -14px rgb(0 0 0 / 60%);
+  --carriage-surface: #1f1b17;
+  --carriage-context: #26211c;
+  --workflow-accent: #c98a46;
+  --workflow-ink: #e2a868;
+  --status-ready: #9dbb8c;
+  --destructive: #e8947f;
+  --on-workflow: #1a1612;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-relic-light="daylight"]) {
+    color-scheme: dark;
+    --paper-deep: #15120f;
+    --paper: #1a1612;
+    --paper-tooth: rgba(239, 230, 214, 0.035);
+    --card: #24201b;
+    --card-raised: #2a251f;
+    --ink: #e4d9c6;
+    --ink-quiet: #bdb19e;
+    --ink-faint: #a39784;
+    --rule: #3a332b;
+    --rule-strong: #4a4237;
+    --orange: #e8834f;
+    --orange-deep: #e2a868;
+    --orange-wash: rgba(232, 131, 79, 0.14);
+    --orange-edge: rgba(232, 131, 79, 0.45);
+    --focus-ring: #e2a868;
+    --lift: 0 1px 1px rgba(0, 0, 0, 0.3), 0 3px 10px -6px rgba(0, 0, 0, 0.6);
+    --lift-raised: 0 1px 1px rgba(0, 0, 0, 0.3), 0 10px 24px -12px rgba(0, 0, 0, 0.7);
+    --canvas-grid: rgba(228, 217, 198, 0.06);
+    --canvas-surface: #26221d;
+    --canvas-note: #2b261e;
+    --canvas-sage: #232821;
+    --canvas-slate: #22262a;
+    --canvas-selection: #e4d9c6;
+    --chrome-surface: #221e19;
+    --chrome-hover: #312b24;
+    --chrome-rule: #3a332b;
+    --chrome-lift: 0 2px 5px rgb(0 0 0 / 25%), 0 12px 24px -14px rgb(0 0 0 / 60%);
+    --carriage-surface: #1f1b17;
+    --carriage-context: #26211c;
+    --workflow-accent: #c98a46;
+    --workflow-ink: #e2a868;
+    --status-ready: #9dbb8c;
+    --destructive: #e8947f;
+  --on-workflow: #1a1612;
+  }
+}
+/* Native controls without authored styling take the Lamplit chrome, not the
+   browser's dark-grey defaults. Zero specificity: any authored rule wins. */
+:where(:root[data-relic-light="lamplit"]) :where(button, select, input, textarea) { background-color: var(--chrome-surface); color: var(--ink); border-color: var(--chrome-rule); }
+@media (prefers-color-scheme: dark) { :where(:root:not([data-relic-light="daylight"])) :where(button, select, input, textarea) { background-color: var(--chrome-surface); color: var(--ink); border-color: var(--chrome-rule); } }
+/* Pictures keep their own light, a little lowered so they do not glare. */
+:root[data-relic-light="lamplit"] img { filter: brightness(.88); }
+@media (prefers-color-scheme: dark) { :root:not([data-relic-light="daylight"]) img { filter: brightness(.88); } }
+
 
 *,
 *::before,
@@ -189,7 +286,7 @@ button {
 /* Provenance, dates, sources, counts — system metadata, set in mono. */
 .meta {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
