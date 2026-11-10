@@ -1,0 +1,161 @@
+.reader {
+  color: var(--ink, #1a1916);
+  /* Running prose is set in the reading serif; the host surface chooses the
+     role (Focus 14/1.5 by default, Builder 16/1.6). Headings keep Cormorant. */
+  font: var(--prose-font, var(--type-focus-prose));
+  max-width: 68ch;
+}
+
+.reader p { margin: 0 0 .75em; }
+.reader h2, .reader h3 { color: var(--ink, #1a1916); font-family: var(--font-editorial); font-weight: 600; line-height: 1.14; margin: 1.4em 0 .4em; }
+.reader h2 { font-size: 1.7rem; }
+.reader h3 { font-size: 1.35rem; }
+.reader ul, .reader ol { margin: 0 0 1.1rem 1.35rem; padding: 0; }
+.reader li { padding-left: .25rem; margin: .28rem 0; }
+.reader li p { margin-bottom: .28rem; }
+.reader blockquote { border-left: 1px solid var(--workflow-amber, #b8702a); color: var(--workflow-ink, #995a21); margin: 1.25rem 0; padding: .15rem 0 .15rem 1.15rem; }
+.reader a { color: var(--workflow-ink, #995a21); text-decoration-thickness: 1px; text-underline-offset: .18em; }
+.reader a:hover { color: var(--ink, #1a1916); }
+
+.reference {
+  background: var(--context-surface, #f3eeea);
+  border: 1px solid var(--chrome-rule, #e1dad1);
+  border-radius: 999px;
+  color: var(--workflow-ink, #995a21);
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.35;
+  padding: .05em .5em;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--workflow-amber, #b8702a) 48%, transparent);
+  text-underline-offset: .18em;
+}
+.reference:hover, .reference:focus-visible { background: var(--control-hover, #e7e0d8); }
+
+.editorShell {
+  background: var(--control-surface, #faf8f4);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: var(--ink, #1a1916);
+  font: var(--prose-font, var(--type-focus-prose));
+  max-width: 68ch;
+  min-height: 8rem;
+  position: relative;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+.editorShell:hover { border-color: var(--chrome-rule, #e1dad1); }
+.editorFocused { background: var(--context-surface, #f3eeea); border-color: var(--workflow-amber, #b8702a); }
+.editorLoading { min-height: 8rem; }
+
+.editorShell :global(.ProseMirror) { caret-color: var(--selection-orange, #ff6d1f); min-height: 7rem; outline: 0; padding: 1rem 1.1rem 1.6rem; white-space: pre-wrap; }
+.editorShell :global(.ProseMirror) > *:first-child { margin-top: 0; }
+.editorShell :global(.ProseMirror) > *:last-child { margin-bottom: 0; }
+.editorShell :global(.ProseMirror) p { margin: 0 0 .75em; }
+.editorShell :global(.ProseMirror) h2, .editorShell :global(.ProseMirror) h3 { color: var(--ink, #1a1916); font-family: var(--font-editorial); font-weight: 600; line-height: 1.14; margin: 1.4em 0 .4em; }
+.editorShell :global(.ProseMirror) h2 { font-size: 1.7rem; }
+.editorShell :global(.ProseMirror) h3 { font-size: 1.35rem; }
+.editorShell :global(.ProseMirror) ul, .editorShell :global(.ProseMirror) ol { margin: 0 0 1.1rem 1.35rem; padding: 0; }
+.editorShell :global(.ProseMirror) blockquote { border-left: 1px solid var(--workflow-amber, #b8702a); color: var(--workflow-ink, #995a21); margin: 1.25rem 0; padding-left: 1.15rem; }
+.editorShell :global(.ProseMirror) a { color: var(--workflow-ink, #995a21); text-decoration: underline; text-underline-offset: .18em; }
+.editorShell :global(.ProseMirror) [data-entity-reference] { background: var(--context-surface, #f3eeea); border: 1px solid var(--chrome-rule, #e1dad1); border-radius: 999px; color: var(--workflow-ink, #995a21); cursor: pointer; display: inline-block; font: inherit; padding: 0 .45em; }
+.editorShell :global(.ProseMirror) [data-entity-reference]:focus-visible { outline: 2px solid var(--selection-orange, #ff6d1f); outline-offset: 2px; }
+.editorShell :global(.ProseMirror[data-placeholder]:empty::before) { color: color-mix(in srgb, var(--workflow-ink, #995a21) 58%, transparent); content: attr(data-placeholder); float: left; height: 0; pointer-events: none; }
+
+.formatBar { align-items: center; display: flex; gap: .15rem; padding: .45rem .55rem .15rem; }
+.formatButton, .referenceTrigger { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 6px; color: var(--workflow-ink, #995a21); cursor: pointer; display: inline-flex; font: 600 .72rem/1 var(--font-ui, "Instrument Sans", sans-serif); justify-content: center; min-height: 1.9rem; min-width: 1.9rem; padding: .35rem; }
+.formatButton:hover, .formatButton:focus-visible, .referenceTrigger:hover, .referenceTrigger:focus-visible { background: var(--control-hover, #e7e0d8); border-color: var(--chrome-rule, #e1dad1); }
+.formatButtonActive { background: var(--context-surface, #f3eeea); border-color: var(--workflow-amber, #b8702a); color: var(--ink, #1a1916); }
+.formatGlyph { font-family: var(--font-editorial, "Cormorant Garamond", Georgia, serif); font-size: 1rem; }
+.formatRule { background: var(--chrome-rule, #e1dad1); height: 1.25rem; margin: 0 .2rem; width: 1px; }
+.formatSpacer { flex: 1; }
+.referenceTrigger { color: var(--workflow-ink, #995a21); padding-inline: .55rem; }
+
+.inlinePopover { align-items: center; background: var(--control-surface, #faf8f4); border: 1px solid var(--chrome-rule, #e1dad1); border-radius: 8px; box-shadow: 0 8px 20px color-mix(in srgb, var(--ink, #1a1916) 12%, transparent); display: flex; flex-wrap: wrap; gap: .4rem; margin: .25rem .55rem .45rem; padding: .5rem; position: relative; z-index: 2; }
+.inlinePopover label { color: var(--workflow-ink, #995a21); font: 600 .72rem/1 var(--font-ui, "Instrument Sans", sans-serif); width: 100%; }
+.inlinePopover input { background: var(--control-surface, #faf8f4); border: 1px solid var(--chrome-rule, #e1dad1); border-radius: 6px; color: var(--ink, #1a1916); flex: 1; font: .82rem/1.3 var(--font-ui, "Instrument Sans", sans-serif); min-width: 12rem; padding: .42rem .5rem; }
+.inlinePopover button { background: var(--workflow-ink, #995a21); border: 1px solid var(--workflow-ink, #995a21); border-radius: 6px; color: var(--control-surface, #faf8f4); cursor: pointer; font: 600 .76rem/1.2 var(--font-ui, "Instrument Sans", sans-serif); padding: .42rem .6rem; }
+.inlinePopover button[type="button"] { background: transparent; color: var(--workflow-ink, #995a21); }
+.inlinePopover input:focus-visible, .inlinePopover button:focus-visible { outline: 2px solid var(--selection-orange, #ff6d1f); outline-offset: 2px; }
+.referenceResults { display: grid; gap: .2rem; max-height: 12rem; overflow: auto; width: 100%; }
+.referenceResult { align-items: center; background: transparent !important; border: 1px solid transparent !important; color: var(--ink, #1a1916) !important; display: flex; justify-content: space-between; text-align: left; width: 100%; }
+.referenceResult:hover, .referenceResult:focus-visible { background: var(--context-surface, #f3eeea) !important; border-color: var(--chrome-rule, #e1dad1) !important; }
+.referenceResult small, .popoverHint { color: var(--workflow-ink, #995a21); font: .7rem/1.3 var(--font-ui, "Instrument Sans", sans-serif); }
+.editorHint { bottom: .38rem; color: color-mix(in srgb, var(--workflow-ink, #995a21) 62%, transparent); font: .67rem/1 var(--font-ui, "Instrument Sans", sans-serif); position: absolute; right: .65rem; }
+.visuallyHidden { clip: rect(0 0 0 0); clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
+
+/* Manuscript: always-editable writing that sits on the page. No frame, no well;
+   formatting floats above the selection and block insertion lives on the line. */
+.manuscript { background: transparent; border: 0; border-radius: 0; max-width: none; min-height: 0; transition: none; }
+.manuscript:hover { border-color: transparent; }
+.manuscript.editorLoading { min-height: 1.6em; }
+.manuscript :global(.ProseMirror) { min-height: 1.6em; padding: 0; caret-color: var(--focus-ring, #ad4318); }
+/* Headings written inside a section sit below the section heading in the hierarchy. */
+.manuscript :global(.ProseMirror) h2 { font-size: 1.2rem; font-style: italic; font-weight: 500; line-height: 1.25; margin: 1.3em 0 .3em; }
+.manuscript :global(.ProseMirror) h3 { font: 600 1rem/1.4 var(--font-reading); margin: 1.2em 0 .25em; }
+.manuscript :global(.ProseMirror) blockquote { color: var(--ink-quiet, #5f584f); font-style: italic; border-left-color: var(--chrome-rule, #e1dad1); }
+.manuscript :global(.ProseMirror > p:only-child:has(> br:only-child))::before {
+  color: var(--ink-faint, #70695f);
+  content: var(--editor-placeholder, "");
+  float: left;
+  font-style: italic;
+  height: 0;
+  pointer-events: none;
+}
+
+.floatingBar {
+  background: var(--chrome-surface, #faf8f4);
+  border: 1px solid var(--chrome-rule, #e1dad1);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgb(26 25 22 / 6%), 0 10px 24px -10px rgb(26 25 22 / 28%);
+  gap: 2px;
+  padding: 4px;
+  position: absolute;
+  white-space: nowrap;
+  z-index: 8;
+}
+.floatingBar .formatButton { border: 0; border-radius: 6px; color: var(--ink-quiet, #5f584f); height: 32px; min-height: 32px; min-width: 32px; padding: 0 6px; }
+.floatingBar .formatButton:hover { background: var(--chrome-hover, #e7e0d8); color: var(--ink, #1a1916); }
+.floatingBar .formatButton:focus-visible { background: var(--chrome-hover, #e7e0d8); color: var(--ink, #1a1916); outline: 2px solid var(--focus-ring, #ad4318); outline-offset: 0; }
+.floatingBar .formatButtonActive { background: color-mix(in srgb, var(--workflow-ink, #995a21) 12%, transparent); color: var(--workflow-ink, #995a21); }
+.floatingBar .formatGlyph { display: inline-grid; place-items: center; font: 600 11px/1 var(--font-ui, "Instrument Sans", sans-serif); letter-spacing: .02em; }
+.floatingBar .formatGlyph strong, .floatingBar .formatGlyph em { font: 600 16px/1 var(--font-editorial, Georgia, serif); }
+.floatingBar .formatGlyph em { font-style: italic; font-weight: 500; }
+.floatingBar .formatRule { height: 18px; margin: 0 3px; }
+.formatBar.floatingBar { flex-wrap: nowrap; }
+.mentionGlyph { font: 500 14px/1 var(--font-ui, "Instrument Sans", sans-serif); }
+
+.floatingPopover { margin: 0; max-width: min(320px, 100%); position: absolute; width: 320px; z-index: 9; background: var(--chrome-surface, #faf8f4); box-shadow: 0 1px 2px rgb(26 25 22 / 6%), 0 10px 24px -10px rgb(26 25 22 / 28%); }
+.floatingPopover label { color: var(--ink-quiet, #5f584f); }
+.referenceResult[aria-selected="true"] { background: var(--chrome-hover, #e7e0d8) !important; }
+
+.insertMenu {
+  background: var(--chrome-surface, #faf8f4);
+  border: 1px solid var(--chrome-rule, #e1dad1);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgb(26 25 22 / 6%), 0 10px 24px -10px rgb(26 25 22 / 28%);
+  display: grid;
+  max-height: 18rem;
+  overflow: auto;
+  padding: 4px;
+  position: absolute;
+  width: 220px;
+  z-index: 9;
+}
+.insertOption { border-radius: 6px; color: var(--ink, #1a1916); cursor: pointer; font: 400 13px/1.3 var(--font-ui, "Instrument Sans", sans-serif); padding: 8px 10px; }
+.insertOption:hover, .insertOption[aria-selected="true"] { background: var(--chrome-hover, #e7e0d8); }
+.insertOption[aria-disabled="true"] { color: var(--ink-faint, #70695f); cursor: default; }
+
+@media (max-width: 640px) {
+  .formatBar { flex-wrap: wrap; }
+  .formatSpacer { display: none; }
+  .referenceTrigger { margin-left: auto; }
+}
+
+@media (pointer: coarse) {
+  .floatingBar .formatButton { height: 40px; min-width: 40px; }
+  .insertOption { padding-block: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editorShell { transition: none; }
+}

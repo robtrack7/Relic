@@ -1,0 +1,156 @@
+/*
+ * Inspector shell refinements stay separate from the Desk surface stylesheet.
+ * The detail panel is a Focus host, so it owns its own scroll region while
+ * remaining an overlay of the central workspace. The data attributes make
+ * these rules resilient to the Desk stylesheet's CSS-module class names.
+ */
+
+.panel {
+  min-width: 0;
+  min-height: 0;
+}
+.motionSurface { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
+.motionSurface[hidden] { display: none; }
+.motionSurface [data-focus-mode] { pointer-events: auto; animation: none; }
+.motionSurface[inert] [data-detail-panel] { pointer-events: none; }
+
+.motionSurface [data-focus-mode] {
+  top: calc(var(--workspace-edge, 20px) + 56px);
+  right: calc(var(--workspace-right-inset, 0px) + var(--workspace-edge, 20px));
+  bottom: calc(var(--workspace-edge, 20px) + 76px);
+  width: min(360px, calc(100% - (var(--workspace-edge, 20px) * 2)));
+  max-width: calc(100% - (var(--workspace-edge, 20px) * 2));
+  min-height: 0;
+  overflow: hidden;
+  padding: 16px 16px 20px;
+  border-radius: var(--radius-surface, 24px);
+}
+
+.motionSurface [data-focus-mode][data-focus-mode="full"] {
+  top: var(--workspace-content-top, 132px);
+  left: calc(var(--workspace-focus-left-inset, 64px) + 20px);
+  right: calc(var(--workspace-focus-right-inset, 0px) + 20px);
+  bottom: var(--workspace-edge, 20px);
+  width: min(900px, calc(100% - var(--workspace-focus-left-inset, 64px) - var(--workspace-focus-right-inset, 0px) - 40px));
+  max-width: none;
+  margin-inline: auto;
+  padding: 0;
+  transform: none;
+}
+
+.motionSurface [data-focus-mode] > header {
+  flex: none;
+  min-width: 0;
+}
+
+.motionSurface [data-detail-scroll] {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 18px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.motionSurface [data-focus-mode] input,
+.motionSurface [data-focus-mode] textarea,
+.motionSurface [data-focus-mode] button {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.motionSurface [data-focus-mode] [data-inspector-field] {
+  grid-template-columns: minmax(4.5rem, 5.5rem) minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.motionSurface [data-focus-mode] [data-inspector-field] > span,
+.motionSurface [data-focus-mode] [data-inspector-field] > div {
+  min-width: 0;
+}
+
+.motionSurface [data-focus-mode] [data-inspector-field] > span:first-child {
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+
+.motionSurface [data-focus-mode] [data-claim-meta] {
+  min-width: 0;
+  padding-left: clamp(0px, 5.25rem, 24%);
+}
+
+.motionSurface [data-focus-mode] [data-sheet-grid] {
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.motionSurface [data-focus-mode] [data-inspector-close] {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  flex: none;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.motionSurface [data-focus-mode] [data-inspector-close] > svg {
+  width: 20px;
+  height: 20px;
+}
+
+.motionSurface [data-focus-mode] [data-inspector-action] {
+  min-height: 44px;
+  padding: 6px 10px;
+  border-radius: var(--radius-control);
+  font: 500 12px/1.3 var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+@media (max-width: 720px), (pointer: coarse) {
+  .motionSurface [data-focus-mode] {
+    top: auto;
+    right: var(--workspace-edge, 20px);
+    bottom: var(--workspace-edge, 20px);
+    width: min(360px, calc(100% - (var(--workspace-edge, 20px) * 2)));
+    max-height: min(70dvh, calc(100% - (var(--workspace-edge, 20px) * 2)));
+  }
+}
+
+@media (max-width: 420px) {
+  .motionSurface [data-focus-mode] {
+    right: 8px;
+    bottom: 8px;
+    width: calc(100% - 16px);
+    max-width: calc(100% - 16px);
+    max-height: min(76dvh, calc(100% - 16px));
+    padding: 14px 12px 16px;
+  }
+
+  .motionSurface [data-focus-mode] [data-inspector-field] {
+    grid-template-columns: minmax(4rem, 5rem) minmax(0, 1fr);
+  }
+
+  .motionSurface [data-focus-mode] [data-inspector-field] > :last-child {
+    grid-column: 2;
+  }
+}
+
+@container (max-width: 900px) {
+  .motionSurface [data-focus-mode] {
+    top: 76px;
+    bottom: calc(var(--workspace-edge, 20px) + 140px);
+    max-height: none;
+  }
+}
+
+@container (max-width: 360px) {
+  .motionSurface [data-focus-mode] {
+    bottom: calc(var(--workspace-edge, 20px) + 300px);
+  }
+}

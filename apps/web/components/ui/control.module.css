@@ -1,0 +1,240 @@
+.button,
+.iconButton,
+.toggleButton,
+.segment {
+  --control-surface: var(--chrome-surface, #faf8f4);
+  --control-ink: var(--ink, #1c1815);
+  --control-quiet: var(--ink-quiet, #57514a);
+  --control-edge: var(--chrome-rule, #d8d0c6);
+  --control-accent: var(--workflow-accent, #b8702a);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control, 8px);
+  background: transparent;
+  color: var(--control-quiet);
+  cursor: pointer;
+  font-family: var(--font-ui, var(--sans));
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.button,
+.toggleButton {
+  gap: 8px;
+  padding: 0 15px;
+}
+
+.iconButton {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+}
+
+.iconButton > svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.compact {
+  min-height: 44px;
+  font-size: 12px;
+}
+
+.iconButton.compact {
+  width: 44px;
+}
+
+.quiet:hover,
+.quiet:focus-visible {
+  background: color-mix(in srgb, var(--control-surface) 88%, var(--control-accent));
+  color: var(--control-ink);
+}
+
+.quiet:active,
+.quiet[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--control-surface) 76%, var(--control-accent));
+  color: var(--control-ink);
+}
+
+.secondary,
+.segment.secondary {
+  border-color: var(--control-edge);
+  background: var(--control-surface);
+  color: var(--control-ink);
+  box-shadow: var(--chrome-lift, 0 1px 2px rgb(26 25 22 / 7%));
+}
+
+.secondary:hover,
+.secondary:focus-visible {
+  border-color: color-mix(in srgb, var(--control-accent) 55%, var(--control-edge));
+  background: color-mix(in srgb, var(--control-surface) 86%, var(--control-accent));
+}
+
+.secondary:active,
+.secondary[aria-pressed="true"] {
+  border-color: var(--control-accent);
+  background: color-mix(in srgb, var(--control-surface) 76%, var(--control-accent));
+  box-shadow: none;
+  transform: translateY(1px);
+}
+
+.primary {
+  border-color: var(--workflow-ink, #995a21);
+  background: var(--workflow-ink, #995a21);
+  color: #fffaf2;
+  box-shadow: 0 1px 2px rgb(68 39 18 / 18%);
+}
+
+.primary:hover,
+.primary:focus-visible {
+  border-color: #824817;
+  background: #824817;
+}
+
+.primary:active,
+.primary[aria-pressed="true"] {
+  border-color: #6f3d15;
+  background: #6f3d15;
+  box-shadow: none;
+  transform: translateY(1px);
+}
+
+.primary:disabled,
+.primary:disabled:hover {
+  border-color: color-mix(in srgb, var(--workflow-ink, #995a21) 28%, var(--control-edge));
+  background: color-mix(in srgb, var(--workflow-ink, #995a21) 32%, var(--control-surface));
+  color: var(--control-quiet);
+}
+
+.destructive {
+  border-color: color-mix(in srgb, var(--destructive, #8a3828) 38%, var(--control-edge));
+  color: var(--destructive, #8a3828);
+}
+
+.destructive:hover,
+.destructive:focus-visible,
+.destructive:active {
+  background: color-mix(in srgb, var(--destructive, #8a3828) 10%, transparent);
+}
+
+.button:focus-visible,
+.iconButton:focus-visible,
+.toggleButton:focus-visible,
+.segment:focus-visible {
+  outline: 2px solid var(--control-accent);
+  outline-offset: 2px;
+}
+
+.button:disabled,
+.iconButton:disabled,
+.toggleButton:disabled,
+.segment:disabled {
+  color: color-mix(in srgb, var(--control-quiet) 46%, transparent);
+  cursor: not-allowed;
+  opacity: 0.68;
+  transform: none;
+}
+
+.button:disabled:hover,
+.iconButton:disabled:hover,
+.toggleButton:disabled:hover,
+.segment:disabled:hover {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.buttonGroup {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.segmentedControl {
+  display: inline-flex;
+  max-width: 100%;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--chrome-rule, #d8d0c6);
+  border-radius: 7px;
+  background: var(--context-surface, #f3eeea);
+}
+
+.segment {
+  min-height: 44px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  padding: 0 13px;
+}
+
+.segment.selected {
+  border-color: var(--chrome-rule, #d8d0c6);
+  background: var(--control-surface, #faf8f4);
+  color: var(--control-ink, #1c1815);
+  box-shadow: 0 1px 2px rgb(26 25 22 / 8%);
+}
+
+.segment:hover:not(:disabled):not(.selected) {
+  background: color-mix(in srgb, var(--control-surface) 82%, var(--control-accent));
+}
+
+.segment.compact {
+  min-height: 44px;
+  padding-inline: 10px;
+}
+
+.loadingMark {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 1000;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--ink, #1c1815) 22%, transparent);
+  border-radius: 4px;
+  background: var(--ink, #1c1815);
+  color: var(--paper, #f7f4ef);
+  font-family: var(--font-ui, var(--sans));
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.25;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgb(26 25 22 / 16%);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .iconButton,
+  .toggleButton,
+  .segment,
+  .loadingMark {
+    animation: none;
+    transition: none;
+  }
+}

@@ -1,0 +1,35 @@
+import { fn } from "storybook/test";
+import type * as Actions from "../actions";
+import type * as EntityActions from "../entity-actions";
+
+// Browser-only Storybook adapters. Individual scenes supply typed fixture responses.
+export const captureCardAction = fn<typeof Actions.captureCardAction>();
+export const changeCollectionAction = fn<typeof Actions.changeCollectionAction>();
+export const replaceSpatialAction = fn<typeof Actions.replaceSpatialAction>();
+export const restoreCompositionAction = fn<typeof Actions.restoreCompositionAction>();
+export const editCardBodyAction = fn<typeof Actions.editCardBodyAction>();
+export const moveCardsAction = fn<typeof Actions.moveCardsAction>();
+export const moveCollectionCardsAction = fn<typeof Actions.moveCollectionCardsAction>();
+export const createBoardAction = fn<typeof Actions.createBoardAction>();
+export const referenceObjectsAction = fn<typeof Actions.referenceObjectsAction>();
+export const removeCardsAction = fn<typeof Actions.removeCardsAction>();
+export const removeCollectionCardsAction = fn<typeof Actions.removeCollectionCardsAction>();
+export const createSessionAction = fn<typeof Actions.createSessionAction>();
+export const editSessionAction = fn<typeof Actions.editSessionAction>();
+export const setBeatAction = fn<typeof Actions.setBeatAction>();
+export const removeBeatAction = fn<typeof Actions.removeBeatAction>();
+export const reorderBeatsAction = fn<typeof Actions.reorderBeatsAction>();
+export const representObjectAction = fn<typeof Actions.representObjectAction>();
+export const editRepresentationAction = fn<typeof Actions.editRepresentationAction>();
+export const setClaimAction = fn<typeof Actions.setClaimAction>();
+export const setRelationshipVisibilityAction = fn<typeof Actions.setRelationshipVisibilityAction>();
+export const searchWorldAction = fn<typeof Actions.searchWorldAction>();
+export const inspectObjectAction = fn<typeof Actions.inspectObjectAction>();
+export const readCompositionObjectsAction = fn<typeof Actions.readCompositionObjectsAction>();
+export const removeClaimAction = fn<typeof Actions.removeClaimAction>();
+export const settleTruthAction = fn<typeof Actions.settleTruthAction>();
+export const loadEntityAction = fn<typeof EntityActions.loadEntityAction>();
+export const createEntityAction = fn<typeof EntityActions.createEntityAction>();
+export const saveEntityDocumentAction = fn<typeof EntityActions.saveEntityDocumentAction>();
+export const saveEntityIdentityAction = fn<typeof EntityActions.saveEntityIdentityAction>();
+export const saveEntityMechanicsAction = fn<typeof EntityActions.saveEntityMechanicsAction>();

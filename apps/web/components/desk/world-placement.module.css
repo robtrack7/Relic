@@ -1,0 +1,36 @@
+.placement { position: absolute; display: flex; min-width: 0; padding: 0; border: 0; border-radius: 14px; outline: none; cursor: default; user-select: none; transition: transform 300ms cubic-bezier(.16, 1, .3, 1), width 260ms cubic-bezier(.16, 1, .3, 1), min-height 260ms cubic-bezier(.16, 1, .3, 1), opacity 140ms ease-out; transform-origin: 50% 30%; }
+[data-interacting="drag"] .placement { transition: opacity 140ms ease-out; }
+[data-interacting="resize"] .placement { transition: none; }
+.placement > div { flex: 1; }
+.placement[data-paper-tint="paper"] { --paper-tint: #fbf9f4; }
+.placement[data-paper-tint="sand"] { --paper-tint: #f4ecdc; }
+.placement[data-paper-tint="sage"] { --paper-tint: #edf0e7; }
+.placement[data-paper-tint="slate"] { --paper-tint: #eaf0f2; }
+.placement[data-paper-tint="rose"] { --paper-tint: #f4e9e5; }
+.placement:focus-visible { outline: 2px solid color-mix(in srgb, var(--orange) 72%, transparent); outline-offset: 5px; }
+/* Selection: a focus-ring-coloured frame offset from the card edge, so it never
+   reads as the card's own maturity edge (dashed/solid hairline on the card). */
+.placement[data-selected]::after { position: absolute; inset: calc(-1 * max(4px, 4px / var(--canvas-scale, 1))); z-index: 2; border: max(2px, calc(2px / var(--canvas-scale, 1))) solid var(--focus-ring); border-radius: 18px; box-shadow: 0 8px 20px rgba(31, 27, 21, .12); content: ""; pointer-events: none; }
+.placement[data-selected]:focus-visible { outline: none; }
+.placement[data-selected] > div { position: relative; z-index: 1; }
+.placement[data-receded] { opacity: .82; }
+.placement[data-receded]:hover { opacity: 1; }
+.placement[data-receded]:focus-within { opacity: 1; }
+.placement[data-focused]::after { border-color: var(--workflow-accent); box-shadow: 0 10px 24px rgba(31, 27, 21, .14); }
+.placement[data-neighbour]::after { inset: -3px; border-width: 1px; border-color: color-mix(in srgb, var(--workflow-ink) 70%, transparent); box-shadow: none; }
+.editingShell { display: flex; min-width: 0; min-height: 100%; height: 100%; flex-direction: column; overflow: hidden; border-radius: 14px; background: var(--paper-tint, var(--card)); box-shadow: var(--lift-raised); }
+.editingHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; box-sizing: border-box; padding: 12px 20px 10px; color: var(--ink-quiet); font: 500 10px/1.4 var(--font-ui); letter-spacing: .1em; text-transform: uppercase; }
+.writing { box-sizing: border-box; display: flex; min-height: 0; height: 100%; padding: 16px 20px 20px; border-top: 1px solid var(--rule); background: var(--paper-tint, var(--card)); box-shadow: inset 0 0 0 1px var(--workflow-accent); user-select: text; }
+.editor { font: 400 17px/1.6 var(--serif); }
+.editingShell { min-height: 0; }
+.editingHeader { flex: none; }
+.writing { flex: 1; height: auto; padding: 8px 12px 10px; box-shadow: none; overflow: hidden; }
+.writing > div { flex: 1; min-width: 0; min-height: 0; }
+.writingFrame { height: 100%; min-height: 0; grid-template-rows: minmax(0, 1fr) auto; }
+.writing .editor { min-height: 0; height: 100%; resize: none; padding: 6px 8px; font-size: 15px; line-height: 1.45; }
+.titleEditor { position: absolute; z-index: 4; box-sizing: border-box; min-height: 44px; padding: 4px 0; border: 0; border-bottom: 1px solid var(--workflow-accent); outline: none; background: var(--paper-tint, var(--card)); color: var(--ink); font: 600 28px/1 var(--font-editorial); letter-spacing: -.018em; }
+.resizeHandle { position: absolute; right: -34px; bottom: -34px; z-index: 4; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 12px; background: transparent; color: var(--ink-quiet); cursor: nwse-resize; }
+.resizeHandle span { display: block; width: 12px; height: 12px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; opacity: .72; }
+.resizeHandle:hover span, .resizeHandle:focus-visible span { opacity: 1; color: var(--workflow-ink); }
+.resizeHandle:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+@media (prefers-reduced-motion: reduce) { .placement { transition: none; } }

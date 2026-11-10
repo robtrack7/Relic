@@ -1,0 +1,10 @@
+.item { min-width: 0; width: min(100%, 500px); margin: 0 auto 20px; list-style: none; transition: opacity 140ms ease-out; }
+.item[data-receded] { opacity: .5; }
+.item[data-receded]:hover { opacity: 1; }
+.body { min-width: 0; outline: none; }
+.body:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 6px; border-radius: 14px; }
+.actions { display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 8px 4px 0; }
+.actions > span { margin-right: auto; }
+.actions button { min-height: 44px; padding: 8px 4px; border: 0; background: transparent; color: var(--ink-quiet); font: 400 12px/1.5 var(--font-ui); }
+.actions button:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+@media (prefers-reduced-motion: reduce) { .item { transition: none; } }

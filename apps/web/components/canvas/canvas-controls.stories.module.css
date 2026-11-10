@@ -1,0 +1,50 @@
+.stage {
+  min-height: 100vh;
+  padding: 32px;
+  background-color: var(--paper);
+  background-image: radial-gradient(circle, rgba(74, 65, 52, 0.13) 0.75px, transparent 0.9px);
+  background-size: 24px 24px;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 40px;
+}
+
+.specimen {
+  display: grid;
+  gap: 12px;
+}
+
+.specimen > span,
+.readout {
+  color: var(--ink-faint);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.viewPad {
+  position: relative;
+  width: min(620px, calc(100vw - 64px));
+  height: 180px;
+}
+
+.viewPad > div {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+.minimapPad {
+  display: grid;
+  width: 320px;
+  min-height: 190px;
+  padding: 18px;
+  place-items: end;
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+}

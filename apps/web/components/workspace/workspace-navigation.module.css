@@ -1,0 +1,7 @@
+.rail { display: flex; flex-direction: column; gap: 14px; width: 48px; }
+.destination { width: 48px !important; height: 48px; min-height: 48px !important; padding: 0 !important; border: 1px solid var(--chrome-rule) !important; border-radius: 50% !important; background: var(--chrome-surface) !important; box-shadow: var(--chrome-lift); color: var(--ink) !important; transition: background-color 140ms ease, transform 140ms ease; }
+.destination:hover { background: var(--card-raised) !important; transform: translateX(2px); }
+.destination[aria-current] { color: var(--workflow-ink) !important; background: var(--carriage-context) !important; }
+.destination:focus-visible { outline: 2px solid var(--workflow-ink); outline-offset: 3px; }
+@media (max-height: 600px) { .rail { gap: 8px; } }
+@media (prefers-reduced-motion: reduce) { .destination { transition: none; } .destination:hover { transform: none; } }

@@ -1,0 +1,10 @@
+.stage {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 28px;
+  background: var(--chrome-surface, #f7f4ef);
+  color: var(--ink, #1a1916);
+  font-family: var(--font-ui, var(--sans));
+}

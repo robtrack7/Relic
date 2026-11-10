@@ -1,0 +1,2 @@
+.constrained { width: min(1100px, 100vw); margin: 0 auto; }
+.narrow { width: min(760px, 100vw); margin: 0 auto; }

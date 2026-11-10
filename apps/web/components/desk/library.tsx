@@ -2,12 +2,19 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { CardId, KindFilter, Maturity, WorldEntry } from "@/lib/world/model";
+import type { CardId, DeskView, KindFilter, Link, Maturity, WorldEntry, WorldObjectId } from "@/lib/world/model";
 import { REPRESENTATION_KINDS } from "@/lib/world/templates";
 
 import type { SurfaceControlsRef } from "./surface-controls";
 import type { DeskStore } from "./use-desk";
+import { EntityFocusVisit, EntityBuilderVisit } from "@/components/entities/entity-visits";
+import { onEntityCommitted } from "@/components/entities/entity-session";
+import type { FocusPageId } from "@/lib/world/entity-composition";
+import { richPlainText, richText } from "@/lib/world/entity-document";
+import { ObjectGlyph } from "@/components/world-objects/object-parts";
+import { cardRef, cardTitle } from "@/lib/world/model";
 import styles from "./desk.module.css";
+import inspectionStyles from "./library-inspection.module.css";
 
 /**
  * The Library: the world's systematic index.
@@ -44,23 +51,24 @@ const MATURITIES: readonly { value: Maturity | null; label: string }[] = [
  * Shared with the Finder on purpose: a thing must read the same way wherever
  * Relic offers it, or the GM has to learn two vocabularies for one world.
  */
-export function EntryIdentity({ entry }: { entry: WorldEntry }) {
+export function EntryIdentity({ entry, showName = true, showSnippet = true }: { entry: WorldEntry; showName?: boolean; showSnippet?: boolean }) {
   const kinds = entry.kinds.length > 0 ? entry.kinds : null;
 
   // An object nobody has named is called by its first line, so a Fragment's
   // prose begins with the name it is already being shown under — and a named
   // thing is often written about starting with its own name. Say the rest of
   // the sentence, or nothing.
-  const rest = entry.snippet.startsWith(entry.ref.label)
-    ? entry.snippet.slice(entry.ref.label.length).replace(/^[\s,;:.—–-]+/, "")
-    : entry.snippet;
+  const preview = richPlainText(richText(entry.snippet)).replace(/\s+/g, " ").trim();
+  const rest = preview.startsWith(entry.ref.label)
+    ? preview.slice(entry.ref.label.length).replace(/^[\s,;:.—–-]+/, "")
+    : preview;
 
   return (
     <span className={styles.entryIdentity}>
       <span className={styles.entryHead}>
-        <span className={styles.entryName} data-unnamed={entry.ref.label === "Unnamed" || undefined}>
+        {showName ? <span className={styles.entryName} data-unnamed={entry.ref.label === "Unnamed" || undefined}>
           {entry.ref.label}
-        </span>
+        </span> : null}
 
         {/* Every way it is understood, not only the first — an object that is a
             Place and a Faction is one thing seen twice, and hiding half of that
@@ -81,7 +89,6 @@ export function EntryIdentity({ entry }: { entry: WorldEntry }) {
 
         {/* Maturity reads through a word and a mark, never colour alone. */}
         <span className={styles.entryMaturity} data-maturity={entry.maturity}>
-          <span aria-hidden="true">{entry.maturity === "ink" ? "◆" : "✎"}</span>{" "}
           {entry.maturity === "ink" ? "Ink" : "Pencil"}
         </span>
 
@@ -90,7 +97,7 @@ export function EntryIdentity({ entry }: { entry: WorldEntry }) {
         ) : null}
       </span>
 
-      {rest ? <span className={styles.entrySnippet}>{rest}</span> : null}
+      {showSnippet && rest ? <span className={styles.entrySnippet}>{rest}</span> : null}
     </span>
   );
 }
@@ -99,19 +106,31 @@ export function Library({
   store,
   controls,
   compositionName,
+  initialQuery,
+  active = true,
+  worldId, onInspectEntity, onBuildEntity, onCreateEntity, activeEntityId, onCloseInspection,
   onArrive,
   onClose
 }: {
   store: DeskStore;
+  worldId?: string;
+  onInspectEntity?: (objectId: string) => void;
+  onBuildEntity?: (objectId: string) => void;
+  onCreateEntity?: () => void;
+  onCloseInspection?: () => void;
+  activeEntityId?: string | null;
   controls: SurfaceControlsRef;
   /** What retrieving something will put it on. Named, so the act is not a guess. */
   compositionName: string;
+  /** Query carried over from the compact Finder, preserving the GM's trail. */
+  initialQuery?: string;
+  active?: boolean;
   onArrive: (cardIds: readonly CardId[]) => void;
   onClose: () => void;
 }) {
   const { search, pullIn } = store;
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery ?? "");
   const [kinds, setKinds] = useState<readonly KindFilter[]>([]);
   const [maturity, setMaturity] = useState<Maturity | null>(null);
   const [scope, setScope] = useState<Scope>("active");
@@ -121,6 +140,23 @@ export function Library({
   const [more, setMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [inspected, setInspected] = useState<WorldEntry | null>(null);
+  const [visits, setVisits] = useState<readonly string[]>([]);
+  const [mode, setMode] = useState<"focus" | "builder">("focus");
+  const [page, setPage] = useState<FocusPageId>("overview");
+  const inspectionTrigger = useRef<HTMLElement | null>(null);
+  useEffect(() => { if (onInspectEntity && !activeEntityId) setInspected(null); }, [activeEntityId, onInspectEntity]);
+  useEffect(() => onEntityCommitted(entity => {
+    if (worldId && entity.worldId !== worldId) return;
+    setEntries(current => {
+      const label = entity.representation?.label || entity.body.split("\n")[0] || "Untitled fragment";
+      const snippet = entity.body.replace(/\s+/g, " ").slice(0, 220);
+      if (current.some(entry => entry.ref.objectId === entity.objectId)) return current.map(entry => entry.ref.objectId === entity.objectId ? { ...entry, ref: { ...entry.ref, label }, maturity: entity.maturity, snippet } : entry);
+      const matches = (!query.trim() || `${label} ${entity.body}`.toLowerCase().includes(query.toLowerCase())) && (!kinds.length || kinds.includes(entity.representation?.kind ?? "unclassified")) && (!maturity || entity.maturity === maturity) && scope !== "archived" && entity.lifecycle === "active";
+      return matches ? [{ ref: { objectId: entity.objectId, kind: entity.representation?.kind ?? null, label }, kinds: entity.representation ? [entity.representation.kind] : [], maturity: entity.maturity, snippet, lifecycle: entity.lifecycle, updatedAt: new Date().toISOString(), cardHere: null }, ...current] : current;
+    });
+  }), [worldId, query, kinds, maturity, scope]);
 
   const field = useRef<HTMLInputElement>(null);
   // Every request carries a ticket; only the newest may write. Filters change
@@ -129,33 +165,52 @@ export function Library({
   const ticket = useRef(0);
 
   useEffect(() => {
-    field.current?.focus();
-  }, []);
+    if (!active) return;
+    const frame = requestAnimationFrame(() => field.current?.focus({ preventScroll: true }));
+    return () => cancelAnimationFrame(frame);
+  }, [active]);
+
+  // Finder can hand the Library a new query while the surface stays mounted
+  // (for example after a responsive chrome transition). Keep that hand-off
+  // authoritative without resetting ordinary typing on unrelated renders.
+  useEffect(() => {
+    setQuery(initialQuery ?? "");
+  }, [initialQuery]);
 
   const load = useCallback(
     async (offset: number) => {
       const mine = ++ticket.current;
       if (offset === 0) setLoading(true);
-      const found = await search({
-        query,
-        kinds,
-        maturity,
-        include: scope,
-        limit: PAGE,
-        offset
-      });
-      if (ticket.current !== mine) return;
-      setEntries((current) => (offset === 0 ? found : [...current, ...found]));
-      setMore(found.length === PAGE);
-      setLoading(false);
+      if (offset === 0) setError(null);
+      try {
+        const found = await search({
+          query,
+          kinds,
+          maturity,
+          include: scope,
+          limit: PAGE,
+          offset
+        });
+        if (ticket.current !== mine) return;
+        setEntries((current) => (offset === 0 ? found : [...current, ...found]));
+        setMore(found.length === PAGE);
+      } catch {
+        if (ticket.current !== mine) return;
+        if (offset === 0) setEntries([]);
+        setMore(false);
+        setError("The Library could not load. Try again.");
+      } finally {
+        if (ticket.current === mine) setLoading(false);
+      }
     },
     [kinds, maturity, query, scope, search]
   );
 
   useEffect(() => {
+    if (!active) return;
     const timer = setTimeout(() => void load(0), query === "" ? 0 : 140);
     return () => clearTimeout(timer);
-  }, [load, query]);
+  }, [active, load, query]);
 
   const toggleKind = (kind: KindFilter) => {
     setKinds((current) =>
@@ -182,14 +237,21 @@ export function Library({
   const bringIn = async (refs: readonly WorldEntry[]) => {
     if (refs.length === 0 || working) return;
     setWorking(true);
-    const landed = await pullIn(
-      refs.map((entry) => entry.ref),
-      controls.current?.landing() ?? { x: 0, y: 0 }
-    );
-    setWorking(false);
-    setChosen(new Set());
-    if (landed.length > 0) onArrive(landed);
-    onClose();
+    setError(null);
+    try {
+      const landed = await pullIn(
+        refs.map((entry) => entry.ref),
+        controls.current?.landing() ?? { x: 0, y: 0 }
+      );
+      if (!landed.length) throw new Error("No object could be placed.");
+      setChosen(new Set());
+      if (landed.length > 0) onArrive(landed);
+      onClose();
+    } catch {
+      setError("That material could not be brought in. Try again.");
+    } finally {
+      setWorking(false);
+    }
   };
 
   const reveal = (entry: WorldEntry) => {
@@ -198,18 +260,31 @@ export function Library({
     onClose();
   };
 
+  const closeInspection = () => {
+    setInspected(null); onCloseInspection?.();
+    requestAnimationFrame(() => inspectionTrigger.current?.focus({ preventScroll: true }));
+  };
+  const inspect = (entry: WorldEntry, depth: "focus" | "builder" = "focus") => {
+    if (!inspected) inspectionTrigger.current = document.activeElement as HTMLElement;
+    setInspected(entry); setMode(depth); setPage("overview");
+    setVisits(current => current.includes(entry.ref.objectId) ? current : [...current, entry.ref.objectId]);
+    if (depth === "builder") onBuildEntity?.(entry.ref.objectId); else onInspectEntity?.(entry.ref.objectId);
+  };
+  const follow = (id: string) => inspect({ ref: { objectId: id as WorldObjectId, label: "World entity", kind: null }, kinds: [], snippet: "", maturity: "pencil", lifecycle: "active", updatedAt: "", cardHere: null });
+
   return (
     <section
-      className={styles.library}
+      className={`${styles.library} ${inspectionStyles.library}`}
+      data-inspecting={inspected ? mode : undefined}
       aria-label="Library"
       onKeyDown={(event) => {
         if (event.key === "Escape") {
           event.stopPropagation();
-          onClose();
+          if (inspected) closeInspection(); else onClose();
         }
       }}
     >
-      <header className={styles.libraryHead}>
+      <header className={styles.libraryHead} inert={Boolean(inspected && mode === "builder" && !onBuildEntity)}>
         <div className={styles.libraryTitles}>
           <h1 className={styles.libraryTitle}>Library</h1>
           <p className={styles.librarySub}>
@@ -217,12 +292,10 @@ export function Library({
             <strong>{compositionName}</strong> as a reference — nothing is copied or moved.
           </p>
         </div>
-        <button type="button" className={styles.ghostAction} onClick={onClose}>
-          Back to the desk
-        </button>
+        <div className={styles.entryActions}>{onCreateEntity ? <button type="button" className={styles.primaryAction} onClick={onCreateEntity}>Create entity</button> : null}<button type="button" className={styles.ghostAction} onClick={onClose}>Back to the desk</button></div>
       </header>
 
-      <div className={styles.libraryControls}>
+      <div className={styles.libraryControls} inert={Boolean(inspected && mode === "builder" && !onBuildEntity)}>
         <input
           ref={field}
           className={styles.libraryField}
@@ -276,10 +349,13 @@ export function Library({
         </div>
       </div>
 
-      <div className={styles.libraryBody}>
+      <div className={styles.libraryBody} inert={Boolean(inspected && mode === "builder" && !onBuildEntity)}>
+        <p className={inspectionStyles.indexSummary} role="status">{loading ? "Searching the world…" : `${entries.length}${more ? "+" : ""} ${entries.length === 1 ? "record" : "records"}`}<span>Inspect a page · open Builder to develop it</span></p>
         {loading ? <p className={styles.libraryNote}>Looking…</p> : null}
 
-        {!loading && entries.length === 0 ? (
+        {!loading && error ? <p className={styles.libraryNote} role="alert">{error}</p> : null}
+
+        {!loading && !error && entries.length === 0 ? (
           <p className={styles.libraryNote}>
             {query === ""
               ? "Nothing in this world answers to those filters yet."
@@ -301,14 +377,14 @@ export function Library({
                   type="button"
                   className={styles.entryChoose}
                   aria-pressed={here ? undefined : chosen.has(entry.ref.objectId)}
-                  onClick={() => (here ? reveal(entry) : toggleChosen(entry))}
+                  onClick={() => void inspect(entry, "builder")}
                 >
-                  <EntryIdentity entry={entry} />
+                  <span className={inspectionStyles.indexIdentity}><ObjectGlyph family={entry.ref.kind ?? "fragment"}/><EntryIdentity entry={entry} /></span>
                 </button>
-
-                {here ? (
-                  <span className={styles.entryHere}>
-                    <span className={styles.entryHereMark}>on {compositionName}</span>
+                <span className={styles.entryActions}>
+                    <button type="button" className={styles.ghostAction} aria-expanded={inspected?.ref.objectId === entry.ref.objectId} onClick={() => inspected?.ref.objectId === entry.ref.objectId ? closeInspection() : void inspect(entry)}>Inspect</button>
+                    <button type="button" className={styles.ghostAction} onClick={() => void inspect(entry, "builder")}>Open in Builder</button>
+                {here ? <>
                     <button
                       type="button"
                       className={styles.ghostAction}
@@ -316,17 +392,18 @@ export function Library({
                     >
                       Reveal
                     </button>
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    className={styles.ghostAction}
-                    disabled={working}
-                    onClick={() => void bringIn([entry])}
-                  >
-                    {entry.lifecycle === "archived" ? "Restore" : "Bring in"}
-                  </button>
-                )}
+                  </> : <>
+                    <button type="button" className={inspectionStyles.chooseButton} aria-label={`Choose ${entry.ref.label} for placement`} aria-pressed={chosen.has(entry.ref.objectId)} onClick={() => toggleChosen(entry)}><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="3"/>{chosen.has(entry.ref.objectId) ? <path d="m6 10 3 3 5-6"/> : null}</svg></button>
+                    <button
+                      type="button"
+                      className={styles.ghostAction}
+                      disabled={working}
+                      onClick={() => void bringIn([entry])}
+                    >
+                      {entry.lifecycle === "archived" ? "Restore" : "Bring in"}
+                    </button>
+                  </>}
+                </span>
               </li>
             );
           })}
@@ -343,10 +420,17 @@ export function Library({
         ) : null}
       </div>
 
+      {!onInspectEntity && worldId ? <div className={inspectionStyles.host}>
+        {visits.map(objectId => <div key={objectId}>
+          <div className={inspectionStyles.localFocus} hidden={!active || inspected?.ref.objectId !== objectId}><EntityFocusVisit worldId={worldId} objectId={objectId} active={active && inspected?.ref.objectId === objectId} page={page} onPageChange={setPage} onClose={closeInspection} onBuilder={() => setMode("builder")} onFollow={follow}/></div>
+          <EntityBuilderVisit worldId={worldId} objectId={objectId} active={active && inspected?.ref.objectId === objectId && mode === "builder"} onClose={() => setMode("focus")} onFollow={follow}/>
+        </div>)}
+      </div> : null}
+
       {/* Contextual, like every other batch action in Relic: it appears when
           there is something to do and goes away again afterwards. */}
       {chosen.size > 0 ? (
-        <footer className={styles.libraryFoot}>
+        <footer className={styles.libraryFoot} inert={Boolean(inspected && mode === "builder" && !onBuildEntity)}>
           <span className={styles.tally}>
             {chosen.size} {chosen.size === 1 ? "thing" : "things"} chosen
           </span>

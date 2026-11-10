@@ -1,0 +1,233 @@
+/* ── Shared shell ──────────────────────────────────────────────────────────
+   One shell for every family: radius, lift, maturity edge, actions. Faces are
+   composed per family below. Selection is drawn by the Desk placement, so the
+   surface never draws its own selection frame. */
+.surface {
+  --object-paper: var(--paper-tint, var(--card));
+  --object-rule: var(--rule);
+  --object-quiet: var(--ink-quiet);
+  --family-tint: color-mix(in srgb, var(--workflow-accent) 13%, var(--card));
+  --family-mark: color-mix(in srgb, var(--ink) 72%, var(--workflow-ink));
+  /* A title never renders below 11px on screen, however far the camera is. */
+  --title-floor: calc(11px / var(--canvas-scale, 1));
+  --over-image: #fbf8f1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--object-paper);
+  color: var(--ink);
+  box-shadow: var(--lift-raised);
+  font-family: var(--font-ui);
+  text-align: left;
+  isolation: isolate;
+  container-type: inline-size;
+  transition: box-shadow 180ms ease-out, background-color 180ms ease-out;
+}
+.surface[data-object-family="place"] { --family-tint: color-mix(in srgb, var(--ink) 5%, var(--canvas-slate)); }
+.surface[data-object-family="thread"] { --family-tint: var(--canvas-note); }
+.surface[data-object-family="faction"] { --family-tint: color-mix(in srgb, var(--ink) 7%, var(--canvas-slate)); --family-mark: color-mix(in srgb, var(--ink) 85%, #2f4a5a); }
+.surface[data-object-family="artifact"] { --family-tint: color-mix(in srgb, var(--status-ready) 13%, var(--card)); --family-mark: color-mix(in srgb, var(--ink) 70%, var(--status-ready)); }
+.surface[data-object-family="event"] { --family-tint: color-mix(in srgb, var(--destructive) 7%, var(--card)); }
+.surface[data-object-family="source"] { --family-tint: var(--canvas-note); }
+
+/* Maturity is an edge, distinct from selection (placement ring) and from
+   truth (claims). Ink: a settled solid hairline. Pencil: a dashed edge. */
+.surface::after {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border: max(1px, calc(1px / var(--canvas-scale, 1))) solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+}
+.surface[data-maturity="pencil"]::after {
+  border-style: dashed;
+  border-width: max(1.25px, calc(1.25px / var(--canvas-scale, 1)));
+  border-color: color-mix(in srgb, var(--ink) 46%, transparent);
+}
+.surface[data-selected] { box-shadow: var(--lift-raised); }
+.surface[data-proposed] { outline: 2px dashed var(--workflow-ink); outline-offset: 5px; }
+.surface :is(button, a):focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -3px; }
+.surface h3 { margin: 0 0 10px; color: var(--object-quiet); font: var(--type-label); letter-spacing: .08em; text-transform: uppercase; }
+
+.cardActions { display: flex; gap: 2px; margin-left: auto; }
+/* Below 100% zoom the overlay counter-scales so every action keeps a 44px
+   screen-space target; above 100% it simply grows with the card. */
+.cardActionsOverlay { position: absolute; z-index: 5; top: 6px; right: 6px; opacity: 0; transform: scale(max(1, calc(1 / var(--canvas-scale, 1)))); transform-origin: top right; transition: opacity 140ms ease-out; }
+.cardHost:hover .cardActionsOverlay, .cardHost:focus-within .cardActionsOverlay { opacity: 1; }
+.cardActionsOverlay .cardActions { margin-left: 0; padding: 2px; border: 1px solid color-mix(in srgb, var(--card) 55%, var(--rule)); border-radius: var(--radius-control); background: color-mix(in srgb, var(--card) 88%, transparent); box-shadow: var(--lift); }
+.cardActions button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: var(--object-quiet); border-radius: var(--radius-control); }
+.cardActions button:hover { background: var(--chrome-hover); color: var(--ink); }
+.asOf { display: flex; align-items: center; gap: 8px; padding: 8px 20px; background: var(--carriage-context); color: var(--workflow-ink); font-size: 12px; }
+/* min-height (not height) so a Desk placement can stretch the card to its footprint. */
+.cardHost { position: relative; display: flex; flex-direction: column; width: 100%; min-width: 0; min-height: 100%; }
+.faceContent { display: flex; flex: 1; flex-direction: column; min-width: 0; transition: opacity 140ms ease-out, transform 220ms cubic-bezier(.16, 1, .3, 1); }
+.surface[data-disclosure="expanded"] .faceContent { opacity: 1; }
+.flipControl { position: absolute; z-index: 4; top: -15px; right: -16px; border: 1px solid var(--chrome-rule); border-radius: var(--radius-inset); background: var(--chrome-surface); box-shadow: var(--lift); }
+.surface[data-disclosure="expanded"] { animation: disclosureIn 220ms cubic-bezier(.16, 1, .3, 1); }
+@keyframes disclosureIn { from { opacity: .86; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .surface, .faceContent { transition: none; }
+  .surface[data-disclosure="expanded"] { animation: none; }
+}
+@media (pointer: coarse) { .cardActionsOverlay { opacity: 1; } }
+
+/* ── Shared face primitives ─────────────────────────────────────────────── */
+.fill { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+.title {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: inherit;
+  font: var(--type-card-title);
+  font-size: max(23px, var(--title-floor));
+  letter-spacing: -.01em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.titleExpanded { font-size: max(30px, var(--title-floor)); line-height: 1.06; }
+.metaRow, .footRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.footRow { margin-top: auto; padding: 12px 18px 14px; border-top: 1px solid var(--object-rule); }
+.footRow > :first-child { min-width: 0; }
+.familyCue { display: inline-flex; align-items: center; gap: 6px; min-width: 0; color: var(--object-quiet); font: var(--type-label); letter-spacing: .04em; }
+.familyCue svg { width: 14px; height: 14px; flex: none; }
+.maturity { display: inline-flex; flex: none; align-items: center; gap: 6px; color: var(--object-quiet); font: var(--type-label); letter-spacing: .04em; white-space: nowrap; }
+.maturity i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.maturity[data-maturity="pencil"] i { border: 1.25px solid currentColor; background: transparent; }
+.kindLine { margin: 6px 0 0; color: var(--object-quiet); font: var(--type-label); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; overflow-wrap: anywhere; }
+.statement { margin: 10px 0 0; font: var(--type-card-body); color: var(--ink); overflow-wrap: anywhere; }
+.fadeText { max-height: calc(var(--lines, 3) * 1lh); overflow: hidden; white-space: pre-line; }
+.fadeText[data-overflowing] { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 1.15lh), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 1.15lh), transparent); }
+.essentials { display: grid; gap: 7px; margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--object-rule); }
+.essentials > div { display: grid; grid-template-columns: minmax(64px, .7fr) minmax(0, 1.6fr); align-items: baseline; gap: 10px; }
+.essentials dt { color: var(--object-quiet); font: var(--type-label); letter-spacing: .05em; text-transform: uppercase; }
+.essentials dd { margin: 0; font: var(--type-card-body); overflow-wrap: anywhere; }
+.expandedBody { padding: 16px 20px 16px; }
+.expandedBody:empty { display: none; }
+.expandedBody > .essentials:first-child { margin-top: 0; }
+.expandedSection { padding: 14px 20px 16px; border-top: 1px solid var(--object-rule); }
+.references { display: flex; gap: 2px 14px; align-items: center; flex-wrap: wrap; min-width: 0; }
+.references button { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 2px 0; border: 0; background: transparent; color: var(--ink); font: var(--type-card-body); font-size: 12.5px; text-align: left; }
+.references button:disabled { cursor: default; }
+.references button:not(:disabled):hover { text-decoration: underline; text-underline-offset: 3px; }
+.references button svg { width: 14px; height: 14px; flex: none; color: var(--object-quiet); }
+.moreReferences { color: var(--object-quiet); font: var(--type-label); }
+.monogram { display: grid; place-items: center; background: var(--family-tint); color: var(--family-mark); }
+.monogram span { font: 500 clamp(40px, 22cqi, 104px)/1 var(--font-editorial); letter-spacing: .04em; }
+.monogram span::after { display: block; width: 1.1em; height: 1px; margin: .16em auto 0; background: currentColor; opacity: .45; content: ""; }
+
+/* ── Character (OBJ-CHAR-02/03) ─────────────────────────────────────────── */
+.character { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.portraitFrame { position: relative; flex: 1 1 auto; min-height: max(160px, 78cqi); overflow: hidden; background: var(--family-tint); }
+.character .portraitFrame:has(.monogram) { min-height: max(140px, 54cqi); }
+.nameBand { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 12px 16px 14px; }
+.characterExpanded { display: grid; flex: 1; grid-template-columns: minmax(0, 42%) minmax(0, 1fr); }
+.characterExpanded .portraitFrame { min-height: 280px; }
+.characterBody { display: flex; flex-direction: column; min-width: 0; padding: 18px 20px 16px; }
+.headRow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.epithet { margin: 6px 0 0; color: var(--object-quiet); font: var(--type-card-body); font-style: italic; }
+.statement[data-identity-statement] { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.relationCue { display: grid; gap: 2px; margin-top: auto; padding-top: 12px; }
+.relationCue > span { color: var(--object-quiet); font: var(--type-label); letter-spacing: .05em; text-transform: uppercase; }
+@container (max-width: 380px) {
+  .characterExpanded { grid-template-columns: 1fr; }
+  .characterExpanded .portraitFrame { min-height: 220px; }
+}
+
+/* ── Place (OBJ-PLACE-02/03) ────────────────────────────────────────────── */
+.place, .placeExpanded { position: relative; display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.placeImage { position: relative; flex: 1 1 auto; min-height: max(180px, 58cqi); overflow: hidden; background: var(--ink); color: var(--over-image); }
+.placeExpanded .placeImage { flex: none; height: 220px; }
+.placeOverlay { position: absolute; inset: auto 0 0; padding: 56px 18px 14px; background: linear-gradient(to bottom, transparent, color-mix(in srgb, #15120f 78%, transparent) 58%); }
+.placeOverlay .title { text-shadow: 0 1px 12px rgb(0 0 0 / 35%); }
+.placeOverlay .kindLine { color: color-mix(in srgb, var(--over-image) 86%, transparent); }
+.placeBand { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px 14px; }
+.atmosphere { display: -webkit-box; min-width: 0; margin: 0; overflow: hidden; font: var(--type-card-body); font-style: italic; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.place[data-cinematic] { background: var(--ink); }
+.place[data-cinematic] .placeImage { min-height: max(280px, 86cqi); }
+.place[data-cinematic] .placeOverlay { display: grid; gap: 0; padding: 120px 20px 18px; background: linear-gradient(to bottom, transparent, color-mix(in srgb, #15120f 86%, transparent) 50%); }
+.place[data-cinematic] .atmosphere { margin-top: 12px; color: var(--over-image); }
+.place[data-cinematic] .maturity { justify-self: start; margin-top: 12px; color: color-mix(in srgb, var(--over-image) 86%, transparent); }
+.surface[data-composition="cinematic"][data-object-family="place"]::after { border-color: color-mix(in srgb, var(--over-image) 30%, transparent); }
+.placeText { padding: 16px 18px 18px; background: var(--family-tint); }
+.placeText .title { margin-top: 14px; }
+.placeText .atmosphere { margin-top: 12px; }
+
+/* ── Thread (OBJ-THREAD-02/03) ──────────────────────────────────────────── */
+.thread { display: flex; flex: 1; flex-direction: column; min-height: 0; padding-top: 16px; }
+.thread > :not(.footRow, .expandedSection) { margin-inline: 20px; }
+.thread .title { margin-top: 14px; }
+.threadStatus { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); font: var(--type-label); letter-spacing: .04em; }
+.threadStatus i { width: 7px; height: 7px; border-radius: 50%; background: var(--status-ready); }
+.question { display: -webkit-box; margin: 8px 0 0; overflow: hidden; color: var(--ink); font: var(--type-card-body); font-size: 14px; font-style: italic; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.pressure { display: -webkit-box; margin: 14px 0 16px; overflow: hidden; font: var(--type-card-body); -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.pressure > span { margin-right: 8px; color: var(--workflow-ink); font: var(--type-label); letter-spacing: .05em; text-transform: uppercase; }
+.involved { display: -webkit-box; overflow: hidden; color: var(--ink); font: var(--type-card-body); font-size: 12.5px; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.thread .expandedSection { margin-top: 2px; }
+.developments { display: flex; flex-direction: column; list-style: none; padding: 0; margin: 0; }
+.developments li { position: relative; display: flex; gap: 12px; padding: 0 0 12px; }
+.developments li:last-child { padding-bottom: 0; }
+.developments li:not(:last-child)::before { position: absolute; top: 13px; bottom: 0; left: 3px; width: 1px; background: var(--object-rule, var(--rule)); content: ""; }
+.developmentPoint { width: 7px; height: 7px; margin-top: 5px; border: 1px solid currentColor; border-radius: 50%; flex: none; }
+.storyPosition { display: block; color: var(--object-quiet, var(--ink-quiet)); font: var(--type-label); font-weight: 500; }
+.storyPosition button { min-height: 32px; border: 0; padding: 0; background: transparent; text-decoration: underline; text-underline-offset: 3px; }
+.developments p { margin: 3px 0 0; font: var(--type-card-body); }
+.developmentEvent { display: block; margin-top: 2px; color: var(--object-quiet, var(--ink-quiet)); font: var(--type-card-body); font-size: 12px; font-style: italic; }
+.pendingDevelopment { display: inline-block; margin-top: 4px; color: var(--workflow-ink); font: var(--type-label); }
+.empty { margin: 0; color: var(--object-quiet, var(--ink-quiet)); font: var(--type-card-body); }
+
+/* ── Fragment (OBJ-FRAG-03/04) ──────────────────────────────────────────── */
+.fragment { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.fragmentImage { position: relative; flex: none; aspect-ratio: 16 / 9; overflow: hidden; background: var(--family-tint); }
+.fragmentText { padding: 22px 22px 18px; }
+.fragmentProse { margin: 0; font: var(--type-fragment); font-size: max(25px, var(--title-floor)); letter-spacing: -.005em; overflow-wrap: anywhere; text-wrap: pretty; }
+.fragment[data-image] .fragmentText { padding-top: 16px; }
+.fragment[data-image] .fragmentProse { font-size: max(20px, var(--title-floor)); }
+.fragment[data-quote] .fragmentProse { font: italic 400 19px/1.45 var(--font-reading); font-size: max(19px, var(--title-floor)); }
+.fragmentProse[data-empty] { color: var(--object-quiet); }
+.fragmentLinks { padding: 0 22px 12px; }
+
+/* ── Source (OBJ-SRC-02/03) ─────────────────────────────────────────────── */
+.sourceHost, .familyHost { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.source { display: flex; flex: 1; flex-direction: column; }
+.sourceMain { display: grid; grid-template-columns: minmax(0, 36%) minmax(0, 1fr); gap: 16px; padding: 18px 18px 16px; }
+.documentFrame { position: relative; align-self: start; aspect-ratio: 3 / 4; overflow: hidden; border: 5px solid var(--card-raised); border-radius: 3px; background: var(--family-tint); box-shadow: 0 0 0 1px var(--object-rule), var(--lift); }
+.documentBlank { display: grid; height: 100%; place-items: center; color: var(--object-quiet); }
+.documentBlank svg { width: 30%; height: auto; }
+.pageCue { position: absolute; left: 6px; bottom: 6px; padding: 3px 6px; border-radius: 4px; background: color-mix(in srgb, var(--ink) 74%, transparent); color: var(--over-image); font: var(--type-label); font-weight: 500; white-space: nowrap; }
+.sourceText { display: flex; flex-direction: column; min-width: 0; }
+.sourceText .title { margin-top: 8px; }
+.citation { margin: 6px 0 0; color: var(--object-quiet); font: var(--type-card-body); font-size: 12px; }
+.excerpt { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--object-rule); font: var(--type-card-body); font-style: italic; }
+.provenance { overflow: hidden; color: var(--object-quiet); font: var(--type-card-body); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+@container (max-width: 300px) {
+  .sourceMain { grid-template-columns: minmax(0, 32%) minmax(0, 1fr); gap: 12px; padding-inline: 14px; }
+}
+
+/* ── Faction, Artifact, Event ───────────────────────────────────────────── */
+.faction, .artifact, .event { display: flex; flex-direction: column; min-width: 0; }
+.faction, .event { padding: 18px 18px 16px; }
+.emblemRow { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 14px; align-items: start; }
+.artifact:not([data-image]) .emblemRow { padding: 18px 18px 0; }
+.emblem { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 10px; background: var(--family-tint); }
+.emblem .monogram span { font-size: 30px; }
+.emblem .monogram span::after { display: none; }
+.emblemText { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.emblemText .kindLine { margin-top: 0; }
+.agenda { display: -webkit-box; margin: 14px 0 0; overflow: hidden; font: var(--type-card-body); font-size: 14px; font-style: italic; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.faction .statement { margin-top: 14px; }
+.artifactImage { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: var(--family-tint); }
+.artifactText { padding: 16px 18px 0; }
+.artifact > .statement { margin: 12px 18px 18px; }
+.familyHost > .footRow { margin-top: auto; }
+.event .title { margin-top: 12px; }
+.event .familyCue { color: var(--workflow-ink); }
+.event .kindLine { margin-top: 12px; }

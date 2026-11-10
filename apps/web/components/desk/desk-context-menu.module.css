@@ -1,0 +1,13 @@
+.anchor { position: fixed; width: 0; height: 0; pointer-events: none; }
+.menu { min-width: 0; }
+.group + .group { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--chrome-rule); }
+.groupLabel { display: block; padding: 5px 10px 6px; color: var(--ink-quiet); font: 400 12px/1.4 var(--font-ui); }
+.group button { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; min-height: 36px; padding: 7px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ink); text-align: left; font: 400 13px/1.4 var(--font-ui); cursor: pointer; }
+.group button:hover, .group button:focus-visible { outline: none; background: var(--chrome-hover); }
+.group button:focus-visible { box-shadow: inset 0 0 0 1px var(--workflow-ink); }
+.group button:disabled { color: var(--ink-faint); cursor: default; opacity: .7; }
+.group button[data-destructive] { color: var(--destructive); }
+.group kbd { flex: none; color: var(--ink-quiet); font: 400 11px/1.3 var(--font-ui); }
+.group button > span:first-child { display: inline-flex; align-items: center; gap: 10px; }
+.swatch { width: 16px; height: 16px; border: 1px solid var(--rule-strong); border-radius: 50%; }
+@media (pointer: coarse) { .group button { min-height: 44px; } }

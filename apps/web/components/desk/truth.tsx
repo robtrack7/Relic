@@ -1,4 +1,11 @@
-import type { AuthorKind, Maturity, Provenance, Settlement, TruthState } from "@/lib/world/model";
+import type {
+  AuthorKind,
+  Authorship,
+  Maturity,
+  Provenance,
+  Settlement,
+  TruthState
+} from "@/lib/world/model";
 
 import styles from "./desk.module.css";
 
@@ -23,8 +30,8 @@ const MATURITY_MARK: Record<Maturity, { label: string; glyph: string }> = {
 };
 
 const TRUTH_MARK: Record<TruthState, { label: string; glyph: string }> = {
-  pencil: { label: "Pencil", glyph: "✎" },
-  ink: { label: "Ink", glyph: "◆" },
+  pencil: { label: "Pending", glyph: "◌" },
+  ink: { label: "Settled", glyph: "●" },
   disputed: { label: "Disputed", glyph: "≠" }
 };
 
@@ -85,7 +92,7 @@ const AUTHOR: Record<AuthorKind, string> = {
 const RULING: Record<TruthState, string> = {
   ink: "established",
   disputed: "disputed",
-  pencil: "returned to pencil"
+  pencil: "returned to pending"
 };
 
 const ARRIVAL: Record<Provenance["kind"], string> = {
@@ -114,6 +121,48 @@ function when(iso: string): string {
  * Mono, quiet, and always present — an archival record rather than a tooltip
  * the GM has to know to go looking for.
  */
+/**
+ * That somebody other than the GM wrote this prose, and the way back.
+ *
+ * Present only when the writer was not the GM: their own words are the unmarked
+ * case, and attributing them would be noise on every card in the world. The
+ * moment a model has written into a GM's notebook, though, "which of these
+ * sentences are mine" becomes a real question, and it must be answerable by
+ * looking rather than by remembering.
+ *
+ * Restore is offered because Relic has no undo and rewriting prose is the one
+ * thing the Librarian can do that destroys rather than adds or archives.
+ * Everything else it touches is reversible by a gesture the GM already has.
+ *
+ * A word and a glyph, like every other cue here — never colour alone.
+ */
+export function WrittenLine({
+  written,
+  onRestore
+}: {
+  written: Authorship;
+  onRestore?: () => void;
+}) {
+  return (
+    <div className={styles.written}>
+      <p className={styles.writtenBy}>
+        <span aria-hidden="true">✎ </span>
+        rewritten by {AUTHOR[written.by]} {when(written.at)}
+      </p>
+      {written.superseded === null || !onRestore ? null : (
+        <button
+          type="button"
+          className={styles.truthAction}
+          onClick={onRestore}
+          title="Put back the words that were here before this rewrite."
+        >
+          Restore
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function ProvenanceLine({
   provenance,
   settled,

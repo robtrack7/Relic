@@ -1,0 +1,4 @@
+Generated with the built-in ImageGen tool for the illustrative Blackwater Desk fixture.
+Encoded as WebP for delivery; no external image service is required.
+
+Use case: stylized-concept. Asset type: a single landscape artwork used inside a fictional Place record on a worldbuilding research desk. An abandoned stone bell tower rises from the cold water of Blackwater harbour at low tide; weathered quay and moored wooden fishing boats, distant cliff village lost in sea mist. Quiet, believable, cinematic environmental photography with a painterly finish, subdued blue grey water, charcoal stone, sparse amber window light. Wide landscape 3:2 framing, tower clearly readable near centre, richly detailed but restrained. No people in foreground, no text, no borders, no UI, no parchment, no logos or watermark. This is world content, not a picture of an interface.

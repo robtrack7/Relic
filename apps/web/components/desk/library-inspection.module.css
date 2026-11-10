@@ -1,0 +1,27 @@
+.library { isolation: isolate; container-type: inline-size; border-radius: var(--radius-surface); background: var(--paper); }
+.indexSummary { display: flex; justify-content: space-between; gap: 16px; margin: 12px 10px; color: var(--ink-quiet); font: 500 12px/1.5 var(--font-ui); }
+.indexSummary span { font-weight: 400; }
+.indexIdentity { display: flex; align-items: center; gap: 15px; min-width: 0; }
+.indexIdentity > svg { width: 22px; height: 22px; flex: none; color: var(--workflow-ink); }
+.chooseButton { display: grid; place-items: center; width: 36px; min-height: 44px; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--ink-quiet); }
+.chooseButton svg { width: 20px; stroke: currentColor; stroke-width: 1.5; }
+.chooseButton:hover, .chooseButton[aria-pressed=true] { background: var(--control-hover); color: var(--workflow-ink); }
+.host { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+.idleHint { display: none; position: absolute; top: 44%; right: 28px; width: 340px; margin: 0; color: var(--ink-quiet); text-align: center; font: 14px/1.6 var(--font-ui); }
+.host :global([data-detail-panel]) { pointer-events: auto; top: 0; right: 0; bottom: 0; max-height: none; }
+.host :global([data-detail-panel][data-focus-mode=full]) { left: 0; right: 0; width: auto; max-width: none; transform: none; }
+.loadPanel { position: absolute; top: 0; right: 0; bottom: 0; width: min(420px, calc(100% - 20px)); padding: 28px; box-sizing: border-box; pointer-events: auto; background: var(--chrome-surface); border-radius: var(--radius-surface); box-shadow: var(--chrome-lift); }
+.loadPanel h2 { margin: 0 0 20px; font: 600 32px/1.1 var(--font-editorial); }
+.loadPanel p { font: 14px/1.6 var(--font-ui); }
+.loadPanel > div { display: flex; flex-wrap: wrap; gap: 8px; }
+@container (min-width: 1100px) {
+  .library > :not(.host) { margin-right: 460px; }
+  .idleHint { display: block; }
+}
+@media (max-width: 900px) {
+  .indexSummary span { display: none; }
+  .indexIdentity { gap: 10px; }
+}
+@media (pointer: coarse) { .chooseButton { width: 44px; } }
+.localFocus { position: absolute; top: 0; right: 0; bottom: 0; width: 420px; max-width: calc(100% - 24px); background: var(--chrome-surface); border: 1px solid var(--chrome-rule); border-radius: var(--radius-surface); box-shadow: var(--chrome-lift); pointer-events: auto; }
+.localFocus[hidden] { display: none; }

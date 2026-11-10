@@ -2,8 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { LibrarianMessage, Source } from "@/lib/librarian/model";
+import type { Point } from "@/lib/desk/viewport";
+import type { Effect, LibrarianMessage, Source, WireEvent } from "@/lib/librarian/model";
+import { sayMoney, saySize, type Reckoning } from "@/lib/librarian/spend";
 import type { CardId, CompositionId, ObjectRef } from "@/lib/world/model";
+import { CarriageFooter, CarriageHeader, CarriageLauncher, CarriageSection, CarriageShell } from "@/components/carriage/carriage";
+import { Button } from "@/components/ui/control";
+import { LibrarianComposer } from "@/components/librarian/librarian-composer";
+import type { WorkspaceCarriageRenderProps } from "@/components/workspace/workspace-shell";
 
 import styles from "./desk.module.css";
 
@@ -22,16 +28,25 @@ import styles from "./desk.module.css";
  * a Librarian guessing. The line says what it can see, in the same words the
  * canvas uses.
  *
- * Nothing here writes to the world. Sources are the exception that proves it:
- * clicking one brings that object onto the composition, and that is the GM's
- * retrieval gesture — the same one search and relationships already use — not
- * something the Librarian did.
+ * The Librarian now works as well as answers, and the carriage shows that as it
+ * happens: an `acted` event carries a change that has *already* committed, so
+ * the note goes into the transcript and the effect goes straight to the Desk.
+ * Nothing here asks permission, because permission was not the design — what
+ * makes an immediate write tolerable is that it is Pencil, attributed, and
+ * visible, not that a dialog stood in front of it.
+ *
+ * Sources remain the one thing that is not the Librarian acting: clicking one
+ * brings that object onto the composition, and that is the GM's own retrieval
+ * gesture — the same one search and relationships already use.
  */
 
 type Streaming = Readonly<{
   ask: string;
+  scope: string;
   said: string;
   consulting: string | null;
+  /** What has been done so far this turn, in the order it was done. */
+  did: readonly string[];
   failure: string | null;
 }>;
 
@@ -45,7 +60,11 @@ export function Librarian({
   focusCardId,
   focusLabel,
   selectedCardIds,
-  onFollowSource
+  onFollowSource,
+  onActed,
+  here,
+  carriage,
+  request = fetch
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -56,15 +75,35 @@ export function Librarian({
   focusLabel: string | null;
   selectedCardIds: readonly CardId[];
   onFollowSource: (ref: ObjectRef) => void;
+  /** Something the Librarian changed, already committed, for the Desk to adopt. */
+  onActed: (effect: Effect) => void;
+  /** Where the GM is looking. Asked for at send time, never held as state. */
+  here: () => Point | null;
+  carriage?: WorkspaceCarriageRenderProps;
+  /** Injectable HTTP boundary for isolated stories; production uses the real route. */
+  request?: typeof fetch;
 }) {
   const [messages, setMessages] = useState<readonly LibrarianMessage[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [ready, setReady] = useState(true);
   const [draft, setDraft] = useState("");
   const [turn, setTurn] = useState<Streaming | null>(IDLE);
+  /*
+   * What this world's conversation has cost, over its whole life — priced on
+   * the server, because the rates live there. Held as state and advanced by
+   * each `done` rather than refetched, so the meter moves the moment a turn
+   * lands instead of at the next time the carriage happens to open.
+   */
+  const [spent, setSpent] = useState<Reckoning>(NOTHING_YET);
 
   const field = useRef<HTMLTextAreaElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  const requestPending = useRef(false);
+  const followLatest = useRef(true);
+  const scope = [compositionName, focusLabel ? `Focus: ${focusLabel}` : null, selectedCardIds.length ? `${selectedCardIds.length} selected` : null].filter(Boolean).join(" · ");
+  // A running stream must use current workspace visibility, even after collapse.
+  const acted = useRef(onActed);
+  acted.current = onActed;
 
   /*
    * The conversation is fetched when the carriage first opens, not when the page
@@ -76,18 +115,28 @@ export function Librarian({
     let live = true;
     void (async () => {
       try {
-        const response = await fetch(
+        const response = await request(
           `/api/librarian?composition=${encodeURIComponent(compositionId)}`
         );
-        if (!live) return;
         if (response.ok) {
           const body = (await response.json()) as {
             ready: boolean;
             messages: readonly LibrarianMessage[];
+            spent?: Reckoning;
           };
+          if (!live) return;
           setMessages(body.messages);
           setReady(body.ready);
+          // Optional, and defaulted rather than trusted. A meter is the least
+          // important thing in this panel and must never be the reason a
+          // conversation fails to open — which is exactly what reading
+          // `spent.turns` off an absent field would do.
+          setSpent(body.spent ?? NOTHING_YET);
+        } else {
+          if (live) setReady(false);
         }
+      } catch {
+        if (live) setReady(false);
       } finally {
         if (live) setLoaded(true);
       }
@@ -95,43 +144,62 @@ export function Librarian({
     return () => {
       live = false;
     };
-  }, [open, loaded, compositionId]);
+  }, [open, loaded, compositionId, request]);
 
   useEffect(() => {
-    if (open) field.current?.focus();
+    if (open) field.current?.focus({ preventScroll: true });
   }, [open]);
 
-  // Keep the newest words in view while they arrive.
   useEffect(() => {
     const node = scroller.current;
-    if (node) node.scrollTop = node.scrollHeight;
-  }, [messages, turn]);
+    if (!node) return;
+    const track = () => { followLatest.current = node.scrollHeight - node.clientHeight - node.scrollTop < 48; };
+    node.addEventListener("scroll", track, { passive: true });
+    return () => node.removeEventListener("scroll", track);
+  }, [open]);
+
+  // Follow new words unless the GM has scrolled back to read an earlier answer.
+  useEffect(() => {
+    const node = scroller.current;
+    if (node && followLatest.current && open) node.scrollTop = node.scrollHeight;
+  }, [messages, turn, open]);
 
   const ask = useCallback(
     async (question: string) => {
       const said = question.trim();
-      if (!said || turn) return;
+      if (!said || said.length > 4000 || !loaded || !ready || requestPending.current) return;
 
+      requestPending.current = true;
+      followLatest.current = true;
       setDraft("");
-      setTurn({ ask: said, said: "", consulting: null, failure: null });
+      setTurn({ ask: said, scope, said: "", consulting: null, did: [], failure: null });
+      let completed = false;
+      let failed = false;
+      const fail = (message: string) => {
+        failed = true;
+        setTurn(was => was ? { ...was, failure: message } : was);
+        // Never overwrite a next question the GM began while this turn ran.
+        setDraft(was => was || said);
+      };
 
       try {
-        const response = await fetch("/api/librarian", {
+        const response = await request("/api/librarian", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             compositionId,
             focusCardId,
             selectedCardIds,
+            // Where the GM is looking, so what the Librarian brings arrives in
+            // front of them rather than wherever the world happens to be empty.
+            here: here(),
             ask: said
           })
         });
 
         if (!response.ok || !response.body) {
           const problem = (await response.json().catch(() => null)) as { error?: string } | null;
-          setTurn((was) =>
-            was ? { ...was, failure: problem?.error ?? "The Librarian could not answer." } : was
-          );
+          fail(problem?.error ?? "The Librarian could not answer. Your question is kept below.");
           return;
         }
 
@@ -139,119 +207,105 @@ export function Librarian({
         const decoder = new TextDecoder();
         let pending = "";
 
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          pending += decoder.decode(value, { stream: true });
-
-          // Newline-delimited JSON: everything before the last newline is whole.
-          const lines = pending.split("\n");
-          pending = lines.pop() ?? "";
-
-          for (const line of lines) {
-            if (!line.trim()) continue;
-            const event = JSON.parse(line) as {
-              type: string;
-              text?: string;
-              note?: string;
-              message?: string;
-              body?: string;
-              sources?: readonly Source[];
-            };
+        const readLine = (line: string) => {
+            if (completed) return;
+            if (!line.trim()) return;
+            // One declaration, shared with the route. The wire used to be agreed
+            // by hand at both ends, which held until an event kind was added.
+            const event = JSON.parse(line) as WireEvent;
 
             if (event.type === "text") {
-              setTurn((was) => (was ? { ...was, said: was.said + (event.text ?? "") } : was));
+              setTurn((was) => (was ? { ...was, said: was.said + event.text } : was));
             } else if (event.type === "consulting") {
-              setTurn((was) => (was ? { ...was, consulting: event.note ?? null } : was));
-            } else if (event.type === "failed") {
+              setTurn((was) => (was ? { ...was, consulting: event.note } : was));
+            } else if (event.type === "acted") {
+              /*
+               * The world has already changed — this is the browser catching up,
+               * not being asked permission. Applying it here rather than at the
+               * end of the turn is the point: the Desk moves while the Librarian
+               * is still talking, so its work is something the GM watches happen
+               * rather than something a panel claims afterwards.
+               */
+              acted.current(event.effect);
               setTurn((was) =>
-                was ? { ...was, failure: event.message ?? "Something went wrong." } : was
+                was ? { ...was, consulting: null, did: [...was.did, event.note] } : was
               );
+            } else if (event.type === "failed") {
+              fail(event.message);
             } else if (event.type === "done") {
               // The server has recorded the exchange; adopt its version rather
               // than the streamed text, so what is shown is what was stored.
+              completed = true;
               setMessages((was) => [
                 ...was,
                 provisional("gm", said),
-                provisional("librarian", event.body ?? "", event.sources ?? [])
+                provisional("librarian", event.body, event.sources)
               ]);
+              setSpent((was) => spentAlso(was, event.spent));
               setTurn(IDLE);
             }
+        };
+        try {
+          for (;;) {
+            const { done, value } = await reader.read();
+            pending += decoder.decode(value, { stream: !done });
+            const lines = pending.split("\n");
+            pending = lines.pop() ?? "";
+            for (const line of lines) readLine(line);
+            if (done) { readLine(pending); break; }
           }
+        } finally {
+          reader.releaseLock();
         }
       } catch {
-        setTurn((was) => (was ? { ...was, failure: "The conversation was interrupted." } : was));
+        if (!completed && !failed) fail("The conversation was interrupted. Your question is kept below.");
+      } finally {
+        if (!completed && !failed) fail("The conversation ended before the answer was complete. Your question is kept below.");
+        requestPending.current = false;
       }
     },
-    [compositionId, focusCardId, selectedCardIds, turn]
+    [compositionId, focusCardId, here, loaded, ready, request, scope, selectedCardIds]
   );
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        className={styles.carriageTab}
-        onClick={() => onOpenChange(true)}
-        aria-label="Open the Librarian"
-      >
-        <span aria-hidden="true">✦</span> Librarian
-      </button>
-    );
+  if (!open && !carriage) {
+    return <CarriageLauncher side="right" label="Librarian" variant="librarian" controls="carriage-librarian" onOpen={() => onOpenChange(true)} />;
   }
 
   const settled = turn?.failure ?? null;
 
   return (
-    <section
-      className={styles.carriage}
-      aria-label="Librarian"
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          event.stopPropagation();
-          onOpenChange(false);
-        }
-      }}
-    >
-      <header className={styles.carriageHead}>
-        <div>
-          <h2 className={styles.carriageTitle}>Librarian</h2>
+    <CarriageShell {...carriage} side="right" id="carriage-librarian" variant="librarian" ariaLabel="Librarian"
+      header={<CarriageHeader side="right" title="Librarian" variant="librarian" status={turn && !turn.failure ? "Working" : !loaded ? "Opening" : ready ? "Ready" : "Unavailable"} statusTone={!loaded || !ready || (turn && !turn.failure) ? "quiet" : "ready"} onCollapse={carriage?.onCollapse ?? (() => onOpenChange(false))} />}
+      context={<CarriageSection density="compact">
           {/* What it can see, said plainly. Implicit context that cannot be
               read is indistinguishable from the Librarian guessing. */}
-          <p className={styles.carriageVantage}>
-            Reading <strong>{compositionName}</strong>
-            {focusLabel ? (
-              <>
-                {" · "}
-                focused on <strong>{focusLabel}</strong>
-              </>
-            ) : null}
-            {selectedCardIds.length > 0 ? ` · ${selectedCardIds.length} selected` : null}
-          </p>
-        </div>
-        <button
-          type="button"
-          className={styles.ghostAction}
-          onClick={() => onOpenChange(false)}
-        >
-          Collapse
-        </button>
-      </header>
-
-      <div className={styles.carriageBody} ref={scroller}>
+          <details className={styles.librarianContext}>
+            <summary>Reading <strong>{compositionName}</strong>{focusLabel ? ` · ${focusLabel}` : null}{selectedCardIds.length ? ` · ${selectedCardIds.length} selected` : null}</summary>
+            <dl><div><dt>Workspace</dt><dd>{compositionName}</dd></div><div><dt>Focus</dt><dd>{focusLabel ?? "No object in Focus"}</dd></div><div><dt>Selection</dt><dd>{selectedCardIds.length ? `${selectedCardIds.length} objects` : "No selected objects"}</dd></div></dl>
+            <p>Each request keeps the context it was sent with.</p>
+          </details>
+      </CarriageSection>}
+      scrollRef={scroller}
+      footer={<CarriageFooter>
+        <LibrarianComposer value={draft} onChange={setDraft} onSubmit={() => { void ask(draft); }} inputRef={field}
+          status={!loaded ? "opening" : !ready ? "unavailable" : turn && !turn.failure ? "submitting" : "idle"}
+          scope={focusLabel ? `Focus · ${focusLabel}` : `${compositionName}${selectedCardIds.length ? ` · ${selectedCardIds.length} selected` : ""}`} />
+        {loaded && !ready ? <div className={styles.librarianRecovery}>
+          <span>The Librarian is unavailable in this workspace. Your draft and manual tools remain available.</span>
+          <Button variant="quiet" onClick={() => { setLoaded(false); setReady(true); }}>Retry connection</Button>
+        </div> : null}
+        <Meter spent={spent} />
+      </CarriageFooter>}
+    >
+      <div className={styles.librarianStream} role="log" aria-label="Librarian conversation" aria-live="polite" aria-relevant="additions" aria-busy={Boolean(turn && !turn.failure)}>
         {!loaded ? <p className={styles.carriageNote}>Opening the conversation…</p> : null}
-
-        {loaded && !ready ? (
-          <p className={styles.carriageNote}>
-            The Librarian is not configured in this environment. Set{" "}
-            <code>ANTHROPIC_API_KEY</code> to wake it.
-          </p>
-        ) : null}
 
         {loaded && ready && messages.length === 0 && !turn ? (
           <p className={styles.carriageNote}>
-            Ask about this world and the Librarian will answer from what Relic actually
-            records, citing what it read. It can look things up, and it cannot yet change
-            anything.
+            Ask about this world and the Librarian answers from what Relic actually
+            records, citing what it read. It can also work: bring things here, arrange
+            them, write new material. Everything it makes is Pencil and carries its name,
+            and only you can establish Ink.
           </p>
         ) : null}
 
@@ -261,62 +315,97 @@ export function Librarian({
 
         {turn ? (
           <>
-            <article className={styles.saidGm}>
+            <article className={styles.saidGm} aria-label="You">
               <p className={styles.saidBody}>{turn.ask}</p>
             </article>
-            <article className={styles.saidLibrarian}>
+            <article className={styles.saidLibrarian} aria-label="Librarian">
+              <p className={styles.requestScope}>Sent from {turn.scope}</p>
+              {/* What was done, kept visible above whatever is being said about
+                  it. The Desk has already changed; this is the account of why,
+                  and it must not disappear behind the answer. */}
+              {turn.did.map((act, i) => (
+                <p key={i} className={styles.acted}>
+                  {act}
+                </p>
+              ))}
               {turn.consulting && !turn.said ? (
                 <p className={styles.consulting}>{turn.consulting}…</p>
               ) : null}
               {turn.said ? (
                 <p className={styles.saidBody}>
                   {turn.said}
-                  <span className={styles.cursor} aria-hidden="true" />
+                  {!settled ? <span className={styles.cursor} aria-hidden="true" /> : null}
                 </p>
               ) : null}
-              {!turn.said && !turn.consulting && !settled ? (
+              {!turn.said && !turn.consulting && turn.did.length === 0 && !settled ? (
                 <p className={styles.consulting}>Reading…</p>
               ) : null}
-              {settled ? <p className={styles.carriageProblem}>{settled}</p> : null}
+              {settled ? <p className={styles.carriageProblem} role="alert">{settled} Review any changes above before sending again.</p> : null}
             </article>
           </>
         ) : null}
       </div>
 
-      <form
-        className={styles.composer}
-        onSubmit={(event) => {
-          event.preventDefault();
-          void ask(draft);
-        }}
-      >
-        <textarea
-          ref={field}
-          className={styles.composerField}
-          value={draft}
-          rows={2}
-          placeholder="Ask about this world"
-          aria-label="Ask the Librarian"
-          disabled={!ready && loaded}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            // Enter sends, because the carriage is a conversation. A newline is
-            // still reachable, which is what keeps a long question possible.
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              void ask(draft);
-            }
-          }}
-        />
-        <button
-          type="submit"
-          className={styles.primaryAction}
-          disabled={draft.trim() === "" || turn !== null}
-        >
-          {turn ? "Reading…" : "Ask"}
-        </button>
-      </form>
-    </section>
+    </CarriageShell>
+  );
+}
+
+/** A world that has never spoken to its Librarian. */
+const NOTHING_YET: Reckoning = { turns: 0, tokens: 0, usd: null };
+
+/**
+ * The running total, after one more turn.
+ *
+ * `usd` goes null and stays null the moment any turn cannot be priced, which is
+ * the same rule `reckon` applies on the server and for the same reason: a
+ * figure that quietly omits the turns it did not recognise would read as a
+ * small bill rather than an incomplete one.
+ */
+function spentAlso(was: Reckoning, turn: Reckoning | undefined): Reckoning {
+  if (!turn) return was;
+  return {
+    turns: was.turns + turn.turns,
+    tokens: was.tokens + turn.tokens,
+    usd: was.usd === null || turn.usd === null ? null : was.usd + turn.usd
+  };
+}
+
+/**
+ * What this conversation has cost.
+ *
+ * Two facts of different kinds, and the wording keeps them apart. Tokens are
+ * **measured** — the provider counted them and Relic stored them. Money is
+ * **estimated** from a published rate that Relic cannot verify against the
+ * account being billed, so it is prefixed and dimmed rather than stated. When
+ * no rate is known the money simply is not shown: `AI.md` forbids the Librarian
+ * from filling a gap with something plausible, and a meter beside it has no
+ * business doing what the Librarian may not.
+ *
+ * Absent entirely before the first turn. An empty conversation showing "0
+ * tokens · $0.00" would be drawing attention to a cost nobody has incurred.
+ */
+function Meter({ spent }: { spent: Reckoning }) {
+  if (spent.turns === 0) return null;
+
+  return (
+    <p
+      className={styles.meter}
+      title={`${spent.tokens.toLocaleString()} tokens over ${spent.turns} turn${
+        spent.turns === 1 ? "" : "s"
+      }. ${
+        spent.usd === null
+          ? "Relic has no rate for this model — set LIBRARIAN_RATES to estimate cost."
+          : // Deliberately not "published rates": the figure may have come from
+            // the operator's own LIBRARIAN_RATES, and naming a source Relic
+            // cannot be sure of would be the meter overstating what it knows.
+            "Cost is an estimate, not a bill."
+      }`}
+    >
+      <span>{saySize(spent.tokens)} tokens</span>
+      {spent.usd !== null ? (
+        <span className={styles.meterEstimate}>· ≈{sayMoney(spent.usd)}</span>
+      ) : null}
+    </p>
   );
 }
 
@@ -335,14 +424,14 @@ function Said({
 }) {
   if (message.speaker === "gm") {
     return (
-      <article className={styles.saidGm}>
+      <article className={styles.saidGm} aria-label="You">
         <p className={styles.saidBody}>{message.body}</p>
       </article>
     );
   }
 
   return (
-    <article className={styles.saidLibrarian}>
+    <article className={styles.saidLibrarian} aria-label="Librarian">
       <p className={styles.saidBody}>
         <Cited body={message.body} sources={message.sources} onFollowSource={onFollowSource} />
       </p>
@@ -354,7 +443,7 @@ function Said({
               type="button"
               className={styles.sourceChip}
               onClick={() => onFollowSource(source.ref)}
-              title={`Bring ${source.ref.label} here`}
+              title={`Open ${source.ref.label}`}
             >
               <span className={styles.sourceMark}>{source.n}</span> {source.ref.label}
             </button>
@@ -399,7 +488,8 @@ function Cited({
         type="button"
         className={styles.citation}
         onClick={() => onFollowSource(source.ref)}
-        title={`Bring ${source.ref.label} here`}
+        title={`Open ${source.ref.label}`}
+        aria-label={`Open citation ${source.n}: ${source.ref.label}`}
       >
         {source.n}
       </button>
@@ -431,6 +521,9 @@ function provisional(
     body,
     sources,
     compositionId: null,
+    // The turn's cost is shown by the meter, which is fed from the `done`
+    // event. Repeating it on the drawn message would be the same fact twice.
+    spend: null,
     saidAt: new Date().toISOString()
   };
 }

@@ -1,0 +1,39 @@
+.collection { position: absolute; left: 0; top: 0; box-sizing: border-box; border-radius: 20px; background: transparent; border: 1px dashed color-mix(in srgb, var(--chrome-rule) 88%, transparent); pointer-events: none; transition: transform 300ms cubic-bezier(.16, 1, .3, 1), border-color 160ms ease-out, background-color 160ms ease-out; }
+.collection[data-collapsed] { background: transparent; border-color: transparent; }
+.collection[data-selected] { border-color: color-mix(in srgb, var(--workflow-ink) 65%, var(--chrome-rule)); }
+.collection { transition: left 300ms var(--motion-ease), top 300ms var(--motion-ease), width 300ms var(--motion-ease), height 300ms var(--motion-ease), border-color 160ms ease-out, background-color 160ms ease-out; }
+[data-interacting="drag"] .collection { transition: border-color 160ms ease-out, background-color 160ms ease-out; }
+.collection[data-drop-target] { border: 1px solid var(--orange); background: color-mix(in srgb, var(--orange) 7%, transparent); }
+.header { position: relative; z-index: 2147483000; height: 54px; display: flex; gap: 8px; align-items: center; padding: 0 12px; pointer-events: auto; cursor: grab; color: var(--ink); }
+.collection:not([data-collapsed]) .header { cursor: grab; }
+.collection:not([data-collapsed]):hover { border-color: color-mix(in srgb, var(--workflow-ink) 60%, var(--chrome-rule)); }
+.collection[data-selected] .header { color: var(--workflow-ink); }
+.boundaryHandle { position: absolute; z-index: 2147482999; pointer-events: auto; border: 0; padding: 0; background: transparent; opacity: 0; }
+.boundaryHandle:hover, .boundaryHandle:focus-visible { opacity: 1; background: color-mix(in srgb, var(--workflow-ink) 22%, transparent); outline: none; }
+.boundaryTop, .boundaryBottom { left: 18px; right: 18px; height: 12px; cursor: grab; }
+.boundaryTop { top: -6px; }
+.boundaryBottom { bottom: -6px; }
+.boundaryLeft, .boundaryRight { top: 18px; bottom: 18px; width: 12px; cursor: grab; }
+.boundaryLeft { left: -6px; }
+.boundaryRight { right: -6px; }
+.boundaryHandle:active { cursor: grabbing; }
+.header:active { cursor: grabbing; }
+.header button { color: inherit; border: 0; background: transparent; cursor: pointer; }
+.toggle, .browseButton { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; flex: 0 0 auto; }
+.header svg { width: 17px; height: 17px; }
+.header button:hover { background: var(--chrome-hover); }
+.header button:focus-visible, .browser button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; }
+.title { padding: 4px; text-align: left; font: 500 18px/1.2 var(--serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.count { margin-left: auto; white-space: nowrap; color: var(--ink-faint); font: 400 12px/1.4 var(--font-ui); }
+.header form { flex: 1; min-width: 0; }
+.header input { width: 100%; padding: 5px; border: 1px solid var(--chrome-rule); background: var(--paper); color: var(--ink); font: 500 18px/1.2 var(--serif); }
+.browser { position: absolute; top: 50px; right: 8px; z-index: 2147483001; min-width: 280px; max-width: 360px; max-height: 420px; overflow-y: auto; padding: 8px; background: var(--chrome-surface); border-radius: 12px; box-shadow: var(--lift-raised); pointer-events: auto; }
+.browser p { margin: 5px 8px 10px; font: 400 12px/1.4 var(--font-ui); color: var(--ink-faint); }
+.browser button { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; width: 100%; padding: 10px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); text-align: left; cursor: pointer; font: 400 14px/1.4 var(--font-ui); }
+.browser button:hover { background: var(--chrome-hover); }
+.browser small { color: var(--ink-faint); font-size: 11px; }
+.browserAction { justify-content: flex-start !important; }
+.browserActionStart { margin-top: 6px; border-top: 1px solid var(--chrome-rule) !important; border-radius: 0 !important; }
+@media (prefers-reduced-motion: reduce) { .collection { transition: none; } .boundaryHandle { transition: none; } }
+
+

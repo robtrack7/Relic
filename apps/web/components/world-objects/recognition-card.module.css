@@ -1,0 +1,68 @@
+/* DSK-026 far tier: the Small Card simplified to image or mark plus a name
+   that counter-scales against the Desk camera (never below 11px on screen). */
+.far {
+  --far-name: max(24px, calc(11.5px / var(--canvas-scale, 1)));
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--family-tint);
+  color: var(--ink);
+}
+
+.fill { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.farImage,
+.farMark {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: max(96px, 62cqi);
+  overflow: hidden;
+}
+
+.farMark { display: grid; }
+
+.farName {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--far-name) * .3);
+  padding: calc(var(--far-name) * .45) calc(var(--far-name) * .55);
+  background: var(--object-paper, var(--card));
+}
+
+/* Text-led families are their name: it fills the card instead of a band. */
+.far:not([data-media]):not(:has(.farMark)) .farName {
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  background: transparent;
+}
+
+.farGlyph {
+  flex: none;
+  width: calc(var(--far-name) * .7);
+  height: calc(var(--far-name) * .7);
+  margin-top: calc(var(--far-name) * .12);
+  color: var(--ink-quiet);
+}
+
+.farName h2 {
+  display: -webkit-box;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font: var(--type-card-title);
+  font-size: var(--far-name);
+  line-height: 1.05;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.far:not([data-media]):not(:has(.farMark)) .farName h2 {
+  font-size: calc(var(--far-name) * 1.35);
+  -webkit-line-clamp: 4;
+}

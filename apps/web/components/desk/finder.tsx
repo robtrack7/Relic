@@ -1,29 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import type { CardId, WorldEntry } from "@/lib/world/model";
+
+import { SearchField } from "@/components/ui/search-field";
+import styles from "@/components/ui/search-field.module.css";
+import { useOverlayDismiss } from "@/components/ui/floating-surface";
 
 import { EntryIdentity } from "./library";
 import type { SurfaceControlsRef } from "./surface-controls";
 import type { DeskStore } from "./use-desk";
-import styles from "./desk.module.css";
-
-/**
- * Global search: the promise that spatial memory is an assist, never a
- * requirement.
- *
- * Anything in the world is two keystrokes away regardless of which composition
- * it sits on, or whether it sits on one at all. Finding something and *having*
- * it are one gesture here — Enter places it in front of you and deepens into it,
- * because a GM who searched for Mara wanted Mara, not a list mentioning her.
- *
- * Retrieval never navigates. The composition stays where it was and the thing
- * comes to you, exactly as following a relationship does.
- */
 
 const RESULTS = 10;
 
+/** Global retrieval that keeps the current composition and brings the result to it. */
 export function Finder({
   store,
   controls,
@@ -33,182 +24,265 @@ export function Finder({
   store: DeskStore;
   controls: SurfaceControlsRef;
   onArrive: (cardIds: readonly CardId[]) => void;
-  onOpenLibrary: () => void;
+  onOpenLibrary: (query?: string) => void;
 }) {
   const { search, pullIn } = store;
-
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [entries, setEntries] = useState<readonly WorldEntry[]>([]);
   const [active, setActive] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [working, setWorking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [inspected, setInspected] = useState<WorldEntry | null>(null);
+  const [searchAttempt, setSearchAttempt] = useState(0);
 
-  const wrapper = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLInputElement>(null);
-  // Only the newest request may write. Keystrokes outrun round trips, and a
-  // stale answer landing last is how a search box starts showing the results
-  // for a word the GM has already finished deleting.
+  const trigger = useRef<HTMLButtonElement>(null);
+  const content = useRef<HTMLDivElement>(null);
+  const returnFocus = useRef<HTMLElement | null>(null);
   const ticket = useRef(0);
+  const panelId = useId();
+  const listboxId = useId();
+
+  const openFinder = useCallback(() => {
+    if (!open) {
+      returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : trigger.current;
+    }
+    setOpen(true);
+  }, [open]);
+
+  const closeFinder = useCallback((restoreFocus: boolean) => {
+    ticket.current += 1;
+    setOpen(false);
+    setLoading(false);
+    setWorking(false);
+    if (restoreFocus) (returnFocus.current ?? trigger.current)?.focus();
+  }, []);
+
+  useOverlayDismiss({ open, onClose: closeFinder, triggerRef: trigger, contentRef: content });
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if ((event.key === "k" || event.key === "K") && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        setOpen((was) => !was);
-        return;
-      }
-      // "/" is the fast path, but only where it is not a character being typed.
       const target = event.target as HTMLElement | null;
       const typing =
         target instanceof HTMLInputElement ||
         target instanceof HTMLTextAreaElement ||
         target?.isContentEditable === true;
+      if ((event.key === "k" || event.key === "K") && (event.metaKey || event.ctrlKey) && !typing) {
+        event.preventDefault();
+        if (open) closeFinder(true);
+        else openFinder();
+        return;
+      }
       if (event.key === "/" && !typing) {
         event.preventDefault();
-        setOpen(true);
+        openFinder();
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, []);
+  }, [closeFinder, open, openFinder]);
 
   useEffect(() => {
     if (!open) return;
     field.current?.focus();
     field.current?.select();
-    const close = (event: Event) => {
-      if (!wrapper.current?.contains(event.target as Node)) setOpen(false);
-    };
-    document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
   }, [open]);
+
+  useEffect(() => () => {
+    ticket.current += 1;
+  }, []);
 
   useEffect(() => {
     if (!open) return;
     const mine = ++ticket.current;
-    const timer = setTimeout(
-      async () => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setEntries([]);
+    setActive(0);
+    const timer = setTimeout(async () => {
+      try {
         const found = await search({ query, limit: RESULTS });
-        if (ticket.current !== mine) return;
+        if (cancelled || ticket.current !== mine) return;
         setEntries(found);
         setActive(0);
-      },
-      query === "" ? 0 : 140
-    );
-    return () => clearTimeout(timer);
-  }, [open, query, search]);
+      } catch {
+        if (cancelled || ticket.current !== mine) return;
+        setEntries([]);
+        setActive(0);
+        setError("Search could not load. Try again.");
+      } finally {
+        if (!cancelled && ticket.current === mine) setLoading(false);
+      }
+    }, query === "" ? 0 : 140);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      ticket.current += 1;
+    };
+  }, [open, query, search, searchAttempt]);
 
-  /**
-   * What a result does when it is chosen.
-   *
-   * Something already on this composition is *revealed* rather than added —
-   * referencing it again would be a no-op, and offering to "add" what is already
-   * in front of the GM would be Relic misdescribing its own world.
-   */
+  const updateQuery = (next: string) => {
+    setQuery(next);
+    setEntries([]);
+    setActive(0);
+    setError(null);
+  };
+
+  const clearSearch = () => {
+    updateQuery("");
+    setError(null);
+    field.current?.focus();
+  };
+
   const take = async (entry: WorldEntry | undefined) => {
-    if (!entry || working) return;
-    setOpen(false);
-
+    if (!entry || loading || working) return;
+    setError(null);
     if (entry.cardHere) {
+      closeFinder(true);
       onArrive([entry.cardHere]);
       return;
     }
 
     setWorking(true);
-    const landed = await pullIn([entry.ref], controls.current?.landing() ?? { x: 0, y: 0 });
-    setWorking(false);
-    if (landed.length > 0) onArrive(landed);
+    try {
+      const landed = await pullIn([entry.ref], controls.current?.landing() ?? { x: 0, y: 0 });
+      if (!landed.length) throw new Error("The object could not be placed.");
+      closeFinder(true);
+      if (landed.length > 0) onArrive(landed);
+    } catch {
+      setError("That result could not be brought in. Try again.");
+    } finally {
+      setWorking(false);
+    }
   };
 
+  const inspect = (entry: WorldEntry | undefined) => {
+    if (!entry || loading || working) return;
+    setError(null);
+    if (entry.cardHere) {
+      closeFinder(true);
+      onArrive([entry.cardHere]);
+      return;
+    }
+    setInspected((current) => (current?.ref.objectId === entry.ref.objectId ? null : entry));
+  };
+
+  const activeDescendant = entries[active]
+    ? `${listboxId}-option-${entries[active].ref.objectId}`
+    : undefined;
+
   return (
-    <div className={styles.finder} ref={wrapper}>
-      <button
-        type="button"
-        className={styles.finderTrigger}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        onClick={() => setOpen((was) => !was)}
+    <SearchField
+        ref={field}
+        triggerRef={trigger}
+        contentRef={content}
+        value={query}
+        onChange={updateQuery}
+        open={open}
+        onOpenChange={(next) => (next ? openFinder() : closeFinder(true))}
+        onClear={clearSearch}
+        onBoundaryBlur={() => { if (open) closeFinder(false); }}
+        panelId={panelId}
+        listboxId={listboxId}
+        activeDescendant={activeDescendant}
+        busy={loading || working}
+        placeholder="A name, or something you wrote"
+        onFieldKeyDown={(event) => {
+          event.stopPropagation();
+          if (event.key === "Escape") {
+            event.preventDefault();
+            closeFinder(true);
+          } else if (event.key === "ArrowDown" && entries.length > 0) {
+            event.preventDefault();
+            setActive((current) => Math.min(current + 1, entries.length - 1));
+          } else if (event.key === "ArrowUp" && entries.length > 0) {
+            event.preventDefault();
+            setActive((current) => Math.max(current - 1, 0));
+          } else if (event.key === "Enter" && entries.length > 0) {
+            event.preventDefault();
+            inspect(entries[active]);
+          }
+        }}
       >
-        <span aria-hidden="true">⌕</span>
-        <span className={styles.finderTriggerLabel}>Search this world</span>
-        <kbd className={styles.finderKey}>⌘K</kbd>
-      </button>
-
-      {open ? (
-        <div className={styles.finderPanel} role="dialog" aria-label="Search this world">
-          <input
-            ref={field}
-            className={styles.finderField}
-            value={query}
-            placeholder="A name, or something you wrote"
-            aria-label="Search this world"
-            autoComplete="off"
-            onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={(event) => {
-              // Stopped here so the canvas underneath never acts on a keystroke
-              // meant for the search box.
-              event.stopPropagation();
-              if (event.key === "Escape") {
-                event.preventDefault();
-                setOpen(false);
-              } else if (event.key === "ArrowDown") {
-                event.preventDefault();
-                setActive((current) => Math.min(current + 1, entries.length - 1));
-              } else if (event.key === "ArrowUp") {
-                event.preventDefault();
-                setActive((current) => Math.max(current - 1, 0));
-              } else if (event.key === "Enter") {
-                event.preventDefault();
-                void take(entries[active]);
-              }
-            }}
-          />
-
-          {entries.length === 0 ? (
-            <p className={styles.finderNote}>
-              {query === ""
-                ? "Nothing in this world yet."
-                : `Nothing matches “${query}”.`}
-            </p>
-          ) : (
-            <ul className={styles.finderResults}>
-              {entries.map((entry, index) => (
-                <li key={entry.ref.objectId}>
+        {loading ? <p className={styles.status} role="status" aria-live="polite">Searching…</p> : null}
+        {!loading && error ? <p className={styles.status} role="alert">
+          {error}
+          {error === "Search could not load. Try again." ? (
+            <button type="button" className={styles.more} onClick={() => setSearchAttempt((attempt) => attempt + 1)}>
+              Try again
+            </button>
+          ) : null}
+        </p> : null}
+        {!loading && !error && entries.length === 0 ? (
+          <p className={styles.status} role="status" aria-live="polite">
+            {query === "" ? "Nothing in this world yet." : `Nothing matches “${query}”.`}
+          </p>
+        ) : null}
+        <ul id={listboxId} className={styles.results} role="listbox" aria-label="Search results">
+          {entries.map((entry, index) => {
+            const activeRow = index === active;
+            return (
+              <li key={entry.ref.objectId} role="presentation">
+                <div className={styles.resultRow}>
                   <button
+                    id={`${listboxId}-option-${entry.ref.objectId}`}
                     type="button"
-                    className={styles.finderResult}
-                    data-active={index === active || undefined}
-                    // Pointer-down would fire before the panel's own blur
-                    // handling settles; hovering to aim is what a list like this
-                    // is for, so the highlight follows the pointer instead.
+                    role="option"
+                    aria-selected={activeRow}
+                    disabled={loading || working}
+                    className={styles.result}
+                    data-active={activeRow || undefined}
                     onMouseEnter={() => setActive(index)}
-                    onClick={() => void take(entry)}
+                    onFocus={() => setActive(index)}
+                    onClick={() => inspect(entry)}
                   >
                     <EntryIdentity entry={entry} />
-                    <span className={styles.finderVerb}>
-                      {entry.cardHere ? "here" : "bring in"}
-                    </span>
+                    <span className={styles.verb}>{entry.cardHere ? "open" : "inspect"}</span>
                   </button>
-                </li>
-              ))}
-            </ul>
-          )}
+                  {!entry.cardHere ? (
+                    <button
+                      type="button"
+                      className={styles.resultAction}
+                      disabled={loading || working}
+                      onClick={() => void take(entry)}
+                    >
+                      Bring in
+                    </button>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
 
-          <footer className={styles.finderFoot}>
-            <span className={styles.finderHint}>↑↓ move · Enter brings it in · Esc closes</span>
-            <button
-              type="button"
-              className={styles.finderMore}
-              onClick={() => {
-                setOpen(false);
-                onOpenLibrary();
-              }}
-            >
-              Open the Library
-            </button>
-          </footer>
-        </div>
-      ) : null}
-    </div>
+        {inspected ? (
+          <aside className={styles.preview} aria-label={`Preview ${inspected.ref.label}`}>
+            <div className={styles.previewHead}>
+              <strong>{inspected.ref.label}</strong>
+              <button type="button" className={styles.previewClose} onClick={() => setInspected(null)}>Close</button>
+            </div>
+            <EntryIdentity entry={inspected} showName={false} showSnippet={false} />
+            <p>{inspected.snippet}</p>
+            <small>This object is not on the current composition. Use Bring in when you want to arrange it here.</small>
+          </aside>
+        ) : null}
+
+        <footer className={styles.footer}>
+          <span className={styles.hint}>↑↓ move · Enter inspects · Esc closes</span>
+          <button
+            type="button"
+            className={styles.more}
+            onClick={() => {
+              closeFinder(false);
+              onOpenLibrary(query);
+            }}
+          >
+            Open the Library
+          </button>
+        </footer>
+    </SearchField>
   );
 }

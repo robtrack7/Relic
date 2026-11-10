@@ -13,9 +13,9 @@
   justify-content: space-between;
   gap: 16px;
   padding: 0 16px;
-  min-height: 48px;
-  border-bottom: 1px solid var(--rule);
-  background: var(--card);
+  min-height: 64px;
+  border-bottom: 0;
+  background: var(--paper);
 }
 
 .identity {
@@ -26,10 +26,10 @@
 }
 
 .wordmark {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
   color: var(--ink);
 }
 
@@ -187,6 +187,7 @@
 
 .primaryAction,
 .ghostAction {
+  min-height: 44px;
   padding: 5px 12px;
   white-space: nowrap;
   border-radius: var(--radius-control);
@@ -250,8 +251,8 @@
   justify-content: space-between;
   gap: 16px;
   padding: 5px 16px;
-  border-top: 1px solid var(--rule);
-  background: var(--card);
+  border-top: 0;
+  background: var(--paper);
   color: var(--ink-faint);
   font-size: 12px;
 }
@@ -292,7 +293,7 @@
   min-width: 200px;
   padding: 6px;
   border: 1px solid var(--rule-strong);
-  border-radius: var(--radius);
+  border-radius: var(--radius-surface);
   background: var(--card-raised);
   box-shadow: var(--lift-raised);
 }
@@ -311,7 +312,7 @@
   background-color: var(--paper);
   /* The tooth of the paper. Faint enough to read as texture, regular enough
      to help judge distance while dragging. */
-  background-image: radial-gradient(circle, var(--paper-tooth) 1px, transparent 1.2px);
+  background-image: radial-gradient(circle, var(--canvas-grid) 0.7px, transparent 0.85px);
   touch-action: none;
   cursor: default;
   outline: none;
@@ -321,17 +322,14 @@
   cursor: grab;
 }
 
-.canvas::after {
-  /* The desk sits a little lower than its edges. Atmosphere, not information. */
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    130% 100% at 50% 40%,
-    transparent 55%,
-    rgba(88, 74, 52, 0.07) 100%
-  );
+.canvas:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--orange);
+}
+
+.canvas[data-interacting="pan"],
+.canvas[data-interacting="drag"],
+.canvas[data-interacting="drag"] .card {
+  cursor: grabbing;
 }
 
 .world {
@@ -339,7 +337,6 @@
   top: 0;
   left: 0;
   transform-origin: 0 0;
-  will-change: transform;
 }
 
 .emptyDesk {
@@ -350,10 +347,51 @@
   margin: 0;
   color: var(--ink-faint);
   font-family: var(--serif);
-  font-size: 19px;
-  letter-spacing: 0.01em;
+  width: min(440px, calc(100% - 64px));
   pointer-events: none;
   text-align: center;
+}
+
+.emptyDesk h1 {
+  margin: 0;
+  color: var(--ink-quiet);
+  font: 400 clamp(28px, 4vw, 36px)/1.2 var(--serif);
+  letter-spacing: -0.02em;
+}
+
+.emptyDesk p {
+  margin: 16px 0 24px;
+  font: 14px/1.65 var(--sans);
+}
+
+.emptyDesk button {
+  pointer-events: auto;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-control);
+  background: var(--canvas-surface);
+  box-shadow: var(--lift);
+  font: 500 13px/1.4 var(--sans);
+  color: var(--ink);
+}
+
+.emptyDesk button:hover {
+  border-color: var(--ink-faint);
+  box-shadow: var(--lift-raised);
+}
+
+.emptyDesk small {
+  display: block;
+  margin-top: 20px;
+  font: 12px/1.6 var(--sans);
+}
+
+.canvasNavigation {
+  position: absolute;
+  bottom: var(--canvas-edge);
+  left: var(--canvas-edge);
+  z-index: 10;
 }
 
 .marquee {
@@ -363,42 +401,6 @@
   pointer-events: none;
 }
 
-.viewControls {
-  position: absolute;
-  right: 14px;
-  bottom: 14px;
-  display: flex;
-  align-items: stretch;
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--radius-control);
-  background: var(--card-raised);
-  box-shadow: var(--lift);
-  overflow: hidden;
-}
-
-.viewControls button {
-  min-width: 32px;
-  padding: 4px 8px;
-  border: 0;
-  background: transparent;
-  color: var(--ink-quiet);
-  font-size: 13px;
-}
-
-.viewControls button:hover {
-  background: var(--orange-wash);
-  color: var(--orange-deep);
-}
-
-.viewControls button + button {
-  border-left: 1px solid var(--rule);
-}
-
-.zoomLevel {
-  font-family: var(--mono);
-  font-size: 10px;
-  min-width: 52px;
-}
 
 /* ------------------------------------------------------------------ card -- */
 
@@ -549,12 +551,20 @@
 /* ----------------------------------------------------------------- stack -- */
 
 .stack {
-  height: 100%;
-  overflow-y: auto;
+  position: absolute;
+  inset: var(--workspace-content-top) var(--workspace-edge) 68px 84px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   background: var(--paper);
-  background-image: radial-gradient(circle, var(--paper-tooth) 1px, transparent 1.2px);
-  padding: 16px;
 }
+.stackToolbar { display: flex; flex: none; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; width: min(640px, 100%); margin: 0 auto 12px; }
+.stackToolbar h2 { margin: 0; color: var(--ink); font: 600 25px/1.2 var(--font-editorial); }
+.stackToolbar button { min-width: 0; border-radius: var(--radius-pill); }
+.stackToolbar svg { width: 18px; height: 18px; flex: none; }
+.stackScroll { flex: 1; min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--rule-strong) transparent; padding: 4px 8px 20px; scroll-padding-block: 16px; }
 
 .emptyStack {
   margin: 48px auto;
@@ -563,6 +573,17 @@
   color: var(--ink-faint);
   font-family: var(--serif);
   font-size: 19px;
+}
+
+.emptyStack h1 {
+  margin: 0 0 16px;
+  color: var(--ink-quiet);
+  font: 400 30px/1.2 var(--serif);
+  letter-spacing: -0.02em;
+}
+
+.emptyStack p {
+  font: 14px/1.65 var(--sans);
 }
 
 .stackList {
@@ -652,6 +673,59 @@
 }
 
 @media (max-width: 720px) {
+  .shell {
+    min-width: 0;
+  }
+
+  .chrome {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+
+  .identity {
+    flex: 1 1 calc(100% - 60px);
+    gap: 10px;
+  }
+
+  .worldBar {
+    overflow: hidden;
+  }
+
+  .worldName {
+    max-width: 30vw;
+  }
+
+  .finder {
+    flex: 0 0 44px;
+  }
+
+  .chromeActions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .primaryAction,
+  .ghostAction,
+  .compositionButton,
+  .finderTrigger {
+    min-height: 44px;
+  }
+
+  .syncBadge {
+    margin-right: auto;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .emptyStack {
+    width: 100%;
+    padding: 24px;
+    overflow-wrap: anywhere;
+  }
+
   .hints {
     display: none;
   }
@@ -802,7 +876,7 @@
   overflow-y: auto;
   padding: 16px 16px 20px;
   border: 1px solid var(--rule-strong);
-  border-radius: var(--radius);
+  border-radius: var(--radius-surface);
   background: var(--card-raised);
   box-shadow: var(--lift-raised);
   animation: inspectorIn 160ms cubic-bezier(0.2, 0, 0, 1);
@@ -1007,6 +1081,28 @@
 }
 
 .truthBar .truthActionStrong {
+  margin-left: auto;
+}
+
+/* Somebody other than the GM wrote this prose. Quiet and mono, like provenance,
+   because it is the same kind of fact — an archival note, not an alarm. The GM
+   should be able to find it when they ask "is this mine", and never have it
+   compete with the writing itself. */
+.written {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.writtenBy {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--ink-quiet);
+}
+
+.written .truthAction {
   margin-left: auto;
 }
 
@@ -1244,7 +1340,7 @@
   flex-direction: column;
   min-width: 190px;
   border: 1px solid var(--rule-strong);
-  border-radius: var(--radius);
+  border-radius: var(--radius-surface);
   background: var(--card-raised);
   box-shadow: var(--lift-raised);
   overflow: hidden;
@@ -1538,6 +1634,7 @@
 }
 
 .finderTrigger {
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1581,7 +1678,7 @@
   width: min(560px, calc(100vw - 32px));
   padding: 8px;
   border: 1px solid var(--rule-strong);
-  border-radius: var(--radius);
+  border-radius: var(--radius-surface);
   background: var(--card-raised);
   box-shadow: var(--lift-raised);
 }
@@ -1935,6 +2032,61 @@
   color: var(--ink-faint);
 }
 
+.entryActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.entryPreview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 16px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-surface);
+  background: var(--card);
+  box-shadow: var(--lift);
+}
+
+.entryPreviewHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.entryPreviewHead h2 {
+  margin: 2px 0 0;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.entryPreviewHint {
+  margin: 0;
+  color: var(--ink-faint);
+  font: 12px/1.5 var(--font-ui);
+}
+
+.entryPreviewBody {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.entryPreviewHint {
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+
 .libraryFoot {
   display: flex;
   align-items: center;
@@ -2024,7 +2176,10 @@
   z-index: 40;
   width: 360px;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  /* Head, conversation, composer, meter. The meter is last because it is the
+     only row that is about the machine rather than the world — a status strip,
+     which belongs at the bottom edge and out of the reading path. */
+  grid-template-rows: auto 1fr auto auto;
   min-height: 0;
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius);
@@ -2149,6 +2304,20 @@
   color: var(--ink-faint);
 }
 
+/* Something the Librarian did, rather than something it is saying. It reads as
+   a record — mono, indented behind a rule — because that is what it is: the
+   world has already changed, and this is the account of why. Weightier than a
+   consultation, which passes, and quieter than the answer, which is the point. */
+.acted {
+  margin: 0 0 4px;
+  padding-left: 8px;
+  border-left: 2px solid var(--orange-edge);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-quiet);
+}
+
 .cursor {
   display: inline-block;
   width: 2px;
@@ -2254,8 +2423,32 @@
 }
 
 .composerField:focus-visible {
-  outline: 2px solid var(--orange);
+  outline: 2px solid var(--focus-ring);
   outline-offset: -1px;
+}
+
+/* What the conversation has cost. Mono and faint, because `relic-ui` reserves
+   mono for provenance and system metadata and this is squarely that: a fact
+   about running a model, not a fact about the world. It must be findable when
+   looked for and invisible when not — a cost meter that draws the eye would be
+   asking the GM to think about tokens while they are thinking about a story. */
+.meter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 0 14px 9px;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Estimated, and saying so. The tokens beside it are measured, and running the
+   two together in one weight would let a rate Relic cannot verify borrow the
+   authority of a count it can. */
+.meterEstimate {
+  opacity: 0.75;
 }
 
 /* Workflow parity: the same conversation without a wide frame. A sheet over
@@ -2273,3 +2466,543 @@
     right: 12px;
   }
 }
+
+/* ------------------------------------------------------------------ prep -- */
+
+/*
+ * The running order, on the left edge — the other side of the world from the
+ * Librarian, so an evening can be planned with a conversation open beside it.
+ *
+ * Same panel family as the Inspector and the carriage: a raised card floating
+ * over the canvas rather than a chrome column, because the world underneath
+ * stays the thing being worked on. Prep is not a mode.
+ */
+.prepRail {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  bottom: 12px;
+  z-index: 40;
+  width: 300px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 0;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--card-raised);
+  box-shadow: var(--lift-raised);
+  animation: prepIn 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes prepIn {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .prepRail {
+    animation: none;
+  }
+}
+
+.prepTab {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 30;
+  padding: 7px 14px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--rule-strong);
+  background: var(--card-raised);
+  box-shadow: var(--lift-raised);
+  color: var(--ink);
+  font-size: 13px;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.prepTab:hover {
+  border-color: var(--orange);
+  color: var(--orange-deep);
+}
+
+.prepHead {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.prepTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.prepMark {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Lifecycle in words. Never colour alone — a GM must be able to read what
+   state tonight is in without distinguishing two shades of the same ink. */
+.prepState {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--ink-faint);
+}
+
+.prepCollapse {
+  padding: 0 6px;
+  border: none;
+  background: none;
+  color: var(--ink-faint);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.prepCollapse:hover {
+  color: var(--ink);
+}
+
+/* Serif, because it names a piece of the fiction's calendar rather than a
+   control. Invisible until touched: it is a title, not a form field. */
+.prepTitle {
+  width: 100%;
+  padding: 2px 4px;
+  margin: 0 -4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.prepTitle:hover,
+.prepIntent:hover,
+.beatText:hover {
+  border-color: var(--rule);
+}
+
+.prepTitle:focus,
+.prepIntent:focus,
+.beatText:focus {
+  outline: none;
+  border-color: var(--orange-edge);
+  background: var(--card);
+}
+
+.prepIntent {
+  width: 100%;
+  padding: 4px;
+  margin: 0 -4px;
+  resize: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--ink-quiet);
+  font-family: var(--serif);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.prepIntent::placeholder {
+  color: var(--ink-faint);
+}
+
+.prepBeats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 14px 14px;
+}
+
+.prepHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+
+/* Naming what a beat is where beats are written. An intention is not an
+   assertion, and the rail says so rather than leaving it to be inferred. */
+.prepNote {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-faint);
+}
+
+.prepEmpty {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+.beatList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.beat {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-control);
+  background: var(--card);
+}
+
+/* A beat the Librarian proposed, drawn with the interrupted edge Relic uses
+   for material that arrived without the GM writing it. Accompanied by words —
+   the mark is never the only thing saying so. */
+.beat[data-proposed] {
+  border-style: dashed;
+  border-color: var(--rule-strong);
+}
+
+.beatOrder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.beatNumber {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.beatMoves {
+  display: flex;
+  flex-direction: column;
+}
+
+.beatMove {
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--ink-faint);
+  font-size: 8px;
+  line-height: 1.2;
+}
+
+.beatMove:hover:not(:disabled) {
+  color: var(--orange-deep);
+}
+
+.beatMove:disabled {
+  opacity: 0.3;
+}
+
+.beatBody {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.beatText {
+  width: 100%;
+  padding: 2px 4px;
+  margin: 0 -4px;
+  resize: vertical;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.beatProposed {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+
+.beatRefs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* What a beat is about. A chip is a way into the world rather than a label:
+   following one brings the thing to the Prep if it is not already here. */
+.beatRef {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  background: var(--card-raised);
+}
+
+.beatRefName {
+  max-width: 150px;
+  overflow: hidden;
+  padding: 1px 4px 1px 8px;
+  border: none;
+  background: none;
+  color: var(--ink-quiet);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.beatRefDrop {
+  padding: 1px 6px 1px 2px;
+  border: none;
+  background: none;
+  color: var(--ink-faint);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.beatRefName:hover,
+.beatRefDrop:hover,
+.beatAction:hover,
+.beatAdd:hover {
+  color: var(--orange-deep);
+}
+
+.beatActions {
+  display: flex;
+  gap: 10px;
+}
+
+.beatAction {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ink-faint);
+  font-size: 11px;
+}
+
+.beatDraft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 7px 8px;
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--radius-control);
+  background: var(--card);
+}
+
+.beatDraftField {
+  width: 100%;
+  resize: none;
+  border: none;
+  background: none;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.beatDraftField:focus {
+  outline: none;
+}
+
+.beatAdd {
+  align-self: flex-start;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+
+.beatAddHint {
+  color: var(--ink-faint);
+  font-size: 11px;
+}
+
+.prepProblem {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  border-top: 1px solid var(--rule);
+  background: var(--orange-wash);
+  color: var(--orange-deep);
+  font-size: 12px;
+  text-align: left;
+}
+
+/* The Library draws above the working surface, so it starts where the rail
+   ends rather than covering the plan it was opened to fill. */
+.main[data-prep="open"] .library {
+  left: 324px;
+}
+
+/* Workflow parity: on a narrow screen the running order is a sheet over the
+   stack rather than a column beside a canvas there is no room for. Every path
+   — write a beat, reorder it, attach what is selected — stays a tap. */
+@media (max-width: 720px), (pointer: coarse) {
+  .prepRail {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: auto;
+  }
+
+  .main[data-prep="open"] .library {
+    left: 0;
+  }
+}
+
+/* Shared workspace integration. These roles style chrome and carriage content only. */
+.liveShell, .liveSurface { position: relative; width: 100%; height: 100dvh; min-height: 0; }
+.liveSurface { height: 100%; container-type: inline-size; --detail-panel-inset: 0px; }
+.liveSurface[data-detail-open] { --detail-panel-inset: 0px; }
+.liveShell .identity { gap: 14px; font-family: var(--font-ui); }
+.liveShell .wordmark { flex: none; font-family: var(--font-editorial); font-weight: 600; font-size: 27px; letter-spacing: -.025em; white-space: nowrap; }
+.wordmark small { font: 500 10px var(--font-ui); letter-spacing: .1em; }
+.liveShell .worldBar { min-width: 0; flex-wrap: wrap; gap: 2px 6px; }
+.liveShell .worldName { display: none; }
+.liveShell .worldBar > .trailMark { display: none; }
+.liveShell .compositionButton { min-height: 44px; max-width: 100%; padding: 4px 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
+.liveShell .finder { width: 100%; font-family: var(--font-ui); }
+.liveShell .finderTrigger { width: 100%; min-height: 44px; padding: 0 14px; border-color: var(--chrome-rule); border-radius: 9px; background: var(--chrome-surface); color: var(--ink-quiet); box-shadow: var(--lift); font-size: 13px; }
+.liveShell .finderKey { font-family: var(--font-ui); font-size: 11px; background: transparent; border: 0; }
+.liveShell .finderPanel { max-width: calc(100cqi - 32px); }
+.workspaceStatus { position: absolute; z-index: 11; right: 20px; bottom: 20px; display: flex; align-items: center; justify-content: flex-end; gap: 12px; max-width: calc(100% - 320px); padding: 4px 8px; border-radius: 6px; background: var(--paper); color: var(--ink-faint); font: 11px/1.4 var(--font-ui); pointer-events: auto; }
+.surfaceProjection { position: absolute; inset: 0; min-width: 0; min-height: 0; }
+.surfaceProjection[hidden] { display: none; }
+.librarianStream { display: flex; flex-direction: column; gap: 24px; padding: 20px 18px; }
+.carriageVantage { margin: 0; font: 12px/1.6 var(--font-ui); color: var(--ink-quiet); }
+.librarianStream .carriageNote { font: 13px/1.7 var(--font-ui); color: var(--ink-quiet); }
+.librarianStream .saidGm { padding: 12px 14px; border-radius: var(--radius-inset); background: var(--chrome-hover); }
+.librarianStream .saidBody { font-size: 14px; }
+.librarianStream .saidLibrarian .saidBody { font-family: var(--font-ui); font-size: 14px; line-height: 1.75; }
+.librarianStream .citation { min-width: 28px; min-height: 28px; height: auto; border-radius: var(--radius-control); color: var(--workflow-ink); font: 500 11px var(--font-ui); }
+.librarianStream .sourceChip { min-height: 36px; border-radius: var(--radius-pill); color: var(--ink-quiet); font-family: var(--font-ui); }
+.librarianStream .acted { border-left: 1px solid var(--workflow-accent); font: 12px/1.6 var(--font-ui); }
+.librarianStream .consulting { font: 12px/1.6 var(--font-ui); }
+.librarianRecovery { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; width: 100%; font: 12px/1.6 var(--font-ui); }
+.librarianRecovery > span { flex: 1 1 160px; }
+.librarianRecovery > button { padding-inline: 8px; }
+.requestScope { margin: 0; color: var(--ink-quiet); font: 11px/1.5 var(--font-ui); overflow-wrap: anywhere; }
+.librarianContext { color: var(--ink-quiet); font: 12px/1.6 var(--font-ui); }
+.librarianContext summary { min-height: 44px; padding-block: 12px; cursor: pointer; overflow-wrap: anywhere; }
+.librarianContext summary strong { font-weight: 500; color: var(--ink); }
+.librarianContext dl { display: grid; gap: 8px; margin: 12px 0; }
+.librarianContext dl > div { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px; }
+.librarianContext dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+.librarianContext > p { margin: 12px 0 0; }
+.prepTitle { font: 600 25px/1.2 var(--font-editorial); }
+.prepIntent { margin-top: 8px; font: 13px/1.65 var(--font-ui); }
+.prepTitle:focus-visible, .prepIntent:focus-visible, .beatText:focus-visible { outline: 2px solid var(--workflow-accent); outline-offset: 2px; }
+.beatList { gap: 10px; }
+.beat { background: var(--carriage-context); border-color: var(--chrome-rule); border-radius: 7px; }
+.beatList button { min-height: 32px; }
+.beatText { font-size: 14px; line-height: 1.6; }
+.meter { width: 100%; margin: 0; padding: 4px 0; font-size: 11px; }
+@container (max-width: 900px) {
+  .workspaceStatus { bottom: 76px; max-width: calc(100% - 40px); }
+}
+@media (max-width: 1100px) {
+  .liveShell .identity { gap: 8px; }
+  .liveShell .wordmark { font-size: 24px; }
+}
+.liveShell .wordmark { font-size: 27px; }
+.liveShell .wordmark small { font-size: 12px; letter-spacing: 0; }
+.liveShell .compositionButton { color: var(--workflow-ink); padding: 0 6px; font-size: 13px; }
+.liveShell .finderTrigger { border-radius: var(--radius-surface); }
+.workspaceStatus { left: 24px; right: auto; bottom: 28px; max-width: 260px; padding: 5px 0; gap: 10px; background: transparent; }
+.workspaceStatus .syncBadge { font-family: var(--font-ui); font-size: 11px; letter-spacing: 0; text-transform: none; }
+.workspaceStatus .tally { font-size: 12px; }
+.sessionDockLink { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; margin-top: 10px; padding: 8px 10px; border-radius: 7px; color: var(--ink); text-decoration: none; font: 500 13px/1.5 var(--font-ui); }
+.sessionDockLink:hover { background: var(--chrome-hover); }
+@container (max-width: 1000px) { .workspaceStatus { bottom: 28px; max-width: 180px; } .workspaceStatus .tally { font-size: 11px; } }
+@container (max-width: 720px) { .workspaceStatus { bottom: 96px; max-width: 180px; } .liveShell .wordmark { font-size: 24px; } }
+.canvas[data-tool="connect"], .canvas[data-tool="connect"] .card { cursor: crosshair; }
+.selectionMenu { position: absolute; top: calc(100% + 8px); right: 0; display: grid; width: 200px; padding: 6px; border: 1px solid var(--chrome-rule); border-radius: var(--radius-surface); background: var(--chrome-surface); box-shadow: var(--lift-raised); }
+.selectionMenu button { min-height: 44px; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font: 500 13px var(--font-ui); text-align: left; }
+.selectionMenu button:hover, .selectionMenu button:focus-visible { background: var(--chrome-hover); }
+.connectionEditor { position: absolute; z-index: 14; top: 132px; left: 50%; width: min(340px, calc(100% - 40px)); padding: 18px; transform: translateX(-50%); border: 1px solid var(--chrome-rule); border-radius: var(--radius-surface); background: var(--chrome-surface); box-shadow: var(--lift-raised); font: 13px/1.5 var(--font-ui); }
+.connectionHeading { font: 600 22px/1.3 var(--font-editorial); }
+.connectionEditor > p { display: flex; align-items: center; gap: 10px; margin: 12px 0; overflow-wrap: anywhere; }
+.connectionEditor > p > svg { width: 14px; flex: none; }
+.connectionEditor > label { display: block; margin-top: 18px; margin-bottom: 6px; font-weight: 500; }
+.connectionEditor > input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--chrome-rule); border-radius: 7px; background: var(--card-raised); color: var(--ink); font: inherit; }
+.connectionEditor > input::placeholder { color: var(--ink-faint); }
+.connectionEditor > .connectionHelp { color: var(--ink-quiet); font-size: 12px; }
+.connectionEditor > div { display: flex; justify-content: flex-end; gap: 6px; margin-top: 16px; }
+.compositionButton > svg { width: 12px; height: 12px; margin-left: 5px; color: var(--ink-faint); }
+.switcherContent { display: grid; }
+.switcherDescription { margin: 5px 10px 12px; color: var(--ink-quiet); font: 12px/1.55 var(--font-ui); }
+.switcherError { margin: 8px 10px 2px; padding: 8px 10px; border: 1px solid var(--destructive); border-radius: 7px; background: color-mix(in srgb, var(--destructive) 8%, transparent); color: var(--destructive); font: 12px/1.45 var(--font-ui); }
+.switcherContent .switcherItem, .switcherContent .switcherAdd { min-height: 44px; padding: 10px; border: 0; border-radius: 7px; font-family: var(--font-ui); }
+.switcherContent .switcherItem:hover, .switcherContent .switcherAdd:hover { background: var(--chrome-hover); }
+.switcherContent .switcherHeading { margin: 10px 10px 4px; font: 500 11px/1.5 var(--font-ui); text-transform: none; letter-spacing: 0; }
+.switcherContent .switcherCount { font: 11px var(--font-ui); text-transform: none; letter-spacing: 0; }
+.switcherContent .switcherItem[data-current] { background: var(--carriage-context); color: var(--workflow-ink); }
+.switcherContent .nameField { min-height: 44px; border-color: var(--chrome-rule); border-radius: 7px; font-family: var(--font-ui); }
+.switcherContent .nameField:focus-visible { outline: 2px solid var(--workflow-ink); outline-offset: 2px; }
+/* Detail and library surfaces clear the shell's persistent orientation controls. */
+.liveSurface { container-type: normal; }
+.objectProposalPlacement { position: absolute; z-index: 300; padding: 20px; border-radius: 14px; background: var(--paper); box-shadow: var(--lift-raised); }
+.liveSurface .inspector { z-index: 50; top: 80px; right: 20px; bottom: 20px; border-color: var(--chrome-rule); border-radius: var(--radius-surface); background: var(--chrome-surface); }
+.liveSurface .library { z-index: 50; top: var(--workspace-content-top); right: calc(var(--workspace-right-inset, 0px) + var(--workspace-edge)); bottom: var(--workspace-edge); min-width: 0; min-height: 0; overflow: hidden; }
+.liveSurface .inspectorClose { display: grid; place-items: center; width: 40px; min-height: 40px; border-radius: 50%; }
+@media (max-width: 720px), (pointer: coarse) { .liveSurface .inspector { top: auto; right: 12px; bottom: 12px; } }
+.canvas:focus-visible { box-shadow: inset 0 0 0 1px var(--workflow-ink); }
+.workspaceStatus .sendToButton { min-height: 32px; padding: 5px 9px; border: 1px solid var(--chrome-rule); border-radius: 7px; background: var(--chrome-surface); color: var(--ink-quiet); font: 12px/1.3 var(--font-ui); }
+.liveSurface .library { left: calc(var(--workspace-left-inset, 0px) + 84px); }
+
+.workspaceStatus .problem { display: flex; align-items: center; gap: 10px; max-width: 340px; text-align: left; }
+.workspaceStatus .problem button { flex: none; min-height: 44px; padding: 7px 10px; border: 1px solid var(--destructive); border-radius: var(--radius-control); background: var(--card-raised); color: var(--destructive); font: 500 12px/1.4 var(--font-ui); }
+.semanticEdges { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; pointer-events: none; color: var(--workflow-ink); }
+.semanticEdges [role="button"] { pointer-events: auto; }
+.spatialAnnouncement { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.connectionEditor > .relationshipSuggestions { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 6px; margin-top: 10px; }
+.relationshipSuggestions button { padding: 5px 8px; border: 1px solid var(--chrome-rule); border-radius: 6px; background: var(--chrome-surface); color: var(--ink-quiet); font: 12px/1.4 var(--font-ui); cursor: pointer; }
+.relationshipSuggestions button:hover { background: var(--chrome-hover); }
+.relationshipSuggestions button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.narrowLibrary { position: fixed; inset: 132px 12px 20px; z-index: 80; }
+.narrowLibrary > .library { position: absolute; inset: 0; width: auto; max-width: none; min-width: 0; border-radius: var(--radius-surface); box-shadow: var(--lift-raised); }
+.compositionName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 600px) { .liveShell .wordmark small { display: none; } .liveShell .identity { gap: 4px; } .liveShell .compositionButton { min-width: 0; gap: 2px; } .compositionButton > svg { flex: none; margin-left: 0; } }

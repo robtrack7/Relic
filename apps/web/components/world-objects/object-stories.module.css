@@ -1,0 +1,18 @@
+.study { padding: 48px 56px 72px; min-height: 100dvh; background: var(--paper); }
+.study header { margin-bottom: 40px; }
+.study h1 { margin: 0; font: 600 56px/1.1 var(--font-editorial); letter-spacing: -.025em; }
+.study header p { margin: 12px 0 0; color: var(--ink-quiet); font: 400 14px/1.6 var(--font-ui); }
+.specimens { columns: 3 310px; column-gap: 32px; max-width: 1300px; }
+.specimens > div { break-inside: avoid; margin-bottom: 32px; padding: 5px; }
+.disclosure { padding: 28px; }
+.disclosure > p { max-width: 40ch; font-family: var(--font-ui); }
+.ladder { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 42px; padding: 32px; background: var(--paper); min-height: 100dvh; }
+.farWorld { display: flex; flex-wrap: wrap; gap: 16px; max-width: 1100px; }
+.farWorld > div { flex: none; transform-origin: top left; margin: 0 -180px -180px 0; }
+.ladder > section > h2 { margin: 0 0 24px; color: var(--ink-quiet); font: 500 12px/1.4 var(--font-ui); }
+.timeStudy { max-width: calc(100vw - 48px); padding: 24px; }
+.timeStudy nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.timeStudy nav button { padding: 12px 18px; min-height: 44px; border: 1px solid var(--chrome-rule); border-radius: var(--radius-control); background: var(--chrome-surface); font: 400 12px/1.4 var(--font-ui); }
+.timeStudy nav button[aria-pressed="true"] { background: var(--chrome-hover); color: var(--ink); border-color: var(--workflow-ink); }
+.timeStudy > p { color: var(--ink-quiet); margin-top: 24px; font: 400 12px/1.6 var(--font-ui); }
+@media(max-width:720px) { .study { padding: 24px 20px; } .study h1 { font-size: 42px; } .specimens { columns: 1; } .ladder { flex-wrap: wrap; } }

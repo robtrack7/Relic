@@ -1,0 +1,104 @@
+/* Mechanics: a typeset stat block, owned by the mechanics system (P2).
+   Hairline rules between groups, run-in labels, tabular figures. No box per stat. */
+
+.mechanics { min-width: 0; }
+
+.statBlock {
+  container-type: inline-size;
+  min-width: 0;
+  color: var(--ink);
+  font: 400 13px/1.45 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+.statBlock > * + * { margin-top: 0; }
+.statBlock > :is(.vitals, .attributes, .lines, .features, .equipment) { padding-block: 9px; border-top: 1px solid var(--chrome-rule); }
+.statBlock > :is(.vitals, .attributes, .lines, .features, .equipment):first-child,
+.statBlock > .system + * { border-top: 0; }
+.statBlock > .system + * { padding-top: 4px; }
+.statBlock[data-depth="card"] > :first-child { padding-top: 0; }
+
+.system { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 6px; padding-bottom: 7px; border-bottom: 1px solid var(--ink-faint); color: var(--ink-quiet); font: var(--type-label); }
+.system > span:first-child { color: var(--ink); font: 600 12px/1.4 var(--font-ui); }
+
+/* Vitals strip: the 2–4 numbers the table looks at most. */
+.vitals { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 0; }
+.vital { min-width: 0; }
+.vital dt { color: var(--ink-quiet); font: var(--type-label); }
+.vital dd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 2px; margin: 1px 0 0; }
+.vital .vitalValue { font: var(--type-stat); }
+.vital .vitalText { display: inline-block; padding-top: 5px; font: 600 15px/1.25 var(--font-ui); }
+.vitalQualifier { color: var(--ink-quiet); font: 500 13px/1.1 var(--font-ui); }
+.vitalMax { color: var(--ink-quiet); font: 500 13px/1.1 var(--font-ui); }
+.vitalMax > span[aria-hidden] { margin-inline: 1px 2px; }
+.statBlock[data-depth="card"] .vitals { gap: 4px 16px; }
+.statBlock[data-depth="card"] .vital .vitalValue { font-size: 19px; }
+
+.stepper { display: inline-flex; gap: 2px; margin-left: 6px; align-self: center; }
+.stepper button { width: 24px; height: 24px; padding: 0; border: 1px solid var(--chrome-rule); border-radius: 6px; background: transparent; color: var(--ink-quiet); font: 500 14px/1 var(--font-ui); cursor: pointer; }
+.stepper button:hover { color: var(--ink); border-color: var(--ink-faint); }
+
+/* Attribute row: score with modifier, six up, three up in narrow containers. */
+.attributes { display: grid; grid-template-columns: repeat(var(--columns, 6), minmax(0, 1fr)); gap: 6px 4px; margin: 0; text-align: center; }
+.attributes dt { color: var(--ink-quiet); font: var(--type-label); overflow-wrap: anywhere; }
+.attributes dd { margin: 1px 0 0; font: 600 15px/1.25 var(--font-ui); white-space: nowrap; }
+.modifier { color: var(--ink-quiet); font-weight: 500; font-size: 12px; }
+@container (max-width: 300px) {
+  .attributes[data-columns="6"], .attributes[data-columns="5"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .vitals { column-gap: 16px; }
+}
+
+/* Run-in label/value lines that wrap like prose. */
+.lines { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; margin: 0; }
+.groupLead { flex-basis: 100%; color: var(--ink-quiet); font: var(--type-label); }
+.line { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.line[data-long] { flex-basis: 100%; }
+.statBlock .lineLabel { font: 600 12px/1.45 var(--font-ui); }
+.statBlock .lineValue { font: 400 13px/1.45 var(--font-ui); }
+.equipment { margin: 0; overflow-wrap: anywhere; }
+
+/* Features: run-in bold-italic name, rules prose in the reading serif. */
+.features { display: grid; gap: 7px; }
+.feature { min-width: 0; }
+.featureBody { font: 400 13px/1.45 var(--font-reading); overflow-wrap: anywhere; }
+.featureBody[data-folded] { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.feature[data-depth="card"] .featureBody[data-folded] { -webkit-line-clamp: 2; }
+.feature .featureName { font: italic 600 13px/1.45 var(--font-ui); }
+.featureStop { font: italic 600 13px/1.45 var(--font-ui); }
+.feature .featureProse { display: inline; color: var(--ink); font: inherit; }
+.feature .featureProse > :first-child { display: inline; }
+.feature .featureProse p { margin: 0 0 .35em; }
+.feature .featureProse > :last-child { margin-bottom: 0; }
+.fold, .textAction, .addStatistics, .reference { padding: 2px 0; border: 0; background: transparent; color: var(--workflow-ink); font: 500 12px/1.4 var(--font-ui); cursor: pointer; }
+.fold:hover, .textAction:hover, .addStatistics:hover, .reference:hover { text-decoration: underline; text-underline-offset: 3px; }
+.reference { padding: 0; font: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.featureEditor { display: grid; gap: 4px; margin-top: 6px; justify-items: start; }
+.featureEditor > :first-child { justify-self: stretch; }
+.quiet { margin: 0; color: var(--ink-quiet); font: 400 12px/1.45 var(--font-ui); }
+.addStatistics { min-height: 36px; }
+
+/* In-place editing: the value is the control. */
+.editable { display: inline; min-width: 1.2em; margin: 0 -2px; padding: 0 2px; border: 0; border-radius: 3px; background: transparent; color: inherit; font: inherit; text-align: inherit; cursor: text; box-shadow: inset 0 -1px 0 var(--chrome-rule); }
+.editable:hover { background: var(--carriage-context); box-shadow: inset 0 -1px 0 var(--workflow-ink); }
+.editInput { max-width: 100%; margin: 0 -2px; padding: 0 2px; border: 0; border-radius: 3px; background: var(--carriage-context); color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; text-align: inherit; box-shadow: inset 0 -1px 0 var(--workflow-ink); outline: none; }
+.statBlock button:focus-visible, .statBlock input:focus-visible, .statBlock select:focus-visible, .template summary:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+.visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Template panel: structure lives here so Focus keeps one layout. */
+.template { margin-top: 14px; border-top: 1px solid var(--ink-faint); }
+.template summary { width: fit-content; min-height: 36px; padding-top: 10px; color: var(--workflow-ink); font: 600 12px/1.4 var(--font-ui); cursor: pointer; }
+.templateBody { display: grid; gap: 14px; padding-top: 8px; }
+.templateBody fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.templateBody legend { padding: 0; margin-bottom: 4px; color: var(--ink-quiet); font: var(--type-label); }
+.templateRow { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+.templateRow label { display: grid; gap: 3px; flex: 1 1 140px; color: var(--ink-quiet); font: var(--type-label); }
+.templateList { display: grid; gap: 4px; margin: 0 0 6px; padding: 0; list-style: none; }
+.templateList li, .templateAdd { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.templateBody :is(input, select) { flex: 1 1 90px; min-width: 0; min-height: 32px; padding: 4px 8px; border: 1px solid var(--chrome-rule); border-radius: var(--radius-control); background: transparent; color: var(--ink); font: 400 12px/1.4 var(--font-ui); }
+.templateBody select { flex: 0 0 auto; }
+.templateAdd > button { min-height: 32px; padding: 4px 10px; border: 1px solid var(--chrome-rule); border-radius: var(--radius-control); background: transparent; color: var(--workflow-ink); font: 500 12px/1.4 var(--font-ui); cursor: pointer; }
+.templateAdd[data-picker] { flex-direction: column; align-items: stretch; }
+.rowControls { display: inline-flex; gap: 2px; }
+.rowControls button { min-width: 28px; min-height: 28px; padding: 2px 6px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-quiet); font: 500 12px/1 var(--font-ui); cursor: pointer; }
+.rowControls button:hover:not(:disabled) { color: var(--ink); background: var(--carriage-context); }
+.rowControls button:disabled { opacity: .35; cursor: default; }

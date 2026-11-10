@@ -1,0 +1,11 @@
+.proposal { width: 100%; min-width: 0; font-family: var(--font-ui); }
+.proposal > header { margin-bottom: 20px; }
+.proposal > header strong { color: var(--workflow-ink); font-size: 13px; font-weight: 500; }
+.proposal > header p { margin: 8px 0 0; color: var(--ink-quiet); font-size: 13px; line-height: 1.6; }
+.change { margin: 24px 0 16px; font: 400 16px/1.5 var(--serif); white-space: pre-wrap; overflow-wrap: anywhere; }
+.change span { display: block; margin-bottom: 6px; color: var(--ink-quiet); font: 500 11px/1.5 var(--font-ui); text-transform: capitalize; }
+.editor { display: block; margin-top: 24px; font-size: 12px; }
+.editor textarea { display: block; width: 100%; min-height: 100px; resize: vertical; margin-top: 8px; padding: 12px; border: 1px solid var(--chrome-rule); border-radius: var(--radius-control); background: var(--card); color: var(--ink); font: 400 15px/1.6 var(--serif); }
+.actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.note { margin-top: 16px; color: var(--ink-quiet); font-size: 11px; line-height: 1.6; }
+.error { color: var(--destructive); font-size: 13px; }
