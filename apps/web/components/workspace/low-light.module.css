@@ -1,0 +1,53 @@
+/* P8 study only. Candidate low-light treatments for live play, scoped to a
+   wrapper so they restyle the real components without touching the product.
+   PRODUCT.md leaves the treatment a design decision; nothing here ships. */
+
+.page { display: grid; gap: 32px; min-height: 100dvh; padding: 32px; background: #8f887d; font-family: var(--font-ui); }
+.page > header { max-width: 80ch; color: #14110e; }
+.page > header h1 { margin: 0 0 6px; font: 600 28px/1.2 var(--font-editorial); }
+.page > header p { margin: 0; font-size: 13px; line-height: 1.6; }
+.options { display: grid; grid-template-columns: repeat(auto-fit, minmax(640px, 1fr)); gap: 24px; }
+
+.room { display: grid; grid-template-rows: auto 1fr; gap: 16px; padding: 20px; border-radius: 24px; background: var(--paper); color: var(--ink); }
+.room > header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.room > header strong { font: 600 22px/1.2 var(--font-editorial); }
+.room > header span { color: var(--ink-quiet); font-size: 12px; }
+.scene { display: grid; grid-template-columns: 300px minmax(0, 1fr); align-items: start; gap: 16px; }
+.cards { display: grid; gap: 16px; }
+.mechanics { padding: 16px 20px; border: 1px solid var(--chrome-rule); border-radius: 14px; background: var(--carriage-context); }
+
+/* Today's daylight world, for comparison. */
+.daylight { }
+
+/* A — Lamplit: a warm dark reading surface. Parchment ink is held near 11:1,
+   not pure white, so text does not halate in a dark room. Amber stays the
+   one workflow colour; images keep their own light. */
+.lamplit {
+  --paper-deep: #15120f; --paper: #1a1612; --paper-tooth: rgba(239, 230, 214, .04);
+  --card: #24201b; --card-raised: #2a251f; --canvas-surface: #26221d; --canvas-note: #2b261e; --canvas-sage: #232821; --canvas-slate: #22262a;
+  --ink: #e4d9c6; --ink-quiet: #bdb19e; --ink-faint: #a39784;
+  --rule: #3a332b; --rule-strong: #4a4237;
+  --chrome-surface: #221e19; --chrome-hover: #312b24; --chrome-rule: #3a332b;
+  --carriage-surface: #1f1b17; --carriage-context: #26211c;
+  --workflow-accent: #c98a46; --workflow-ink: #e2a868; --focus-ring: #e2a868;
+  --status-ready: #9dbb8c; --destructive: #e8947f;
+  --lift: 0 1px 1px rgb(0 0 0 / 30%), 0 3px 10px -6px rgb(0 0 0 / 60%);
+  --lift-raised: 0 1px 1px rgb(0 0 0 / 30%), 0 10px 24px -12px rgb(0 0 0 / 70%);
+  --chrome-lift: 0 2px 5px rgb(0 0 0 / 25%), 0 12px 24px -14px rgb(0 0 0 / 60%);
+  color-scheme: dark;
+}
+.lamplit img { filter: brightness(.86); }
+
+/* B — Dusk paper: the same paper world with its luminance taken down about a
+   third, for GMs who want the table to look like Relic, only quieter. */
+.dusk {
+  --paper-deep: #bdb5a7; --paper: #c9c1b3; --paper-tooth: rgba(40, 34, 26, .06);
+  --card: #d4cdc0; --card-raised: #d9d2c5; --canvas-surface: #d6cfc2; --canvas-note: #cfc6b2; --canvas-sage: #c9cdc1; --canvas-slate: #c6cacb;
+  --ink: #14110e; --ink-quiet: #3f3a34; --ink-faint: #4d473f;
+  --rule: #b3aa98; --rule-strong: #a1977f;
+  --chrome-surface: #d0c9bc; --chrome-hover: #c2b9aa; --chrome-rule: #b9b09f;
+  --carriage-surface: #cbc3b5; --carriage-context: #c7bfb1;
+  --workflow-accent: #8a521c; --workflow-ink: #6e3f12; --focus-ring: #6e3f12;
+  --status-ready: #2f4a28; --destructive: #6a2416;
+}
+.dusk img { filter: brightness(.82) saturate(.9); }
