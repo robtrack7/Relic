@@ -16,6 +16,7 @@ import {
 import { closeDb, db } from "@/lib/world/db";
 import { PostgresDeskRepository } from "@/lib/world/postgres-store";
 import type { DeskRepository } from "@/lib/world/repository";
+import { must } from "./support";
 
 /**
  * The world's index.
@@ -41,13 +42,14 @@ afterAll(async () => {
 });
 
 async function capture(compositionId: CompositionId, body: string, name?: string) {
-  const card = await repo.captureCard({
+  const card = must(await repo.captureCard({
     compositionId,
     cardId: asCardId(randomUUID()),
     objectId: asWorldObjectId(randomUUID()),
     body,
-    layout: emptyLayoutAt(0, 0)
-  });
+    layout: emptyLayoutAt(0, 0),
+    author: "gm"
+  }), "capture");
   if (name) {
     await repo.representObject({
       objectId: card.objectId,

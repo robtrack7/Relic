@@ -15,6 +15,7 @@ import {
 import { closeDb, db } from "@/lib/world/db";
 import { PostgresDeskRepository } from "@/lib/world/postgres-store";
 import type { DeskRepository } from "@/lib/world/repository";
+import { must } from "./support";
 
 /**
  * Step 10's specification, executable.
@@ -38,13 +39,14 @@ afterAll(async () => {
 
 async function subject(body = "someone who lies about the third bell") {
   const desk = await repo.openDesk(WORLD);
-  const card = await repo.captureCard({
+  const card = must(await repo.captureCard({
     compositionId: desk.compositionId,
     cardId: asCardId(randomUUID()),
     objectId: asWorldObjectId(randomUUID()),
     body,
-    layout: emptyLayoutAt(0, 0)
-  });
+    layout: emptyLayoutAt(0, 0),
+    author: "gm"
+  }), "capture");
   await repo.representObject({
     objectId: card.objectId,
     representationId: asRepresentationId(randomUUID()),
@@ -63,7 +65,8 @@ async function assert(
     subjectId: objectId,
     claimId: asClaimId(randomUUID()),
     claimKind,
-    value
+    value,
+    author: "gm"
   });
   if (result.state !== "ok") throw new Error(`setClaim: ${result.state}`);
   return result.data;
@@ -71,6 +74,126 @@ async function assert(
 
 const reload = async (objectId: WorldObjectId) =>
   (await repo.openDesk(WORLD)).cards.find((card) => card.objectId === objectId);
+
+/**
+ * Step 13 adds a second author. These are the properties that keep the GM able
+ * to tell their own world from a model's contribution to it — and the one
+ * reversal that makes an immediate, undo-less write tolerable.
+ */
+describe("the world records who wrote it", () => {
+  it("leaves the GM's own capture unmarked", async () => {
+    const { card } = await subject();
+
+    // Attribution is for material that is not the GM's. Marking their own
+    // writing would put an author on every card in an ordinary world.
+    expect(card.written).toBeNull();
+  });
+
+  it("names the Librarian on what the Librarian captured", async () => {
+    const desk = await repo.openDesk(WORLD);
+    const card = must(
+      await repo.captureCard({
+        compositionId: desk.compositionId,
+        cardId: asCardId(randomUUID()),
+        objectId: asWorldObjectId(randomUUID()),
+        body: "The harbourmaster has been taking bribes since spring",
+        layout: emptyLayoutAt(0, 0),
+        author: "librarian"
+      }),
+      "capture"
+    );
+
+    expect(card.written?.by).toBe("librarian");
+    expect(card.written?.at).toBeTruthy();
+    // Nothing was replaced, so there is nothing to put back.
+    expect(card.written?.superseded).toBeNull();
+
+    // Authorship is not maturity. What the Librarian contributes is Pencil, and
+    // saying who wrote it must not read as saying Relic believes it.
+    expect(card.maturity).toBe("pencil");
+    expect(card.settled).toBeNull();
+  });
+
+  it("records the Librarian as the source of a claim it asserted", async () => {
+    const { card } = await subject();
+    const result = await repo.setClaim({
+      subjectId: card.objectId,
+      claimId: asClaimId(randomUUID()),
+      claimKind: "occupation",
+      value: "harbourmaster",
+      author: "librarian"
+    });
+    if (result.state !== "ok") throw new Error(`setClaim: ${result.state}`);
+
+    expect(result.data.provenance.authoredBy).toBe("librarian");
+    expect(result.data.provenance.kind).toBe("librarian");
+    // The law it cannot reach: asserting is not establishing, whoever asserts.
+    expect(result.data.truthState).toBe("pencil");
+    expect(result.data.settled).toBeNull();
+  });
+
+  it("keeps what a Librarian rewrite replaced, so it can be put back", async () => {
+    const { desk, card } = await subject("Mara keeps the third bell");
+
+    const rewritten = await repo.editCardBody({
+      compositionId: desk.compositionId,
+      cardId: card.cardId,
+      body: "Mara keeps the third bell, and has since the flood",
+      observedBodyVersion: card.bodyVersion,
+      author: "librarian"
+    });
+    if (rewritten.state !== "ok") throw new Error(`editCardBody: ${rewritten.state}`);
+
+    expect(rewritten.data.body).toBe("Mara keeps the third bell, and has since the flood");
+    expect(rewritten.data.written?.by).toBe("librarian");
+    // Relic has no undo. This one column is the reversal for the one act that
+    // destroys rather than adds or archives.
+    expect(rewritten.data.written?.superseded).toBe("Mara keeps the third bell");
+  });
+
+  it("leaves no superseded copy when the GM edits their own prose", async () => {
+    const { desk, card } = await subject("Mara keeps the third bell");
+
+    const edited = await repo.editCardBody({
+      compositionId: desk.compositionId,
+      cardId: card.cardId,
+      body: "Mara kept the third bell",
+      observedBodyVersion: card.bodyVersion,
+      author: "gm"
+    });
+    if (edited.state !== "ok") throw new Error(`editCardBody: ${edited.state}`);
+
+    // Every keystroke on the capture path comes through here, debounced. A
+    // superseded copy per edit would be a revision log nobody asked for.
+    expect(edited.data.written).toBeNull();
+  });
+
+  it("clears the Librarian's mark once the GM writes over it", async () => {
+    const { desk, card } = await subject("Mara keeps the third bell");
+
+    const byLibrarian = await repo.editCardBody({
+      compositionId: desk.compositionId,
+      cardId: card.cardId,
+      body: "Mara has kept the third bell since the flood",
+      observedBodyVersion: card.bodyVersion,
+      author: "librarian"
+    });
+    if (byLibrarian.state !== "ok") throw new Error("setup failed");
+
+    const byGm = await repo.editCardBody({
+      compositionId: desk.compositionId,
+      cardId: card.cardId,
+      body: "Mara has kept the third bell since her father died",
+      observedBodyVersion: byLibrarian.data.bodyVersion,
+      author: "gm"
+    });
+    if (byGm.state !== "ok") throw new Error(`editCardBody: ${byGm.state}`);
+
+    // The GM has taken the prose back. Leaving the Librarian's name on it would
+    // attribute their sentence to a model.
+    expect(byGm.data.written).toBeNull();
+  });
+});
 
 describe("nothing but a deliberate act establishes Ink", () => {
   it("captures and asserts as Pencil, with nothing settled", async () => {
@@ -383,7 +506,8 @@ describe("a relationship is established like any other claim", () => {
       claimId: asClaimId(randomUUID()),
       claimKind: "allegiance",
       value: "the Harbour Guild",
-      objectValue: guild.card.objectId
+      objectValue: guild.card.objectId,
+      author: "gm"
     });
     if (result.state !== "ok") throw new Error("setClaim failed");
 

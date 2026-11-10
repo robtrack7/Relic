@@ -1,4 +1,5 @@
-import { rectsIntersect, type Rect } from "@/lib/desk/viewport";
+import { CANVAS_GRID, materiallyContained } from "@/lib/desk/manipulation";
+import type { Rect } from "@/lib/desk/viewport";
 import type { CardId, Layout } from "@/lib/world/model";
 
 export type Selection = ReadonlySet<CardId>;
@@ -27,18 +28,17 @@ export const soleMember = (selection: Selection): CardId | null =>
 
 type Placed = { readonly cardId: CardId; readonly layout: Layout };
 
-/** Marquee hit test: a card is caught if it overlaps the band at all. */
+/** Marquee hit test: a grazing edge does not unexpectedly capture a card. */
 export function within(cards: readonly Placed[], band: Rect): CardId[] {
-  return cards.filter((card) => rectsIntersect(card.layout, band)).map((card) => card.cardId);
+  return cards.filter((card) => materiallyContained(card.layout, band)).map((card) => card.cardId);
 }
 
 /**
- * Dot pitch that stays legible at any zoom. Without this the background moirés
- * into noise when zoomed out and looks like graph paper when zoomed in.
+ * Shared visible-dot and snapping step. Power-of-two multiples of the base
+ * world grid preserve one origin while keeping the screen pitch legible.
  */
 export function gridStep(scale: number, minimumScreenPitch = 18): number {
-  let step = 24;
+  let step = CANVAS_GRID;
   while (step * scale < minimumScreenPitch && step < 6144) step *= 2;
-  while (step * scale > minimumScreenPitch * 4 && step > 6) step /= 2;
   return step;
 }

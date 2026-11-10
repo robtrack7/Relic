@@ -10,7 +10,10 @@
     "start": "pnpm --filter @relic/web start",
     "lint": "pnpm --filter @relic/web lint",
     "test": "pnpm --filter @relic/web test",
-    "test:e2e": "pnpm --filter @relic/web test:e2e"
+    "test:e2e": "pnpm --filter @relic/web test:e2e",
+    "storybook": "pnpm --filter @relic/web storybook",
+    "build-storybook": "pnpm --filter @relic/web build-storybook",
+    "test:storybook": "pnpm --filter @relic/web test:storybook"
   },
   "engines": {
     "node": ">=24.0.0"

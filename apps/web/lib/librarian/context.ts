@@ -5,6 +5,7 @@ import type {
   DeskView,
   Link,
   ObjectRef,
+  Prep,
   Workspace,
   WorldEntry
 } from "@/lib/world/model";
@@ -44,7 +45,22 @@ const SEARCH_RESULTS = 8;
  * not be two different sources.
  */
 export type Catalogue = Readonly<{
+  /** Number this object, or return the number it already has. */
   cite: (ref: ObjectRef) => number;
+  /**
+   * The object a number names, or null when it names nothing.
+   *
+   * The counterpart of `cite`, and the reason the Librarian can be given hands
+   * safely. A model asked to act on `[3]` can only be right or out of range; a
+   * model asked to act on an identifier could name anything in the database and
+   * would eventually invent one that resolved somewhere real. Numbering is the
+   * address space, and it contains exactly the evidence Relic assembled for this
+   * turn — nothing the GM was not already looking at or did not already find.
+   *
+   * Takes `unknown` because that is what arrives: tool arguments come from the
+   * model, and "not a number at all" is one of the cases, not an impossibility.
+   */
+  resolve: (n: unknown) => ObjectRef | null;
   sources: () => readonly ObjectRef[];
 }>;
 
@@ -59,6 +75,10 @@ export function catalogue(): Catalogue {
       refs.push(ref);
       seen.set(ref.objectId, refs.length);
       return refs.length;
+    },
+    resolve: (n) => {
+      if (typeof n !== "number" || !Number.isInteger(n) || n < 1) return null;
+      return refs[n - 1] ?? null;
     },
     sources: () => refs
   };
@@ -145,11 +165,14 @@ function inDepth(card: DeskCard, cite: (ref: ObjectRef) => number): string {
 export function buildBrief({
   workspace,
   view,
+  prep,
   vantage,
   cite
 }: {
   workspace: Workspace;
   view: DeskView;
+  /** The session this composition prepares for, when it prepares for one. */
+  prep?: Prep | null;
   vantage: Vantage;
   cite: (ref: ObjectRef) => number;
 }): string {
@@ -169,6 +192,45 @@ export function buildBrief({
   out.push(
     "Compositions hold references and layout, never world content. The same object may sit on several at once."
   );
+
+  /*
+   * What tonight is for, when the GM is standing on a Prep.
+   *
+   * Placed directly after the world and before the composition, because it is
+   * the frame everything else on this surface is being read through: a card on
+   * a Prep is there for a reason, and the reason is here.
+   *
+   * The distinction is stated rather than assumed. A beat is a plan; nothing in
+   * this section is a record that anything happened, and a Librarian that
+   * summarised it as world history would be inventing a session.
+   */
+  if (prep) {
+    out.push("");
+    out.push("# Tonight");
+    out.push(
+      `This composition is the Prep for “${prep.session.title}” (${prep.session.state.replace(/_/g, " ")}).`
+    );
+    out.push(
+      prep.session.intent
+        ? `What it is for: ${clip(prep.session.intent, PROSE_SHOWN)}`
+        : "The GM has not yet said what it is for."
+    );
+    out.push(
+      "The running order below is intention, not record. None of it has happened, none of it is a claim about the world, and none of it may be reported as something the world says."
+    );
+    if (prep.beats.length === 0) {
+      out.push("Nothing is planned yet.");
+    } else {
+      for (const beat of prep.beats) {
+        const about =
+          beat.refs.length > 0
+            ? ` — about ${beat.refs.map((ref) => `[${cite(ref)}] ${ref.label}`).join(", ")}`
+            : "";
+        const whose = beat.author === "gm" ? "" : ` (you proposed this)`;
+        out.push(`${beat.position}. ${clip(beat.body, PROSE_SHOWN)}${about}${whose}`);
+      }
+    }
+  }
 
   const byCard = new Map(view.cards.map((card) => [card.cardId as string, card]));
   const focused = vantage.focusCardId ? (byCard.get(vantage.focusCardId) ?? null) : null;
@@ -225,7 +287,9 @@ export function buildBrief({
  * drift from that one, and the one that drifted would be the one that could not
  * find something. What the Librarian can find is exactly what the GM can find.
  *
- * Read-only, deliberately. The Librarian's eyes arrive before its hands.
+ * A read, and the only one. Everything that changes the world lives in
+ * `hands.ts`; keeping the two files apart is how "what can the Librarian
+ * actually do" stays a question with a short answer.
  */
 export function searchTool(
   repository: DeskRepository,
@@ -234,6 +298,7 @@ export function searchTool(
 ): LibrarianTool {
   return {
     name: "search_world",
+    writes: false,
     description:
       "Search this world by name or by prose, across everything in it — not only what is on the current composition. Use it whenever the answer depends on material you cannot already see. Returns numbered entries you may cite.",
     schema: {
@@ -264,8 +329,10 @@ export function searchTool(
         limit: SEARCH_RESULTS
       });
 
-      if (found.length === 0) return `Nothing in this world matches “${query}”.`;
-      return found.map((entry) => resultLine(entry, cite)).join("\n");
+      if (found.length === 0) {
+        return { told: `Nothing in this world matches “${query}”.` };
+      }
+      return { told: found.map((entry) => resultLine(entry, cite)).join("\n") };
     }
   };
 }

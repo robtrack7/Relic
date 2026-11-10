@@ -3,22 +3,34 @@ import { randomUUID } from "node:crypto";
 import type postgres from "postgres";
 
 import { db } from "@/lib/world/db";
+import { applyCollectionCommand, type CollectionCommand } from "@/lib/desk/collections";
+import type { SpatialCollection, SpatialState } from "./model";
 import {
   asLibrarianMessageId,
   type LibrarianMessage,
   type Source,
   type Speaker
 } from "@/lib/librarian/model";
+import type { Spend, SpendTally } from "@/lib/librarian/spend";
 import {
+  asBeatId,
   asCardId,
   asClaimId,
   asCompositionId,
   asRepresentationId,
+  asRelationshipId,
+  asSessionId,
   asTemplateId,
   asWorldId,
   asWorldObjectId,
+  assertedBy,
+  capturedBy,
   type AuthorKind,
+  type Authorship,
+  type Beat,
+  type BeatId,
   type CardId,
+  type CardTint,
   type Claim,
   type ClaimId,
   type CompositionId,
@@ -30,9 +42,15 @@ import {
   type Link,
   type Maturity,
   type ObjectRef,
+  type Prep,
   type ProvenanceKind,
   type Representation,
   type RepresentationKind,
+  type RelationshipId,
+  type Session,
+  type SessionId,
+  type SessionState,
+  type SessionSummary,
   type Settlement,
   type StoryPosition,
   type TruthState,
@@ -41,23 +59,34 @@ import {
   type WorldId,
   type WorldObjectId
 } from "@/lib/world/model";
+import { emptyRichText, legacyDocument, narrativeBody, richText, validEntityDocument, validMechanicsProfile, type EntityBlock, type EntityDocument, type EntitySnapshot, type MechanicsProfile, type RichNode } from "@/lib/world/entity-document";
+import { relationshipCardinality, relationshipTypeFor } from "@/lib/world/relationship-types";
 import {
   conflict,
   missing,
   ok,
   refused,
   type CaptureCardInput,
+  type CreateEntityInput,
   type CreateBoardInput,
+  type CreateSessionInput,
   type DeskRepository,
   type EditBodyInput,
   type EditRepresentationInput,
+  type SaveEntityDocumentInput,
+  type SaveEntityIdentityInput,
+  type SaveEntityMechanicsInput,
+  type EditSessionInput,
   type MoveCardsInput,
   type RecordExchangeInput,
   type ReferenceObjectsInput,
+  type RemoveBeatInput,
   type RemoveCardsInput,
   type RemoveClaimInput,
+  type ReorderBeatsInput,
   type RepresentObjectInput,
   type SearchWorldInput,
+  type SetBeatInput,
   type SetClaimInput,
   type SettleTruthInput,
   type Settled,
@@ -85,7 +114,7 @@ import {
  * reports `conflict` — or sees the row no longer matches `lifecycle = 'active'`
  * and correctly reports `missing`.
  *
- * **Lock order, globally:** `compositions` → `composition_items` →
+ * **Lock order, globally:** `compositions` → `composition_items` → `sessions` →
  * `world_objects` → `fragments`, ids ascending within a table. Nothing here
  * violates it, and nothing new should.
  *
@@ -117,6 +146,24 @@ type CardRow = {
   settled_by: string | null;
   settled_at: string | Date | null;
   body_version: number;
+  edited_by: string | null;
+  edited_at: string | Date | null;
+  superseded_body: string | null;
+  presentation: unknown;
+};
+
+type EntityRow = {
+  object_id: string;
+  world_id: string;
+  lifecycle: string;
+  maturity: string;
+  settled_by: string | null;
+  settled_at: string | Date | null;
+  body: string;
+  body_version: number;
+  edited_by: string | null;
+  edited_at: string | Date | null;
+  superseded_body: string | null;
 };
 
 /**
@@ -132,12 +179,16 @@ const cardSelect = (sql: Sql) => sql`
     ci.id          as card_id,
     ci.object_id   as object_id,
     ci.x, ci.y, ci.width, ci.height, ci.z,
+    ci.presentation,
     ci.version     as card_version,
     f.body         as body,
     wo.maturity    as maturity,
     wo.settled_by  as settled_by,
     wo.settled_at  as settled_at,
-    f.version      as body_version
+    f.version      as body_version,
+    f.edited_by    as edited_by,
+    f.edited_at    as edited_at,
+    f.superseded_body as superseded_body
   from composition_items ci
   join world_objects wo on wo.id = ci.object_id
   join fragments f on f.object_id = ci.object_id
@@ -153,6 +204,12 @@ type LibrarianMessageRow = {
   role: string;
   body: string;
   sources: unknown;
+  provider: string | null;
+  model: string | null;
+  tokens_input: number | null;
+  tokens_cache_write: number | null;
+  tokens_cache_read: number | null;
+  tokens_output: number | null;
   said_at: string | Date;
 };
 
@@ -165,7 +222,27 @@ function toLibrarianMessage(row: LibrarianMessageRow): LibrarianMessage {
     // `recordExchange` one statement away. Read back as what it was stored as.
     sources: (Array.isArray(row.sources) ? row.sources : []) as readonly Source[],
     compositionId: row.composition_id === null ? null : asCompositionId(row.composition_id),
+    spend: toSpend(row),
     saidAt: asTimestamp(row.said_at)
+  };
+}
+
+/**
+ * What a message cost, or nothing.
+ *
+ * `librarian_messages_spend_whole` guarantees all six columns arrive together
+ * or not at all, so one null is enough to decide — the same shape as
+ * `toSettlement` and `toAuthorship` above, for the same reason.
+ */
+function toSpend(row: LibrarianMessageRow): Spend | null {
+  if (row.provider === null || row.model === null) return null;
+  return {
+    provider: row.provider,
+    model: row.model,
+    input: row.tokens_input ?? 0,
+    cacheWrite: row.tokens_cache_write ?? 0,
+    cacheRead: row.tokens_cache_read ?? 0,
+    output: row.tokens_output ?? 0
   };
 }
 
@@ -175,6 +252,20 @@ function toSettlement(by: string | null, at: string | Date | null): Settlement |
   return { by: by as AuthorKind, at: asTimestamp(at) };
 }
 
+/**
+ * Authorship is recorded only when the writer was not the GM, so a null here is
+ * the ordinary case rather than missing data. `fragments_authorship_whole`
+ * guarantees the two halves agree, which is why one null is enough to check.
+ */
+function toAuthorship(
+  by: string | null,
+  at: string | Date | null,
+  superseded: string | null
+): Authorship | null {
+  if (by === null || at === null) return null;
+  return { by: by as AuthorKind, at: asTimestamp(at), superseded };
+}
+
 type RepresentationRow = {
   id: string;
   object_id: string;
@@ -182,11 +273,13 @@ type RepresentationRow = {
   label: string | null;
   template_id: string | null;
   fields: Record<string, string | number>;
+  mechanics?: unknown;
   version: number;
 };
 
 type ClaimRow = {
   id: string;
+  relationship_id: string | null;
   subject_id: string;
   claim_kind: string;
   value: string;
@@ -204,7 +297,7 @@ type ClaimRow = {
 };
 
 const claimColumns = (sql: Sql) => sql`
-  id, subject_id, claim_kind, value, object_value, truth_state, truth_by,
+  id, relationship_id, subject_id, claim_kind, value, object_value, truth_state, truth_by,
   truth_at, authored_by, provenance, recorded_at, story_order, story_precision,
   story_label, version
 `;
@@ -223,8 +316,14 @@ type ObjectRefRow = {
  * into anything has no name — only the thought it was captured as. The fallback
  * is the same one the card uses, stated here so an object with no card on this
  * composition still reads as something.
+ *
+ * `scope` widens the fallback to material that has been archived. A
+ * relationship to something cleared off every composition is best left unnamed
+ * — the neighbourhood is a live property of the world. A *beat* naming it is
+ * the GM's own plan for tonight, and dropping the chip because they tidied the
+ * Desk last week would be Relic editing their notes.
  */
-const objectRefSelect = (sql: Sql) => sql`
+const objectRefSelect = (sql: Sql, scope: "active" | "present" = "active") => sql`
   select wo.id as id, r.kind as kind, r.label as label, f.body as body
     from world_objects wo
     left join fragments f on f.object_id = wo.id
@@ -235,7 +334,7 @@ const objectRefSelect = (sql: Sql) => sql`
        order by seq asc
        limit 1
     ) r on true
-   where wo.lifecycle = 'active'
+   where ${scope === "active" ? sql`wo.lifecycle = 'active'` : sql`wo.lifecycle <> 'deleted'`}
 `;
 
 type WorldEntryRow = ObjectRefRow & {
@@ -282,6 +381,7 @@ function toRepresentation(row: RepresentationRow): Representation {
     label: row.label,
     templateId: row.template_id ? asTemplateId(row.template_id) : null,
     fields: row.fields ?? {},
+    ...(validMechanicsProfile(row.mechanics) ? { mechanics: row.mechanics } : {}),
     version: row.version
   };
 }
@@ -289,6 +389,7 @@ function toRepresentation(row: RepresentationRow): Representation {
 function toClaim(row: ClaimRow): Claim {
   return {
     id: asClaimId(row.id),
+    relationshipId: row.relationship_id === null ? null : asRelationshipId(row.relationship_id),
     subjectId: asWorldObjectId(row.subject_id),
     claimKind: row.claim_kind,
     value: row.value,
@@ -317,14 +418,18 @@ function toDeskCard(
   claims: readonly Claim[],
   links: readonly Link[]
 ): DeskCard {
+  const rawPresentation = row.presentation && typeof row.presentation === "object" ? row.presentation as { tint?: unknown; semanticEdges?: unknown } : {};
+  const tint = ["paper", "sand", "sage", "slate", "rose"].includes(String(rawPresentation.tint)) ? String(rawPresentation.tint) as CardTint : null;
   return {
     cardId: asCardId(row.card_id),
     objectId: asWorldObjectId(row.object_id),
     layout: { x: row.x, y: row.y, width: row.width, height: row.height },
+    presentation: { tint, ...(Array.isArray(rawPresentation.semanticEdges) ? { semanticEdges: rawPresentation.semanticEdges.filter((id): id is string => typeof id === "string").map(asRelationshipId) } : {}) },
     z: row.z,
     body: row.body,
     maturity: row.maturity as Maturity,
     settled: toSettlement(row.settled_by, row.settled_at),
+    written: toAuthorship(row.edited_by, row.edited_at, row.superseded_body),
     cardVersion: row.card_version,
     bodyVersion: row.body_version,
     representation,
@@ -333,7 +438,76 @@ function toDeskCard(
   };
 }
 
+type SessionRow = {
+  id: string;
+  world_id: string;
+  composition_id: string;
+  title: string;
+  intent: string | null;
+  state: string;
+  version: number;
+  created_at: string | Date;
+};
+
+const sessionColumns = (sql: Sql) => sql`
+  id, world_id, composition_id, title, intent, state, version, created_at
+`;
+
+function toSession(row: SessionRow): Session {
+  return {
+    id: asSessionId(row.id),
+    worldId: asWorldId(row.world_id),
+    compositionId: asCompositionId(row.composition_id),
+    title: row.title,
+    intent: row.intent,
+    state: row.state as SessionState,
+    version: row.version,
+    createdAt: asTimestamp(row.created_at)
+  };
+}
+
+type BeatRow = {
+  id: string;
+  session_id: string;
+  body: string;
+  position: number;
+  author: string;
+  version: number;
+};
+
+function toBeat(row: BeatRow, refs: readonly ObjectRef[]): Beat {
+  return {
+    id: asBeatId(row.id),
+    sessionId: asSessionId(row.session_id),
+    body: row.body,
+    position: row.position,
+    refs,
+    author: row.author as AuthorKind,
+    version: row.version
+  };
+}
+
 const now = () => new Date().toISOString();
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function richReferenceIds(node: RichNode, output: string[] = []): string[] {
+  if (node.type === "entityReference" && typeof node.attrs?.objectId === "string") output.push(node.attrs.objectId);
+  node.content?.forEach(child => richReferenceIds(child, output));
+  return output;
+}
+
+function documentReferenceIds(document: EntityDocument): readonly string[] {
+  const ids: string[] = [];
+  document.blocks.forEach(block => { if (block.kind === "text") richReferenceIds(block.content, ids); });
+  return [...new Set(ids)];
+}
+
+function mechanicsReferenceIds(profile: MechanicsProfile): readonly string[] {
+  const ids = profile.equipment.flatMap(item => item.objectId ? [item.objectId] : []);
+  profile.features.forEach(feature => richReferenceIds(feature.description, ids));
+  richReferenceIds(profile.notes, ids);
+  return [...new Set(ids)];
+}
 
 export class PostgresDeskRepository implements DeskRepository {
   readonly #sql: postgres.Sql;
@@ -374,7 +548,7 @@ export class PostgresDeskRepository implements DeskRepository {
     const objectIds = [...new Set(rows.map((row) => row.object_id))];
 
     const representationRows = (await sql`
-      select id, object_id, kind, label, template_id, fields, version
+      select id, object_id, kind, label, template_id, fields, mechanics, version
         from representations
        where object_id = any(${objectIds}::uuid[]) and lifecycle = 'active'
        order by object_id, seq asc
@@ -480,7 +654,11 @@ export class PostgresDeskRepository implements DeskRepository {
       const other = known.get(row.object_value as string);
       if (!other) continue;
       add(row.subject_id, {
+        provenance: toClaim(row).provenance,
+        story: toClaim(row).story,
+        settled: toClaim(row).settled,
         claimId: asClaimId(row.id),
+        relationshipId: row.relationship_id === null ? null : asRelationshipId(row.relationship_id),
         claimKind: row.claim_kind,
         direction: "out",
         other,
@@ -492,7 +670,11 @@ export class PostgresDeskRepository implements DeskRepository {
       const other = known.get(row.subject_id);
       if (!other) continue;
       add(row.object_value as string, {
+        provenance: toClaim(row).provenance,
+        story: toClaim(row).story,
+        settled: toClaim(row).settled,
         claimId: asClaimId(row.id),
+        relationshipId: row.relationship_id === null ? null : asRelationshipId(row.relationship_id),
         claimKind: row.claim_kind,
         direction: "in",
         other,
@@ -507,6 +689,76 @@ export class PostgresDeskRepository implements DeskRepository {
     const [card] = await this.#hydrate(sql, [row]);
     if (!card) throw new Error("hydrate: a card resolved to nothing");
     return card;
+  }
+
+  async #entitySnapshot(sql: Sql, worldId: WorldId, objectId: WorldObjectId, document?: EntityDocument): Promise<EntitySnapshot | null> {
+    const rows = (await sql`
+      select wo.id as object_id, wo.world_id, wo.lifecycle, wo.maturity,
+             wo.settled_by, wo.settled_at,
+             f.body, f.version as body_version,
+             f.edited_by, f.edited_at, f.superseded_body
+        from world_objects wo
+        join fragments f on f.object_id = wo.id
+       where wo.id = ${objectId} and wo.world_id = ${worldId}
+         and wo.lifecycle <> 'deleted'
+    `) as unknown as EntityRow[];
+    const row = rows[0];
+    if (!row) return null;
+
+    const representationRows = (await sql`
+      select id, object_id, kind, label, template_id, fields, mechanics, version
+        from representations
+       where object_id = ${objectId} and lifecycle = 'active'
+       order by seq asc
+       limit 1
+    `) as unknown as RepresentationRow[];
+    const claimRows = (await sql`
+      select ${claimColumns(sql)} from claims
+       where subject_id = ${objectId} and lifecycle = 'active'
+       order by claim_kind, story_order asc nulls first, seq asc
+    `) as unknown as ClaimRow[];
+    const inboundRows = (await sql`
+      select ${claimColumns(sql)} from claims
+       where object_value = ${objectId} and lifecycle = 'active'
+       order by claim_kind, seq asc
+    `) as unknown as ClaimRow[];
+    const claims = claimRows.map(toClaim);
+    const links = await this.#linksFor(sql, [objectId], claimRows, inboundRows);
+    const content = {
+      objectId: asWorldObjectId(row.object_id), body: row.body, bodyVersion: row.body_version,
+      maturity: row.maturity as Maturity,
+      settled: toSettlement(row.settled_by, row.settled_at),
+      written: toAuthorship(row.edited_by, row.edited_at, row.superseded_body),
+      representation: representationRows[0] ? toRepresentation(representationRows[0]) : null,
+      claims,
+      links: links.get(objectId) ?? []
+    };
+    let resolvedDocument = document;
+    if (!resolvedDocument) {
+      const stored = (await sql`
+        select document from entity_documents where object_id = ${objectId}
+      `) as unknown as { document: unknown }[];
+      resolvedDocument = validEntityDocument(stored[0]?.document) ? stored[0].document : legacyDocument(content);
+    }
+    return { worldId, lifecycle: row.lifecycle as Lifecycle, ...content, document: resolvedDocument };
+  }
+
+  /**
+   * Relationships embedded in authored rich content are references, not
+   * implicit claims. Resolve them at the repository boundary so internal
+   * callers cannot bypass world tenancy or point at archived identities.
+   */
+  async #validateEntityReferences(tx: Tx, worldId: WorldId, ids: readonly string[]): Promise<string | null> {
+    const unique = [...new Set(ids)];
+    if (unique.some(id => !UUID.test(id))) return "Entity references must use stable world-object ids.";
+    if (unique.length === 0) return null;
+    const rows = (await tx`
+      select id from world_objects
+       where id = any(${unique}::uuid[])
+         and world_id = ${worldId} and lifecycle = 'active'
+    `) as unknown as { id: string }[];
+    if (rows.length !== unique.length) return "Every referenced entity must be active and belong to this world.";
+    return null;
   }
 
   async #cardsOf(sql: Sql, compositionId: CompositionId): Promise<DeskCard[]> {
@@ -615,7 +867,8 @@ export class PostgresDeskRepository implements DeskRepository {
       compositionId,
       kind: "desk",
       name: "Desk",
-      cards: await this.#cardsOf(this.#sql, compositionId)
+      cards: await this.#cardsOf(this.#sql, compositionId),
+      spatial: await this.#spatialOf(this.#sql, compositionId)
     };
   }
 
@@ -643,6 +896,21 @@ export class PostgresDeskRepository implements DeskRepository {
       card_count: number;
     }[];
 
+    const sessions = (await this.#sql`
+      select s.id, s.composition_id, s.title, s.state,
+             (select count(*) from session_beats b
+               where b.session_id = s.id and b.lifecycle = 'active')::int as beat_count
+        from sessions s
+       where s.world_id = ${worldId}
+       order by s.seq desc
+    `) as unknown as {
+      id: string;
+      composition_id: string;
+      title: string;
+      state: string;
+      beat_count: number;
+    }[];
+
     return {
       worldId,
       name: worlds[0]?.name ?? null,
@@ -651,7 +919,18 @@ export class PostgresDeskRepository implements DeskRepository {
         kind: row.kind as CompositionKind,
         name: row.name ?? "Untitled",
         cardCount: row.card_count
-      }))
+      })),
+      // Newest first: the session a GM wants is almost always the next one, and
+      // it is the one most recently started.
+      sessions: sessions.map(
+        (row): SessionSummary => ({
+          sessionId: asSessionId(row.id),
+          compositionId: asCompositionId(row.composition_id),
+          title: row.title,
+          state: row.state as SessionState,
+          beatCount: row.beat_count
+        })
+      )
     };
   }
 
@@ -668,8 +947,222 @@ export class PostgresDeskRepository implements DeskRepository {
       compositionId,
       kind: row.kind as CompositionKind,
       name: row.name,
-      cards: await this.#cardsOf(this.#sql, compositionId)
+      cards: await this.#cardsOf(this.#sql, compositionId),
+      spatial: await this.#spatialOf(this.#sql, compositionId)
     };
+  }
+
+  async inspectObject(worldId: WorldId, objectId: WorldObjectId): Promise<DeskView | null> {
+    // Resolve an existing placement solely as the editing adapter. Reading a
+    // dossier never creates, restores, or rearranges a Board reference.
+    const rows = await this.#sql`
+      select c.id, c.kind, c.name, ci.id as card_id
+      from compositions c join composition_items ci on ci.composition_id = c.id
+      join world_objects wo on wo.id = ci.object_id
+      where c.world_id = ${worldId} and wo.world_id = ${worldId}
+        and wo.id = ${objectId} and wo.lifecycle = 'active' and ci.lifecycle = 'active'
+      order by ci.seq limit 1`;
+    const row = rows[0];
+    if (!row) return null;
+    const compositionId = asCompositionId(row.id);
+    const card = await this.#cardById(this.#sql, compositionId, asCardId(row.card_id));
+    if (!card) return null;
+    return { worldId, compositionId, kind: row.kind as CompositionKind, name: row.name,
+      cards: [await this.#hydrateOne(this.#sql, card)] };
+  }
+
+  async loadEntity(worldId: WorldId, objectId: WorldObjectId): Promise<EntitySnapshot | null> {
+    return await this.#entitySnapshot(this.#sql, worldId, objectId);
+  }
+
+  async createEntity(input: CreateEntityInput): Promise<WriteResult<EntitySnapshot>> {
+    return await this.#tx(async tx => {
+      const world = await tx`select id from worlds where id = ${input.worldId}`;
+      if (!world[0]) return missing<EntitySnapshot>();
+      const existing = (await tx`
+        select id, world_id, lifecycle
+          from world_objects
+         where id = ${input.objectId}
+         for no key update
+      `) as unknown as { id: string; world_id: string; lifecycle: string }[];
+      if (existing[0]) {
+        if (existing[0].world_id !== input.worldId) return refused<EntitySnapshot>("That identity belongs to another world.");
+        if (existing[0].lifecycle !== "active") return refused<EntitySnapshot>("That identity is not active.");
+        const replay = await this.#entitySnapshot(tx, input.worldId, input.objectId);
+        if (!replay) throw new Error("createEntity: existing identity has no Fragment");
+        return ok(replay);
+      }
+      const timestamp = now();
+      await tx`
+        insert into world_objects
+          (id, world_id, lifecycle, version, creation_kind, creation_author, creation_recorded_at)
+        values (${input.objectId}, ${input.worldId}, 'active', 1, 'gm_capture', 'gm', ${timestamp})
+      `;
+      await tx`
+        insert into fragments (id, object_id, body, version, updated_at, edited_by, edited_at)
+        values (${randomUUID()}, ${input.objectId}, '', 1, ${timestamp}, null, null)
+      `;
+      if (input.kind) {
+        await tx`
+          insert into representations (id, object_id, kind, label, fields, version, lifecycle, created_at)
+          values (${randomUUID()}, ${input.objectId}, ${input.kind}, ${input.label ?? null}, '{}'::jsonb, 1, 'active', ${timestamp})
+        `;
+      }
+      const initial: EntityDocument = {
+        schemaVersion: 1,
+        version: 1,
+        blocks: [{ id: `${input.objectId}:narrative`, kind: "text", role: "narrative", title: "Narrative", content: emptyRichText() }]
+      };
+      await tx`
+        insert into entity_documents (object_id, document, version, updated_at, updated_by)
+        values (${input.objectId}, ${tx.json(initial as never)}, 1, ${timestamp}, 'gm')
+      `;
+      const snapshot = await this.#entitySnapshot(tx, input.worldId, input.objectId, initial);
+      if (!snapshot) throw new Error("createEntity: identity vanished inside its own transaction");
+      return ok(snapshot);
+    });
+  }
+
+  async saveEntityDocument(input: SaveEntityDocumentInput): Promise<WriteResult<EntitySnapshot>> {
+    if (!validEntityDocument(input.document)) return refused<EntitySnapshot>("This document is not valid.");
+    return await this.#tx(async tx => {
+      const objects = (await tx`
+        select wo.id, wo.lifecycle, f.body, f.version as body_version
+          from world_objects wo join fragments f on f.object_id = wo.id
+         where wo.id = ${input.objectId} and wo.world_id = ${input.worldId}
+         for no key update of wo, f
+      `) as unknown as { id: string; lifecycle: string; body: string; body_version: number }[];
+      const object = objects[0];
+      if (!object || object.lifecycle !== "active") return missing<EntitySnapshot>();
+      const referenceError = await this.#validateEntityReferences(tx, input.worldId, documentReferenceIds(input.document));
+      if (referenceError) return refused<EntitySnapshot>(referenceError);
+      const stored = (await tx`
+        select document, version from entity_documents where object_id = ${input.objectId} for update
+      `) as unknown as { document: unknown; version: number }[];
+      const current = stored[0]?.version ?? 0;
+      if (current !== input.observedVersion) return conflict<EntitySnapshot>([]);
+      const nextVersion = current + 1;
+      const next: EntityDocument = { ...input.document, version: nextVersion };
+      const body = `${/^!\[[^\]]*\]\([^\s)]+\)\s*/.exec(object.body)?.[0] ?? ""}${narrativeBody(next)}`;
+      const scribe = input.author && input.author !== "gm" ? input.author : null;
+      const timestamp = now();
+      await tx`
+        insert into entity_documents (object_id, document, version, updated_at, updated_by)
+        values (${input.objectId}, ${tx.json(next as never)}, ${nextVersion}, ${timestamp}, ${scribe ?? "gm"})
+        on conflict (object_id) do update
+          set document = excluded.document, version = excluded.version,
+              updated_at = excluded.updated_at, updated_by = excluded.updated_by
+      `;
+      if (body !== object.body) {
+        await tx`
+          update fragments
+             set body = ${body}, version = version + 1, updated_at = ${timestamp},
+                 edited_by = ${scribe}, edited_at = ${scribe === null ? null : timestamp},
+                 superseded_body = ${scribe === null ? null : object.body}
+           where object_id = ${input.objectId}
+        `;
+      }
+      const snapshot = await this.#entitySnapshot(tx, input.worldId, input.objectId, next);
+      if (!snapshot) throw new Error("saveEntityDocument: identity vanished inside its own transaction");
+      return ok(snapshot);
+    });
+  }
+
+  async saveEntityIdentity(input: SaveEntityIdentityInput): Promise<WriteResult<EntitySnapshot>> {
+    return await this.#tx(async tx => {
+      const rows = (await tx`
+        select r.id, r.object_id, r.kind, r.label, r.template_id, r.fields, r.mechanics, r.version
+          from representations r join world_objects wo on wo.id = r.object_id
+         where r.object_id = ${input.objectId} and wo.world_id = ${input.worldId}
+           and r.lifecycle = 'active' and wo.lifecycle = 'active'
+         order by r.seq asc limit 1 for no key update of r
+      `) as unknown as RepresentationRow[];
+      const row = rows[0];
+      if (!row) return missing<EntitySnapshot>();
+      if (row.version !== input.observedVersion) return conflict<EntitySnapshot>([]);
+      const mergedFields: Record<string, string | number> = { ...(row.fields ?? {}) };
+      for (const [key, value] of Object.entries(input.fields)) {
+        if (value === "") delete mergedFields[key];
+        else mergedFields[key] = value;
+      }
+      await tx`
+        update representations
+           set label = ${input.label}, fields = ${JSON.stringify(mergedFields)}::text::jsonb,
+               version = version + 1
+         where id = ${row.id}
+      `;
+      const snapshot = await this.#entitySnapshot(tx, input.worldId, input.objectId);
+      if (!snapshot) throw new Error("saveEntityIdentity: identity vanished inside its own transaction");
+      return ok(snapshot);
+    });
+  }
+
+  async saveEntityMechanics(input: SaveEntityMechanicsInput): Promise<WriteResult<EntitySnapshot>> {
+    if (!validMechanicsProfile(input.profile)) return refused<EntitySnapshot>("This mechanics profile is not valid.");
+    return await this.#tx(async tx => {
+      const rows = (await tx`
+        select r.id, r.object_id, r.kind, r.label, r.template_id, r.fields, r.mechanics, r.version
+          from representations r join world_objects wo on wo.id = r.object_id
+         where r.object_id = ${input.objectId} and wo.world_id = ${input.worldId}
+           and r.lifecycle = 'active' and wo.lifecycle = 'active'
+         order by r.seq asc limit 1 for no key update of r
+      `) as unknown as RepresentationRow[];
+      const row = rows[0];
+      if (!row) return missing<EntitySnapshot>();
+      if (row.version !== input.observedVersion) return conflict<EntitySnapshot>([]);
+      const referenceError = await this.#validateEntityReferences(tx, input.worldId, mechanicsReferenceIds(input.profile));
+      if (referenceError) return refused<EntitySnapshot>(referenceError);
+      const legacy = { ...(row.fields ?? {}) };
+      for (const field of input.profile.fields) legacy[field.id] = field.value;
+      await tx`
+        update representations
+           set mechanics = ${JSON.stringify(input.profile)}::text::jsonb,
+               fields = ${JSON.stringify(legacy)}::text::jsonb,
+               version = version + 1
+         where id = ${row.id}
+      `;
+      const snapshot = await this.#entitySnapshot(tx, input.worldId, input.objectId);
+      if (!snapshot) throw new Error("saveEntityMechanics: identity vanished inside its own transaction");
+      return ok(snapshot);
+    });
+  }
+
+  async #spatialOf(sql: Sql, compositionId: CompositionId): Promise<SpatialState> {
+    const rows = await sql`select spatial_collections, spatial_version from compositions where id = ${compositionId}`;
+    return { collections: (rows[0]?.spatial_collections ?? []) as SpatialCollection[], version: Number(rows[0]?.spatial_version ?? 1) };
+  }
+
+  async changeCollection(input: { compositionId: CompositionId; observedVersion: number; command: CollectionCommand }): Promise<WriteResult<SpatialState>> {
+    return this.#tx(async tx => {
+      if (!await this.#lockComposition(tx, input.compositionId)) return missing<SpatialState>();
+      const state = await this.#spatialOf(tx, input.compositionId);
+      if (state.version !== input.observedVersion) return refused<SpatialState>("This Board's collections changed elsewhere. Reload to continue.");
+      let next: SpatialState;
+      try { next = applyCollectionCommand(state, input.command, await this.#cardsOf(tx, input.compositionId)); }
+      catch (error) { return refused<SpatialState>(error instanceof Error ? error.message : "The collection could not be changed."); }
+      await tx`update compositions set spatial_collections = ${tx.json(next.collections as never)}, spatial_version = ${next.version} where id = ${input.compositionId}`;
+      return ok(next);
+    });
+  }
+
+  async replaceSpatial(input: { compositionId: CompositionId; observedVersion: number; spatial: SpatialState }): Promise<WriteResult<SpatialState>> {
+    return this.#tx(async tx => {
+      if (!await this.#lockComposition(tx, input.compositionId)) return missing<SpatialState>();
+      const current = await this.#spatialOf(tx, input.compositionId);
+      if (current.version !== input.observedVersion) return refused<SpatialState>("This Board's collections changed elsewhere. Reload to continue.");
+      const cards = await this.#cardsOf(tx, input.compositionId);
+      let next: SpatialState = { version: current.version, collections: [] };
+      try {
+        for (const collection of input.spatial.collections) {
+          next = applyCollectionCommand(next, { kind: "create", id: collection.id, title: collection.title, cardIds: collection.cardIds, collapsed: collection.collapsed, anchor: collection.anchor }, cards);
+        }
+      } catch (error) {
+        return refused<SpatialState>(error instanceof Error ? error.message : "The collection could not be restored.");
+      }
+      next = { version: current.version + 1, collections: next.collections };
+      await tx`update compositions set spatial_collections = ${tx.json(next.collections as never)}, spatial_version = ${next.version} where id = ${input.compositionId}`;
+      return ok(next);
+    });
   }
 
   async createBoard(input: CreateBoardInput): Promise<CompositionSummary> {
@@ -690,6 +1183,286 @@ export class PostgresDeskRepository implements DeskRepository {
         name: input.name,
         cardCount: 0
       };
+    });
+  }
+
+  // Sessions and Prep --------------------------------------------------------
+
+  /**
+   * The names behind a beat's references.
+   *
+   * Resolved on read, exactly as a `Link`'s far end is, and for the same reason:
+   * identity is stable and names are not, so a beat about the Harbour Guild
+   * still reads correctly after the Guild is renamed. `present` rather than
+   * `active`, so a beat keeps its chips when the GM clears the Desk.
+   */
+  async #refsFor(sql: Sql, beatIds: readonly string[]): Promise<Map<string, ObjectRef[]>> {
+    const out = new Map<string, ObjectRef[]>();
+    if (beatIds.length === 0) return out;
+
+    const rows = (await sql`
+      select beat_id, object_id, seq
+        from session_beat_refs
+       where beat_id = any(${beatIds}::uuid[])
+       order by beat_id, seq asc
+    `) as unknown as { beat_id: string; object_id: string; seq: number }[];
+    if (rows.length === 0) return out;
+
+    const objectIds = [...new Set(rows.map((row) => row.object_id))];
+    const refRows = (await sql`
+      ${objectRefSelect(sql, "present")}
+        and wo.id = any(${objectIds}::uuid[])
+    `) as unknown as ObjectRefRow[];
+
+    const known = new Map(refRows.map((row) => [row.id, toObjectRef(row)]));
+    for (const row of rows) {
+      const ref = known.get(row.object_id);
+      if (!ref) continue;
+      const list = out.get(row.beat_id) ?? [];
+      list.push(ref);
+      out.set(row.beat_id, list);
+    }
+    return out;
+  }
+
+  async #beatsOf(sql: Sql, sessionId: SessionId): Promise<Beat[]> {
+    const rows = (await sql`
+      select id, session_id, body, position, author, version
+        from session_beats
+       where session_id = ${sessionId} and lifecycle = 'active'
+       order by position asc, seq asc
+    `) as unknown as BeatRow[];
+    if (rows.length === 0) return [];
+
+    const refs = await this.#refsFor(sql, rows.map((row) => row.id));
+    return rows.map((row) => toBeat(row, refs.get(row.id) ?? []));
+  }
+
+  /**
+   * A session and the composition it is prepared on, created together.
+   *
+   * The prep composition takes the session's title as its name, because the
+   * switcher and "add these cards to…" both read composition names and
+   * "Untitled" is not what a GM called their evening. `editSession` keeps the
+   * two in step for the same reason.
+   */
+  async createSession(input: CreateSessionInput): Promise<WriteResult<Prep>> {
+    return await this.#tx(async (tx) => {
+      const worlds = (await tx`
+        select id from worlds where id = ${input.worldId}
+      `) as unknown as { id: string }[];
+      if (!worlds[0]) return missing<Prep>();
+
+      await tx`
+        insert into compositions (id, world_id, kind, name, version, created_at)
+        values (${input.compositionId}, ${input.worldId}, 'prep', ${input.title}, 1, ${now()})
+      `;
+
+      const rows = (await tx`
+        insert into sessions (
+          id, world_id, composition_id, title, intent, state, version, created_at
+        )
+        values (
+          ${input.sessionId}, ${input.worldId}, ${input.compositionId},
+          ${input.title}, null, 'planned', 1, ${now()}
+        )
+        returning ${sessionColumns(tx)}
+      `) as unknown as SessionRow[];
+
+      const row = rows[0];
+      if (!row) throw new Error("createSession: session vanished inside its own transaction");
+      return ok({ session: toSession(row), beats: [] });
+    });
+  }
+
+  async openPrep(compositionId: CompositionId): Promise<Prep | null> {
+    const rows = (await this.#sql`
+      select ${sessionColumns(this.#sql)}
+        from sessions where composition_id = ${compositionId}
+    `) as unknown as SessionRow[];
+
+    const row = rows[0];
+    if (!row) return null;
+    return {
+      session: toSession(row),
+      beats: await this.#beatsOf(this.#sql, asSessionId(row.id))
+    };
+  }
+
+  async editSession(input: EditSessionInput): Promise<WriteResult<Session>> {
+    return await this.#tx(async (tx) => {
+      const current = (await tx`
+        select id, composition_id, version from sessions
+         where id = ${input.sessionId}
+         for no key update
+      `) as unknown as { id: string; composition_id: string; version: number }[];
+
+      const row = current[0];
+      if (!row) return missing<Session>();
+      // No composition to hand back, so a stale edit reports the versions it
+      // clashed with rather than a card list it has no business inventing.
+      if (row.version !== input.observedVersion) {
+        return refused<Session>("this session was changed somewhere else");
+      }
+
+      const updated = (await tx`
+        update sessions
+           set title = ${input.title}, intent = ${input.intent}, version = version + 1
+         where id = ${input.sessionId}
+        returning ${sessionColumns(tx)}
+      `) as unknown as SessionRow[];
+
+      // The composition carries the same name, so renaming the session renames
+      // what the switcher shows. One intent, one change set.
+      await tx`
+        update compositions set name = ${input.title}, version = version + 1
+         where id = ${row.composition_id}
+      `;
+
+      const after = updated[0];
+      if (!after) throw new Error("editSession: session vanished inside its own transaction");
+      return ok(toSession(after));
+    });
+  }
+
+  /**
+   * Writes one beat, new or revised.
+   *
+   * The session row is locked because `max(position)` is an aggregate and
+   * cannot be — the same argument that serialises `max(z)` on the composition.
+   *
+   * The referenced objects are checked but deliberately **not** locked. A beat
+   * pointing at something archived while it is being written is a beat pointing
+   * at archived material, which is allowed and is the ordinary state of a plan
+   * about something the GM tidied away last week.
+   *
+   * No observed version. Beats are edited by one GM in a rail, and the
+   * Librarian may only add — so last-write-wins here costs a keystroke rather
+   * than a fact, unlike prose or a claim. The column exists for the day that
+   * stops being true.
+   */
+  async setBeat(input: SetBeatInput): Promise<WriteResult<Beat>> {
+    return await this.#tx(async (tx) => {
+      const sessions = (await tx`
+        select id, world_id from sessions where id = ${input.sessionId}
+        for no key update
+      `) as unknown as { id: string; world_id: string }[];
+      const session = sessions[0];
+      if (!session) return missing<Beat>();
+
+      const refs = [...new Set(input.refs as readonly string[])];
+      if (refs.length > 0) {
+        const objects = (await tx`
+          select id, world_id from world_objects
+           where id = any(${refs}::uuid[]) and lifecycle <> 'deleted'
+        `) as unknown as { id: string; world_id: string }[];
+        if (objects.length !== refs.length) return missing<Beat>();
+        // The same seam `referenceObjects` holds: a beat may not reach into
+        // another world, and the store decides that rather than the caller.
+        if (objects.some((row) => row.world_id !== session.world_id)) return missing<Beat>();
+      }
+
+      const existing = (await tx`
+        select position from session_beats
+         where id = ${input.beatId} and session_id = ${input.sessionId} and lifecycle = 'active'
+      `) as unknown as { position: number }[];
+
+      const tail = (await tx`
+        select coalesce(max(position), 0)::int as last
+          from session_beats
+         where session_id = ${input.sessionId} and lifecycle = 'active'
+      `) as unknown as { last: number }[];
+
+      const position = existing[0]?.position ?? (tail[0]?.last ?? 0) + 1;
+
+      const written = (await tx`
+        insert into session_beats (
+          id, session_id, body, position, author, lifecycle, version, created_at
+        )
+        values (
+          ${input.beatId}, ${input.sessionId}, ${input.body}, ${position},
+          ${input.author}, 'active', 1, ${now()}
+        )
+        on conflict (id) do update
+           set body = excluded.body,
+               -- A GM revising a beat the Librarian proposed has made it
+               -- theirs. The mark says "you did not write this"; once they
+               -- have, they did.
+               author = excluded.author,
+               version = session_beats.version + 1
+         where session_beats.session_id = ${input.sessionId}
+           and session_beats.lifecycle = 'active'
+        returning id, session_id, body, position, author, version
+      `) as unknown as BeatRow[];
+
+      const row = written[0];
+      // The conflict target matched but the guard did not: this id is another
+      // session's beat, or one that has been retired. Neither is ours to move.
+      if (!row) return missing<Beat>();
+
+      // Replaced wholesale. What a beat is about is one judgment, and merging
+      // would make removing the last reference impossible to express.
+      await tx`delete from session_beat_refs where beat_id = ${input.beatId}`;
+      for (const [seq, objectId] of refs.entries()) {
+        await tx`
+          insert into session_beat_refs (beat_id, object_id, seq)
+          values (${input.beatId}, ${objectId}, ${seq})
+        `;
+      }
+
+      const resolved = await this.#refsFor(tx, [row.id]);
+      return ok(toBeat(row, resolved.get(row.id) ?? []));
+    });
+  }
+
+  async removeBeat(input: RemoveBeatInput): Promise<WriteResult<BeatId>> {
+    return await this.#tx(async (tx) => {
+      const updated = (await tx`
+        update session_beats
+           set lifecycle = 'archived', version = version + 1
+         where id = ${input.beatId} and lifecycle = 'active'
+        returning id
+      `) as unknown as { id: string }[];
+
+      const row = updated[0];
+      if (!row) return missing<BeatId>();
+      return ok(asBeatId(row.id));
+    });
+  }
+
+  async reorderBeats(input: ReorderBeatsInput): Promise<WriteResult<readonly Beat[]>> {
+    return await this.#tx(async (tx) => {
+      const sessions = (await tx`
+        select id from sessions where id = ${input.sessionId}
+        for no key update
+      `) as unknown as { id: string }[];
+      if (!sessions[0]) return missing<readonly Beat[]>();
+
+      const current = (await tx`
+        select id from session_beats
+         where session_id = ${input.sessionId} and lifecycle = 'active'
+      `) as unknown as { id: string }[];
+
+      const here = new Set(current.map((row) => row.id));
+      const wanted = [...new Set(input.beatIds as readonly string[])];
+
+      // Refused rather than repaired. A list that is not exactly this session's
+      // running order is a caller working from a stale rail, and inventing an
+      // order for the beats it forgot would be Relic deciding what happens
+      // tonight.
+      if (wanted.length !== here.size || wanted.some((id) => !here.has(id))) {
+        return refused<readonly Beat[]>("that is not this session's running order");
+      }
+
+      for (const [index, beatId] of wanted.entries()) {
+        await tx`
+          update session_beats
+             set position = ${index + 1}, version = version + 1
+           where id = ${beatId}
+        `;
+      }
+
+      return ok(await this.#beatsOf(tx, input.sessionId));
     });
   }
 
@@ -782,29 +1555,57 @@ export class PostgresDeskRepository implements DeskRepository {
     });
   }
 
-  async captureCard(input: CaptureCardInput): Promise<DeskCard> {
+  async captureCard(input: CaptureCardInput): Promise<WriteResult<DeskCard>> {
     const timestamp = now();
 
     return await this.#tx(async (tx) => {
       const worldId = await this.#lockComposition(tx, input.compositionId);
-      if (!worldId) throw new Error("captureCard: composition does not exist");
+      if (!worldId) return missing<DeskCard>();
 
       // Captured thought is unresolved, so the object is Pencil with no
       // settlement recorded against it. Nothing on this path may write 'ink' —
       // and now nothing on it *can*: the insert names no settling author, and
       // `world_objects_ink_is_deliberate` refuses Ink without one.
+      //
+      // The author is a parameter rather than a constant because the Librarian
+      // captures too, and a world that could not tell the two apart would be a
+      // world where the GM cannot find their own writing.
       await tx`
         insert into world_objects
           (id, world_id, lifecycle, maturity, version, created_at,
            creation_kind, creation_author, creation_recorded_at)
         values (${input.objectId}, ${worldId}, 'active', 'pencil', 1, ${timestamp},
-                'gm_capture', 'gm', ${timestamp})
+                ${capturedBy(input.author)}, ${input.author}, ${timestamp})
       `;
 
+      // Prose authorship is recorded only when it was not the GM's. Their own
+      // writing is the unmarked case, and marking it would make every card in
+      // an ordinary world carry an attribution nobody asked for.
+      const scribe = input.author === "gm" ? null : input.author;
+
       await tx`
-        insert into fragments (id, object_id, body, version, updated_at)
-        values (${randomUUID()}, ${input.objectId}, ${input.body}, 1, ${timestamp})
+        insert into fragments
+          (id, object_id, body, version, updated_at, edited_by, edited_at)
+        values (
+          ${randomUUID()}, ${input.objectId}, ${input.body}, 1, ${timestamp},
+          ${scribe}, ${scribe === null ? null : timestamp}
+        )
       `;
+
+      // An optional first representation is part of capture's one change set.
+      // If this insert fails, the object, Fragment, and placement all roll back
+      // together rather than leaving a half-deepened identity behind.
+      if (input.initialRepresentation) {
+        await tx`
+          insert into representations
+            (id, object_id, kind, label, fields, version, lifecycle, created_at)
+          values (
+            ${input.initialRepresentation.representationId}, ${input.objectId},
+            ${input.initialRepresentation.kind}, ${input.initialRepresentation.label},
+            '{}'::jsonb, 1, 'active', ${timestamp}
+          )
+        `;
+      }
 
       const z = (await this.#maxZ(tx, input.compositionId)) + 1;
 
@@ -821,7 +1622,7 @@ export class PostgresDeskRepository implements DeskRepository {
 
       const row = await this.#cardById(tx, input.compositionId, input.cardId);
       if (!row) throw new Error("captureCard: card vanished inside its own transaction");
-      return await this.#hydrateOne(tx, row);
+      return ok(await this.#hydrateOne(tx, row));
     });
   }
 
@@ -843,13 +1644,67 @@ export class PostgresDeskRepository implements DeskRepository {
         return conflict<DeskCard>(await this.#cardsOf(tx, input.compositionId));
       }
 
-      // Keyed on the object, not the card. This is what makes an edit through
-      // any composition an edit of the one Fragment.
+      // Once an entity document exists, the legacy card editor is a narrow
+      // compatibility path: it replaces only the canonical narrative block,
+      // never the other authored sections.
+      const documents = (await tx`
+        select document, version from entity_documents where object_id = ${row.object_id} for update
+      `) as unknown as { document: unknown; version: number }[];
+      const stored = documents[0];
+      const parsed = validEntityDocument(stored?.document) ? stored.document : null;
+      let nextDocument: EntityDocument | null = null;
+      if (parsed) {
+        let replaced = false;
+        const blocks = parsed.blocks.map((block): EntityBlock => {
+          if (!replaced && block.kind === "text" && block.role === "narrative") {
+            replaced = true;
+            return { ...block, content: richText(input.body.replace(/^!\[[^\]]*\]\([^\s)]+\)\s*/, "")) };
+          }
+          return block;
+        });
+        nextDocument = {
+          ...parsed,
+          version: parsed.version + 1,
+          blocks: replaced ? blocks : [{ id: `${row.object_id}:narrative`, kind: "text", role: "narrative", title: "Narrative", content: richText(input.body.replace(/^!\[[^\]]*\]\([^\s)]+\)\s*/, "")) }, ...blocks]
+        };
+      }
+
+      /*
+       * Keyed on the object, not the card. This is what makes an edit through
+       * any composition an edit of the one Fragment.
+       *
+       * Three columns move together and only when the author is not the GM.
+       * The GM typing over their own prose is the unmarked case: it needs no
+       * attribution, and keeping a superseded copy of every keystroke would
+       * turn the debounced capture path into a revision log nobody asked for.
+       * A rewrite by anyone else is a different act — it destroys words the GM
+       * may not have chosen to lose — so it records who, when, and what stood
+       * there before, which is what the restore control reads.
+       */
+      const scribe = input.author === "gm" ? null : input.author;
+      const moment = now();
+
+      const nextBody = nextDocument
+        ? `${/^!\[[^\]]*\]\([^\s)]+\)\s*/.exec(row.body)?.[0] ?? ""}${narrativeBody(nextDocument)}`
+        : input.body;
       await tx`
         update fragments
-           set body = ${input.body}, version = version + 1, updated_at = ${now()}
+           set body = ${nextBody},
+               version = version + 1,
+               updated_at = ${moment},
+               edited_by = ${scribe},
+               edited_at = ${scribe === null ? null : moment},
+               superseded_body = ${scribe === null ? null : row.body}
          where object_id = ${row.object_id}
       `;
+      if (nextDocument && stored) {
+        await tx`
+          update entity_documents
+             set document = ${tx.json(nextDocument as never)}, version = ${nextDocument.version},
+                 updated_at = ${moment}, updated_by = ${input.author === "gm" ? "gm" : input.author}
+           where object_id = ${row.object_id}
+        `;
+      }
 
       const after = await this.#cardById(tx, input.compositionId, input.cardId);
       if (!after) throw new Error("editCardBody: card vanished inside its own transaction");
@@ -859,10 +1714,71 @@ export class PostgresDeskRepository implements DeskRepository {
 
   async moveCards(input: MoveCardsInput): Promise<WriteResult<readonly DeskCard[]>> {
     if (input.moves.length === 0) return ok([]);
+    return this.#tx(tx => this.#moveCards(tx, input));
+  }
 
-    const ids = [...new Set(input.moves.map((m) => m.cardId))].sort();
+  async setRelationshipVisibility(input: { compositionId: CompositionId; cardId: CardId; relationshipId: RelationshipId; visible: boolean; observedCardVersion: number }): Promise<WriteResult<DeskCard>> {
+    return this.#tx(async tx => {
+      if (!await this.#lockComposition(tx, input.compositionId)) return missing();
+      const rows = await tx`select object_id, version from composition_items where id = ${input.cardId} and composition_id = ${input.compositionId} and lifecycle = 'active' for no key update`;
+      const row = rows[0];
+      if (!row) return missing();
+      if (row.version !== input.observedCardVersion) return conflict([]);
+      const related = await tx`select id from claims where relationship_id = ${input.relationshipId} and lifecycle = 'active' and (subject_id = ${row.object_id} or object_value = ${row.object_id})`;
+      if (input.visible && !related.length) return refused("This relationship is unavailable from this object.");
+      await tx`update composition_items set presentation = jsonb_set(presentation, '{semanticEdges}',
+        coalesce((select jsonb_agg(value) from (select distinct value from jsonb_array_elements(coalesce(presentation->'semanticEdges', '[]'::jsonb)) where value <> to_jsonb(${input.relationshipId}::text) union select to_jsonb(${input.relationshipId}::text) where ${input.visible}) edges), '[]'::jsonb)), version = version + 1 where id = ${input.cardId}`;
+      const after = await this.#cardById(tx, input.compositionId, input.cardId);
+      return after ? ok(await this.#hydrateOne(tx, after)) : missing();
+    });
+  }
 
-    return await this.#tx(async (tx) => {
+  async moveCollectionCards(input: MoveCardsInput & { observedSpatialVersion: number; command: CollectionCommand | null; spatial?: SpatialState }): Promise<WriteResult<{ cards: readonly DeskCard[]; spatial: SpatialState }>> {
+    return this.#tx(async tx => {
+      if (!await this.#lockComposition(tx, input.compositionId)) return missing();
+      const current = await this.#spatialOf(tx, input.compositionId);
+      if (current.version !== input.observedSpatialVersion) return refused("This Board's collections changed elsewhere. Reload to continue.");
+      let spatial = current;
+      let shiftedAnchor = false;
+      try {
+        const cards = await this.#cardsOf(tx, input.compositionId);
+        if (input.spatial) {
+          const used = new Set<CardId>();
+          spatial = { version: current.version, collections: [] };
+          for (const group of input.spatial.collections) {
+            if (group.cardIds.some(id => used.has(id))) throw new Error("A card can belong to only one collection.");
+            group.cardIds.forEach(id => used.add(id));
+            spatial = applyCollectionCommand(spatial, { kind: "create", ...group }, cards);
+          }
+          spatial = { ...spatial, version: current.version + 1 };
+        } else if (input.command) spatial = applyCollectionCommand(current, input.command, cards);
+        else {
+          spatial = { ...current, collections: current.collections.map(group => {
+            if (!group.anchor || !group.cardIds.length) return group;
+            const deltas = group.cardIds.map(id => {
+              const move = input.moves.find(item => item.cardId === id);
+              const card = cards.find(item => item.cardId === id);
+              return move && card ? { x: move.x - card.layout.x, y: move.y - card.layout.y } : null;
+            });
+            const delta = deltas[0];
+            if (!delta || (!delta.x && !delta.y) || deltas.some(item => !item || Math.abs(item.x - delta.x) > .01 || Math.abs(item.y - delta.y) > .01)) return group;
+            shiftedAnchor = true;
+            return { ...group, anchor: { x: group.anchor.x + delta.x, y: group.anchor.y + delta.y } };
+          }) };
+          if (shiftedAnchor) spatial = { ...spatial, version: current.version + 1 };
+        }
+      }
+      catch (error) { return refused(error instanceof Error ? error.message : "The collection could not be changed."); }
+      const moved = await this.#moveCards(tx, input);
+      if (moved.state !== "ok") return moved;
+      if (input.command || input.spatial || shiftedAnchor) await tx`update compositions set spatial_collections = ${tx.json(spatial.collections as never)}, spatial_version = ${spatial.version} where id = ${input.compositionId}`;
+      return ok({ cards: moved.data, spatial });
+    });
+  }
+
+  async #moveCards(tx: Tx, input: MoveCardsInput): Promise<WriteResult<readonly DeskCard[]>> {
+      if (new Set(input.moves.map(move => move.cardId)).size !== input.moves.length) return refused("A placement may appear only once in a move.");
+      const ids = [...new Set(input.moves.map(move => move.cardId))].sort();
       // Take the locks in one dedicated single-table statement, in primary-key
       // order, before reading anything. `order by` in the same query as
       // `for ... update` does not guarantee acquisition order — where the
@@ -902,7 +1818,13 @@ export class PostgresDeskRepository implements DeskRepository {
       for (const move of input.moves) {
         await tx`
           update composition_items
-             set x = ${move.x}, y = ${move.y}, version = version + 1
+             set x = ${move.x}, y = ${move.y},
+                 width = ${move.width ?? rows.get(move.cardId)!.width},
+                 height = ${move.height ?? rows.get(move.cardId)!.height},
+                 z = ${move.z ?? rows.get(move.cardId)!.z},
+                 presentation = case when ${move.tint === undefined}
+                   then presentation else presentation || ${tx.json({ tint: move.tint ?? null } as never)} end,
+                 version = version + 1
            where id = ${move.cardId}
         `;
         if (input.bringToFront) {
@@ -921,7 +1843,6 @@ export class PostgresDeskRepository implements DeskRepository {
         if (row) moved.push(await this.#hydrateOne(tx, row));
       }
       return ok<readonly DeskCard[]>(moved);
-    });
   }
 
   async removeCards(input: RemoveCardsInput): Promise<WriteResult<readonly CardId[]>> {
@@ -932,6 +1853,7 @@ export class PostgresDeskRepository implements DeskRepository {
     const ids = [...new Set(input.cardIds)].sort();
 
     return await this.#tx(async (tx) => {
+      if (!await this.#lockComposition(tx, input.compositionId)) return missing<readonly CardId[]>();
       const removed: CardId[] = [];
 
       for (const cardId of ids) {
@@ -972,6 +1894,10 @@ export class PostgresDeskRepository implements DeskRepository {
         }
       }
 
+      const spatial = await this.#spatialOf(tx, input.compositionId);
+      const removedSet = new Set(removed);
+      const collections = spatial.collections.map(collection => ({ ...collection, cardIds: collection.cardIds.filter(id => !removedSet.has(id)) })).filter(collection => collection.cardIds.length > 0);
+      if (JSON.stringify(collections) !== JSON.stringify(spatial.collections)) await tx`update compositions set spatial_collections = ${tx.json(collections as never)}, spatial_version = spatial_version + 1 where id = ${input.compositionId}`;
       return ok<readonly CardId[]>(removed);
     });
   }
@@ -994,7 +1920,7 @@ export class PostgresDeskRepository implements DeskRepository {
       // Idempotent: asking for a kind the object already has returns what is
       // there, so a repeated gesture is harmless.
       const existing = (await tx`
-        select id, object_id, kind, label, template_id, fields, version
+        select id, object_id, kind, label, template_id, fields, mechanics, version
           from representations
          where object_id = ${input.objectId}
            and kind = ${input.kind}
@@ -1006,7 +1932,7 @@ export class PostgresDeskRepository implements DeskRepository {
         insert into representations (id, object_id, kind, label, fields, version, lifecycle, created_at)
         values (${input.representationId}, ${input.objectId}, ${input.kind},
                 ${input.label}, '{}'::jsonb, 1, 'active', ${now()})
-        returning id, object_id, kind, label, template_id, fields, version
+        returning id, object_id, kind, label, template_id, fields, mechanics, version
       `) as unknown as RepresentationRow[];
 
       const row = inserted[0];
@@ -1020,7 +1946,7 @@ export class PostgresDeskRepository implements DeskRepository {
   ): Promise<WriteResult<Representation>> {
     return await this.#tx(async (tx) => {
       const locked = (await tx`
-        select id, object_id, kind, label, template_id, fields, version
+        select id, object_id, kind, label, template_id, fields, mechanics, version
           from representations
          where id = ${input.representationId} and lifecycle = 'active'
          for no key update
@@ -1041,7 +1967,7 @@ export class PostgresDeskRepository implements DeskRepository {
                fields = ${JSON.stringify(input.fields)}::text::jsonb,
                version = version + 1
          where id = ${input.representationId}
-        returning id, object_id, kind, label, template_id, fields, version
+        returning id, object_id, kind, label, template_id, fields, mechanics, version
       `) as unknown as RepresentationRow[];
 
       const after = updated[0];
@@ -1053,6 +1979,20 @@ export class PostgresDeskRepository implements DeskRepository {
   async setClaim(input: SetClaimInput): Promise<WriteResult<Claim>> {
     return await this.#tx(async (tx) => {
       const target = input.objectValue ?? null;
+      const type = target ? relationshipTypeFor(input.claimKind) : undefined;
+      const claimKind = type?.key ?? input.claimKind;
+      const equivalentKinds = type ? [type.key, type.label] : [claimKind];
+      const projection = input.boardProjection;
+      if (projection) {
+        if (!target) return refused<Claim>("Only a semantic relationship can be shown on a Board.");
+        if (!await this.#lockComposition(tx, projection.compositionId)) return missing<Claim>();
+        const placements = await tx`select id, object_id, version from composition_items where id = ${projection.cardId} and composition_id = ${projection.compositionId} and lifecycle = 'active' for no key update`;
+        const placement = placements[0];
+        if (!placement || placement.object_id !== input.subjectId) return refused<Claim>("The source placement does not belong to this object.");
+        if (placement.version !== projection.observedCardVersion) return conflict<Claim>([]);
+        const other = await tx`select id from composition_items where composition_id = ${projection.compositionId} and object_id = ${target} and lifecycle = 'active'`;
+        if (!other.length) return refused<Claim>("Both objects must be placed on this Board before drawing a semantic edge.");
+      }
 
       /*
        * Both ends are locked, in ascending id order — the global rule for
@@ -1085,42 +2025,100 @@ export class PostgresDeskRepository implements DeskRepository {
       if (objects.length !== ids.length) return missing<Claim>();
       if (new Set(objects.map((row) => row.world_id)).size > 1) return missing<Claim>();
 
+      let relationshipId: string | null = target === null ? null : input.claimId as string;
+      if (input.expectedClaim) {
+        const observed = (await tx`
+          select id, relationship_id, subject_id, claim_kind, object_value, truth_state, story_order, version from claims
+           where id = ${input.expectedClaim.claimId} and lifecycle = 'active'
+           for no key update
+        `) as unknown as { id: string; relationship_id: string | null; subject_id: string; claim_kind: string; object_value: string | null; truth_state: string; story_order: string | number | null; version: number }[];
+        const previous = observed[0];
+        if (!previous) return missing<Claim>();
+        // A claim observation still protects the subject and version. Predicate
+        // edits are deliberate corrections: the old claim is archived below and
+        // the replacement receives a fresh identity, preserving the relationship
+        // history while allowing the sentence to be meaningfully repaired.
+        if (previous.subject_id !== input.subjectId) return refused<Claim>("That assertion belongs to a different subject.");
+        if (previous.version !== input.expectedClaim.version) return conflict<Claim>([]);
+        if (input.expectedClaim.relationshipId && previous.relationship_id !== input.expectedClaim.relationshipId) return conflict<Claim>([]);
+        if (previous.object_value !== null && (previous.truth_state === "ink" || previous.story_order !== null)) {
+          return refused<Claim>(previous.truth_state === "ink"
+            ? "This relationship is established. Review it before changing it."
+            : "This historical relationship is anchored in story time and cannot be changed here.");
+        }
+        // A relationship correction keeps its semantic identity even though
+        // the claim revision receives a new row id. Legacy non-relational
+        // claims remain ordinary claims and never acquire one accidentally.
+        relationshipId = target === null ? null : previous.relationship_id ?? input.claimId as string;
+      }
+
       const story = input.story;
 
-      // With no story position, this is a correction: the GM is fixing what
+      // With no ordered story position, this is a correction: the GM is fixing what
       // they said, not recording that the world changed. Retire the current
       // claim of this kind rather than accumulating contradictions at the same
       // point in time. Provenance survives — the old row is archived, never
       // deleted.
       //
-      // With a story position, append. Mara's allegiance before the cathedral
+      // With an ordered story position, append. Mara's allegiance before the cathedral
       // and after it are two claims, both true.
       //
-      // A relationship follows the same rule, which makes every relational
-      // attribute single-valued: setting Mara's location to the Cathedral
-      // retires her location at the Quay, exactly as a text correction would.
-      // Multi-valued relationships — an Event's participants, a Faction's
-      // members — need a different unit of replacement and are not this slice.
-      if (!story) {
+      // Plain attributes and registry-declared single-valued relationships
+      // replace their standing value. Semantic relationships default to many,
+      // so Event participants, Faction members, and multiple social ties can
+      // accumulate without one endpoint silently deleting another.
+      // Relative/unknown labels are preserved, but null order uses the same
+      // correction policy in the client and store; a label cannot invent order.
+      const shouldReplace = story?.order == null &&
+        (target === null || relationshipCardinality(claimKind) === "one");
+      if (shouldReplace) {
+        const protectedStanding = (await tx`
+          select id, truth_state, story_order
+            from claims
+           where subject_id = ${input.subjectId}
+             and (case when ${Boolean(type)} then lower(claim_kind) else claim_kind end) = any(${equivalentKinds}::text[])
+             and lifecycle = 'active'
+             and object_value is not null
+             and story_order is null
+             and truth_state = 'ink'
+           for no key update
+        `) as unknown as { id: string; truth_state: string; story_order: string | number | null }[];
+        const protectedOther = protectedStanding.some((row) => row.id !== input.expectedClaim?.claimId);
+        if (protectedOther) {
+          return refused<Claim>("This relationship is established. Review it before replacing it.");
+        }
         await tx`
           update claims
              set lifecycle = 'archived', version = version + 1
            where subject_id = ${input.subjectId}
-             and claim_kind = ${input.claimKind}
+             and (case when ${Boolean(type)} then lower(claim_kind) else claim_kind end) = any(${equivalentKinds}::text[])
              and lifecycle = 'active'
              and story_order is null
         `;
       }
 
+      // When the observed claim changes predicate, retire that exact row too.
+      // This is intentionally inside the same transaction as the replacement
+      // insert, so a predicate edit cannot leave two active identities for one
+      // sentence or lose the old relationship without its replacement.
+      if (input.expectedClaim) {
+        await tx`
+          update claims
+             set lifecycle = 'archived', version = version + 1
+           where id = ${input.expectedClaim.claimId}
+             and lifecycle = 'active'
+        `;
+      }
+
       const inserted = (await tx`
         insert into claims (
-          id, subject_id, claim_kind, value, object_value, truth_state,
+          id, relationship_id, subject_id, claim_kind, value, object_value, truth_state,
           authored_by, provenance, recorded_at,
           story_order, story_precision, story_label,
           version, lifecycle
         )
         values (
-          ${input.claimId}, ${input.subjectId}, ${input.claimKind}, ${input.value},
+          ${input.claimId}, ${relationshipId}::uuid, ${input.subjectId}, ${claimKind}, ${input.value},
           -- A relationship is this column and nothing else. Everything a claim
           -- already carries — truth, provenance, story position — applies to it
           -- unchanged, which is the reason it is not its own table.
@@ -1131,7 +2129,11 @@ export class PostgresDeskRepository implements DeskRepository {
           -- which is what makes claims_ink_is_deliberate refuse this row if
           -- 'pencil' ever became 'ink' by accident.
           'pencil',
-          'gm', 'gm_assertion', ${now()},
+          -- Who asserted it, and how it arrived. Both are parameters because
+          -- the Librarian may assert too — and "the Librarian inferred this"
+          -- is the fact that keeps its contribution distinguishable from the
+          -- GM's without making it a lesser kind of claim.
+          ${input.author}, ${assertedBy(input.author)}, ${now()},
           ${story?.order ?? null}, ${story?.precision ?? "unknown"}, ${story?.label ?? null},
           1, 'active'
         )
@@ -1140,16 +2142,32 @@ export class PostgresDeskRepository implements DeskRepository {
 
       const row = inserted[0];
       if (!row) throw new Error("setClaim: claim vanished inside its own transaction");
+      if (projection && relationshipId) await tx`update composition_items set presentation = jsonb_set(presentation, '{semanticEdges}',
+        coalesce(presentation->'semanticEdges', '[]'::jsonb) || jsonb_build_array(${relationshipId}::text)), version = version + 1 where id = ${projection.cardId}`;
       return ok(toClaim(row));
     });
   }
 
   async removeClaim(input: RemoveClaimInput): Promise<WriteResult<ClaimId>> {
     return await this.#tx(async (tx) => {
+      const current = (await tx`
+        select object_value, truth_state, story_order, version
+          from claims
+         where id = ${input.claimId} and lifecycle = 'active'
+         for no key update
+      `) as unknown as { object_value: string | null; truth_state: string; story_order: string | number | null; version: number }[];
+      const claim = current[0];
+      if (!claim) return missing<ClaimId>();
+      if (claim.object_value !== null && (claim.truth_state === "ink" || claim.story_order !== null)) {
+        return refused<ClaimId>(claim.truth_state === "ink"
+          ? "This relationship is established. Review it before removing it."
+          : "This historical relationship is anchored in story time and cannot be removed here.");
+      }
       const updated = (await tx`
         update claims
            set lifecycle = 'archived', version = version + 1
          where id = ${input.claimId} and lifecycle = 'active'
+           and (${input.observedVersion ?? null}::integer is null or version = ${input.observedVersion ?? null})
         returning id
       `) as unknown as { id: string }[];
 
@@ -1445,7 +2463,9 @@ export class PostgresDeskRepository implements DeskRepository {
     const window = Math.min(Math.max(Math.trunc(limit), 1), 200);
 
     const rows = (await this.#sql`
-      select id, composition_id, role, body, sources, said_at
+      select id, composition_id, role, body, sources, said_at,
+             provider, model,
+             tokens_input, tokens_cache_write, tokens_cache_read, tokens_output
         from public.librarian_messages
        where world_id = ${worldId}
        order by seq desc
@@ -1453,6 +2473,59 @@ export class PostgresDeskRepository implements DeskRepository {
     `) as unknown as LibrarianMessageRow[];
 
     return rows.reverse().map(toLibrarianMessage);
+  }
+
+  /**
+   * What this world has spent on its Librarian, over its whole life.
+   *
+   * Grouped by model rather than summed flat, because pricing is per model and
+   * a world may have been spoken to through more than one over time. Summing
+   * first and pricing after would silently apply one world's last model's rate
+   * to every token that came before it.
+   *
+   * Not scoped by the history window, deliberately. The transcript is read as
+   * the most recent forty messages because that is what a prompt needs; spend
+   * is a lifetime question and reading only the visible tail would answer a
+   * different one — and answer it low, which is the wrong direction to be wrong
+   * for somebody watching a limit.
+   */
+  async librarianSpend(worldId: WorldId): Promise<SpendTally> {
+    const rows = (await this.#sql`
+      select provider,
+             model,
+             count(*)                       as turns,
+             sum(tokens_input)              as input,
+             sum(tokens_cache_write)        as cache_write,
+             sum(tokens_cache_read)         as cache_read,
+             sum(tokens_output)             as output
+        from public.librarian_messages
+       where world_id = ${worldId}
+         and provider is not null
+       group by provider, model
+       order by provider, model
+    `) as unknown as {
+      provider: string;
+      model: string;
+      // `count` and `sum` come back as numeric, which postgres.js hands over as
+      // a string rather than risking precision it cannot promise.
+      turns: string;
+      input: string;
+      cache_write: string;
+      cache_read: string;
+      output: string;
+    }[];
+
+    return {
+      turns: rows.reduce((n, row) => n + Number(row.turns), 0),
+      byModel: rows.map((row) => ({
+        provider: row.provider,
+        model: row.model,
+        input: Number(row.input),
+        cacheWrite: Number(row.cache_write),
+        cacheRead: Number(row.cache_read),
+        output: Number(row.output)
+      }))
+    };
   }
 
   async recordExchange(input: RecordExchangeInput): Promise<readonly LibrarianMessage[]> {
@@ -1463,24 +2536,41 @@ export class PostgresDeskRepository implements DeskRepository {
     // transaction is what makes it one change set; the round trip is noise
     // beside the model call that just finished.
     return await this.#tx(async (tx) => {
-      const said = async (role: "gm" | "librarian", body: string, sources: unknown) =>
+      const said = async (
+        role: "gm" | "librarian",
+        body: string,
+        sources: unknown,
+        // Only the Librarian's half carries a cost; saying a thing to yourself
+        // is free, and the database refuses a GM row that claims otherwise.
+        spend: Spend | null
+      ) =>
         (
           (await tx`
             insert into public.librarian_messages
-              (world_id, composition_id, role, body, sources)
+              (world_id, composition_id, role, body, sources,
+               provider, model,
+               tokens_input, tokens_cache_write, tokens_cache_read, tokens_output)
             values (
               ${input.worldId},
               ${input.compositionId},
               ${role},
               ${body},
-              ${sql.json(sources as postgres.JSONValue)}
+              ${sql.json(sources as postgres.JSONValue)},
+              ${spend?.provider ?? null},
+              ${spend?.model ?? null},
+              ${spend?.input ?? null},
+              ${spend?.cacheWrite ?? null},
+              ${spend?.cacheRead ?? null},
+              ${spend?.output ?? null}
             )
-            returning id, composition_id, role, body, sources, said_at
+            returning id, composition_id, role, body, sources, said_at,
+                      provider, model,
+                      tokens_input, tokens_cache_write, tokens_cache_read, tokens_output
           `) as unknown as LibrarianMessageRow[]
         )[0]!;
 
-      const ask = await said("gm", input.ask, []);
-      const answer = await said("librarian", input.answer, input.sources);
+      const ask = await said("gm", input.ask, [], null);
+      const answer = await said("librarian", input.answer, input.sources, input.spend ?? null);
       return [ask, answer].map(toLibrarianMessage);
     });
   }

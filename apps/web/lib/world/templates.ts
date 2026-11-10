@@ -52,7 +52,9 @@ export const BUILT_IN_TEMPLATES: Readonly<Record<RepresentationKind, Template>> 
       { key: "occupation", label: "Occupation" },
       { key: "location", label: "Location", relational: true },
       { key: "allegiance", label: "Allegiance", relational: true },
-      { key: "status", label: "Status" }
+      { key: "status", label: "Status" },
+      { key: "disposition", label: "Disposition" },
+      { key: "origin", label: "Origin", relational: true }
     ]
   },
 
@@ -67,7 +69,8 @@ export const BUILT_IN_TEMPLATES: Readonly<Record<RepresentationKind, Template>> 
     claims: [
       { key: "region", label: "Region", relational: true },
       { key: "ruler", label: "Held by", relational: true },
-      { key: "status", label: "Status" }
+      { key: "status", label: "Status" },
+      { key: "climate", label: "Climate" }
     ]
   },
 
@@ -121,8 +124,10 @@ export const BUILT_IN_TEMPLATES: Readonly<Record<RepresentationKind, Template>> 
     fields: [],
     claims: [
       { key: "status", label: "Status" },
+      { key: "open_question", label: "Open question" },
       { key: "stakes", label: "Stakes" },
-      { key: "next", label: "Pressure" }
+      { key: "next", label: "Pressure" },
+      { key: "narrative_pull", label: "Narrative pull" }
     ]
   },
 

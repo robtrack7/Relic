@@ -18,10 +18,16 @@ export type Viewport = {
   scale: number;
 };
 
-export const MIN_SCALE = 0.1;
+export const MIN_SCALE = 0.08;
 export const MAX_SCALE = 4;
 
 export const IDENTITY_VIEWPORT: Viewport = { x: 0, y: 0, scale: 1 };
+
+/** Precision scrolling pans; a notched wheel or a pinch zooms at the pointer. */
+export function wheelNavigationIntent(event: Pick<WheelEvent, "ctrlKey" | "metaKey" | "deltaMode" | "deltaX" | "deltaY">): "pan" | "zoom" {
+  if (event.ctrlKey || event.metaKey || event.deltaMode !== 0) return "zoom";
+  return Math.abs(event.deltaX) > 0 || Math.abs(event.deltaY) < 40 ? "pan" : "zoom";
+}
 
 export function clampScale(scale: number): number {
   if (!Number.isFinite(scale)) return 1;

@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 import type { LibrarianEvent, LibrarianProvider, LibrarianTool, Turn } from "./model";
+import type { Spend } from "./spend";
 
 /**
  * The Librarian, run by Claude.
@@ -123,6 +124,11 @@ export class AnthropicLibrarian implements LibrarianProvider {
 
         const reply = await stream.finalMessage();
 
+        // Before anything that can return. A round trip that ends in a refusal
+        // or a tool loop still cost what it cost, and a meter that only counts
+        // the turns that went well is a meter that under-reports.
+        yield { type: "spent", spend: spent(reply.usage) };
+
         // A refusal is a decision, not a failure, and the Soul's laws are not
         // what triggers one. Report it as itself rather than as an error.
         if (reply.stop_reason === "refusal") {
@@ -177,10 +183,17 @@ export class AnthropicLibrarian implements LibrarianProvider {
           yield { type: "consulting", note: tool.note(input) };
 
           try {
+            const outcome = await tool.run(input);
+            // The effect goes to the browser and the prose goes back to the
+            // model. This adapter reads neither — it only knows an outcome has
+            // two halves and which way each one travels.
+            if (outcome.effect) {
+              yield { type: "acted", note: outcome.told, effect: outcome.effect };
+            }
             results.push({
               type: "tool_result",
               tool_use_id: call.id,
-              content: await tool.run(input)
+              content: outcome.told
             });
           } catch {
             // Reported to the model rather than thrown, so a failed lookup ends
@@ -206,20 +219,58 @@ export class AnthropicLibrarian implements LibrarianProvider {
 }
 
 /**
+ * Anthropic's usage, in Relic's buckets.
+ *
+ * The translation is a one-liner and still worth naming, because the two
+ * providers disagree about what "input tokens" means. Anthropic reports
+ * `input_tokens` as the uncached remainder, with cache reads and writes
+ * counted separately beside it — which is already Relic's shape, so nothing is
+ * subtracted here. The OpenAI adapter has to subtract, and reading the two
+ * functions together is the only way to see that the difference was handled
+ * rather than overlooked.
+ */
+function spent(usage: Anthropic.Usage): Spend {
+  return {
+    provider: "anthropic",
+    model: MODEL,
+    input: usage.input_tokens,
+    cacheWrite: usage.cache_creation_input_tokens ?? 0,
+    cacheRead: usage.cache_read_input_tokens ?? 0,
+    output: usage.output_tokens
+  };
+}
+
+/**
  * What went wrong, in words a GM can act on.
  *
  * Typed classes rather than message matching, and deliberately not the raw
  * provider text: "rate_limit_error" is the model's vocabulary, not Relic's.
+ *
+ * The whole provider error is logged on the way past, because the sentence a GM
+ * reads and the sentence an operator needs are different sentences. Read this
+ * beside `openai.ts`: the branches and the wording are deliberately the same,
+ * because which provider is behind the Librarian is not the GM's problem.
  */
 function explain(error: unknown): string {
+  console.error("[librarian] anthropic:", error);
+
   if (error instanceof Anthropic.AuthenticationError) {
     return "The Librarian's credentials were refused.";
+  }
+  if (error instanceof Anthropic.PermissionDeniedError) {
+    return "The Librarian's credentials do not allow that model.";
   }
   if (error instanceof Anthropic.RateLimitError) {
     return "The Librarian is being asked too much at once. Try again shortly.";
   }
   if (error instanceof Anthropic.APIConnectionError) {
     return "The Librarian could not be reached.";
+  }
+  // Relic builds every request itself, so a refusal of its *shape* is a
+  // misconfiguration or a bug here — never the GM's question. An unknown model
+  // name is the common one.
+  if (error instanceof Anthropic.NotFoundError || error instanceof Anthropic.BadRequestError) {
+    return "The Librarian is misconfigured — check LIBRARIAN_MODEL names a real model.";
   }
   if (error instanceof Anthropic.APIError) {
     return "The Librarian could not answer that.";

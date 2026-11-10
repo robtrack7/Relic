@@ -17,6 +17,7 @@ import {
 import { closeDb, db } from "@/lib/world/db";
 import { PostgresDeskRepository } from "@/lib/world/postgres-store";
 import type { DeskRepository } from "@/lib/world/repository";
+import { must } from "./support";
 
 /**
  * Relationship assertions.
@@ -41,13 +42,14 @@ afterAll(async () => {
 });
 
 async function capture(compositionId: CompositionId, body: string, name?: string) {
-  const card = await repo.captureCard({
+  const card = must(await repo.captureCard({
     compositionId,
     cardId: asCardId(randomUUID()),
     objectId: asWorldObjectId(randomUUID()),
     body,
-    layout: emptyLayoutAt(0, 0)
-  });
+    layout: emptyLayoutAt(0, 0),
+    author: "gm"
+  }), "capture");
   if (name) {
     await repo.representObject({
       objectId: card.objectId,
@@ -70,7 +72,8 @@ const relate = (
     claimId: asClaimId(randomUUID()),
     claimKind,
     value,
-    objectValue
+    objectValue,
+    author: "gm"
   });
 
 const cardFor = (cards: readonly DeskCard[], objectId: WorldObjectId) =>
@@ -270,6 +273,110 @@ describe("a relational attribute is single-valued", () => {
     const card = cardFor((await repo.openDesk(WORLD)).cards, mara.objectId);
     expect(card.links).toHaveLength(0);
     expect(card.claims.find((c) => c.claimKind === "location")?.value).toBe("somewhere upriver");
+  });
+});
+
+describe("semantic relationship identity and cardinality", () => {
+  it("keeps relationship identity while correcting predicate and endpoint", async () => {
+    const desk = await repo.openDesk(WORLD);
+    const mara = await capture(desk.compositionId, "harbour master", "Mara");
+    const guild = await capture(desk.compositionId, "the shipping cartel", "Harbour Guild");
+    const cathedral = await capture(desk.compositionId, "half-drowned", "The Cathedral");
+
+    const first = await relate(mara.objectId, "knows", "Harbour Guild", guild.objectId);
+    expect(first.state).toBe("ok");
+    if (first.state !== "ok") return;
+    expect(first.data.relationshipId).toBeTruthy();
+
+    const corrected = await repo.setClaim({
+      subjectId: mara.objectId,
+      claimId: asClaimId(randomUUID()),
+      claimKind: "protects",
+      value: "The Cathedral",
+      objectValue: cathedral.objectId,
+      author: "gm",
+      expectedClaim: {
+        claimId: first.data.id,
+        version: first.data.version,
+        relationshipId: first.data.relationshipId
+      }
+    });
+    expect(corrected.state).toBe("ok");
+    if (corrected.state !== "ok") return;
+    expect(corrected.data.id).not.toBe(first.data.id);
+    expect(corrected.data.relationshipId).toBe(first.data.relationshipId);
+
+    const cards = (await repo.openDesk(WORLD)).cards;
+    expect(cardFor(cards, mara.objectId).links.map((link) => link.other.objectId)).toEqual([cathedral.objectId]);
+    expect(cardFor(cards, guild.objectId).links).toHaveLength(0);
+  });
+
+  it("keeps many relationship endpoints instead of replacing peers", async () => {
+    const desk = await repo.openDesk(WORLD);
+    const mara = await capture(desk.compositionId, "harbour master", "Mara");
+    const guild = await capture(desk.compositionId, "the shipping cartel", "Harbour Guild");
+    const cathedral = await capture(desk.compositionId, "half-drowned", "The Cathedral");
+
+    await relate(mara.objectId, "knows", "Harbour Guild", guild.objectId);
+    await relate(mara.objectId, "knows", "The Cathedral", cathedral.objectId);
+
+    const links = cardFor((await repo.openDesk(WORLD)).cards, mara.objectId).links;
+    expect(links).toHaveLength(2);
+    expect(new Set(links.map((link) => link.other.objectId)).size).toBe(2);
+  });
+});
+
+describe("relationship mutation guards preserve established and historical claims", () => {
+  it("refuses editing or removing an established relationship without data loss", async () => {
+    const desk = await repo.openDesk(WORLD);
+    const mara = await capture(desk.compositionId, "harbour master", "Mara");
+    const guild = await capture(desk.compositionId, "shipping cartel", "Harbour Guild");
+    const cathedral = await capture(desk.compositionId, "half-drowned", "The Cathedral");
+    const first = await relate(mara.objectId, "knows", "Harbour Guild", guild.objectId);
+    expect(first.state).toBe("ok");
+    if (first.state !== "ok") return;
+    const settled = await repo.settleTruth({ objectId: mara.objectId, maturity: null, claims: [{ claimId: first.data.id, truth: "ink", observedVersion: first.data.version }], author: "gm" });
+    expect(settled.state).toBe("ok");
+    if (settled.state !== "ok") return;
+
+    const edited = await repo.setClaim({ subjectId: mara.objectId, claimId: asClaimId(randomUUID()), claimKind: "protects", value: "The Cathedral", objectValue: cathedral.objectId, author: "gm", expectedClaim: { claimId: first.data.id, version: settled.data.claims[0]!.version, relationshipId: first.data.relationshipId } });
+    expect(edited.state).toBe("refused");
+    const removed = await repo.removeClaim({ claimId: first.data.id, observedVersion: settled.data.claims[0]!.version });
+    expect(removed.state).toBe("refused");
+
+    const after = cardFor((await repo.openDesk(WORLD)).cards, mara.objectId);
+    expect(after.links[0]?.other.objectId).toBe(guild.objectId);
+    expect(after.claims.find(claim => claim.id === first.data.id)?.truthState).toBe("ink");
+  });
+
+  it("refuses replacing a standing established single-valued relationship", async () => {
+    const desk = await repo.openDesk(WORLD);
+    const mara = await capture(desk.compositionId, "harbour master", "Mara");
+    const quay = await capture(desk.compositionId, "wet stones", "The Quay");
+    const cathedral = await capture(desk.compositionId, "half-drowned", "The Cathedral");
+    const first = await relate(mara.objectId, "location", "The Quay", quay.objectId);
+    expect(first.state).toBe("ok");
+    if (first.state !== "ok") return;
+    const settled = await repo.settleTruth({ objectId: mara.objectId, maturity: null, claims: [{ claimId: first.data.id, truth: "ink", observedVersion: first.data.version }], author: "gm" });
+    expect(settled.state).toBe("ok");
+    const replacement = await relate(mara.objectId, "location", "The Cathedral", cathedral.objectId);
+    expect(replacement.state).toBe("refused");
+    expect(cardFor((await repo.openDesk(WORLD)).cards, mara.objectId).links[0]?.other.objectId).toBe(quay.objectId);
+  });
+
+  it("refuses editing or removing an ordered historical relationship", async () => {
+    const desk = await repo.openDesk(WORLD);
+    const mara = await capture(desk.compositionId, "harbour master", "Mara");
+    const guild = await capture(desk.compositionId, "shipping cartel", "Harbour Guild");
+    const cathedral = await capture(desk.compositionId, "half-drowned", "The Cathedral");
+    const first = await repo.setClaim({ subjectId: mara.objectId, claimId: asClaimId(randomUUID()), claimKind: "knows", value: "Harbour Guild", objectValue: guild.objectId, story: { order: 12, precision: "relative", label: "after the harbour fire" }, author: "gm" });
+    expect(first.state).toBe("ok");
+    if (first.state !== "ok") return;
+    const edited = await repo.setClaim({ subjectId: mara.objectId, claimId: asClaimId(randomUUID()), claimKind: "protects", value: "The Cathedral", objectValue: cathedral.objectId, author: "gm", expectedClaim: { claimId: first.data.id, version: first.data.version, relationshipId: first.data.relationshipId } });
+    expect(edited.state).toBe("refused");
+    const removed = await repo.removeClaim({ claimId: first.data.id, observedVersion: first.data.version });
+    expect(removed.state).toBe("refused");
+    expect(cardFor((await repo.openDesk(WORLD)).cards, mara.objectId).links[0]?.other.objectId).toBe(guild.objectId);
   });
 });
 

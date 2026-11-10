@@ -1,6 +1,10 @@
 import type { LibrarianMessage, Source } from "@/lib/librarian/model";
+import type { Spend, SpendTally } from "@/lib/librarian/spend";
 import type {
   AuthorKind,
+  Beat,
+  BeatId,
+  CardTint,
   CardId,
   Claim,
   ClaimId,
@@ -13,9 +17,13 @@ import type {
   Layout,
   Lifecycle,
   Maturity,
+  Prep,
   Representation,
   RepresentationId,
   RepresentationKind,
+  RelationshipId,
+  Session,
+  SessionId,
   Settlement,
   StoryPosition,
   TruthState,
@@ -24,6 +32,7 @@ import type {
   WorldId,
   WorldObjectId
 } from "@/lib/world/model";
+import type { EntityDocument, EntitySnapshot, MechanicsProfile } from "@/lib/world/entity-document";
 
 /**
  * The port every Desk read and write goes through.
@@ -37,6 +46,10 @@ import type {
  * multi-card move either lands whole or not at all.
  */
 export interface DeskRepository {
+  moveCollectionCards(input: MoveCardsInput & { observedSpatialVersion: number; command: import("@/lib/desk/collections").CollectionCommand | null; spatial?: import("./model").SpatialState }): Promise<WriteResult<{ cards: readonly DeskCard[]; spatial: import("./model").SpatialState }>>;
+  /** Validated Board-only collection operations, serialized with placement writes. */
+  changeCollection(input: { compositionId: CompositionId; observedVersion: number; command: import("@/lib/desk/collections").CollectionCommand }): Promise<WriteResult<import("./model").SpatialState>>;
+  replaceSpatial(input: { compositionId: CompositionId; observedVersion: number; spatial: import("./model").SpatialState }): Promise<WriteResult<import("./model").SpatialState>>;
   /** Resolves the world's Desk composition, creating it on first visit. */
   openDesk(worldId: WorldId): Promise<DeskView>;
 
@@ -46,11 +59,82 @@ export interface DeskRepository {
   /** One composition's cards. `null` when the composition does not exist. */
   openComposition(compositionId: CompositionId): Promise<DeskView | null>;
 
+  /** Read an identity in this world without placing it on the current Board. */
+  inspectObject(worldId: WorldId, objectId: WorldObjectId): Promise<DeskView | null>;
+
+  /** Read the persistent entity projection without requiring a placement. */
+  loadEntity(worldId: WorldId, objectId: WorldObjectId): Promise<EntitySnapshot | null>;
+
+  /** Create an identity and its authored document without placing a card. */
+  createEntity(input: CreateEntityInput): Promise<WriteResult<EntitySnapshot>>;
+
+  /** Save authored blocks with optimistic document-version concurrency. */
+  saveEntityDocument(input: SaveEntityDocumentInput): Promise<WriteResult<EntitySnapshot>>;
+
+  /** Save the identity projection (name and legacy-compatible fields). */
+  saveEntityIdentity(input: SaveEntityIdentityInput): Promise<WriteResult<EntitySnapshot>>;
+
+  /** Save typed mechanics while preserving unknown legacy field values. */
+  saveEntityMechanics(input: SaveEntityMechanicsInput): Promise<WriteResult<EntitySnapshot>>;
+
   /**
    * Creates an empty Board: another composition of the same world. A Board is
    * not a container — it holds references and layout, exactly as the Desk does.
    */
   createBoard(input: CreateBoardInput): Promise<CompositionSummary>;
+
+  /**
+   * Starts a session, and the composition it is prepared on.
+   *
+   * Both or neither: a session with no Prep has nowhere to be arranged, and a
+   * prep composition with no session is a Board that has borrowed a word. One
+   * intent, one change set — which is also what makes the pair's invariant
+   * ("every prep composition belongs to exactly one session") true by
+   * construction rather than by hoping callers keep it.
+   */
+  createSession(input: CreateSessionInput): Promise<WriteResult<Prep>>;
+
+  /**
+   * The session a composition is the Prep of, with its running order.
+   *
+   * Keyed by composition rather than by session because that is the question
+   * the surface actually asks: the GM is standing on a composition and Relic
+   * needs to know whether it is preparing for something. `null` for the Desk,
+   * for a Board, and for a composition that does not exist — all three are the
+   * same answer to the surface, which is "draw no rail".
+   */
+  openPrep(compositionId: CompositionId): Promise<Prep | null>;
+
+  /** Renames a session and records what it is for. Never touches its beats. */
+  editSession(input: EditSessionInput): Promise<WriteResult<Session>>;
+
+  /**
+   * Writes one beat: a new one, or the same one again with different words.
+   *
+   * The caller supplies the id, as capture and `setClaim` do, so adding a beat
+   * can be optimistic and replay-safe. `refs` replaces wholesale rather than
+   * merging — what a beat is about is one judgment, and a partial update would
+   * make removing the last reference impossible to express.
+   *
+   * A beat cannot reach truth. There is nothing on it that could: it is an
+   * intention, and the whole point of keeping it out of `claims` is that
+   * planning to do something is not asserting that it happened.
+   */
+  setBeat(input: SetBeatInput): Promise<WriteResult<Beat>>;
+
+  /** Retires a beat. Archival, like everything else Relic removes. */
+  removeBeat(input: RemoveBeatInput): Promise<WriteResult<BeatId>>;
+
+  /**
+   * Puts the running order in the order given.
+   *
+   * The whole list arrives and every position is rewritten, so there is no
+   * partial ordering to reconcile and no way to express half a reorder. Ids
+   * that are not this session's beats are refused rather than skipped — a
+   * caller sending a stale list should be told, not quietly given an order it
+   * did not ask for.
+   */
+  reorderBeats(input: ReorderBeatsInput): Promise<WriteResult<readonly Beat[]>>;
 
   /**
    * References existing World Objects from another composition.
@@ -66,13 +150,16 @@ export interface DeskRepository {
    * Card placing it on the composition. `cardId` and `objectId` are supplied by
    * the caller so capture can be optimistic and replay-safe.
    */
-  captureCard(input: CaptureCardInput): Promise<DeskCard>;
+  captureCard(input: CaptureCardInput): Promise<WriteResult<DeskCard>>;
 
   /** Edits world truth. Touches the Fragment; the composition is untouched. */
   editCardBody(input: EditBodyInput): Promise<WriteResult<DeskCard>>;
 
   /** Edits the composition. Touches placement only; world truth is untouched. */
   moveCards(input: MoveCardsInput): Promise<WriteResult<readonly DeskCard[]>>;
+
+  /** Board-only visibility of an existing relationship, with placement concurrency. */
+  setRelationshipVisibility(input: { compositionId: CompositionId; cardId: CardId; relationshipId: RelationshipId; visible: boolean; observedCardVersion: number }): Promise<WriteResult<DeskCard>>;
 
   /**
    * Removes cards from the composition and archives the objects they were the
@@ -177,6 +264,22 @@ export interface DeskRepository {
    * as though the Librarian had ignored it.
    */
   recordExchange(input: RecordExchangeInput): Promise<readonly LibrarianMessage[]>;
+
+  /**
+   * What this world has spent on its Librarian, in tokens, over its whole life.
+   *
+   * Tokens rather than money, because tokens are measured and money is
+   * estimated — `lib/librarian/spend.ts` holds the rates and does the pricing,
+   * and nothing about a rate belongs in the world's record. Grouped by model,
+   * because that is what the rates are keyed by.
+   *
+   * A floor rather than an exact bill: a turn that fails after the model has
+   * spoken records no exchange and so is not counted. That gap is bounded and
+   * documented; the provider's own dashboard is the authority on the total.
+   * What this answers instead is which *conversations* are expensive, which no
+   * dashboard can.
+   */
+  librarianSpend(worldId: WorldId): Promise<SpendTally>;
 }
 
 export type RecordExchangeInput = Readonly<{
@@ -187,6 +290,8 @@ export type RecordExchangeInput = Readonly<{
   answer: string;
   /** The World Objects the answer actually cited. */
   sources: readonly Source[];
+  /** What running the model cost. Absent when the provider reported no usage. */
+  spend?: Spend | null;
 }>;
 
 export type SearchWorldInput = Readonly<{
@@ -242,10 +347,22 @@ export type SetClaimInput = Readonly<{
   objectValue?: WorldObjectId | null;
   /** Omitted means "no story position", which replaces rather than appends. */
   story?: StoryPosition;
+  /**
+   * Who is asserting, and therefore how the claim is recorded as having arrived.
+   *
+   * It cannot reach Ink. Every claim written here is Pencil with no settling
+   * author, and `claims_ink_is_deliberate` refuses the row if it were ever
+   * otherwise — so this says who believes it, never whether Relic does.
+   */
+  author: AuthorKind;
+  expectedClaim?: Readonly<{ claimId: ClaimId; version: number; relationshipId?: RelationshipId | null }>;
+  /** Canvas Connect commits its semantic intent and Board visibility together. */
+  boardProjection?: Readonly<{ compositionId: CompositionId; cardId: CardId; observedCardVersion: number }>;
 }>;
 
 export type RemoveClaimInput = Readonly<{
   claimId: ClaimId;
+  observedVersion?: number;
 }>;
 
 export type ClaimSettlement = Readonly<{
@@ -296,12 +413,74 @@ export type CaptureCardInput = Readonly<{
   objectId: WorldObjectId;
   body: string;
   layout: Layout;
+  /** Optional first representation, inserted in the same change set as capture. */
+  initialRepresentation?: Readonly<{
+    representationId: RepresentationId;
+    kind: RepresentationKind;
+    label: string | null;
+  }>;
+  /**
+   * Whose thought this is. Recorded on the object and, when it is not the GM's,
+   * on the prose as well — the Librarian may capture, and material it
+   * contributed must stay distinguishable from material the GM wrote.
+   *
+   * It cannot affect maturity. Capture produces Pencil whoever asks, and the
+   * database refuses anything else on this path.
+   */
+  author: AuthorKind;
 }>;
 
 export type CreateBoardInput = Readonly<{
   worldId: WorldId;
   compositionId: CompositionId;
   name: string;
+}>;
+
+export type CreateSessionInput = Readonly<{
+  worldId: WorldId;
+  sessionId: SessionId;
+  /** The prep composition created alongside it. Supplied so the caller can route. */
+  compositionId: CompositionId;
+  title: string;
+}>;
+
+export type EditSessionInput = Readonly<{
+  sessionId: SessionId;
+  title: string;
+  /** What tonight is for. Empty clears it back to nothing having been said. */
+  intent: string | null;
+  /** The version the rail last saw. A mismatch is reported, never overwritten. */
+  observedVersion: number;
+}>;
+
+export type SetBeatInput = Readonly<{
+  sessionId: SessionId;
+  beatId: BeatId;
+  body: string;
+  /**
+   * What this beat is about, replacing whatever it was about before.
+   *
+   * Objects, not cards: a beat may name something that is not on the Prep at
+   * all, and refusing that would make the running order a property of the
+   * composition rather than of the evening. Anything gone or belonging to
+   * another world is refused — the same seam `referenceObjects` holds.
+   */
+  refs: readonly WorldObjectId[];
+  /**
+   * Who wrote it. The Librarian may add a beat, and Prep marks the ones it
+   * proposed — a GM must be able to tell their own plan from a suggestion.
+   */
+  author: AuthorKind;
+}>;
+
+export type RemoveBeatInput = Readonly<{
+  beatId: BeatId;
+}>;
+
+export type ReorderBeatsInput = Readonly<{
+  sessionId: SessionId;
+  /** Every active beat of the session, in the order it should now read. */
+  beatIds: readonly BeatId[];
 }>;
 
 export type ObjectPlacement = Readonly<{
@@ -321,12 +500,55 @@ export type EditBodyInput = Readonly<{
   body: string;
   /** The version the editor last saw. A mismatch is reported, never overwritten. */
   observedBodyVersion: number;
+  /**
+   * Who is rewriting.
+   *
+   * A GM editing their own prose is unmarked. Anyone else replaces words the GM
+   * may not have chosen to lose, so the write records who, when, and the text it
+   * superseded — which is the whole reversal for the one Librarian act that
+   * destroys rather than adds or archives.
+   */
+  author: AuthorKind;
+}>;
+
+export type CreateEntityInput = Readonly<{
+  worldId: WorldId;
+  objectId: WorldObjectId;
+  kind?: RepresentationKind;
+  label?: string | null;
+}>;
+
+export type SaveEntityDocumentInput = Readonly<{
+  worldId: WorldId;
+  objectId: WorldObjectId;
+  observedVersion: number;
+  document: EntityDocument;
+  author?: AuthorKind;
+}>;
+
+export type SaveEntityIdentityInput = Readonly<{
+  worldId: WorldId;
+  objectId: WorldObjectId;
+  observedVersion: number;
+  label: string | null;
+  fields: FieldValues;
+}>;
+
+export type SaveEntityMechanicsInput = Readonly<{
+  worldId: WorldId;
+  objectId: WorldObjectId;
+  observedVersion: number;
+  profile: MechanicsProfile;
 }>;
 
 export type CardMove = Readonly<{
   cardId: CardId;
   x: number;
   y: number;
+  width?: number;
+  height?: number;
+  tint?: CardTint | null;
+  z?: number;
   observedCardVersion: number;
 }>;
 

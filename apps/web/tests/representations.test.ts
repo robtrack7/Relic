@@ -14,6 +14,7 @@ import {
 import { closeDb, db } from "@/lib/world/db";
 import { PostgresDeskRepository } from "@/lib/world/postgres-store";
 import type { DeskRepository } from "@/lib/world/repository";
+import { must } from "./support";
 
 let WORLD = asWorldId(randomUUID());
 let repo: DeskRepository;
@@ -29,13 +30,14 @@ afterAll(async () => {
 
 async function deskWithCard(body = "someone who lies about the third bell") {
   const desk = await repo.openDesk(WORLD);
-  const card = await repo.captureCard({
+  const card = must(await repo.captureCard({
     compositionId: desk.compositionId,
     cardId: asCardId(randomUUID()),
     objectId: asWorldObjectId(randomUUID()),
     body,
-    layout: emptyLayoutAt(0, 0)
-  });
+    layout: emptyLayoutAt(0, 0),
+    author: "gm"
+  }), "capture");
   return { desk, card };
 }
 
@@ -170,7 +172,8 @@ describe("claims are the addressable truth unit", () => {
       claimId: asClaimId(randomUUID()),
       claimKind,
       value,
-      ...(story ? { story } : {})
+      ...(story ? { story } : {}),
+      author: "gm"
     });
 
   it("asserts Pencil, never Ink", async () => {
@@ -253,6 +256,28 @@ describe("claims are the addressable truth unit", () => {
     expect(onBoard?.claims.map((c) => c.value)).toEqual(["harbour master"]);
   });
 
+  it("treats an explicitly unknown story order as an undated correction", async () => {
+    const { card } = await deskWithCard();
+    await claim(card.objectId, "status", "alive");
+    await claim(card.objectId, "status", "missing", { order: null, precision: "relative", label: "sometime that winter" });
+    const current = (await repo.openDesk(WORLD)).cards[0]!.claims.filter(item => item.claimKind === "status");
+    expect(current).toHaveLength(1);
+    expect(current[0]!.value).toBe("missing");
+    expect(current[0]!.story).toEqual({ order: null, precision: "relative", label: "sometime that winter" });
+  });
+
+  it("refuses a stale inline claim revision without retiring the newer assertion", async () => {
+    const { card } = await deskWithCard();
+    const before = must(await claim(card.objectId, "status", "alive"), "initial status");
+    await repo.settleTruth({ objectId: card.objectId, maturity: null, claims: [{ claimId: before.id, truth: "ink", observedVersion: before.version }], author: "gm" });
+    const stale = await repo.setClaim({ subjectId: card.objectId, claimId: asClaimId(randomUUID()), claimKind: "status", value: "missing", author: "gm", expectedClaim: { claimId: before.id, version: before.version } });
+    expect(stale.state).toBe("conflict");
+    const current = (await repo.openDesk(WORLD)).cards[0]!.claims;
+    expect(current).toHaveLength(1);
+    expect(current[0]!.value).toBe("alive");
+    expect(current[0]!.truthState).toBe("ink");
+  });
+
   it("retires a claim without destroying it", async () => {
     const { card } = await deskWithCard();
     const made = await claim(card.objectId, "occupation", "harbour master");
@@ -280,7 +305,8 @@ describe("maturity and truth are different axes", () => {
       subjectId: card.objectId,
       claimId: asClaimId(randomUUID()),
       claimKind: "occupation",
-      value: "locksmith"
+      value: "locksmith",
+      author: "gm"
     });
 
     const after = (await repo.openDesk(WORLD)).cards[0];

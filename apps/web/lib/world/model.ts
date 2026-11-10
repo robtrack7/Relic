@@ -11,6 +11,8 @@
  * touch the object it points at.
  */
 
+import type { MechanicsProfile } from "./entity-document";
+
 declare const brand: unique symbol;
 type Branded<T extends string> = string & { readonly [brand]: T };
 
@@ -21,7 +23,10 @@ export type CompositionId = Branded<"composition">;
 export type CardId = Branded<"card">;
 export type RepresentationId = Branded<"representation">;
 export type ClaimId = Branded<"claim">;
+export type RelationshipId = Branded<"relationship">;
 export type TemplateId = Branded<"template">;
+export type SessionId = Branded<"session">;
+export type BeatId = Branded<"beat">;
 
 /** Only at a trust boundary — a store row, a server action input, or a test. */
 export const asWorldId = (v: string) => v as WorldId;
@@ -31,7 +36,10 @@ export const asCompositionId = (v: string) => v as CompositionId;
 export const asCardId = (v: string) => v as CardId;
 export const asRepresentationId = (v: string) => v as RepresentationId;
 export const asClaimId = (v: string) => v as ClaimId;
+export const asRelationshipId = (v: string) => v as RelationshipId;
 export const asTemplateId = (v: string) => v as TemplateId;
+export const asSessionId = (v: string) => v as SessionId;
+export const asBeatId = (v: string) => v as BeatId;
 
 export type Lifecycle = "active" | "archived" | "deleted";
 
@@ -90,6 +98,43 @@ export type Settlement = Readonly<{
   by: AuthorKind;
   at: string;
 }>;
+
+/**
+ * Who last wrote a Fragment's prose, and what they replaced.
+ *
+ * Null while the GM is the only one who has touched it — the ordinary state, and
+ * every row that existed before the Librarian had hands. It appears the moment
+ * something other than the GM revises prose, because a GM who cannot tell their
+ * own writing from a model's has lost the thing the Desk exists to hold.
+ *
+ * `superseded` carries exactly one step back. Relic has no undo, and rewriting
+ * prose is the only thing the Librarian can do that destroys rather than adds or
+ * archives — so that one act carries its own reversal instead of waiting for a
+ * general one. A full revision history is Chronicle's shape, not this.
+ */
+export type Authorship = Readonly<{
+  by: AuthorKind;
+  at: string;
+  superseded: string | null;
+}>;
+
+/**
+ * How a write by this author is recorded as having arrived.
+ *
+ * Capture and assertion are different arrivals by the same hand, which is why
+ * the GM has two kinds and the Librarian one: what it contributes is the same
+ * sort of thing however it got there, and `librarian` is already the honest
+ * answer to "where did this come from".
+ *
+ * Players and system processes have no write path yet. Their kinds are mapped to
+ * the nearest honest value rather than left to a cast, and will be decided
+ * properly by whichever slice first gives them one.
+ */
+export const capturedBy = (author: AuthorKind): ProvenanceKind =>
+  author === "gm" ? "gm_capture" : author === "librarian" ? "librarian" : "session";
+
+export const assertedBy = (author: AuthorKind): ProvenanceKind =>
+  author === "gm" ? "gm_assertion" : author === "librarian" ? "librarian" : "session";
 
 /**
  * The lightest state of a World Object: captured thought before classification.
@@ -180,6 +225,8 @@ export type Representation = Readonly<{
   label: string | null;
   templateId: TemplateId | null;
   fields: FieldValues;
+  /** Optional typed mechanics projection; legacy fields remain authoritative for unknown keys. */
+  mechanics?: MechanicsProfile;
   version: number;
 }>;
 
@@ -213,6 +260,8 @@ export type StoryPosition = Readonly<{
  */
 export type Claim = Readonly<{
   id: ClaimId;
+  /** Stable semantic identity shared by all revisions of a relationship claim. */
+  relationshipId?: RelationshipId | null;
   subjectId: WorldObjectId;
   /** The attribute asserted, or `assertion` for a free sentence. */
   claimKind: string;
@@ -236,6 +285,9 @@ export type Claim = Readonly<{
   story: StoryPosition;
   version: number;
 }>;
+
+/** The assertion wording a local editor actually observed before revising it. */
+export type ClaimObservation = Readonly<{ claimId: ClaimId; version: number; relationshipId?: RelationshipId | null }>;
 
 export const FREE_ASSERTION = "assertion";
 
@@ -296,10 +348,14 @@ export type WorldEntry = Readonly<{
  */
 export type Link = Readonly<{
   claimId: ClaimId;
+  relationshipId?: RelationshipId | null;
   claimKind: string;
   direction: "out" | "in";
   other: ObjectRef;
   truthState: TruthState;
+  provenance?: Provenance;
+  story?: StoryPosition;
+  settled?: Settlement | null;
 }>;
 
 export type CompositionKind = "desk" | "board" | "prep" | "session";
@@ -312,11 +368,16 @@ export type Layout = Readonly<{
   height: number;
 }>;
 
+export type CardTint = "paper" | "sand" | "sage" | "slate" | "rose";
+export type CardPresentation = Readonly<{ tint: CardTint | null; semanticEdges?: readonly RelationshipId[] }>;
+
 export type Card = Readonly<{
   id: CardId;
   compositionId: CompositionId;
   objectId: WorldObjectId;
   layout: Layout;
+  /** Board-only visual treatment; never world truth. */
+  presentation?: CardPresentation;
   /** Stacking within the composition. Higher draws later. */
   z: number;
   version: number;
@@ -339,6 +400,8 @@ export type DeskCard = Readonly<{
   cardId: CardId;
   objectId: WorldObjectId;
   layout: Layout;
+  /** Board-only visual treatment; never world truth. */
+  presentation?: CardPresentation;
   z: number;
   body: string;
   /**
@@ -348,6 +411,11 @@ export type DeskCard = Readonly<{
   maturity: Maturity;
   /** Who settled it, and when. Null while it is still Pencil. */
   settled: Settlement | null;
+  /**
+   * Who last wrote the prose, if it was not the GM, and what they replaced.
+   * Null in the ordinary case — the GM's own writing needs no attribution.
+   */
+  written: Authorship | null;
   /** Version of the composition item — bumped by move/resize. */
   cardVersion: number;
   /** Version of the fragment — bumped by edits to the body. */
@@ -371,8 +439,9 @@ export type DeskCard = Readonly<{
 export function cardTitle(card: DeskCard): string {
   const label = card.representation?.label?.trim();
   if (label) return label;
-  const firstLine = card.body.trim().split("\n")[0]?.trim() ?? "";
-  return firstLine;
+  const image = /^!\[([^\]]*)\]\([^\s)]+\)\s*/.exec(card.body.trim());
+  const firstLine = card.body.trim().replace(/^!\[[^\]]*\]\([^\s)]+\)\s*/, "").split("\n")[0]?.trim() ?? "";
+  return firstLine || image?.[1] || "";
 }
 
 /**
@@ -396,6 +465,22 @@ export type DeskView = Readonly<{
   kind: CompositionKind;
   name: string | null;
   cards: readonly DeskCard[];
+  /** Board-only arrangement. Never a World Object or a semantic relationship. */
+  spatial?: SpatialState;
+}>;
+
+export type SpatialCollection = Readonly<{
+  id: string;
+  title: string;
+  cardIds: readonly CardId[];
+  collapsed: boolean;
+  /** Stable Board anchor used while a stack is collapsed. */
+  anchor?: Readonly<{ x: number; y: number }>;
+}>;
+
+export type SpatialState = Readonly<{
+  version: number;
+  collections: readonly SpatialCollection[];
 }>;
 
 /**
@@ -415,6 +500,78 @@ export type Workspace = Readonly<{
   worldId: WorldId;
   name: string | null;
   compositions: readonly CompositionSummary[];
+  /**
+   * The world's sessions, newest first.
+   *
+   * Beside the compositions rather than among them: a session *has* a
+   * composition, and listing the prep on its own would offer a way into tonight
+   * that arrived without knowing what tonight was for.
+   */
+  sessions: readonly SessionSummary[];
+}>;
+
+/**
+ * A session: one evening of play, from planned to played.
+ *
+ * The temporal unit the world is arranged for, run through, and settled back
+ * into. Prep, Stage, and Review are three views of this one record, which is
+ * why it is a row and not a composition: a composition is a *place*, and none
+ * of what makes a session a session — that it has not happened yet, that it is
+ * happening, that it is over — is a fact about a place.
+ */
+export type SessionState = "planned" | "in_play" | "played";
+
+export type Session = Readonly<{
+  id: SessionId;
+  worldId: WorldId;
+  /** Where it is prepared. A prep composition, and the session's alone. */
+  compositionId: CompositionId;
+  title: string;
+  /** What tonight is for, in one line. Null until the GM has said. */
+  intent: string | null;
+  state: SessionState;
+  version: number;
+  createdAt: string;
+}>;
+
+/**
+ * One thing the GM means to hit tonight.
+ *
+ * An **intention**, and deliberately not an assertion: a beat carries no truth
+ * state because nothing has happened yet, and a plan that never came off is not
+ * a false statement about the world — it is a plan that never came off.
+ * Promoting one into an Event is Review's act, taken after the session, on
+ * purpose.
+ *
+ * `refs` is what it is about, resolved to names on read for the same reason a
+ * `Link` is: identity is stable and names are not, so a beat mentioning the
+ * Harbour Guild reads correctly after the Guild is renamed.
+ */
+export type Beat = Readonly<{
+  id: BeatId;
+  sessionId: SessionId;
+  body: string;
+  /** Ordering within the session. Contiguous from 1 after every reorder. */
+  position: number;
+  refs: readonly ObjectRef[];
+  /** Who put it in the running order. The Librarian may propose; it is marked. */
+  author: AuthorKind;
+  version: number;
+}>;
+
+/** A session and its running order: everything the Prep rail draws. */
+export type Prep = Readonly<{
+  session: Session;
+  beats: readonly Beat[];
+}>;
+
+/** Enough of a session to name it and open it, without loading its beats. */
+export type SessionSummary = Readonly<{
+  sessionId: SessionId;
+  compositionId: CompositionId;
+  title: string;
+  state: SessionState;
+  beatCount: number;
 }>;
 
 export const DEFAULT_CARD_WIDTH = 260;

@@ -1,17 +1,40 @@
-// @vitest-environment node
+// @vitest-environment jsdom
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { act, renderHook } from "@testing-library/react";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   asCardId,
   asCompositionId,
+  asRepresentationId,
   asWorldId,
   asWorldObjectId,
-  emptyLayoutAt
+  emptyLayoutAt,
+  type DeskCard,
+  type DeskView
 } from "@/lib/world/model";
+import type { RepresentationKind } from "@/lib/world/model";
 import type { DeskRepository } from "@/lib/world/repository";
 import { PostgresDeskRepository } from "@/lib/world/postgres-store";
 import { closeDb, db } from "@/lib/world/db";
+import { must } from "./support";
+
+const deskActions = vi.hoisted(() => ({
+  captureCardAction: vi.fn(),
+  editCardBodyAction: vi.fn(),
+  editRepresentationAction: vi.fn(),
+  moveCardsAction: vi.fn(),
+  referenceObjectsAction: vi.fn(),
+  removeCardsAction: vi.fn(),
+  removeClaimAction: vi.fn(),
+  representObjectAction: vi.fn(),
+  searchWorldAction: vi.fn(),
+  setClaimAction: vi.fn(),
+  settleTruthAction: vi.fn()
+}));
+
+vi.mock("@/app/actions", () => deskActions);
+const { useDesk } = await import("@/components/desk/use-desk");
 
 /**
  * Isolation without truncation or rollback: every test works in a world of its
@@ -37,13 +60,14 @@ afterAll(async () => {
 
 async function deskWithCard(body = "A rumour about the harbour", x = 40, y = 90) {
   const desk = await repo.openDesk(WORLD);
-  const card = await repo.captureCard({
+  const card = must(await repo.captureCard({
     compositionId: desk.compositionId,
     cardId: asCardId(randomUUID()),
     objectId: asWorldObjectId(randomUUID()),
     body,
-    layout: emptyLayoutAt(x, y)
-  });
+    layout: emptyLayoutAt(x, y),
+    author: "gm"
+  }), "capture");
   return { desk, card };
 }
 
@@ -87,16 +111,62 @@ describe("capture", () => {
     expect(card.settled).toBeNull();
   });
 
+  it("can return an initial representation from the same capture change set", async () => {
+    const desk = await repo.openDesk(WORLD);
+    const card = must(await repo.captureCard({
+      compositionId: desk.compositionId,
+      cardId: asCardId(randomUUID()),
+      objectId: asWorldObjectId(randomUUID()),
+      body: "A woman with a brass key",
+      layout: emptyLayoutAt(10, 20),
+      initialRepresentation: {
+        representationId: asRepresentationId(randomUUID()),
+        kind: "character",
+        label: "Mara Venn"
+      },
+      author: "gm"
+    }), "capture with representation");
+
+    expect(card.representation).toMatchObject({ kind: "character", label: "Mara Venn" });
+    expect((await repo.openDesk(WORLD)).cards[0]?.representation).toMatchObject({
+      kind: "character",
+      label: "Mara Venn"
+    });
+  });
+
+  it("rolls back the identity and Fragment when the initial representation fails", async () => {
+    const desk = await repo.openDesk(WORLD);
+    await expect(repo.captureCard({
+      compositionId: desk.compositionId,
+      cardId: asCardId(randomUUID()),
+      objectId: asWorldObjectId(randomUUID()),
+      body: "This must not survive a failed deepening",
+      layout: emptyLayoutAt(10, 20),
+      initialRepresentation: {
+        representationId: asRepresentationId(randomUUID()),
+        kind: "not-a-kind" as RepresentationKind,
+        label: null
+      },
+      author: "gm"
+    })).rejects.toThrow();
+
+    expect((await repo.openDesk(WORLD)).cards).toEqual([]);
+  });
+
   it("stacks each new card above the last", async () => {
     const desk = await repo.openDesk(WORLD);
-    const place = (n: number) =>
-      repo.captureCard({
-        compositionId: desk.compositionId,
-        cardId: asCardId(randomUUID()),
-        objectId: asWorldObjectId(randomUUID()),
-        body: `card ${n}`,
-        layout: emptyLayoutAt(n * 10, 0)
-      });
+    const place = async (n: number) =>
+      must(
+        await repo.captureCard({
+          compositionId: desk.compositionId,
+          cardId: asCardId(randomUUID()),
+          objectId: asWorldObjectId(randomUUID()),
+          body: `card ${n}`,
+          layout: emptyLayoutAt(n * 10, 0),
+          author: "gm"
+        }),
+        "capture"
+      );
     const a = await place(1);
     const b = await place(2);
     expect(b.z).toBeGreaterThan(a.z);
@@ -128,7 +198,8 @@ describe("the composition never owns world truth", () => {
       compositionId: desk.compositionId,
       cardId: card.cardId,
       body: "second thought",
-      observedBodyVersion: card.bodyVersion
+      observedBodyVersion: card.bodyVersion,
+      author: "gm"
     });
 
     expect(edited.state).toBe("ok");
@@ -143,14 +214,18 @@ describe("the composition never owns world truth", () => {
 describe("one intent, one change set", () => {
   it("refuses a whole multi-card move when any card is stale", async () => {
     const desk = await repo.openDesk(WORLD);
-    const place = (x: number) =>
-      repo.captureCard({
-        compositionId: desk.compositionId,
-        cardId: asCardId(randomUUID()),
-        objectId: asWorldObjectId(randomUUID()),
-        body: "",
-        layout: emptyLayoutAt(x, 0)
-      });
+    const place = async (x: number) =>
+      must(
+        await repo.captureCard({
+          compositionId: desk.compositionId,
+          cardId: asCardId(randomUUID()),
+          objectId: asWorldObjectId(randomUUID()),
+          body: "",
+          layout: emptyLayoutAt(x, 0),
+          author: "gm"
+        }),
+        "capture"
+      );
     const a = await place(0);
     const b = await place(400);
 
@@ -187,14 +262,16 @@ describe("one intent, one change set", () => {
       compositionId: desk.compositionId,
       cardId: card.cardId,
       body: "written elsewhere",
-      observedBodyVersion: card.bodyVersion
+      observedBodyVersion: card.bodyVersion,
+      author: "gm"
     });
 
     const stale = await repo.editCardBody({
       compositionId: desk.compositionId,
       cardId: card.cardId,
       body: "written here",
-      observedBodyVersion: card.bodyVersion
+      observedBodyVersion: card.bodyVersion,
+      author: "gm"
     });
 
     expect(stale.state).toBe("conflict");
@@ -203,25 +280,28 @@ describe("one intent, one change set", () => {
 
   it("reports a conflict with the whole composition, not just the card that clashed", async () => {
     const { desk, card } = await deskWithCard("original");
-    const bystander = await repo.captureCard({
+    const bystander = must(await repo.captureCard({
       compositionId: desk.compositionId,
       cardId: asCardId(randomUUID()),
       objectId: asWorldObjectId(randomUUID()),
       body: "untouched by any of this",
-      layout: emptyLayoutAt(600, 600)
-    });
+      layout: emptyLayoutAt(600, 600),
+      author: "gm"
+    }), "capture");
 
     await repo.editCardBody({
       compositionId: desk.compositionId,
       cardId: card.cardId,
       body: "written elsewhere",
-      observedBodyVersion: card.bodyVersion
+      observedBodyVersion: card.bodyVersion,
+      author: "gm"
     });
     const stale = await repo.editCardBody({
       compositionId: desk.compositionId,
       cardId: card.cardId,
       body: "written here",
-      observedBodyVersion: card.bodyVersion
+      observedBodyVersion: card.bodyVersion,
+      author: "gm"
     });
 
     // A caller reconciles by replacing what it holds. A partial list here would
@@ -239,7 +319,8 @@ describe("one intent, one change set", () => {
       compositionId: desk.compositionId,
       cardId: asCardId(randomUUID()),
       body: "nowhere",
-      observedBodyVersion: 1
+      observedBodyVersion: 1,
+      author: "gm"
     });
     expect(result.state).toBe("missing");
   });
@@ -256,13 +337,14 @@ describe("boards are compositions of the same world", () => {
 
   it("reopens a board with only what was put on it", async () => {
     const { desk, board } = await deskAndBoard();
-    const card = await repo.captureCard({
+    const card = must(await repo.captureCard({
       compositionId: desk.compositionId,
       cardId: asCardId(randomUUID()),
       objectId: asWorldObjectId(randomUUID()),
       body: "The bells vanished during the storm",
-      layout: emptyLayoutAt(0, 0)
-    });
+      layout: emptyLayoutAt(0, 0),
+      author: "gm"
+    }), "capture");
 
     const reopened = await repo.openComposition(board.compositionId);
     expect(reopened?.kind).toBe("board");
@@ -275,13 +357,14 @@ describe("boards are compositions of the same world", () => {
 
   it("references one object from two compositions without copying it", async () => {
     const { desk, board } = await deskAndBoard();
-    const onDesk = await repo.captureCard({
+    const onDesk = must(await repo.captureCard({
       compositionId: desk.compositionId,
       cardId: asCardId(randomUUID()),
       objectId: asWorldObjectId(randomUUID()),
       body: "The harbour master lies",
-      layout: emptyLayoutAt(10, 20)
-    });
+      layout: emptyLayoutAt(10, 20),
+      author: "gm"
+    }), "capture");
 
     const placed = await repo.referenceObjects({
       compositionId: board.compositionId,
@@ -301,7 +384,8 @@ describe("boards are compositions of the same world", () => {
       compositionId: board.compositionId,
       cardId: onBoard!.cardId,
       body: "The harbour master is bought",
-      observedBodyVersion: onBoard!.bodyVersion
+      observedBodyVersion: onBoard!.bodyVersion,
+      author: "gm"
     });
     expect((await repo.openDesk(WORLD)).cards[0]?.body).toBe("The harbour master is bought");
 
@@ -321,13 +405,14 @@ describe("boards are compositions of the same world", () => {
 
   it("referencing the same object twice returns the card that is already there", async () => {
     const { desk, board } = await deskAndBoard();
-    const onDesk = await repo.captureCard({
+    const onDesk = must(await repo.captureCard({
       compositionId: desk.compositionId,
       cardId: asCardId(randomUUID()),
       objectId: asWorldObjectId(randomUUID()),
       body: "",
-      layout: emptyLayoutAt(0, 0)
-    });
+      layout: emptyLayoutAt(0, 0),
+      author: "gm"
+    }), "capture");
 
     const place = () =>
       repo.referenceObjects({
@@ -349,13 +434,14 @@ describe("boards are compositions of the same world", () => {
     const { board } = await deskAndBoard();
     const other = asWorldId(randomUUID());
     const elsewhere = await repo.openDesk(other);
-    const stranger = await repo.captureCard({
+    const stranger = must(await repo.captureCard({
       compositionId: elsewhere.compositionId,
       cardId: asCardId(randomUUID()),
       objectId: asWorldObjectId(randomUUID()),
       body: "belongs to another world",
-      layout: emptyLayoutAt(0, 0)
-    });
+      layout: emptyLayoutAt(0, 0),
+      author: "gm"
+    }), "capture");
 
     const result = await repo.referenceObjects({
       compositionId: board.compositionId,
@@ -370,13 +456,14 @@ describe("boards are compositions of the same world", () => {
 
   it("keeps the object alive while any composition still references it", async () => {
     const { desk, board } = await deskAndBoard();
-    const onDesk = await repo.captureCard({
+    const onDesk = must(await repo.captureCard({
       compositionId: desk.compositionId,
       cardId: asCardId(randomUUID()),
       objectId: asWorldObjectId(randomUUID()),
       body: "still wanted",
-      layout: emptyLayoutAt(0, 0)
-    });
+      layout: emptyLayoutAt(0, 0),
+      author: "gm"
+    }), "capture");
     await repo.referenceObjects({
       compositionId: board.compositionId,
       placements: [
@@ -463,13 +550,14 @@ describe("two writers at once", () => {
 
   it("archives an object when its last two references are removed at once", async () => {
     const { desk, board } = await deskAndBoard();
-    const onDesk = await repo.captureCard({
+    const onDesk = must(await repo.captureCard({
       compositionId: desk.compositionId,
       cardId: asCardId(randomUUID()),
       objectId: asWorldObjectId(randomUUID()),
       body: "wanted by two boards at once",
-      layout: emptyLayoutAt(0, 0)
-    });
+      layout: emptyLayoutAt(0, 0),
+      author: "gm"
+    }), "capture");
     const placed = await repo.referenceObjects({
       compositionId: board.compositionId,
       placements: [
