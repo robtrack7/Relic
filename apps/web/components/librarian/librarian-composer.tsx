@@ -112,7 +112,8 @@ export const LibrarianComposer = forwardRef<HTMLTextAreaElement, LibrarianCompos
         : status === "submitting"
           ? "The Librarian is reading"
           : unavailable
-            ? "The Librarian is unavailable"
+            // The carriage says once why it cannot answer; here, only what happens to the draft.
+            ? "Your draft is kept"
             : "Ready to send";
 
     return (
@@ -146,7 +147,7 @@ export const LibrarianComposer = forwardRef<HTMLTextAreaElement, LibrarianCompos
             type="submit"
             className={styles.send}
             label="Send message"
-            title={unavailable ? "The Librarian is unavailable" : "Send message"}
+            title={unavailable ? "Sending resumes when the Librarian reconnects" : "Send message"}
             variant="primary"
             disabled={!canSubmit}
             loading={status === "submitting"}

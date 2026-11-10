@@ -275,7 +275,7 @@ export function Librarian({
 
   return (
     <CarriageShell {...carriage} side="right" id="carriage-librarian" variant="librarian" ariaLabel="Librarian"
-      header={<CarriageHeader side="right" title="Librarian" variant="librarian" status={turn && !turn.failure ? "Working" : !loaded ? "Opening" : ready ? "Ready" : "Unavailable"} statusTone={!loaded || !ready || (turn && !turn.failure) ? "quiet" : "ready"} onCollapse={carriage?.onCollapse ?? (() => onOpenChange(false))} />}
+      header={<CarriageHeader side="right" title="Librarian" variant="librarian" status={turn && !turn.failure ? "Working" : !loaded ? "Opening" : ready ? "Ready" : "Offline"} statusTone={!loaded || !ready || (turn && !turn.failure) ? "quiet" : "ready"} onCollapse={carriage?.onCollapse ?? (() => onOpenChange(false))} />}
       context={<CarriageSection density="compact">
           {/* What it can see, said plainly. Implicit context that cannot be
               read is indistinguishable from the Librarian guessing. */}
@@ -290,10 +290,6 @@ export function Librarian({
         <LibrarianComposer value={draft} onChange={setDraft} onSubmit={() => { void ask(draft); }} inputRef={field}
           status={!loaded ? "opening" : !ready ? "unavailable" : turn && !turn.failure ? "submitting" : "idle"}
           scope={focusLabel ? `Focus · ${focusLabel}` : `${compositionName}${selectedCardIds.length ? ` · ${selectedCardIds.length} selected` : ""}`} />
-        {loaded && !ready ? <div className={styles.librarianRecovery}>
-          <span>The Librarian is unavailable in this workspace. Your draft and manual tools remain available.</span>
-          <Button variant="quiet" onClick={() => { setLoaded(false); setReady(true); }}>Retry connection</Button>
-        </div> : null}
         <Meter spent={spent} />
       </CarriageFooter>}
     >
@@ -344,6 +340,11 @@ export function Librarian({
             </article>
           </>
         ) : null}
+        {/* The one place that explains the outage, where the answer would have appeared. */}
+        {loaded && !ready ? <div className={styles.librarianRecovery}>
+          <span>The Librarian is unavailable in this workspace. Your draft and manual tools remain available.</span>
+          <Button variant="quiet" onClick={() => { setLoaded(false); setReady(true); }}>Retry connection</Button>
+        </div> : null}
       </div>
 
     </CarriageShell>

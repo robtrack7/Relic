@@ -36,11 +36,18 @@ const WORKSPACE_EDGE = 20;
 const LANE_GAP = 16;
 /** A 48px mark plus its gap to the Builder. */
 const BUILDER_LANE = 48 + LANE_GAP;
+/** The narrowest Builder worth writing in. Opening it folds the left carriage rather than go below. */
+export const BUILDER_MIN_WIDTH = 720;
 type GeometryInput ={ availableWidth: number; minCenterWidth: number; left?: { open: boolean; width: number }; right?: { open: boolean; width: number }; preferRightOverlay?: boolean };
 
 export function resolveWorkspaceGeometry({ availableWidth, minCenterWidth, left, right, preferRightOverlay = false }: GeometryInput): WorkspaceGeometry {
   const available = Math.max(0, availableWidth);
   const occupied = (left?.open ? left.width : 0) + (right?.open ? right.width : 0);
+  // The Builder is the work itself: carriages never split the workspace out from
+  // under it. They float beside it, and the right one folds to its lane mark.
+  if (preferRightOverlay && left?.open && right?.open && available - occupied < minCenterWidth) {
+    return { left: "overlay", right: "overlay", centerWidth: Math.max(0, available - occupied) };
+  }
   if (left?.open && right?.open && available - occupied < minCenterWidth) {
     return { left: "split", right: "split", centerWidth: 0 };
   }
@@ -268,9 +275,21 @@ export function WorkspaceShell({ children, chrome, canvasChrome, navigation, ove
   // beside an open left carriage. The Builder starts LANE_GAP after it.
   const railLeft = !split && leftOpen ? actualLeft + LANE_GAP : WORKSPACE_EDGE;
   const builderLeftInset = (visibleLeft ? Math.max(railLeft, actualLeft + LANE_GAP) : railLeft) + 48 + LANE_GAP - WORKSPACE_EDGE;
+  const builderWidth = measuredWidth - builderLeftInset - builderRightInset - 2 * WORKSPACE_EDGE;
+  // Composition rule: opening the Builder folds Stage or Prepare to its pill when
+  // the Builder would otherwise fall below its working width. Reopening the
+  // carriage afterwards is the GM's explicit choice and is honoured.
+  const builderWasActive = useRef(builderActive);
+  const builderSqueezed = builderActive && leftOpen && builderWidth < BUILDER_MIN_WIDTH;
+  useEffect(() => {
+    const opened = builderActive && !builderWasActive.current;
+    builderWasActive.current = builderActive;
+    if (opened && builderSqueezed) setLeftOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only the Builder opening decides
+  }, [builderActive]);
 
   return <div ref={root} className={styles.workspace} aria-label={ariaLabel} role={split ? "main" : "group"}
-    data-left-mode={geometry.left} data-right-mode={geometry.right} data-focus-mode={focusMode} data-center-width={geometry.centerWidth} data-split={split || undefined} data-resizing={resizing || undefined}
+    data-left-mode={geometry.left} data-right-mode={geometry.right} data-focus-mode={focusMode} data-center-width={geometry.centerWidth} data-split={split || undefined} data-builder={builderActive || undefined} data-resizing={resizing || undefined}
     style={{ height, gridTemplateColumns: `${geometry.left === "shared" ? actualLeft : 0}px minmax(0, 1fr) ${geometry.right === "shared" ? actualRight : 0}px`,
       "--split-inset": `${splitInset}px`, "--split-left": `${splitLeft}px`,
       "--workspace-left-inset": `${geometry.left === "overlay" ? actualLeft : 0}px`,

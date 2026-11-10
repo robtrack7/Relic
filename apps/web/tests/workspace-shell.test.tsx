@@ -32,6 +32,30 @@ describe("workspace geometry", () => {
       left: { open: true, width: 316 }, right: { open: true, width: 348 } }))
       .toEqual({ left: "split", right: "split", centerWidth: 0 });
   });
+  it("never splits the workspace out from under the Builder", () => {
+    expect(resolveWorkspaceGeometry({ availableWidth: 1000, minCenterWidth: 620, preferRightOverlay: true,
+      left: { open: true, width: 316 }, right: { open: true, width: 348 } }))
+      .toEqual({ left: "overlay", right: "overlay", centerWidth: 336 });
+  });
+});
+
+describe("Builder composition", () => {
+  const builderFrame = (container: HTMLElement) => container.querySelector<HTMLElement>("[data-layer]")!.closest<HTMLElement>("[data-left-mode]")!;
+  it("folds Stage to its pill when opening the Builder would leave it under its working width", () => {
+    const onLeftOpenChange = vi.fn();
+    const { rerender, container } = render(<WorkspaceShell leftCarriage={STAGE} rightCarriage={LIBRARIAN} defaultLeftOpen onLeftOpenChange={onLeftOpenChange} layoutWidth={1024}><div>Canvas</div></WorkspaceShell>);
+    rerender(<WorkspaceShell leftCarriage={STAGE} rightCarriage={LIBRARIAN} defaultLeftOpen onLeftOpenChange={onLeftOpenChange} builderActive layoutWidth={1024}><div>Builder</div></WorkspaceShell>);
+    expect(onLeftOpenChange).toHaveBeenLastCalledWith(false);
+    expect(screen.queryByRole("complementary", { name: "Stage carriage" })).toBeNull();
+    expect(builderFrame(container).dataset.builder).toBe("true");
+  });
+  it("keeps Stage beside a Builder that still has its working width, and honours reopening it", () => {
+    const onLeftOpenChange = vi.fn();
+    const { rerender } = render(<WorkspaceShell leftCarriage={STAGE} rightCarriage={LIBRARIAN} defaultLeftOpen onLeftOpenChange={onLeftOpenChange} layoutWidth={1600}><div>Canvas</div></WorkspaceShell>);
+    rerender(<WorkspaceShell leftCarriage={STAGE} rightCarriage={LIBRARIAN} defaultLeftOpen onLeftOpenChange={onLeftOpenChange} builderActive layoutWidth={1600}><div>Builder</div></WorkspaceShell>);
+    expect(onLeftOpenChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("complementary", { name: "Stage carriage" })).toBeDefined();
+  });
 });
 
 describe("carriage workspace", () => {

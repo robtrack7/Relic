@@ -53,7 +53,8 @@ export const SubmitAndKeepDraft: Story = { render: () => <ConversationStudy />,
     await userEvent.type(input, "Keep this next question");
     await scene.findByText("Ready to send");
     await userEvent.click(scene.getByRole("button", { name: "Collapse Librarian carriage" }));
-    await userEvent.click(scene.getByRole("button", { name: "Open Librarian carriage" }));
+    // The launcher returns once the carriage has finished withdrawing.
+    await userEvent.click(await scene.findByRole("button", { name: "Open Librarian carriage" }));
     await expect(scene.getByRole("textbox", { name: "Ask the Librarian" })).toHaveValue("Keep this next question");
   }
 };

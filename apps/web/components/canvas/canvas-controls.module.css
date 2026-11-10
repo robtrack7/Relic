@@ -73,8 +73,9 @@
 .toolButton:hover { transform: translateY(-2px); background: var(--card-raised) !important; box-shadow: var(--lift-raised); }
 .toolButton:active { transform: translateY(0); }
 .toolButton[data-tool="create"] { background: var(--workflow-accent) !important; border-color: var(--workflow-ink) !important; color: var(--card-raised) !important; }
-.toolButton[data-active="true"][data-tool="select"], .toolButton[data-active="true"][data-tool="connect"] { color: var(--card-raised) !important; background: var(--ink) !important; border-color: var(--ink) !important; }
-.toolButton[data-active="true"] { outline: 2px solid var(--card-raised); outline-offset: -5px; }
+/* Only Create is filled. The current tool is a state, not a second primary action: tinted and ink-outlined. */
+.toolButton[data-active="true"] { background: var(--chrome-hover) !important; border-color: var(--ink) !important; box-shadow: inset 0 0 0 1px var(--ink), var(--chrome-lift); color: var(--ink) !important; }
+.toolButton[data-active="true"][data-tool="create"] { background: var(--workflow-accent) !important; border-color: var(--workflow-ink) !important; box-shadow: inset 0 0 0 2px var(--card-raised), var(--chrome-lift); color: var(--card-raised) !important; }
 .toolButton[aria-disabled="true"] { color: var(--ink-faint) !important; cursor: not-allowed; }
 .toolButton[aria-disabled="true"]:hover { transform: none; box-shadow: var(--chrome-lift); }
 .toolMenu, .viewOptions { display: grid; padding: 6px; border: 1px solid var(--chrome-rule); border-radius: var(--radius-surface); background: var(--chrome-surface); box-shadow: var(--lift-raised); font-family: var(--font-ui); }
@@ -170,3 +171,5 @@
 }
 @media (prefers-reduced-motion: reduce) { .toolButton { transition: none !important; } .toolButton:hover { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .selectionToolbar { scroll-behavior: auto; } }
+/* Canvas-only controls cannot act behind the Builder, so they step out with the receding canvas. */
+:global([data-builder]) .toolArea, :global([data-builder]) .viewArea, :global([data-builder]) .minimapArea { visibility: hidden; }

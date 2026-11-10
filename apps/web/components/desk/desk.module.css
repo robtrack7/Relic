@@ -3006,3 +3006,12 @@
 .narrowLibrary > .library { position: absolute; inset: 0; width: auto; max-width: none; min-width: 0; border-radius: var(--radius-surface); box-shadow: var(--lift-raised); }
 .compositionName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 600px) { .liveShell .wordmark small { display: none; } .liveShell .identity { gap: 4px; } .liveShell .compositionButton { min-width: 0; gap: 2px; } .compositionButton > svg { flex: none; margin-left: 0; } }
+
+/* While the Builder is open the canvas recedes to a quiet backdrop: still the
+   world, still in place, no longer competing. Its own controls step out; a
+   sync problem never does. */
+.surfaceProjection { transition: opacity 220ms ease-out, filter 220ms ease-out; }
+:global([data-builder]) .surfaceProjection { opacity: .45; filter: saturate(.6); }
+:global([data-builder]) .workspaceStatus .tally, :global([data-builder]) .workspaceStatus .sendToButton { visibility: hidden; }
+:global([data-builder]) .workspaceStatus:has(.problem) { z-index: 43; }
+@media (prefers-reduced-motion: reduce) { .surfaceProjection { transition: none; } }

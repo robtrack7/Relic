@@ -169,8 +169,9 @@ export function DeskStack({
                 </article>
               )}
 
-              <div className={stackStyles.actions}>
-                <ContestedCue count={disputedClaims(card).length} />
+              {/* A truth cue stays in view; the actions tray only opens on the card being worked. */}
+              {disputedClaims(card).length ? <div className={stackStyles.cue}><ContestedCue count={disputedClaims(card).length} /></div> : null}
+              <div className={stackStyles.actions} role="group" aria-label={`Actions for ${stackTitle(card)}`}>
                 {/* Workflow parity, not canvas parity: deepening must be
                     reachable without a pointer gesture. */}
                 <button
