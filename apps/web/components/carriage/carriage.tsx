@@ -272,17 +272,21 @@ export function CarriageFooter({ children }: { children: ReactNode }) {
   return <footer className={styles.footer}>{children}</footer>;
 }
 
-/** The same recognizable dock handle is used by every collapsed carriage. */
-export function CarriageLauncher({ label, side, variant, controls, onOpen }: {
-  label: string; side: CarriageSide; variant: CarriageVariant; controls: string; onOpen: () => void;
+/**
+ * The same recognizable dock handle is used by every collapsed carriage.
+ * `compact` folds the pill to its mark so a wide surface (the Builder) can share
+ * the workspace's top line instead of stepping down beneath the label.
+ */
+export function CarriageLauncher({ label, side, variant, controls, onOpen, compact = false }: {
+  label: string; side: CarriageSide; variant: CarriageVariant; controls: string; onOpen: () => void; compact?: boolean;
 }) {
-  return <button type="button" className={styles.launcher} data-side={side} data-variant={variant}
+  return <button type="button" className={styles.launcher} data-side={side} data-variant={variant} data-compact={compact || undefined}
     data-carriage-toggle={side} aria-label={`Open ${label} carriage`} aria-expanded={false}
-    aria-controls={controls} onClick={onOpen}>
-    {side === "right" ? <CarriageIcon kind="collapse-left" /> : null}
+    aria-controls={controls} title={compact ? label : undefined} onClick={onOpen}>
+    {side === "right" && !compact ? <CarriageIcon kind="collapse-left" /> : null}
     {side === "left" ? <span className={styles.launcherMark}><CarriageIcon kind={variant} /></span> : null}
-    <span>{label}</span>
-    {side === "right" ? <span className={styles.launcherMark}><CarriageIcon kind={variant} /></span> : <CarriageIcon kind="collapse-right" />}
+    {compact ? null : <span>{label}</span>}
+    {side === "right" ? <span className={styles.launcherMark}><CarriageIcon kind={variant} /></span> : compact ? null : <CarriageIcon kind="collapse-right" />}
   </button>;
 }
 

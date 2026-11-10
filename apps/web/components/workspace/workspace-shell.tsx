@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
-  CarriageFooter, CarriageHeader, CarriageLauncher, CarriageShell, clampCarriageWidth,
+  CarriageFooter, CarriageHeader, CarriageIcon, CarriageLauncher, CarriageShell, clampCarriageWidth,
   type CarriageShellProps, type CarriageSide, type CarriageVariant
 } from "@/components/carriage/carriage";
 import styles from "./workspace-shell.module.css";
@@ -30,7 +30,13 @@ export type WorkspaceCarriageDefinition = {
 export type WorkspaceCarriageMode = "closed" | "overlay" | "shared" | "split";
 export type WorkspaceGeometry = { left: WorkspaceCarriageMode; right: WorkspaceCarriageMode; centerWidth: number };
 export type WorkspaceChromeControls = WorkspaceGeometry & { leftOpen: boolean; rightOpen: boolean; toggleLeft: () => void; toggleRight: () => void };
-type GeometryInput = { availableWidth: number; minCenterWidth: number; left?: { open: boolean; width: number }; right?: { open: boolean; width: number }; preferRightOverlay?: boolean };
+/** Mirrors `--workspace-edge`. */
+const WORKSPACE_EDGE = 20;
+/** The space the rail keeps from surfaces beside it. */
+const LANE_GAP = 16;
+/** A 48px mark plus its gap to the Builder. */
+const BUILDER_LANE = 48 + LANE_GAP;
+type GeometryInput ={ availableWidth: number; minCenterWidth: number; left?: { open: boolean; width: number }; right?: { open: boolean; width: number }; preferRightOverlay?: boolean };
 
 export function resolveWorkspaceGeometry({ availableWidth, minCenterWidth, left, right, preferRightOverlay = false }: GeometryInput): WorkspaceGeometry {
   const available = Math.max(0, availableWidth);
@@ -216,7 +222,7 @@ export function WorkspaceShell({ children, chrome, canvasChrome, navigation, ove
     const isVisible = side === "left" ? leftPresent : rightPresent;
     const isLogicalOpen = side === "left" ? leftOpen : rightOpen;
     const isFocusSuppressed = side === "right" && !librarianVisible;
-    return <div ref={side === "left" ? leftNode : rightNode} className={styles.dock} hidden={!isVisible} inert={!isLogicalOpen || isFocusSuppressed} aria-hidden={isFocusSuppressed || undefined} data-carriage-region={side} data-mode={mode} data-panel-suppressed={isFocusSuppressed || undefined} data-layer={`${side}-dock`} style={{ "--dock-width": `${width}px` } as CSSProperties}>
+    return <div ref={side === "left" ? leftNode : rightNode} className={styles.dock} hidden={!isVisible} inert={!isLogicalOpen || isFocusSuppressed} aria-hidden={isFocusSuppressed || undefined} data-carriage-region={side} data-mode={mode} data-panel-suppressed={isFocusSuppressed || undefined} data-layer={`${side}-dock`} style={{ "--dock-width": `${width}px`, ...(side === "right" && librarianLaneShift && mode === "overlay" ? { right: librarianLaneShift } : null) } as CSSProperties}>
       {carriage.render ? carriage.render(props) : <CarriageShell {...props} id={`carriage-${carriage.id}`} variant={carriage.variant} ariaLabel={`${carriage.label} carriage`}
         header={<CarriageHeader side={side} title={carriage.title} eyebrow={carriage.eyebrow} status={carriage.status} statusTone={carriage.statusTone} icon={carriage.icon} variant={carriage.variant} onCollapse={props.onCollapse} />}
         context={carriage.context} actions={carriage.actions}
@@ -226,11 +232,42 @@ export function WorkspaceShell({ children, chrome, canvasChrome, navigation, ove
     </div>;
   };
 
-  const focusRightOffset = librarianVisible ? actualRight + rightGap : 0;
+  // A dock's width includes its own outer workspace edge; the visible shell is
+  // narrower by that edge. Every gutter between neighbouring surfaces is rightGap.
+  const librarianSpan = Math.max(0, actualRight - WORKSPACE_EDGE);
   const focusInGeometry = (focusVisible && canPairFocus) || (focusPresent && !focusOpen && canPairFocus);
   const librarianInGeometry = librarianVisible && (!builderActive || canPairFocus);
-  const builderRightInset = (focusInGeometry ? focusWidth + rightGap : 0) + (librarianInGeometry ? actualRight + (focusInGeometry ? rightGap : 0) : 0);
-  const builderLeftInset = visibleLeft ? actualLeft : 64;
+  const rightLauncherVisible = Boolean(rightCarriage && geometry.right === "closed" && !rightPresent && !rightToggleInChrome);
+  // While the Builder is open, the right-hand panels it cannot sit beside fold
+  // to 48px marks in a lane of their own, mirroring the navigation rail. The
+  // marks are the switch: pressed shows that panel as a preview, pressed again
+  // hides it. Nothing floats over the Builder's header.
+  const laneFocus = Boolean(focusPanel && focusOpen && builderBlocksPairing);
+  const laneLibrarian: "open" | "toggle" | null = !builderActive || !rightCarriage ? null
+    : rightLauncherVisible ? "open"
+    : rightOpen && (laneFocus || builderCannotFitLibrarian) ? "toggle" : null;
+  const builderLane = builderActive && (laneFocus || laneLibrarian !== null);
+  // Paired surfaces stack from the right edge; the Builder, or the lane, sits beside them.
+  const pairedStack = (focusInGeometry ? focusWidth : 0) + (librarianInGeometry ? librarianSpan : 0) + (focusInGeometry && librarianInGeometry ? rightGap : 0);
+  const builderLaneRight = WORKSPACE_EDGE + (pairedStack ? pairedStack + LANE_GAP : 0);
+  // Previews open just inside the lane, never over it.
+  const librarianLaneShift = builderLane && !librarianInGeometry ? BUILDER_LANE : 0;
+  const focusRightOffset = (librarianVisible ? librarianSpan + rightGap : 0) + (builderLane && !focusInGeometry ? BUILDER_LANE : 0);
+  const toggleFocusPreview = () => {
+    if (focusVisible) { setFocusPreviewRequested(false); return; }
+    setLibrarianPreviewRequested(false); requestFocus(true);
+  };
+  const toggleLibrarianPreview = () => {
+    if (librarianVisible) { setLibrarianPreviewRequested(false); setActiveRightPanel("focus"); return; }
+    setActiveRightPanel("librarian"); setFocusPreviewRequested(false); setLibrarianPreviewRequested(true);
+  };
+  // The lane keeps LANE_GAP on both sides, like the rail; without it neighbours keep one rightGap.
+  const builderRightInset = builderLane ? (pairedStack ? pairedStack + LANE_GAP : 0) + BUILDER_LANE
+    : pairedStack ? pairedStack + rightGap : 0;
+  // The navigation rail always owns a column: at the workspace edge, or LANE_GAP
+  // beside an open left carriage. The Builder starts LANE_GAP after it.
+  const railLeft = !split && leftOpen ? actualLeft + LANE_GAP : WORKSPACE_EDGE;
+  const builderLeftInset = (visibleLeft ? Math.max(railLeft, actualLeft + LANE_GAP) : railLeft) + 48 + LANE_GAP - WORKSPACE_EDGE;
 
   return <div ref={root} className={styles.workspace} aria-label={ariaLabel} role={split ? "main" : "group"}
     data-left-mode={geometry.left} data-right-mode={geometry.right} data-focus-mode={focusMode} data-center-width={geometry.centerWidth} data-split={split || undefined} data-resizing={resizing || undefined}
@@ -245,7 +282,7 @@ export function WorkspaceShell({ children, chrome, canvasChrome, navigation, ove
       "--workspace-focus-panel-width": `${focusWidth}px`,
       "--workspace-focus-right-offset": `${focusRightOffset}px`,
       "--workspace-focus-switch-right": `${librarianVisible ? actualRight + 32 : focusWidth + 32}px`,
-      "--navigation-left": split ? "20px" : `${leftOpen ? actualLeft + 20 : 20}px` } as CSSProperties}>
+      "--navigation-left": `${railLeft}px` } as CSSProperties}>
     {renderDock("left", leftCarriage, actualLeft, setLeftWidth)}
     <main className={styles.center} data-layer="central-workspace" inert={split} aria-hidden={split || undefined}>
       <h1 className={styles.screenReaderOnly}>{ariaLabel}</h1>
@@ -260,18 +297,21 @@ export function WorkspaceShell({ children, chrome, canvasChrome, navigation, ove
     {chrome ? <div className={styles.globalChrome}>{renderLayer(chrome)}</div> : null}
     {navigation ? <div className={styles.navigation}>{renderLayer(navigation)}</div> : null}
     <div className={styles.launchers} role="group" aria-label="Workspace carriages" data-focus-visible={focusVisible || focusPresent || undefined}>
-        {leftCarriage && geometry.left === "closed" && !leftPresent ? <CarriageLauncher label={leftCarriage.label} side="left" variant={leftCarriage.variant ?? "prepare"} controls={`carriage-${leftCarriage.id}`} onOpen={() => open("left")} /> : null}
-        {rightCarriage && geometry.right === "closed" && !rightPresent && !rightToggleInChrome ? <CarriageLauncher label={rightCarriage.label} side="right" variant={rightCarriage.variant ?? "librarian"} controls={`carriage-${rightCarriage.id}`} onOpen={() => { setActiveRightPanel("librarian"); open("right"); }} /> : null}
+        {leftCarriage && geometry.left === "closed" && !leftPresent ? <CarriageLauncher label={leftCarriage.label} side="left" variant={leftCarriage.variant ?? "prepare"} controls={`carriage-${leftCarriage.id}`} compact={builderActive} onOpen={() => open("left")} /> : null}
+        {rightCarriage && rightLauncherVisible && !builderActive ? <CarriageLauncher label={rightCarriage.label} side="right" variant={rightCarriage.variant ?? "librarian"} controls={`carriage-${rightCarriage.id}`} onOpen={() => { setActiveRightPanel("librarian"); open("right"); }} /> : null}
     </div>
-    {focusPanel && focusOpen && visibleLibrarian && !canPairFocus && (!builderCannotFitLibrarian || librarianPreviewRequested || focusPreviewRequested) ? <div className={styles.panelSwitch} style={{ "--switch-right": `${librarianVisible ? actualRight + 32 : focusWidth + 32}px` } as CSSProperties} role="group" aria-label="Right workspace panel">
+    {builderLane ? <div className={styles.builderLane} role="group" aria-label="Right workspace panel" style={{ "--builder-lane-right": `${builderLaneRight}px` } as CSSProperties}>
+      {laneLibrarian === "open" && rightCarriage ? <button type="button" className={styles.laneMark} data-carriage-toggle="right" aria-label={`Open ${rightCarriage.label} carriage`} aria-expanded={false} aria-controls={`carriage-${rightCarriage.id}`} title={rightCarriage.label}
+        onClick={() => { setActiveRightPanel("librarian"); open("right"); }}><CarriageIcon kind={rightCarriage.variant ?? "librarian"} /></button> : null}
+      {laneLibrarian === "toggle" && rightCarriage ? <button type="button" className={styles.laneMark} aria-label={rightCarriage.label} aria-pressed={librarianVisible} title={librarianVisible ? `Hide ${rightCarriage.label}` : `Show ${rightCarriage.label}`}
+        onClick={toggleLibrarianPreview}><CarriageIcon kind={rightCarriage.variant ?? "librarian"} /></button> : null}
+      {laneFocus ? <button type="button" className={styles.laneMark} aria-label="Focus preview" aria-pressed={focusVisible} title={focusVisible ? "Hide Focus preview" : "Show Focus preview"}
+        onClick={toggleFocusPreview}><CarriageIcon kind="neutral" /></button> : null}
+    </div> : null}
+    {!builderActive && focusPanel && focusOpen && visibleLibrarian && !canPairFocus ? <div className={styles.panelSwitch} style={{ "--switch-right": `${librarianVisible ? actualRight + 32 : focusWidth + 32}px` } as CSSProperties} role="group" aria-label="Right workspace panel">
       <button type="button" aria-pressed={focusVisible} onClick={() => requestFocus(true)}>Focus</button>
       <button type="button" aria-pressed={!focusVisible} onClick={() => { setActiveRightPanel("librarian"); setFocusPreviewRequested(false); setLibrarianPreviewRequested(true); }}>Librarian</button>
     </div> : null}
-    {focusPanel && focusOpen && builderBlocksPairing && !focusPreviewRequested && !librarianVisible ? <div className={styles.panelSwitch} style={{ "--switch-right": "12px" } as CSSProperties} role="group" aria-label="Right workspace panel">
-      <button type="button" aria-pressed={false} onClick={() => requestFocus(true)}>Show Focus preview</button>
-      {rightCarriage && rightOpen ? <button type="button" aria-pressed={false} onClick={() => { setActiveRightPanel("librarian"); setLibrarianPreviewRequested(true); }}>Show Librarian</button> : null}
-    </div> : null}
-    {!focusPanel && builderCannotFitLibrarian && rightOpen && !librarianVisible ? <button type="button" className={styles.focusPreviewLauncher} onClick={() => setLibrarianPreviewRequested(true)}>Show Librarian</button> : null}
     {split ? <div className={styles.splitDivider} role="separator" tabIndex={0} aria-label="Resize carriage workspace" aria-orientation="vertical"
       aria-valuemin={Math.round(splitMinimum / (splitAvailable || 1) * 100)} aria-valuemax={Math.round(splitMaximum / (splitAvailable || 1) * 100)} aria-valuenow={Math.round(splitLeft / (splitAvailable || 1) * 100)}
       aria-valuetext={`${Math.round(splitLeft)} pixels for ${leftCarriage?.label}, ${Math.round(actualRight)} pixels for ${rightCarriage?.label}`}

@@ -1,26 +1,33 @@
 .workspace { position: relative; isolation: isolate; display: grid; grid-template-rows: minmax(0, 1fr); min-width: 0; min-height: 0; max-height: 100dvh; overflow: hidden; background: var(--paper); }
 .screenReaderOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-.dock { position: relative; z-index: 20; grid-row: 1; width: var(--dock-width); min-width: 0; min-height: 0; padding: 76px 0 var(--workspace-edge) var(--workspace-edge); }
+.dock { position: relative; z-index: 20; grid-row: 1; width: var(--dock-width); min-width: 0; min-height: 0; padding: var(--workspace-top) 0 var(--workspace-edge) var(--workspace-edge); }
 .dock[hidden] { display: none; }
 .dock[data-mode="closed"] { position: absolute; inset-block: 0; pointer-events: none; }
 .dock[data-mode="closed"][data-carriage-region="left"] { left: 0; }
 .dock[data-mode="closed"][data-carriage-region="right"] { right: 0; }
 .dock[data-carriage-region="left"] { grid-column: 1; }
-.dock[data-carriage-region="right"] { grid-column: 3; justify-self: end; padding: 76px var(--workspace-edge) var(--workspace-edge) 0; }
+.dock[data-carriage-region="right"] { grid-column: 3; justify-self: end; padding: var(--workspace-top) var(--workspace-edge) var(--workspace-edge) 0; }
 .dock[data-mode="overlay"] { position: absolute; inset-block: 0; }
 .dock[data-mode="overlay"][data-carriage-region="left"] { left: 0; }
 .dock[data-mode="overlay"][data-carriage-region="right"] { right: 0; }
 .dock[data-panel-suppressed] { visibility: hidden; pointer-events: none; }
-.focusDock { position: absolute; z-index: 19; top: 76px; right: calc(var(--focus-right-offset, 0px) + var(--workspace-edge, 20px)); bottom: var(--workspace-edge); width: var(--workspace-focus-panel-width, 420px); min-width: 360px; min-height: 0; overflow: hidden; border: 1px solid var(--chrome-rule); border-radius: var(--radius-surface); box-shadow: var(--chrome-lift); }
+.focusDock { position: absolute; z-index: 19; top: var(--workspace-top); right: calc(var(--focus-right-offset, 0px) + var(--workspace-edge, 20px)); bottom: var(--workspace-edge); width: var(--workspace-focus-panel-width, 420px); min-width: 360px; min-height: 0; overflow: hidden; border: 1px solid var(--chrome-rule); border-radius: var(--radius-surface); box-shadow: var(--chrome-lift); }
 .focusDock[data-focus-suppressed] { visibility: hidden; pointer-events: none; }
 .focusDock[hidden] { display: none; }
 .panelSwitch { position: absolute; z-index: 52; top: 82px; right: var(--switch-right, 12px); display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--chrome-rule); border-radius: 999px; background: color-mix(in srgb, var(--chrome-surface) 94%, transparent); box-shadow: var(--lift); }
 .panelSwitch button { min-height: 26px; padding: 0 9px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-quiet); font: 500 10px/1 var(--font-ui); cursor: pointer; }
 .panelSwitch button[aria-pressed="true"] { background: var(--ink); color: var(--card); }
 .panelSwitch button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-.focusPreviewLauncher { position: absolute; z-index: 52; top: 82px; right: 12px; min-height: 32px; padding: 0 12px; border: 1px solid var(--chrome-rule); border-radius: 999px; background: var(--chrome-surface); color: var(--ink); box-shadow: var(--lift); font: 500 10px/1 var(--font-ui); cursor: pointer; }
-.focusPreviewLauncher:hover { background: var(--chrome-hover); }
-.focusPreviewLauncher:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+/* Right-hand counterpart of the navigation rail while the Builder is open: same 48px marks, same 14px rhythm. */
+.builderLane { position: absolute; z-index: 52; top: var(--workspace-top); right: var(--builder-lane-right, var(--workspace-edge)); display: flex; flex-direction: column; gap: 14px; }
+.laneMark { display: grid; width: 48px; height: 48px; place-items: center; padding: 0; border: 1px solid var(--chrome-rule); border-radius: 50%; background: var(--chrome-surface); color: var(--ink); box-shadow: var(--chrome-lift); cursor: pointer; transition: background-color 140ms ease, box-shadow 140ms ease; }
+.laneMark:hover { background: var(--card-raised); box-shadow: var(--lift-raised); }
+.laneMark:active { background: var(--chrome-hover); }
+.laneMark[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: var(--card-raised); }
+.laneMark[aria-pressed="true"]:hover { background: var(--ink-quiet); }
+.laneMark:focus-visible { outline: 2px solid var(--workflow-ink); outline-offset: 3px; }
+.laneMark svg { width: 18px; height: 18px; }
+@media (prefers-reduced-motion: reduce) { .laneMark { transition: none; } }
 .center { position: relative; z-index: 1; grid-column: 2; grid-row: 1; min-width: 0; min-height: 0; overflow: hidden; background: var(--paper); container-type: inline-size; }
 .content { position: absolute; inset: 0; min-width: 0; min-height: 0; }
 .chrome, .globalChrome { position: absolute; z-index: 40; inset: 0; pointer-events: none; }
@@ -37,7 +44,7 @@
 .externalOverlay { z-index: 15; }
 .externalOverlay[hidden] { display: none; }
 .workspace[data-split] .center { visibility: hidden; }
-.dock[data-mode="split"] { position: absolute; top: 76px; bottom: var(--workspace-edge); padding: 0; grid-column: 1 / -1; }
+.dock[data-mode="split"] { position: absolute; top: var(--workspace-top); bottom: var(--workspace-edge); padding: 0; grid-column: 1 / -1; }
 .dock[data-mode="split"][data-carriage-region="left"] { left: var(--split-inset); }
 .dock[data-mode="split"][data-carriage-region="right"] { right: 20px; }
 .splitDivider { position: absolute; z-index: 30; top: 88px; bottom: 32px; left: calc(var(--split-inset) + var(--split-left) - 6px); width: 24px; cursor: col-resize; touch-action: none; border-radius: 6px; outline-offset: 0; }

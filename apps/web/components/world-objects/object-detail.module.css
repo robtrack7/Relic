@@ -1,5 +1,5 @@
 .panel {
-  position: absolute; z-index: 35; top: 76px;
+  position: absolute; z-index: 35; top: var(--workspace-top);
   right: calc(var(--workspace-focus-right-inset, var(--workspace-right-inset, 0px)) + var(--workspace-edge, 20px));
   bottom: calc(var(--workspace-edge, 20px) + 76px);
   display: flex; flex-direction: column; width: min(440px, calc(100% - var(--workspace-focus-right-inset, 0px) - 40px));
@@ -204,7 +204,7 @@
 .historicalNotice { flex: none; }
 .visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 720px), (pointer: coarse) {
-  .panel { top: 76px; bottom: calc(var(--workspace-edge, 20px) + 76px); max-height: none; }
+  .panel { top: var(--workspace-top); bottom: calc(var(--workspace-edge, 20px) + 76px); max-height: none; }
   .header { gap: 0; padding-inline: 6px; }
   .headerIdentity { gap: 4px 8px; }
   .headerIdentity .family svg { display: none; }

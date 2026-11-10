@@ -130,7 +130,7 @@
 .domainContent :global([data-relationship-id] button[aria-label^="Edit relationship"]), .domainContent :global([data-relationship-id] button[aria-label^="Remove relationship"]) { opacity: 0; }
 .domainContent :global([data-relationship-id]:hover button), .domainContent :global([data-relationship-id]:focus-within button) { opacity: 1; }
 .srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
-.builderFrame { position: absolute; top: 132px; bottom: 20px; left: calc(var(--workspace-builder-left-inset, 64px) + 20px); right: calc(var(--workspace-builder-right-inset, 0px) + 20px); z-index: 42; pointer-events: auto; min-width: 0; }
+.builderFrame { position: absolute; top: var(--workspace-top); bottom: var(--workspace-edge); left: calc(var(--workspace-builder-left-inset, 64px) + 20px); right: calc(var(--workspace-builder-right-inset, 0px) + 20px); z-index: 42; pointer-events: auto; min-width: 0; }
 .visit { height: 100%; min-height: 0; }
 .visit[hidden], .builderFrame[hidden] { display: none; }
 .loading { padding: 32px; color: var(--ink-quiet); font: 400 17px/1.5 var(--font-editorial); }

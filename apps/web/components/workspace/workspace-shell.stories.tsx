@@ -93,7 +93,7 @@ export const ConstrainedFocusPanelSwitch: Story = {
     const workspace = scene.getByLabelText("Relic workspace");
     await expect(workspace).toHaveAttribute("data-focus-mode", "shared");
     await expect(scene.getByRole("group", { name: "Right workspace panel" })).toBeVisible();
-    await userEvent.click(scene.getByRole("button", { name: "Show Focus preview" }));
+    await userEvent.click(scene.getByRole("button", { name: "Focus preview" }));
     await expect(workspace.querySelector('[data-focus-panel-region][data-focus-visible="true"]')).toBeTruthy();
   }
 };

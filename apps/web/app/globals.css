@@ -94,6 +94,7 @@
   --radius-surface: 24px;
   --radius-pill: 999px;
   --workspace-edge: 20px;
+  --workspace-top: 76px;
   --workspace-content-top: 132px;
 
   /* Tactile and matte. Shallow stacking, never a drop-shadow costume. */
